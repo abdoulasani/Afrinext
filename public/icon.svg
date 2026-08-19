@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Afrinext">
+  <rect width="512" height="512" rx="112" fill="#b4421f"/>
+  <path d="M256 96c-46 62-70 106-70 148a70 70 0 0 0 140 0c0-42-24-86-70-148Z" fill="#f7d9a0"/>
+  <path d="M136 336c40 28 80 42 120 42s80-14 120-42v40c-40 28-80 42-120 42s-80-14-120-42v-40Z" fill="#0f6b53"/>
+</svg>
