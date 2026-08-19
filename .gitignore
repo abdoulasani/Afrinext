@@ -37,3 +37,8 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# Playwright browser-test output
+apps/web/.e2e/
+apps/web/test-results/
+apps/web/playwright-report/

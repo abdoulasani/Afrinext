@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint --max-warnings 0",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"(no web tests yet \u2014 see Phase 0 review packet)\" && exit 0"
+    "test": "echo \"(unit tests live in packages/core; browser tests: pnpm test:e2e)\" && exit 0",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@afrinext/core": "workspace:*",
@@ -22,6 +23,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/react": "^19",
