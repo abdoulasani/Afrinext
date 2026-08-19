@@ -1,0 +1,183 @@
+import { describe, expect, it } from "vitest";
+import fc from "fast-check";
+import {
+  ELEVATION_WINDOW_MS, generateOtp, generateOtpCode, hashOtpCode, hashPassword,
+  isElevated, isSessionActive, issueSessionToken, needsRehash, normaliseEmail,
+  normalisePhone, sessionTokenMatches, verifyOtp, verifyPassword,
+} from "./index";
+
+describe("password hashing", () => {
+  it("verifies a correct password and rejects a wrong one", async () => {
+    const encoded = await hashPassword("correct horse battery");
+    expect(await verifyPassword("correct horse battery", encoded)).toBe(true);
+    expect(await verifyPassword("wrong horse battery", encoded)).toBe(false);
+  });
+
+  it("produces a different hash each time, so equal passwords are not linkable", async () => {
+    const a = await hashPassword("correct horse battery");
+    const b = await hashPassword("correct horse battery");
+    expect(a).not.toBe(b);
+  });
+
+  it("carries its parameters, so the algorithm can be changed without invalidating hashes", async () => {
+    const encoded = await hashPassword("correct horse battery");
+    expect(encoded.startsWith("scrypt$65536$8$1$")).toBe(true);
+    expect(needsRehash(encoded)).toBe(false);
+    expect(needsRehash("scrypt$1024$8$1$c2FsdA$aGFzaA")).toBe(true);
+    expect(needsRehash("argon2id$whatever")).toBe(true);
+  });
+
+  it("rejects a short password", async () => {
+    await expect(hashPassword("short")).rejects.toThrow(RangeError);
+  });
+
+  it("returns false rather than throwing on a malformed hash", async () => {
+    expect(await verifyPassword("anything", "not-a-hash")).toBe(false);
+    expect(await verifyPassword("anything", "scrypt$x$8$1$a$b")).toBe(false);
+  });
+
+  it("normalises unicode so the same typed password verifies", async () => {
+    const encoded = await hashPassword("café-au-lait-1");
+    expect(await verifyPassword("café-au-lait-1", encoded)).toBe(true);
+  });
+});
+
+describe("sessions", () => {
+  it("stores only a hash, and matches the token against it", () => {
+    const issued = issueSessionToken();
+    expect(issued.tokenHash).not.toBe(issued.token);
+    expect(sessionTokenMatches(issued.token, issued.tokenHash)).toBe(true);
+    expect(sessionTokenMatches("some other token", issued.tokenHash)).toBe(false);
+  });
+
+  it("treats expired and revoked sessions as inactive", () => {
+    const future = new Date(Date.now() + 60_000);
+    const past = new Date(Date.now() - 60_000);
+    expect(isSessionActive({ expiresAt: future, revokedAt: null, elevatedAt: null })).toBe(true);
+    expect(isSessionActive({ expiresAt: past, revokedAt: null, elevatedAt: null })).toBe(false);
+    expect(isSessionActive({ expiresAt: future, revokedAt: new Date(), elevatedAt: null })).toBe(false);
+  });
+
+  it("only counts elevation inside the window", () => {
+    const expiresAt = new Date(Date.now() + 3_600_000);
+    const now = new Date();
+    expect(isElevated({ expiresAt, revokedAt: null, elevatedAt: now }, now)).toBe(true);
+    const stale = new Date(now.getTime() - ELEVATION_WINDOW_MS - 1_000);
+    expect(isElevated({ expiresAt, revokedAt: null, elevatedAt: stale }, now)).toBe(false);
+    expect(isElevated({ expiresAt, revokedAt: null, elevatedAt: null }, now)).toBe(false);
+  });
+
+  it("issues unpredictable tokens", () => {
+    const tokens = new Set(Array.from({ length: 500 }, () => issueSessionToken().token));
+    expect(tokens.size).toBe(500);
+  });
+});
+
+describe("one-time codes", () => {
+  it("accepts the right code and rejects a wrong one", () => {
+    const otp = generateOtp("+22790000001", "sign_in");
+    const challenge = {
+      codeHash: otp.codeHash, attempts: 0, maxAttempts: 5,
+      expiresAt: otp.expiresAt, consumedAt: null,
+    };
+    expect(verifyOtp(challenge, otp.code, "+22790000001", "sign_in")).toEqual({ ok: true });
+    expect(verifyOtp(challenge, "000000", "+22790000001", "sign_in")).toEqual({
+      ok: false, reason: "mismatch",
+    });
+  });
+
+  it("binds a code to its identifier and purpose", () => {
+    const otp = generateOtp("+22790000001", "sign_in");
+    const challenge = {
+      codeHash: otp.codeHash, attempts: 0, maxAttempts: 5,
+      expiresAt: otp.expiresAt, consumedAt: null,
+    };
+    // The same digits issued to someone else must not verify here.
+    expect(verifyOtp(challenge, otp.code, "+22790000002", "sign_in").ok).toBe(false);
+    expect(verifyOtp(challenge, otp.code, "+22790000001", "step_up").ok).toBe(false);
+  });
+
+  it("refuses expired, consumed and exhausted challenges", () => {
+    const otp = generateOtp("+22790000001", "sign_in");
+    const base = { codeHash: otp.codeHash, attempts: 0, maxAttempts: 5, consumedAt: null };
+    expect(
+      verifyOtp({ ...base, expiresAt: new Date(Date.now() - 1) }, otp.code, "+22790000001", "sign_in"),
+    ).toEqual({ ok: false, reason: "expired" });
+    expect(
+      verifyOtp({ ...base, expiresAt: otp.expiresAt, consumedAt: new Date() }, otp.code, "+22790000001", "sign_in"),
+    ).toEqual({ ok: false, reason: "consumed" });
+    expect(
+      verifyOtp({ ...base, expiresAt: otp.expiresAt, attempts: 5 }, otp.code, "+22790000001", "sign_in"),
+    ).toEqual({ ok: false, reason: "too_many_attempts" });
+  });
+
+  it("generates uniformly distributed six-digit codes", () => {
+    const codes = Array.from({ length: 3000 }, () => generateOtpCode());
+    expect(codes.every((c) => /^\d{6}$/.test(c))).toBe(true);
+    // A broken generator (e.g. always the same digit) would collapse this set.
+    expect(new Set(codes).size).toBeGreaterThan(2900);
+  });
+
+  it("hashes differently per identifier", () => {
+    expect(hashOtpCode("123456", "+227A", "sign_in")).not.toBe(hashOtpCode("123456", "+227B", "sign_in"));
+  });
+});
+
+describe("phone normalisation", () => {
+  const countries = [
+    { countryCode: "NE", callingCode: "+227" },
+    { countryCode: "ML", callingCode: "+223" },
+    { countryCode: "NG", callingCode: "+234" },
+    { countryCode: "US", callingCode: "+1" },
+  ];
+
+  it("accepts E.164 and identifies the country", () => {
+    expect(normalisePhone("+227 90 00 00 01", countries)).toEqual({
+      ok: true, e164: "+22790000001", countryCode: "NE",
+    });
+  });
+
+  it("expands a national number using the country context", () => {
+    expect(normalisePhone("090000001", countries, "NE")).toEqual({
+      ok: true, e164: "+22790000001", countryCode: "NE",
+    });
+  });
+
+  it("prefers the longest matching calling code", () => {
+    // +1 must not shadow a longer code that starts with the same digits.
+    const result = normalisePhone("+22790000001", countries);
+    expect(result.ok && result.countryCode).toBe("NE");
+  });
+
+  it("refuses a national number with no country context", () => {
+    expect(normalisePhone("090000001", countries)).toEqual({
+      ok: false, reason: "no_country_context",
+    });
+  });
+
+  it("refuses malformed input", () => {
+    expect(normalisePhone("", countries).ok).toBe(false);
+    expect(normalisePhone("+0123", countries).ok).toBe(false);
+    expect(normalisePhone("abc", countries, "NE").ok).toBe(false);
+  });
+
+  it("always produces E.164 or an explicit failure", () => {
+    fc.assert(
+      fc.property(fc.string({ maxLength: 20 }), (input) => {
+        const result = normalisePhone(input, countries, "NE");
+        if (result.ok) expect(/^\+[1-9]\d{6,14}$/.test(result.e164)).toBe(true);
+      }),
+      { numRuns: 1000 },
+    );
+  });
+});
+
+describe("email normalisation", () => {
+  it("lowercases and trims", () => {
+    expect(normaliseEmail("  Hello@Example.COM ")).toBe("hello@example.com");
+  });
+  it("rejects malformed addresses", () => {
+    expect(normaliseEmail("not-an-email")).toBeNull();
+    expect(normaliseEmail("a@b")).toBeNull();
+  });
+});

@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@import "@afrinext/ui/tokens.css";
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overscroll-behavior-y: none;
+}
+
+/* Room for the fixed bottom tab bar plus the home indicator. */
+.app-scroll {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

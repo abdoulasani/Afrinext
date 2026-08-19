@@ -1,68 +1,60 @@
 # Afrinext
 
-A mobile-first marketplace directory for African businesses — search verified
-suppliers, artisans, logistics and services across the continent, or list your
-own business.
+An African commerce and learning platform: sell digital products and courses,
+build a storefront, get paid, and pay partners — starting in Niger.
 
-Built as an installable PWA with Next.js 16 (App Router), React 19, TypeScript
-and Tailwind CSS v4. It runs in a phone browser and installs to the home screen
-with a standalone app shell, bottom tab navigation and an offline fallback.
+Operated by **AFRI NEXT TECHNOLOGIE** (Entreprise Individuelle, Niger).
+
+> **Status: Phase 0 — foundations.** The production foundation is in place:
+> database, migrations, authentication core, scoped permissions, versioned
+> consent, audit log, and a double-entry ledger with property tests. The
+> marketplace, courses, checkout and delivery are **not built yet**. The app
+> currently served is the original directory prototype, kept running while the
+> real product is built underneath it.
+>
+> iPayMoney is the confirmed payment provider but is **not integrated** — see
+> [`docs/providers/ipaymoney/README.md`](docs/providers/ipaymoney/README.md).
 
 ## Getting started
 
 ```bash
-npm install
-npm run dev      # http://localhost:3000
+pnpm install
+cp .env.example .env          # then set DATABASE_URL and TEST_DATABASE_URL
+pnpm db:migrate
+pnpm --filter @afrinext/core seed
+pnpm dev                      # http://localhost:3000
 ```
 
-Other scripts:
+Requires Node 22+, pnpm 10+, PostgreSQL 16+.
+
+Check it came up: `curl localhost:3000/api/health`
+
+## Verifying
 
 ```bash
-npm run build    # production build
-npm run start    # serve the production build
-npm run lint     # eslint
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-The service worker only registers in production builds, so `npm run dev` never
-serves stale assets.
+The test suite needs a reachable PostgreSQL and a `TEST_DATABASE_URL` distinct
+from `DATABASE_URL`; it truncates every table it touches.
 
-## What's in the app
+## Documentation
 
-| Route           | What it does                                                     |
-| --------------- | ---------------------------------------------------------------- |
-| `/`             | Hero search, category grid, verified picks and recently added     |
-| `/browse`       | Keyword search with category, country, verified and sort filters  |
-| `/listing/[id]` | Business detail: description, tap-to-call/email contacts, related |
-| `/submit`       | Validated form to publish a new listing                           |
-| `/saved`        | Bookmarked listings, kept in `localStorage` on the device         |
-| `/offline`      | Fallback rendered by the service worker when the network is gone  |
+| Document | What it is |
+| -------- | ---------- |
+| [`docs/architecture/README.md`](docs/architecture/README.md) | Decision index — start here |
+| [`docs/architecture/blueprint.html`](docs/architecture/blueprint.html) | Full technical blueprint (also as PDF) |
+| [`docs/review/`](docs/review/) | Per-phase review packets for sign-off |
+| [`docs/providers/ipaymoney/README.md`](docs/providers/ipaymoney/README.md) | What the payment integration still needs |
+| [`AGENTS.md`](AGENTS.md) | Working rules for this codebase |
 
-### API
-
-| Endpoint             | Method | Notes                                                       |
-| -------------------- | ------ | ----------------------------------------------------------- |
-| `/api/listings`      | `GET`  | Accepts `q`, `category`, `country`, `verified`, `sort`       |
-| `/api/listings`      | `POST` | Creates a listing; `422` with per-field errors on bad input  |
-| `/api/listings/[id]` | `GET`  | Single listing, `404` when unknown                           |
-
-```bash
-curl 'http://localhost:3000/api/listings?category=logistics&verified=1'
-```
-
-## Project layout
+## Layout
 
 ```
-src/
-  app/          routes, API handlers, layout and global styles
-  components/   UI: nav, header, cards, forms, save button
-  lib/          types, categories, seed data, store, search, validation
-public/         manifest, icons, service worker
+apps/web/          Next.js 16 — the only place Next.js exists
+packages/core/     Domain logic, framework-free
+packages/db/       Drizzle schema and migrations
+packages/ui/       Design tokens and shared components
+packages/i18n/     fr / en catalogues
+packages/config/   Shared tsconfig and eslint base
 ```
-
-## Data
-
-Listings are seeded from `src/lib/seed.ts` into an in-memory store
-(`src/lib/store.ts`). Submissions are appended at runtime and live for the
-lifetime of the server process — restarting resets to the seed set. `store.ts`
-is the only module that touches storage, so swapping it for a real database
-does not affect the rest of the app.

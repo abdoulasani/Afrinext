@@ -287,14 +287,14 @@
 <div class="wrap">
 
 <header class="masthead">
-  <p class="eyebrow">Afrinext · Phase 1 deliverable</p>
+  <p class="eyebrow">Afrinext · architecture of record · revision 2</p>
   <h1>Afrinext Technical Blueprint</h1>
   <p class="lede">The architecture for a multi-country African commerce and learning platform built around a double-entry ledger — stack, schema, permission model, money design, security controls and a phased build order.</p>
   <div class="meta">
-    <span>Status: for review</span>
-    <span>Scope: architecture only</span>
-    <span>Code written: none</span>
-    <span>iPay: not integrated</span>
+    <span>Rev 2 — Phase 0 authorised</span>
+    <span>Operator: AFRI NEXT TECHNOLOGIE</span>
+    <span>Launch: Niger · XOF</span>
+    <span>iPayMoney: not integrated</span>
   </div>
 </header>
 
@@ -303,6 +303,7 @@
   <h2>Contents</h2>
   <ol>
     <li><a href="#read"><b>00</b><span>The read, and one pushback</span></a></li>
+    <li><a href="#company"><b>01</b><span>Company &amp; regulatory posture</span></a></li>
     <li><a href="#stack"><b>A</b><span>Technology stack</span></a></li>
     <li><a href="#system"><b>B</b><span>System architecture</span></a></li>
     <li><a href="#schema"><b>C</b><span>Database schema</span></a></li>
@@ -338,7 +339,7 @@
   <p>The module list in the brief is a two-to-three-year product. Built as specified — all modules in parallel — every part arrives shallow, and the hardest, least reversible part (money) gets exercised last, by which point the schema is load-bearing for a dozen features.</p>
 
   <div class="decision">
-    <span class="d-label">Recommendation</span>
+    <span class="d-label">Confirmed as V1</span>
     <h3>Launch one vertical: digital products and courses, one country, one payment rail.</h3>
     <dl>
       <dt>Why</dt>
@@ -352,7 +353,18 @@
     </dl>
   </div>
 
-  <p>This is a recommendation, not an assumption I have baked in. If you want physical goods at launch, say so and I will reorder the roadmap in section M — the architecture does not change, only the build order.</p>
+  <p><strong>Confirmed.</strong> The staged scope is now fixed as below. The V2 and V3 architecture stays in this document even though it is not being built yet — removing it would only mean rediscovering it later.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Scope</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">V1</td><td>Identity, authentication, multiple roles, stores, digital products, PDF/ebooks/guides, courses, learning progress, marketplace, checkout, payment integration, ledger, commission engine, seller financial records, payout architecture, Afrinext Network, admin foundation</td><td><span class="chip info">building</span></td></tr>
+      <tr><td class="mono">V2</td><td>Physical products, inventory, delivery partners, delivery state machine, proof of delivery</td><td><span class="chip hold">designed, not built</span></td></tr>
+      <tr><td class="mono">V3</td><td>Creator marketplace, advanced services marketplace, further ecosystem functionality</td><td><span class="chip hold">designed, not built</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Launch market is <strong>Niger</strong>, launch currency <strong>XOF</strong>. Neither is hard-coded: countries and currencies are rows, and the multi-country design elsewhere in this document is unchanged.</p>
 
   <h3>What is in the repository today</h3>
 
@@ -367,6 +379,153 @@
       <tr><td><code>src/lib/search.ts</code>, <code>validate.ts</code>, the URL-driven filter pattern</td><td><span class="chip hold">rewrite, keep the shape</span> The pattern is right; the implementation moves to the database and to shared Zod schemas.</td></tr>
     </tbody>
   </table></div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="company">
+  <div class="sec-head"><div class="sec-mark">01</div><h2 class="sec-title">Company, contract and regulatory posture</h2></div>
+
+  <p>Afrinext is operated by <strong>AFRI NEXT TECHNOLOGIE</strong>, an <em>Entreprise Individuelle</em> registered in Niger, holding an NIF and an RCCM. Its registered activities include information technology, artificial intelligence, general commerce, service provision and import-export.</p>
+
+  <div class="note block">
+    <span class="n-label">What NIF and RCCM are — and are not</span>
+    <p>They establish that the business exists and is registered to trade: a tax identifier and a commercial-register entry. <strong>They are not a payment-services or e-money licence.</strong> Nothing in this document, in the product, in marketing copy, or in anything said to a user may describe them as one. Company registration and regulatory authorization are different things, granted by different authorities, for different activities.</p>
+  </div>
+
+  <h3>The confirmed economic model</h3>
+
+  <p>Afrinext operates as the <strong>commercial platform of record</strong>. The customer contracts with Afrinext, iPayMoney processes the payment, Afrinext's ledger records what each seller, instructor or partner is owed, and Afrinext pays the beneficiary under its own published terms and payout procedure. This is a confirmed business decision, and the architecture is built for it.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 700 500" role="img" aria-label="The confirmed payment flow from customer through Afrinext checkout, iPayMoney, confirmed payment, the Afrinext ledger and seller entitlement to payout, with each hop annotated by the layer that governs it, and payout gated by regulatory authorization.">
+        <defs>
+          <marker id="ca" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect class="svg-box"   x="150" y="14"  width="260" height="42" rx="3"/>
+        <text class="svg-t" x="280" y="40"  text-anchor="middle">Customer</text>
+        <text class="svg-l" x="424" y="33">buys from Afrinext, not from the seller</text>
+
+        <rect class="svg-box-a" x="150" y="84"  width="260" height="42" rx="3"/>
+        <text class="svg-t" x="280" y="110" text-anchor="middle">Afrinext checkout</text>
+        <rect class="svg-box" x="104" y="91" width="28" height="28" rx="3"/>
+        <text class="svg-t" x="118" y="110" text-anchor="middle">B</text>
+        <text class="svg-l" x="424" y="103">terms accepted, versioned</text>
+
+        <rect class="svg-box"   x="150" y="154" width="260" height="42" rx="3"/>
+        <text class="svg-t" x="280" y="180" text-anchor="middle">iPayMoney</text>
+        <rect class="svg-box" x="104" y="161" width="28" height="28" rx="3"/>
+        <text class="svg-t" x="118" y="180" text-anchor="middle">C</text>
+        <text class="svg-l" x="424" y="173">merchant account; card + mobile money</text>
+
+        <rect class="svg-box"   x="150" y="224" width="260" height="42" rx="3"/>
+        <text class="svg-t" x="280" y="250" text-anchor="middle">Payment confirmed</text>
+        <text class="svg-l" x="424" y="243">verified webhook, never a redirect</text>
+
+        <rect class="svg-box-m" x="150" y="294" width="260" height="42" rx="3"/>
+        <text class="svg-t" x="280" y="320" text-anchor="middle">Afrinext ledger</text>
+        <rect class="svg-box" x="104" y="301" width="28" height="28" rx="3"/>
+        <text class="svg-t" x="118" y="320" text-anchor="middle">D</text>
+        <text class="svg-l" x="424" y="313">double-entry, immutable</text>
+
+        <rect class="svg-box-m" x="150" y="364" width="260" height="42" rx="3"/>
+        <text class="svg-t" x="280" y="390" text-anchor="middle">Seller entitlement</text>
+        <rect class="svg-box" x="104" y="371" width="28" height="28" rx="3"/>
+        <text class="svg-t" x="118" y="390" text-anchor="middle">E</text>
+        <text class="svg-l" x="424" y="383">contractual claim on Afrinext</text>
+
+        <rect class="svg-box"   x="150" y="434" width="260" height="42" rx="3"/>
+        <text class="svg-t" x="280" y="460" text-anchor="middle">Payout to beneficiary</text>
+        <rect class="svg-box" x="104" y="441" width="28" height="28" rx="3"/>
+        <text class="svg-t" x="118" y="460" text-anchor="middle">F</text>
+
+        <rect class="svg-box-d" x="424" y="434" width="252" height="42" rx="3"/>
+        <text class="svg-t" x="550" y="452" text-anchor="middle">G · authorization</text>
+        <text class="svg-s" x="550" y="468" text-anchor="middle">gates this step</text>
+
+        <g color="var(--rule-strong)">
+          <line class="svg-line" x1="280" y1="56"  x2="280" y2="77"  marker-end="url(#ca)"/>
+          <line class="svg-line" x1="280" y1="126" x2="280" y2="147" marker-end="url(#ca)"/>
+          <line class="svg-line" x1="280" y1="196" x2="280" y2="217" marker-end="url(#ca)"/>
+          <line class="svg-line" x1="280" y1="266" x2="280" y2="287" marker-end="url(#ca)"/>
+          <line class="svg-line" x1="280" y1="336" x2="280" y2="357" marker-end="url(#ca)"/>
+          <line class="svg-line" x1="280" y1="406" x2="280" y2="427" marker-end="url(#ca)"/>
+          <line class="svg-line-d" x1="424" y1="455" x2="417" y2="455" marker-end="url(#ca)"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Each hop is governed by a different layer, and the layers are not interchangeable.</b> The letters map to the table below. The one that is not yet settled — <span class="mono">G</span> — is the one that gates paying money out, which is why the payout rail is behind an interface rather than wired to a single provider.</figcaption>
+  </figure>
+
+  <h3>Seven layers that must never be conflated</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Layer</th><th>Established by</th><th>Does <em>not</em> establish</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">A</td><td><strong>Company registration</strong><br><span style="color:var(--ink-2)">AFRI NEXT TECHNOLOGIE exists and may trade</span></td><td>NIF, RCCM</td><td>Any right to conduct regulated payment activity</td></tr>
+      <tr><td class="mono">B</td><td><strong>Contract with users</strong><br><span style="color:var(--ink-2)">Terms binding Afrinext and each user</span></td><td>Versioned acceptance records</td><td>Regulatory authorization</td></tr>
+      <tr><td class="mono">C</td><td><strong>Payment-provider relationship</strong><br><span style="color:var(--ink-2)">Ability to accept card and mobile-money payments</span></td><td>iPayMoney merchant account</td><td>That Afrinext may itself hold or transmit funds as its own business activity</td></tr>
+      <tr><td class="mono">D</td><td><strong>Afrinext internal ledger</strong><br><span style="color:var(--ink-2)">Authoritative record of who is owed what</span></td><td>Double-entry entries in Afrinext's database</td><td>Any claim on funds physically held anywhere</td></tr>
+      <tr><td class="mono">E</td><td><strong>Seller economic entitlement</strong><br><span style="color:var(--ink-2)">A seller's claim against Afrinext</span></td><td>Ledger balance + accepted Seller Terms</td><td>A deposit, a bank balance, or protected client money</td></tr>
+      <tr><td class="mono">F</td><td><strong>Payout operation</strong><br><span style="color:var(--ink-2)">The act of paying a beneficiary</span></td><td>Payout workflow + a provider or bank rail</td><td>Its own lawfulness — see G</td></tr>
+      <tr><td class="mono">G</td><td><strong>Regulatory authorization</strong><br><span style="color:var(--ink-2)">Permission to conduct regulated payment activity</span></td><td>A licence, an exemption, or operating under a licensed institution</td><td><strong>Nothing else in this table establishes it.</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Afrinext intends to investigate and obtain whatever additional authorization its financial activities require. Until that is settled, three architectural consequences hold, and they are not negotiable in the code:</p>
+
+  <ol>
+    <li><strong>The ledger models entitlement, not custody.</strong> A seller's available balance is a contractual claim on Afrinext, and the schema, the API and the interface language all say so. No screen calls it a deposit, an account balance, or protected funds.</li>
+    <li><strong>The payout rail is an interface, not a provider.</strong> Whatever posture G resolves to — Afrinext licensed, Afrinext operating under a licensed institution, or payouts executed by a third party — the change lands in one adapter, not across the codebase.</li>
+    <li><strong>Custody is an assumption, not a fact in the code.</strong> Nothing in the ledger asserts where money physically sits. That is deliberate: if the answer changes, the accounting does not.</li>
+  </ol>
+
+  <h3>Consent: versioned, per document, per user</h3>
+
+  <p>Users accept Afrinext's terms before using the commercial functionality those terms govern. Acceptance is recorded per document <em>version</em>, so the question "which terms was this user bound by when they sold that course in March?" has an answer.</p>
+
+<pre><code><span class="kw">CREATE TABLE</span> legal_documents (
+  id            uuid <span class="kw">PRIMARY KEY</span>,
+  kind          text <span class="kw">NOT NULL</span>,      <span class="cm">-- terms_of_use | privacy_policy | seller_terms |</span>
+                                  <span class="cm">-- instructor_terms | payment_refund_policy |</span>
+                                  <span class="cm">-- payout_terms | referral_terms | delivery_terms</span>
+  country_code  char(2),           <span class="cm">-- NULL = applies everywhere</span>
+  <span class="kw">UNIQUE</span> (kind, country_code)
+);
+
+<span class="kw">CREATE TABLE</span> legal_document_versions (
+  id             uuid <span class="kw">PRIMARY KEY</span>,
+  document_id    uuid <span class="kw">NOT NULL REFERENCES</span> legal_documents(id),
+  version        text <span class="kw">NOT NULL</span>,      <span class="cm">-- '2026-08-01' or semver; ordered by effective_from</span>
+  locale         text <span class="kw">NOT NULL</span>,      <span class="cm">-- fr | en</span>
+  content_hash   text <span class="kw">NOT NULL</span>,      <span class="cm">-- sha256 of the exact text shown to the user</span>
+  effective_from timestamptz <span class="kw">NOT NULL</span>,
+  <span class="kw">UNIQUE</span> (document_id, version, locale)
+);
+
+<span class="kw">CREATE TABLE</span> consent_records (
+  id                  uuid <span class="kw">PRIMARY KEY</span>,
+  user_id             uuid <span class="kw">NOT NULL REFERENCES</span> users(id),
+  document_version_id uuid <span class="kw">NOT NULL REFERENCES</span> legal_document_versions(id),
+  accepted_at         timestamptz <span class="kw">NOT NULL DEFAULT</span> now(),
+  ip_address          inet,
+  user_agent          text,
+  locale              text,
+  method              text <span class="kw">NOT NULL</span>,  <span class="cm">-- signup_checkbox | seller_onboarding | reaccept …</span>
+  <span class="kw">UNIQUE</span> (user_id, document_version_id)
+);
+</code></pre>
+
+  <p>Enforcement is a gate, not a banner: an action whose terms the user has not accepted at the <em>current effective version</em> is refused server-side, and the client is told which document to present. Publishing a new version therefore re-prompts affected users automatically, with the old acceptance preserved rather than overwritten — consent records are append-only, like ledger entries, for the same reason.</p>
+
+  <div class="note block">
+    <span class="n-label">The line that must not be crossed</span>
+    <p>Consent establishes layer <span class="mono">B</span>. It does not establish layer <span class="mono">G</span>. A user agreeing to Afrinext's Payout Terms does not authorize Afrinext to conduct a regulated activity, and no amount of well-drafted terms substitutes for the competent authority's permission. Anyone who proposes otherwise has misread this section.</p>
+  </div>
 
   <a class="totop" href="#">↑ Contents</a>
 </section>
@@ -978,11 +1137,11 @@
   </table></div>
 
   <div class="decision">
-    <span class="d-label">Recommendation, needs your sign-off</span>
+    <span class="d-label">Confirmed decision</span>
     <h3>Single level only — no downline of a downline</h3>
     <dl>
       <dt>Why</dt>
-      <dd>Multi-level structures are where recruitment-scheme regulatory attention concentrates, and they contradict the brief's own stated principle. One level keeps the model explainable to a regulator in one sentence: "we share part of our commission with whoever introduced the seller."</dd>
+      <dd><strong>Confirmed by the business: A earns from B's qualifying activity; A never earns from B → C.</strong> Multi-level structures are where recruitment-scheme regulatory attention concentrates, and they contradict Afrinext's own stated principle. One level keeps the model explainable to a regulator in one sentence: "we share part of our commission with whoever introduced the seller."</dd>
       <dt>Instead of</dt>
       <dd>Two or more tiers, which measurably increases ambassador enthusiasm and measurably increases legal exposure.</dd>
       <dt>Trade-off</dt>
@@ -1223,7 +1382,7 @@
 
   <div class="note block">
     <span class="n-label">Risk 1 — the one that can stop the project</span>
-    <p><strong>Holding customer funds may be a regulated activity.</strong> In the UEMOA zone, taking money from a buyer, holding a seller's balance and disbursing it can fall under BCEAO e-money and payment-services rules; Nigeria and Ghana have their own regimes. This is not an engineering problem and I cannot solve it in the architecture — but the architecture can be shaped to reduce exposure by keeping funds at the licensed provider and having Afrinext record <em>entitlement</em> rather than custody. <strong>Get local counsel before P6 (payouts) ships.</strong> Please tell me who is advising on this.</p>
+    <p><strong>Afrinext receiving customer money and paying sellers may be a regulated activity.</strong> The operator, AFRI NEXT TECHNOLOGIE, is a registered <em>Entreprise Individuelle</em> with an NIF and RCCM — which establishes layer <span class="mono">A</span> in section 01, and nothing beyond it. In the UEMOA zone, taking money from a buyer, holding a seller's entitlement and disbursing it can fall under BCEAO e-money and payment-services rules. Afrinext intends to investigate and obtain whatever authorization is required. Until that resolves, the architecture reduces exposure the only way engineering can: the ledger records <em>entitlement</em> rather than asserting custody, and the payout rail sits behind an interface so the answer can change without a rewrite. <strong>This gates P6 (payouts), not P0 or P1.</strong></p>
   </div>
 
   <div class="tbl"><table>
@@ -1247,44 +1406,64 @@
 </section>
 
 <section id="ipay">
-  <div class="sec-head"><div class="sec-mark">P</div><h2 class="sec-title">What the iPay integration needs</h2></div>
+  <div class="sec-head"><div class="sec-mark">P</div><h2 class="sec-title">iPayMoney: confirmed provider, unverified API</h2></div>
+
+  <p><strong>iPayMoney is the confirmed initial payment provider, and Afrinext already holds a merchant account.</strong> That settles the commercial question. It does not settle the engineering one.</p>
 
   <div class="note block">
-    <span class="n-label">Nothing is integrated</span>
-    <p>No iPay endpoint, parameter, signature scheme or webhook payload appears anywhere in this document, and none will be written until the official documentation and sandbox credentials are in hand. What exists in the plan is an <em>interface</em> that iPay will be implemented behind. Any code claiming otherwise would be fiction.</p>
+    <span class="n-label">Verification status — read before trusting anything below</span>
+    <p>The official iPayMoney documentation is <strong>not present in this repository</strong>, and the provider's domain is <strong>not reachable from the build environment</strong> — outbound egress to it is blocked by the network policy. I have therefore verified <em>nothing</em> about their API: not the authentication scheme, not an endpoint, not a payload, not a webhook signature, not a status value.</p>
+    <p>The capabilities reported to me — Mobile Money, credit cards, local and international cards, a JavaScript SDK and an Android SDK — are recorded here as <strong>stated by the business, pending confirmation from the official documentation</strong>. No code treats them as facts.</p>
   </div>
 
-  <p>The abstraction Afrinext codes against:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><code>PaymentProvider</code> interface</td><td><span class="chip yes">built</span> Provider-agnostic; nothing in it assumes iPayMoney.</td></tr>
+      <tr><td><code>MockPaymentProvider</code></td><td><span class="chip yes">built</span> Deterministic, in-process, for development and tests. Refuses to load when <code>NODE_ENV=production</code>.</td></tr>
+      <tr><td><code>iPayMoneyProvider</code> adapter</td><td><span class="chip hold">boundary only</span> The adapter and its registration exist; every method throws <code>ProviderNotConfiguredError</code> naming the missing documentation. It cannot silently appear to work.</td></tr>
+      <tr><td>Real endpoints, auth, payloads, webhook verification</td><td><span class="chip no">not implemented</span> Blocked on the list below.</td></tr>
+      <tr><td>Integration test structure</td><td><span class="chip yes">prepared</span> Specs exist and skip unless sandbox credentials are present in the environment.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The abstraction Afrinext codes against. <code>createPayout</code> is optional deliberately — if iPayMoney has no disbursement API, payouts run as an operational batch and the platform still works, but the finance team's workload changes substantially, so it is worth establishing early.</p>
 
 <pre><code><span class="kw">interface</span> PaymentProvider {
+  readonly id: string;
   createCharge(input: ChargeInput): Promise&lt;ChargeResult&gt;;
   getCharge(providerRef: string): Promise&lt;ChargeStatus&gt;;
-  verifyWebhook(rawBody: Buffer, headers: Headers): Promise&lt;VerifiedEvent&gt;;
-  refund(providerRef: string, amount: Money): Promise&lt;RefundResult&gt;;
-  createPayout?(input: PayoutInput): Promise&lt;PayoutResult&gt;;   <span class="cm">// optional — may not exist</span>
+  verifyWebhook(rawBody: Buffer, headers: HeadersLike): Promise&lt;VerifiedEvent&gt;;
+  refund(input: RefundInput): Promise&lt;RefundResult&gt;;
+  createPayout?(input: PayoutInput): Promise&lt;PayoutResult&gt;;   <span class="cm">// may not exist</span>
   getPayout?(providerRef: string): Promise&lt;PayoutStatus&gt;;
 }
 </code></pre>
 
-  <p><code>createPayout</code> is optional on purpose. If iPay has no disbursement API, payouts run as an operational batch and the platform still works — that fact should be established early, because it changes the finance team's workload substantially.</p>
+  <h3>Exactly what is needed to unblock the adapter</h3>
 
-  <h4>Required from the official iPay documentation, before P4 can begin</h4>
-  <ol>
-    <li>Base URLs for sandbox and production.</li>
-    <li>Authentication scheme — API key, HMAC, OAuth client credentials — and where credentials belong in a request.</li>
-    <li>Charge initiation: request and response schema, and the supported channels per country (Orange Money, MTN MoMo, Moov, Wave, Airtel, card, bank).</li>
-    <li>Flow type: hosted redirect, inline widget, or USSD push. This changes the checkout UI, not just the backend.</li>
-    <li>Status query endpoint and the complete status enumeration, including every terminal and non-terminal value.</li>
-    <li>Webhooks: how the URL is registered, payload schema, signature algorithm and header name, timestamp tolerance, and retry policy.</li>
-    <li>Currency handling and the minor-unit convention — specifically whether XOF amounts are sent as whole francs.</li>
-    <li>Whether a disbursement or payout API exists, and its settlement timing.</li>
-    <li>Refund API and its constraints — partial refunds, time limits.</li>
-    <li>Idempotency support on charge creation, and rate limits.</li>
-    <li>Settlement schedule to the merchant account (T+N), and the fee structure.</li>
-    <li>Sandbox credentials plus test phone numbers or accounts for each channel.</li>
-  </ol>
+  <p>Items 6, 7 and 8 are the ones that most often invalidate an assumed design, so they matter most.</p>
 
-  <p>Items 6, 7 and 8 are the ones that most often invalidate an assumed design. If only a subset is available now, send items 1–6 and P4 can begin against a partial implementation.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Required from the official documentation</th><th>Why it blocks</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td>Base URLs, sandbox and production</td><td>Nothing can be called without them</td></tr>
+      <tr><td class="mono">2</td><td>Authentication scheme (API key, HMAC, OAuth) and where credentials go in a request</td><td>Determines secret storage and rotation</td></tr>
+      <tr><td class="mono">3</td><td>Charge initiation request/response schema, and supported channels per country</td><td>Determines the checkout data model</td></tr>
+      <tr><td class="mono">4</td><td>Flow type: hosted redirect, inline widget, JS SDK, or USSD push</td><td>Changes the checkout interface, not just the backend</td></tr>
+      <tr><td class="mono">5</td><td>Status query endpoint and the <em>complete</em> status enumeration</td><td>Reconciliation cannot be written against a partial enum</td></tr>
+      <tr><td class="mono">6</td><td>Webhooks: registration, payload schema, signature algorithm and header name, timestamp tolerance, retry policy</td><td>Money enters the ledger on a verified webhook; with no signature scheme there is no safe way to accept one</td></tr>
+      <tr><td class="mono">7</td><td>Currency handling — specifically whether XOF is sent as whole francs</td><td>XOF has zero decimal places; a wrong assumption is a 100× error</td></tr>
+      <tr><td class="mono">8</td><td>Whether a payout/disbursement API exists, and its settlement timing</td><td>Decides whether payouts are automated or operational</td></tr>
+      <tr><td class="mono">9</td><td>Refund API and its constraints (partial refunds, time limits)</td><td>The refund reversal path in the ledger</td></tr>
+      <tr><td class="mono">10</td><td>Idempotency support on charge creation, and rate limits</td><td>Retry safety</td></tr>
+      <tr><td class="mono">11</td><td>Settlement schedule to the merchant account (T+N) and fee structure</td><td>Hold windows and platform margin</td></tr>
+      <tr><td class="mono">12</td><td>Sandbox credentials and test numbers or accounts per channel</td><td>Nothing can be tested without them</td></tr>
+      <tr><td class="mono">13</td><td>JavaScript and Android SDK documentation, if the SDK route is used</td><td>Changes the client integration entirely</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Drop the documentation into <code>docs/providers/ipaymoney/</code> in any form — PDF, exported HTML, an OpenAPI file, a Postman collection. Once it is there the adapter is implementable against verified facts instead of assumptions.</p>
 
   <a class="totop" href="#">↑ Contents</a>
 </section>
@@ -1292,19 +1471,20 @@
 <section id="status">
   <div class="sec-head"><div class="sec-mark">S</div><h2 class="sec-title">Status register</h2></div>
 
-  <p>The brief asked that anything unimplemented be marked as such. This is that list, and it is complete as of this document.</p>
+  <p>Anything unimplemented, unverified or assumed is listed here rather than left to inference. Current as of revision 2 of this document.</p>
 
   <div class="tbl"><table>
     <thead><tr><th>Item</th><th>Status</th></tr></thead>
     <tbody>
-      <tr><td>Everything in this blueprint</td><td><span class="chip no">not implemented</span> Architecture only. No code from this plan has been written.</td></tr>
-      <tr><td>iPay payment integration</td><td><span class="chip no">not implemented</span> Blocked on the documentation in section P. Not designed against, not tested, not stubbed with invented shapes.</td></tr>
-      <tr><td>Database, authentication, wallet, ledger, courses, delivery, referrals</td><td><span class="chip no">not implemented</span> None exist in the repository today.</td></tr>
-      <tr><td>Cloudflare Stream / R2, SMS provider, KYC provider</td><td><span class="chip no">not selected</span> Recommended, not procured, no accounts created, no pricing confirmed.</td></tr>
-      <tr><td>Latency assumption (<code>eu-west-3</code> over <code>af-south-1</code>)</td><td><span class="chip hold">unverified</span> Based on general routing, not on measurement from the target cities. Verify in P0.</td></tr>
+      <tr><td>Sections A–M of this blueprint</td><td><span class="chip info">architecture</span> Design, not code. Phase 0 implements the foundation only; the rest is not built.</td></tr>
+      <tr><td>iPayMoney integration</td><td><span class="chip no">not implemented</span> Merchant account exists; the API is unverified and unreachable from the build environment. Interface and mock exist; the adapter throws. See section P.</td></tr>
+      <tr><td>Regulatory authorization (layer <span class="mono">G</span>)</td><td><span class="chip no">unresolved</span> Company registration (NIF, RCCM) establishes layer <span class="mono">A</span> only. Requires local counsel and, if needed, an application to the competent authority. Gates P6.</td></tr>
+      <tr><td>Legal document texts (Terms, Privacy, Seller, Instructor, Payout, Referral)</td><td><span class="chip no">not written</span> The consent <em>architecture</em> exists; the documents themselves are a legal deliverable, not an engineering one.</td></tr>
+      <tr><td>Cloudflare Stream / R2, SMS provider, KYC provider</td><td><span class="chip no">not selected</span> Recommended, not procured. No accounts, no confirmed pricing.</td></tr>
+      <tr><td>Latency assumption (<code>eu-west-3</code> over <code>af-south-1</code>)</td><td><span class="chip hold">unverified</span> Based on general routing, not measurement from Niamey. Verify in P0 or P1.</td></tr>
       <tr><td>Effort estimates in section M</td><td><span class="chip hold">estimates</span> Two to three engineers assumed. Not commitments.</td></tr>
-      <tr><td>Regulatory position on holding funds</td><td><span class="chip no">unresolved</span> Requires local legal counsel. Outside what I can determine.</td></tr>
-      <tr><td>Existing repository prototype</td><td><span class="chip yes">working</span> Builds, lints, and was verified against a running server — but it is a directory demo with an in-memory store, not a foundation for this plan beyond its UI layer.</td></tr>
+      <tr><td>ORM choice (Drizzle vs Prisma)</td><td><span class="chip hold">proceeding on the recommendation</span> Phase 0 uses Drizzle. The decision genuinely depends on team composition, which is still unanswered — see section Q.</td></tr>
+      <tr><td>V2 (physical, delivery) and V3 (creator, services) architecture</td><td><span class="chip info">designed, not built</span> Retained deliberately.</td></tr>
     </tbody>
   </table></div>
 
@@ -1312,26 +1492,43 @@
 </section>
 
 <section id="open">
-  <div class="sec-head"><div class="sec-mark">Q</div><h2 class="sec-title">Open decisions I need from you</h2></div>
+  <div class="sec-head"><div class="sec-mark">Q</div><h2 class="sec-title">Decisions: settled, and still open</h2></div>
 
-  <p>Answers to 1–4 change the plan materially. The rest can be settled during P0 without blocking anything.</p>
+  <h3>Settled — reflected throughout this document</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Decision</th><th>Outcome</th></tr></thead>
+    <tbody>
+      <tr><td>Operating company</td><td>AFRI NEXT TECHNOLOGIE, <em>Entreprise Individuelle</em>, Niger, NIF + RCCM. Registration is layer <span class="mono">A</span> and nothing more — section 01.</td></tr>
+      <tr><td>Economic model</td><td>Afrinext is the commercial platform of record: it receives customer payments and pays beneficiaries under its own terms.</td></tr>
+      <tr><td>Launch scope</td><td>V1 = digital products and courses. V2 physical + delivery, V3 creator + services, both designed and deferred.</td></tr>
+      <tr><td>Launch market</td><td>Niger, XOF — as data, not as constants.</td></tr>
+      <tr><td>Payment provider</td><td>iPayMoney, merchant account held. Behind the provider interface; a second provider must remain possible.</td></tr>
+      <tr><td>Referral</td><td>Single level. Basis is Afrinext's realized commission, never gross. No payment for registration or recruitment.</td></tr>
+      <tr><td>Ledger</td><td>Double-entry design approved in principle. Not to be replaced by a balance field.</td></tr>
+      <tr><td>Consent</td><td>Versioned acceptance per document, per user. Establishes contract, not authorization.</td></tr>
+    </tbody>
+  </table></div>
 
-  <ol>
-    <li><strong>Regulatory posture.</strong> Who is advising on whether Afrinext may hold and disburse user funds in the launch country? This gates P6 and could reshape the wallet's legal model.</li>
-    <li><strong>Launch scope.</strong> Do you accept the digital-and-courses-first vertical, or do physical goods and delivery ship at launch? This reorders roughly nine weeks of work.</li>
-    <li><strong>iPay status.</strong> Is the contract signed, and can you obtain the documentation and sandbox credentials listed in section P? If not, P3's manual rail becomes the launch payment method and we should plan for that openly.</li>
-    <li><strong>Referral levels.</strong> Confirm single-level. If you want tiers, that needs the legal review in item 1 to cover it explicitly.</li>
-    <li><strong>Launch country and currency.</strong> Niger and XOF assumed. Confirm, or name the first two.</li>
-    <li><strong>Team composition.</strong> How many engineers, and what is their Prisma versus SQL experience? This settles the ORM question in section A, and it is the only reason that decision is still open.</li>
-    <li><strong>Hosting preference.</strong> Managed and simple (Vercel + Neon, higher unit cost) or containers (Hetzner or Fly, cheaper, more operations)?</li>
-    <li><strong>Native app.</strong> Is the PWA sufficient at launch, or is a store-distributed app required? It does not change the API design, but it changes how much weight the REST layer carries in P2 and P3.</li>
-    <li><strong>Cash on delivery.</strong> Required at physical-goods launch, or can it be its own phase?</li>
-    <li><strong>KYC.</strong> Which identity documents are practical to verify in the launch country, and is there a provider you already work with?</li>
-  </ol>
+  <h3>Still open</h3>
+  <p>None of these block Phase 0. Items 1 and 2 block later phases and are worth starting now because they have long lead times.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Question</th><th>Blocks</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td><strong>Regulatory.</strong> Who is advising on layer <span class="mono">G</span>, and what authorization is Afrinext pursuing — its own licence, or operating under a licensed institution?</td><td>P6 payouts. Long lead time — start now.</td></tr>
+      <tr><td class="mono">2</td><td><strong>iPayMoney documentation.</strong> The 13 items in section P. Sandbox credentials are the single most useful thing you can send.</td><td>P4 payment integration</td></tr>
+      <tr><td class="mono">3</td><td><strong>Team composition.</strong> How many engineers, and what is their Prisma versus raw-SQL experience?</td><td>Settles the ORM choice; Phase 0 proceeds on Drizzle meanwhile</td></tr>
+      <tr><td class="mono">4</td><td><strong>Hosting.</strong> Managed (Vercel + Neon, higher unit cost) or containers (Hetzner or Fly, cheaper, more operations)?</td><td>P0 deployment, not P0 code</td></tr>
+      <tr><td class="mono">5</td><td><strong>SMS provider for OTP in Niger.</strong> Which aggregator, and what are the per-message economics?</td><td>Real OTP delivery. The OTP architecture is provider-agnostic, so this is not urgent.</td></tr>
+      <tr><td class="mono">6</td><td><strong>Native app.</strong> Is the PWA sufficient at launch, or is store distribution required?</td><td>How much weight the REST layer carries</td></tr>
+      <tr><td class="mono">7</td><td><strong>KYC.</strong> Which identity documents are practically verifiable in Niger, and is there an existing provider?</td><td>P6 withdrawal tiers</td></tr>
+      <tr><td class="mono">8</td><td><strong>Legal document texts.</strong> Who drafts the Terms, Seller Terms, Payout Terms and the rest?</td><td>Nothing technical — the consent machinery works with any text</td></tr>
+    </tbody>
+  </table></div>
 
   <hr class="soft">
 
-  <p>On approval, P0 and P1 are what I would start on — the monorepo, the schema, and the ledger with its property tests — because they are the parts that everything else is built on top of and the parts that are most expensive to change later. Nothing above is locked; tell me where you disagree and I will revise the blueprint before any code is written.</p>
+  <p>Phase 0 is authorised and in progress: the monorepo, the schema, authentication, scoped permissions, the consent tables, the audit log, the ledger with its property tests, and the payment-provider abstraction. Phase 1 does not begin without an explicit approval.</p>
 
   <a class="totop" href="#">↑ Contents</a>
 </section>

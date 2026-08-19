@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  verify:
+    name: lint · typecheck · test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: afrinext
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/afrinext
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/afrinext_test
+      PAYMENT_PROVIDER: mock
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create the test database
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c 'create database afrinext_test'
+
+      - name: Migrate
+        run: pnpm db:migrate
+
+      # Migrations must be reversible in principle: a schema that can only go
+      # forward cannot be rolled back when a release goes wrong. Drizzle has no
+      # down-migrations, so this asserts a clean rebuild from zero instead.
+      - name: Rebuild the schema from scratch
+        run: |
+          pnpm --filter @afrinext/db reset
+          pnpm db:migrate
+
+      - name: Seed reference data
+        run: pnpm --filter @afrinext/core seed
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - name: Build the web app
+        run: pnpm build
+
+      - name: Assert the ledger reconciles after the suite
+        run: pnpm --filter @afrinext/core exec tsx scripts/reconcile-check.ts

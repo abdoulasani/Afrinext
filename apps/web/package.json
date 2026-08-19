@@ -1,0 +1,33 @@
+{
+  "name": "@afrinext/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"(no web tests yet \u2014 see Phase 0 review packet)\" && exit 0"
+  },
+  "dependencies": {
+    "@afrinext/core": "workspace:*",
+    "@afrinext/db": "workspace:*",
+    "@afrinext/i18n": "workspace:*",
+    "@afrinext/ui": "workspace:*",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "drizzle-orm": "^0.38.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "^4",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,66 +1,80 @@
 # Architecture
 
-`blueprint.html` is the Phase 1 technical blueprint — the full document, published as an
-artifact at <https://claude.ai/code/artifact/5b36e98c-2699-4dad-a6ed-53efafdd7f7f>.
+`blueprint.html` is the Afrinext architecture of record — **revision 2**, updated with the
+confirmed business decisions of the Phase 0 authorization. It is published as an artifact and
+rendered to `Afrinext-Technical-Blueprint.pdf`.
 
-This file is the short index: the decisions that shape everything else, and the questions
-still open. Change a decision here and the blueprint needs updating with it.
+This file is the short index: the decisions that shape everything else, and what is still open.
+Change a decision here and the blueprint must change with it.
 
-## Status
+## Operator and regulatory posture
 
-Architecture only. **No code from this plan has been written**, no provider account exists,
-and the iPay integration is not designed against — it is blocked on official documentation.
-The current application in this repository is a directory prototype with an in-memory store;
-only its UI layer carries forward.
+Afrinext is operated by **AFRI NEXT TECHNOLOGIE**, an *Entreprise Individuelle* registered in
+Niger, holding an NIF and an RCCM, with registered activities including information technology,
+artificial intelligence, general commerce, service provision and import-export.
 
-## Decisions
+**NIF and RCCM establish company registration. They are not a payment-services or e-money
+licence and must never be described as one.** Section 01 of the blueprint separates seven layers
+that are routinely conflated:
 
-| # | Decision | Rationale in short | Contested? |
-| - | -------- | ------------------ | ---------- |
-| 1 | Launch vertical is digital products + courses, one country, one payment rail | Exercises every hard part except logistics; shortest path to a real settled transaction | Recommendation — needs sign-off |
-| 2 | Domain logic lives in `packages/core`, framework-free | Next.js is transport, not the application; makes the ledger testable in milliseconds and a future API extraction a packaging change | No |
-| 3 | PostgreSQL, with financial invariants enforced in the database | Deferred constraint triggers, revoked grants and CHECK constraints, not application discipline | No |
-| 4 | Drizzle ORM | SQL-first migrations reviewable before they touch money; native CHECK constraints | **Yes** — Prisma is the alternative; decided by team composition |
-| 5 | pg-boss over BullMQ + Redis | A job can be enqueued in the same transaction as the ledger rows it will act on | Revisit above ~100 jobs/sec |
-| 6 | Double-entry ledger; balances are a verified cache | Immutable entries, per-transaction balancing, nightly reconciliation | No |
-| 7 | Pending vs available are two accounts, not a status | Settlement becomes a transfer, answerable by pointing at a ledger row | No |
-| 8 | Money is `bigint` minor units + currency; exponent from the `currencies` table | XOF/XAF have **zero** decimals; assuming "cents" is wrong across all of UEMOA | No |
-| 9 | Commission rules resolved once at order creation and frozen in `order_fee_lines` | Rate changes never rewrite history | No |
-| 10 | Referral is single-level, drawn from platform revenue, paid only on settled transactions | Payout is bounded by definition; keeps the model explainable to a regulator | Recommendation — needs sign-off |
-| 11 | Database sessions, not JWTs; phone OTP primary | A session controlling a wallet must be revocable in one query | No |
-| 12 | Roles are scoped rows; no `role` column on `users` | One account, many roles, without a schema change per role | No |
-| 13 | Postgres in `eu-west-3` (Paris), not `af-south-1` | Better round-trip to West Africa — **assumption, measure in P0** | Unverified |
+| | Layer | Established by |
+| - | ----- | -------------- |
+| A | Company registration | NIF, RCCM |
+| B | Contract with users | Versioned consent records |
+| C | Payment-provider relationship | iPayMoney merchant account |
+| D | Afrinext internal ledger | Double-entry entries |
+| E | Seller economic entitlement | Ledger balance + Seller Terms |
+| F | Payout operation | Payout workflow + a rail |
+| G | **Regulatory authorization** | A licence, an exemption, or operating under a licensed institution |
+
+Nothing in A–F establishes G. Afrinext intends to investigate and obtain whatever authorization
+its financial activities require; until then the ledger records **entitlement, not custody**, and
+the payout rail sits behind an interface so the posture can change without a rewrite.
+
+## Confirmed decisions
+
+| # | Decision | Rationale in short | Status |
+| - | -------- | ------------------ | ------ |
+| 1 | Afrinext is the commercial platform of record — receives customer payments, pays beneficiaries under its own terms | Confirmed business model | Confirmed |
+| 2 | V1 = digital products + courses. V2 physical + delivery, V3 creator + services | Exercises every hard part except logistics; shortest path to a settled transaction | Confirmed |
+| 3 | Launch market Niger, currency XOF — as data, never constants | Multi-country design unchanged | Confirmed |
+| 4 | iPayMoney is the initial provider, behind `PaymentProvider` | Merchant account held; a second provider must stay possible | Confirmed |
+| 5 | Double-entry ledger is the authoritative financial record | Not to be replaced by a balance field | Approved in principle |
+| 6 | Pending vs available are two ledger accounts, not a status | Settlement becomes a transfer you can point at | Confirmed |
+| 7 | Money is `bigint` minor units + currency; exponent from the `currencies` table | XOF/XAF have **zero** decimals — assuming "cents" is a 100× error | Confirmed |
+| 8 | Commission resolved once at order creation and frozen | Rate changes never rewrite history | Confirmed |
+| 9 | Referral single-level; basis is Afrinext's realized commission, never gross | Payout bounded by what the platform earned; no pay for registration or recruitment | Confirmed |
+| 10 | Versioned consent per document per user; append-only | Answers "which terms bound this user in March?" | Confirmed |
+| 11 | Consent establishes contract (B), never authorization (G) | The line that must not be crossed | Confirmed |
+| 12 | Domain logic in a framework-free `packages/core` | Ledger testable without a server; API extraction later is repackaging | Confirmed |
+| 13 | Database sessions, not JWTs; phone OTP primary | A session controlling a wallet must be revocable in one query | Confirmed |
+| 14 | Roles are scoped rows; no `role` column on `users` | One account, many roles | Confirmed |
+| 15 | Drizzle ORM | SQL-first migrations reviewable before they touch money | **Proceeding on recommendation** — genuinely depends on team composition |
+| 16 | Postgres in `eu-west-3` (Paris) rather than `af-south-1` | Better round-trip to West Africa | **Assumption — measure it** |
 
 ## Build order
 
-Phases are ordered by irreversibility, not visibility. The money spine (P1) ships before any
-product feature, and P3 closes the full economic cycle with a manual payment rail so that no
-other phase is blocked on iPay.
+Phases are ordered by irreversibility, not visibility. The money spine ships before any product
+feature; P3 closes the economic cycle with a manual rail so nothing is blocked on iPayMoney.
 
-`P0` foundations → `P1` ledger → `P2` stores & catalog → `P3` cycle closed, no PSP →
-`P4` iPay *(gated)* → `P5` Learn → `P6` wallet & payouts → `P7` network → `P8` physical &
-delivery → `P9` services → `P10` hardening
+`P0` foundations ← **in progress** → `P1` ledger-backed commerce → `P2` stores & catalog →
+`P3` cycle closed, no PSP → `P4` iPayMoney *(gated on docs)* → `P5` Learn → `P6` wallet & payouts
+*(gated on layer G)* → `P7` network → `P8` physical & delivery → `P9` services → `P10` hardening
 
-The admin console is not a phase; each phase ships the admin surface for what it built.
+## Still open
 
-## Open questions
-
-Blocking:
-
-1. **Regulatory** — who is advising on whether Afrinext may hold and disburse user funds?
-   Gates P6 and may reshape the wallet's legal model.
-2. **Launch scope** — digital-and-courses first, or physical goods at launch?
-3. **iPay** — is the contract signed, and can we obtain the documentation and sandbox
-   credentials listed in section P of the blueprint?
-4. **Referral levels** — confirm single-level.
-
-Non-blocking, settle during P0: launch country and currency, team composition (decides #4
-above), hosting preference, native app requirement, cash on delivery, KYC provider.
+1. **Regulatory (layer G)** — who is advising, and what authorization is being pursued? Gates P6, long lead time.
+2. **iPayMoney documentation** — the 13 items in blueprint section P. Sandbox credentials are the most useful single item.
+3. **Team composition** — settles Drizzle vs Prisma.
+4. **Hosting** — managed or containers.
+5. **SMS provider** for OTP in Niger.
+6. **Native app** — is the PWA enough at launch?
+7. **KYC provider** and verifiable document types in Niger.
+8. **Legal document texts** — a legal deliverable; the consent machinery works with any text.
 
 ## PDF
 
-`Afrinext-Technical-Blueprint.pdf` (37 pages, A4) is a print rendition of `blueprint.html`
-for reviewers who want to annotate on paper. It is generated by printing the HTML through
-headless Chromium with a print stylesheet — light theme, one section per page, embedded
-typefaces, page numbers footed with the source commit. Regenerate it whenever the HTML
+`Afrinext-Technical-Blueprint.pdf` is a print rendition of `blueprint.html`, generated by printing
+the HTML through headless Chromium with a print stylesheet — light theme, one section per page,
+embedded typefaces, page numbers footed with the source commit. Regenerate it whenever the HTML
 changes, or the two will disagree.

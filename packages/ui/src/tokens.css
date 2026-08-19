@@ -1,0 +1,52 @@
+/*
+ * Afrinext design tokens.
+ *
+ * Colours are CSS variables exposed to Tailwind through @theme inline, so a
+ * component never hard-codes a hex value and both palettes stay in one place.
+ */
+
+:root {
+  --background: #fbf7f2;
+  --surface: #ffffff;
+  --surface-muted: #f3ece3;
+  --foreground: #1c1714;
+  --muted: #6d6259;
+  --border: #e6dbcd;
+  --primary: #b4421f;
+  --primary-soft: #fbe7de;
+  --primary-contrast: #ffffff;
+  --accent: #0f6b53;
+  --accent-soft: #dcefe8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #16110e;
+    --surface: #221b17;
+    --surface-muted: #2c231d;
+    --foreground: #f4ece4;
+    --muted: #a8998c;
+    --border: #382d25;
+    --primary: #f07a4e;
+    --primary-soft: #3a2118;
+    --primary-contrast: #1c1714;
+    --accent: #4fc4a3;
+    --accent-soft: #12332a;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-contrast: var(--primary-contrast);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}

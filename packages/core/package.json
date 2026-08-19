@@ -1,0 +1,36 @@
+{
+  "name": "@afrinext/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./money": "./src/money/index.ts",
+    "./ledger": "./src/ledger/index.ts",
+    "./authz": "./src/authz/index.ts",
+    "./auth": "./src/auth/index.ts",
+    "./consent": "./src/consent/index.ts",
+    "./audit": "./src/audit/index.ts",
+    "./payments": "./src/payments/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run src/money src/authz src/auth src/payments",
+    "lint": "eslint src --max-warnings 0",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@afrinext/db": "workspace:*",
+    "drizzle-orm": "^0.38.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "fast-check": "^3.23.2",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9",
+    "tsx": "^4.19.2",
+    "@afrinext/config": "workspace:*",
+    "eslint": "^9.17.0"
+  }
+}
