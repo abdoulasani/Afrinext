@@ -86,7 +86,30 @@ never given a say over authorization.
   alone protects nothing if codes can be requested without limit — and every SMS
   costs money. `packages/core/ratelimit` counts in PostgreSQL with one atomic
   statement. A refusal leaves the auth handler as a **429 with `Retry-After`**,
-  never a 500.
+  never a 500. The limits come from `platform_settings`, not from literals.
+
+## One-time codes
+
+**A verification code exists in exactly one place: `otp_challenges.code_hash`.**
+
+- Better Auth's `phoneNumber` plugin is **not installed and must not be**. It
+  writes the code to `verification.value` in the clear and offers no hook to
+  change that. `phone-otp.test.ts` fails if those endpoints ever reappear.
+- The hash is HMAC-SHA256 under a key derived from the application secret
+  (`deriveOtpKey`). A plain salted digest of a six-digit code is reversible by
+  trying all million inputs; the key is what a stolen table does not contain.
+- Three properties are enforced by PostgreSQL, not by application code:
+  one live challenge per identifier and purpose (partial unique index), the
+  attempt counter (`where attempts < max_attempts`), and single use
+  (`where consumed_at is null`).
+- **Every verification failure answers identically.** Wrong code, expired code,
+  no challenge and exhausted attempts all return the same 400 with
+  `auth.otp_invalid`, so the endpoint cannot be used to enumerate accounts. The
+  real reason goes to the audit log.
+- The code is never logged, never audited, and never returned.
+- **Step-up elevation is required** before requesting a withdrawal, changing
+  payout details, changing an account phone number, or any administrative action
+  that can change where funds are paid.
 
 ## Payments
 
@@ -95,6 +118,10 @@ implemented and refuses to load in production. **iPayMoney is confirmed as the
 provider but NOT implemented** — its documentation is not available, so the
 adapter throws rather than pretending. See `docs/providers/ipaymoney/README.md`
 for exactly what is required to build it.
+
+No SMS provider is chosen either. `MessageSender` is the whole surface, and a
+provider is selected only after a real handset delivery test on Airtel, Orange
+and Moov in Niger — see `docs/providers/sms/README.md`.
 
 ## Conventions
 

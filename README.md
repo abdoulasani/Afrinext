@@ -15,8 +15,14 @@ Operated by **AFRI NEXT TECHNOLOGIE** (Entreprise Individuelle, Niger).
 > served is the original directory prototype plus a sign-in and wallet
 > screen, kept running while the real product is built underneath it.
 >
+> Verification codes exist only as a keyed hash in `otp_challenges`; Better
+> Auth's phone plugin, which stores them in plaintext, is deliberately not
+> installed.
+>
 > iPayMoney is the confirmed payment provider but is **not integrated** — see
 > [`docs/providers/ipaymoney/README.md`](docs/providers/ipaymoney/README.md).
+> No SMS provider is chosen either, so nobody outside this repository can sign
+> in yet — see [`docs/providers/sms/README.md`](docs/providers/sms/README.md).
 
 ## Getting started
 
@@ -50,6 +56,7 @@ from `DATABASE_URL`; it truncates every table it touches.
 | [`docs/review/phase-1-money-spine.html`](docs/review/phase-1-money-spine.html) | Current review packet — Phase 1, the money spine (also as PDF) |
 | [`docs/review/`](docs/review/) | All per-phase review packets |
 | [`docs/providers/ipaymoney/README.md`](docs/providers/ipaymoney/README.md) | What the payment integration still needs |
+| [`docs/providers/sms/README.md`](docs/providers/sms/README.md) | What must be established before an SMS provider is chosen |
 | [`AGENTS.md`](AGENTS.md) | Working rules for this codebase |
 
 ## Layout

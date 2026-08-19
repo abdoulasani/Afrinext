@@ -56,7 +56,12 @@ the payout rail sits behind an interface so the posture can change without a rew
 | 19 | Better Auth's `session` is the only session store; ours was dropped | Two session stores is two truths about who is signed in | Confirmed |
 | 20 | OTP **issuance** is rate limited, not only OTP attempts | Unlimited issuance makes attempt limits meaningless, and each SMS costs money | Confirmed |
 | 21 | Multi-row locks are acquired in a deterministic order | Found by test, not by reasoning — see the Phase 1 packet, section 10 | Confirmed |
-| 22 | Verification codes are stored by Better Auth **in plaintext** | Inconsistent with our own `otp_challenges.code_hash`; no option exists on the phone plugin | **Open — decision 1 of the Phase 1 packet** |
+| 22 | Phone verification codes live only in `otp_challenges`, as a keyed hash | Better Auth's phone plugin stored them in plaintext and offers no hook; it is not installed | **Confirmed — decision 1, option (b), implemented** |
+| 23 | The OTP hash is HMAC under a key derived from the app secret, not a bare digest | A six-digit code falls to a million-guess loop; the key is what a stolen table lacks | Confirmed |
+| 24 | Every OTP verification failure answers identically | Otherwise the endpoint enumerates which numbers have accounts | Confirmed |
+| 25 | OTP limits are read from `platform_settings` | Decision 7: limits are configuration; the per-IP limit is the production-tuning point | Confirmed |
+| 26 | Step-up is required for withdrawals, payout details, phone changes, and any admin action that moves where funds are paid | Decision 3 | Confirmed — mechanism built, enforcement lands with the payout path |
+| 27 | An SMS provider is selected only after a real handset test on all three Niger networks | Decision 8: no provider chosen from documentation alone | Confirmed — investigation not started |
 
 ## Build order
 
@@ -69,14 +74,13 @@ feature; P3 closes the economic cycle with a manual rail so nothing is blocked o
 
 ## Still open
 
-0. **Plaintext OTP storage** — Better Auth writes the code to `verification.value` in the clear, and its
-   phone plugin offers no hashing option. Decision 1 of the Phase 1 review packet. Gates nothing
-   technically, but should be settled before there are real accounts to take over.
 1. **Regulatory (layer G)** — who is advising, and what authorization is being pursued? Gates P6, long lead time.
 2. **iPayMoney documentation** — the 13 items in blueprint section P. Sandbox credentials are the most useful single item.
 3. **Team composition** — settles Drizzle vs Prisma.
 4. **Hosting** — managed or containers.
-5. **SMS provider** for OTP in Niger.
+5. **SMS provider** for OTP in Niger — the practical critical path. Requirements and the
+   delivery test that decides it are in `docs/providers/sms/README.md`; three candidates named
+   for the first investigation, none assumed suitable.
 6. **Native app** — is the PWA enough at launch?
 7. **KYC provider** and verifiable document types in Niger.
 8. **Legal document texts** — a legal deliverable; the consent machinery works with any text.
