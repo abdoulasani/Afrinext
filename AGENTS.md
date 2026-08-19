@@ -11,7 +11,8 @@ PostgreSQL, Drizzle.
 
 ```
 apps/web/          Next.js 16 App Router — UI, route handlers. The only place Next.js exists.
-packages/core/     Domain logic, framework-free: money, ledger, authz, auth, consent, audit, payments
+packages/core/     Domain logic, framework-free: money, ledger, authz, auth,
+                   ratelimit, commissions, consent, audit, payments
 packages/db/       Drizzle schema, migrations, client
 packages/ui/       Design tokens and shared components
 packages/i18n/     fr/en catalogues (fr is the default)
@@ -56,6 +57,36 @@ otherwise.
 - **Nobody approves their own withdrawal.** Enforced in code, not policy.
 - **The ledger records entitlement, not custody.** No screen or field calls a
   seller balance a deposit or protected funds — see blueprint section 01.
+- **Locks are taken in a deterministic order.** `postTransaction` sorts the
+  balance rows it touches by account id before touching any of them. Without
+  that, two transfers in opposite directions deadlock. Anything new that locks
+  more than one row follows the same rule.
+- **Fee snapshots are frozen and append-only.** A `fee_schedules` row plus its
+  `fee_lines` are written once, must total the gross, and are never edited —
+  changing a commission rule later must not restate a past order.
+
+## Authentication and authorization
+
+Better Auth owns **authentication only**: credentials, sign-in, sessions. It is
+never given a say over authorization.
+
+- Its four tables (`user`, `session`, `account`, `verification`) are declared in
+  `packages/db/src/schema/better-auth.ts` and created by **our** migrations, so
+  they are diffed and rebuilt from zero in CI like everything else.
+  `auth/schema-drift.test.ts` fails if Better Auth's expectations drift from
+  what we declare.
+- It reaches PostgreSQL through the `pg` Pool, not its Drizzle adapter — the
+  adapter would own the tables.
+- `session` is the **only** session store. `users.auth_user_id` links a
+  credential to the Afrinext identity that roles, consent, audit and ledger
+  accounts are keyed on.
+- `resolveActor()` in `auth/session-bridge.ts` turns a session into an identity
+  and nothing more. Permissions still come from `authorize()`.
+- **OTP issuance is rate limited, not just OTP attempts.** Bounding attempts
+  alone protects nothing if codes can be requested without limit — and every SMS
+  costs money. `packages/core/ratelimit` counts in PostgreSQL with one atomic
+  statement. A refusal leaves the auth handler as a **429 with `Retry-After`**,
+  never a 500.
 
 ## Payments
 

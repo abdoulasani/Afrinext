@@ -51,18 +51,27 @@ the payout rail sits behind an interface so the posture can change without a rew
 | 14 | Roles are scoped rows; no `role` column on `users` | One account, many roles | Confirmed |
 | 15 | Drizzle ORM | SQL-first migrations reviewable before they touch money | **Proceeding on recommendation** — genuinely depends on team composition |
 | 16 | Postgres in `eu-west-3` (Paris) rather than `af-south-1` | Better round-trip to West Africa | **Assumption — measure it** |
+| 17 | Better Auth owns authentication; `authorize()` still owns authorization | A session proves identity and grants nothing | Confirmed |
+| 18 | Better Auth's four tables live in our schema and migrations, not its adapter | Reviewed, diffed and rebuilt from zero in CI like everything else | Confirmed |
+| 19 | Better Auth's `session` is the only session store; ours was dropped | Two session stores is two truths about who is signed in | Confirmed |
+| 20 | OTP **issuance** is rate limited, not only OTP attempts | Unlimited issuance makes attempt limits meaningless, and each SMS costs money | Confirmed |
+| 21 | Multi-row locks are acquired in a deterministic order | Found by test, not by reasoning — see the Phase 1 packet, section 10 | Confirmed |
+| 22 | Verification codes are stored by Better Auth **in plaintext** | Inconsistent with our own `otp_challenges.code_hash`; no option exists on the phone plugin | **Open — decision 1 of the Phase 1 packet** |
 
 ## Build order
 
 Phases are ordered by irreversibility, not visibility. The money spine ships before any product
 feature; P3 closes the economic cycle with a manual rail so nothing is blocked on iPayMoney.
 
-`P0` foundations ← **in progress** → `P1` ledger-backed commerce → `P2` stores & catalog →
+`P0` foundations ✓ → `P1` money spine ✓ ← **awaiting sign-off** → `P1` ledger-backed commerce → `P2` stores & catalog →
 `P3` cycle closed, no PSP → `P4` iPayMoney *(gated on docs)* → `P5` Learn → `P6` wallet & payouts
 *(gated on layer G)* → `P7` network → `P8` physical & delivery → `P9` services → `P10` hardening
 
 ## Still open
 
+0. **Plaintext OTP storage** — Better Auth writes the code to `verification.value` in the clear, and its
+   phone plugin offers no hashing option. Decision 1 of the Phase 1 review packet. Gates nothing
+   technically, but should be settled before there are real accounts to take over.
 1. **Regulatory (layer G)** — who is advising, and what authorization is being pursued? Gates P6, long lead time.
 2. **iPayMoney documentation** — the 13 items in blueprint section P. Sandbox credentials are the most useful single item.
 3. **Team composition** — settles Drizzle vs Prisma.
@@ -71,6 +80,17 @@ feature; P3 closes the economic cycle with a manual rail so nothing is blocked o
 6. **Native app** — is the PWA enough at launch?
 7. **KYC provider** and verifiable document types in Niger.
 8. **Legal document texts** — a legal deliverable; the consent machinery works with any text.
+
+## Review packets
+
+| Document | Phase | Note |
+| -------- | ----- | ---- |
+| `review/phase-1.html` | architecture | Written when the architecture brief was itself called "Phase 1" |
+| `review/phase-0.html` | Phase 0 — foundations | Corrected: its claim that CI had never run was wrong |
+| `review/phase-1-money-spine.html` | Phase 1 — money spine | Current |
+
+Each has a `-Review-Packet.pdf` (the packet alone) and a `-For-Review.pdf` (packet plus the
+blueprint, bookmarked as two parts).
 
 ## PDF
 
