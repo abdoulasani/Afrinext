@@ -9,14 +9,24 @@ const MUTABLE_TABLES = [
   "ledger_transactions",
   "ledger_accounts",
   "idempotency_keys",
+  // Frozen fee snapshots and settlement state. TRUNCATE, not DELETE: the
+  // append-only triggers refuse row deletion by design.
+  "fee_lines",
+  "fee_schedules",
+  "commission_rules",
+  "settlement_holds",
   "consent_records",
   "audit_logs",
   "role_assignments",
-  "sessions",
   "otp_challenges",
-  "user_identities",
-  "users",
   "rate_limit_counters",
+  // Better Auth's tables. Truncated with the domain ones so a test never
+  // inherits a session or credential from the test before it.
+  "session",
+  "account",
+  "verification",
+  "\"user\"",
+  "users",
 ];
 
 export function testDb(): Database {
@@ -63,4 +73,36 @@ export async function ensureReferenceData(db: Database): Promise<void> {
       "Reference data is missing from the test database. Run: pnpm --filter @afrinext/core seed",
     );
   }
+}
+
+/**
+ * Flattens an error and everything it wraps into one string.
+ *
+ * Drizzle 0.45 wraps driver errors in DrizzleQueryError, so a PostgreSQL
+ * trigger message ("... is append-only") is no longer the top-level message.
+ * Assertions need to see the whole chain or they silently stop checking what
+ * they were written to check.
+ */
+export function messageChain(error: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = error;
+  for (let depth = 0; depth < 8 && current instanceof Error; depth += 1) {
+    parts.push(current.message);
+    current = (current as { cause?: unknown }).cause;
+  }
+  return parts.join(" | ");
+}
+
+/** Asserts a promise rejects with a message matching anywhere in the cause chain. */
+export async function expectRejection(promise: Promise<unknown>, pattern: RegExp): Promise<void> {
+  try {
+    await promise;
+  } catch (error: unknown) {
+    const chain = messageChain(error);
+    if (!pattern.test(chain)) {
+      throw new Error(`Expected rejection matching ${pattern} but got: ${chain}`);
+    }
+    return;
+  }
+  throw new Error(`Expected a rejection matching ${pattern}, but the promise resolved.`);
 }

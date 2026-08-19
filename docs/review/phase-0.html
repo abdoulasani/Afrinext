@@ -229,7 +229,7 @@
       <tr><td>11 · Permission system</td><td><span class="chip yes">tested</span></td><td>22 permissions, 7 roles, seeded and asserted</td></tr>
       <tr><td>12 · i18n foundation</td><td><span class="chip hold">not tested</span></td><td>fr/en catalogues and resolver exist. <strong>No route-level wiring, no tests.</strong></td></tr>
       <tr><td>13 · Design system foundation</td><td><span class="chip hold">not tested</span></td><td>Tokens extracted to <code>packages/ui</code>; app consumes them. No component tests.</td></tr>
-      <tr><td>14 · CI</td><td><span class="chip hold">not tested</span></td><td>Workflow written and committed. <strong>Never executed on GitHub — see limitations.</strong></td></tr>
+      <tr><td>14 · CI</td><td><span class="chip yes">tested</span></td><td>Executed on GitHub and passed. Runs <a href="https://github.com/abdoulasani/Afrinext/actions/runs/32243141943">32243141943</a> and <a href="https://github.com/abdoulasani/Afrinext/actions/runs/32243758387">32243758387</a>, all 15 steps green. <em>Corrected — see below.</em></td></tr>
       <tr><td>15 · Lint</td><td><span class="chip yes">tested</span></td><td>Exit 0 across all 6 projects</td></tr>
       <tr><td>16 · Type checking</td><td><span class="chip yes">tested</span></td><td>Exit 0 across all 6 projects, strict mode</td></tr>
       <tr><td>17 · Automated test framework</td><td><span class="chip yes">tested</span></td><td>Vitest + fast-check; 105 specs</td></tr>
@@ -314,6 +314,11 @@ commit;                                          <span class="cm">-- ERROR: does
 <section id="results">
   <div class="sec-head"><div class="sec-mark">3</div><h2 class="sec-title">Results, as executed</h2></div>
 
+  <div class="note block">
+    <span class="n-label">Correction to the first issue of this packet</span>
+    <p>The first issue of this packet stated that <strong>CI had never executed</strong>, and listed that as a known limitation and an open risk. That was wrong. The workflow had already run on GitHub twice and passed both times — runs <a href="https://github.com/abdoulasani/Afrinext/actions/runs/32243141943">32243141943</a> (commit <span class="mono">87743b6</span>) and <a href="https://github.com/abdoulasani/Afrinext/actions/runs/32243758387">32243758387</a> (commit <span class="mono">ee04b8f</span>) — before the packet was written. I asserted the negative without checking. The rows above and the risk register have been corrected; the real gap is dependency scanning, which CI does not do.</p>
+  </div>
+
   <p>Copied from the run on commit <span class="mono">87743b6</span> against PostgreSQL 16.13. Nothing here is predicted.</p>
 
   <h3>Tests — <span class="chip yes">102 passed · 3 skipped</span></h3>
@@ -373,6 +378,19 @@ Ledger reconciliation clean over a real capture → settlement → payout cycle.
   "migrationsApplied": 2, "currenciesSeeded": 7,
   "permissionsSeeded": 22, "paymentProvider": "mock", "latencyMs": 2 }</code></pre>
   <p>This is the end-to-end proof that the monorepo wiring works: the Next.js route calls <code>packages/core</code>, which calls <code>packages/db</code>, which reaches PostgreSQL — and the structured logger emits it.</p>
+
+  <h3>GitHub CI — <span class="chip yes">executed and green</span></h3>
+  <p>Run <span class="mono">32243758387</span> on commit <span class="mono">ee04b8f</span>, 79 seconds, ubuntu-latest with a <span class="mono">postgres:16</span> service. Every step succeeded:</p>
+<pre><code>✓ Initialize containers            ✓ Run pnpm lint
+✓ actions/checkout@v4              ✓ Run pnpm typecheck
+✓ pnpm/action-setup@v4             ✓ Run pnpm test
+✓ actions/setup-node@v4            ✓ Build the web app
+✓ pnpm install --frozen-lockfile   ✓ Assert the ledger reconciles after the suite
+✓ Create the test database
+✓ Migrate
+✓ Rebuild the schema from scratch
+✓ Seed reference data</code></pre>
+  <p>This is the distinction the review asked for: everything above is <strong>GitHub CI verification</strong>, not local verification. The two agree.</p>
 
   <div class="note">
     <span class="n-label">On screenshots</span>
@@ -637,7 +655,7 @@ Ledger reconciliation clean over a real capture → settlement → payout cycle.
 
   <h3>Known limitations of what <em>is</em> built</h3>
   <ul>
-    <li><strong>CI has never run.</strong> The workflow is committed but has not executed on GitHub — this environment has no runner. Every step in it was run locally and passes, but the YAML itself is unproven. Expect to fix something on first push.</li>
+    <li><strong>Dependency vulnerability scanning is absent from CI.</strong> The workflow runs lint, typecheck, tests, a schema rebuild and the reconciliation gate, but nothing scans dependencies. Added in Phase 1.</li>
     <li><strong>No concurrency testing</strong> anywhere, including the ledger's balance cache.</li>
     <li><strong>No down-migrations.</strong> CI rebuilds from scratch instead; that is not the same as rolling back a release.</li>
     <li><strong>The least-privilege role is untested</strong> — local development connects as superuser, so the <code>REVOKE</code>s are not exercised. The append-only triggers are, and they bind superusers too.</li>
@@ -720,7 +738,7 @@ Ledger reconciliation clean over a real capture → settlement → payout cycle.
     <tbody>
       <tr><td><strong>Regulatory authorization (layer G).</strong> Afrinext receiving customer money and paying sellers may be a regulated activity under BCEAO rules. NIF and RCCM establish company registration only.</td><td><span class="chip no">high</span></td><td>Unresolved and outside engineering. The architecture reduces exposure the only way it can — the ledger records entitlement rather than asserting custody, and the payout rail is an interface. <strong>Gates Phase 6, not Phase 1.</strong> Long lead time; worth starting now.</td></tr>
       <tr><td><strong>iPayMoney API unknown.</strong> Documentation absent and the domain unreachable from the build environment.</td><td><span class="chip hold">high</span></td><td>Contained: the abstraction is built and the mock exercises the whole cycle. Nothing else is blocked. 13 items listed in <code>docs/providers/ipaymoney/README.md</code>.</td></tr>
-      <tr><td><strong>CI unproven.</strong> The workflow has never executed.</td><td><span class="chip hold">med</span></td><td>Every step passes locally. Expect a fix on first push.</td></tr>
+      <tr><td><strong>CI has no dependency scanning.</strong> The workflow itself is proven — it ran on GitHub and passed twice.</td><td><span class="chip hold">med</span></td><td>Scanning added in Phase 1.</td></tr>
       <tr><td><strong>Ledger concurrency untested.</strong> The balance cache relies on row-lock serialisation that has been reasoned about, not tested.</td><td><span class="chip hold">med</span></td><td>Add a concurrent-posting test in Phase 1, before real traffic exists.</td></tr>
       <tr><td><strong>Nothing is audited yet.</strong> The writer exists but has no call sites.</td><td><span class="chip hold">med</span></td><td>Must land with the first financial and administrative actions in Phase 1, not after.</td></tr>
       <tr><td><strong>OTP issuance is unlimited.</strong> Attempts are bounded; requests are not.</td><td><span class="chip hold">med</span></td><td>Each SMS costs money, so this is a billing risk as well as a security one. Phase 1 must.</td></tr>
@@ -778,7 +796,7 @@ Ledger reconciliation clean over a real capture → settlement → payout cycle.
       <tr><td class="mono">9</td><td>Is the schema right? Anything missing that Phase 1 will need, or present that it will not?</td><td class="mono">packages/db/src/schema/</td><td>☐ approve ☐ changes ☐ reject</td></tr>
       <tr><td class="mono">10</td><td>Is the payment abstraction sound, and is throwing the right behaviour for an unverified provider?</td><td class="mono">packages/core/src/payments/</td><td>☐ approve ☐ changes ☐ reject</td></tr>
       <tr><td class="mono">11</td><td>Is the framework boundary drawn in the right place, and worth enforcing by lint?</td><td class="mono">packages/config/eslint.base.mjs</td><td>☐ approve ☐ changes ☐ reject</td></tr>
-      <tr><td class="mono">12</td><td>Does the CI workflow cover what it should? It has never run — what will break?</td><td class="mono">.github/workflows/ci.yml</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">12</td><td>Does the CI workflow cover what it should? It runs green on GitHub; dependency scanning is the known gap.</td><td class="mono">.github/workflows/ci.yml</td><td>☐ approve ☐ changes ☐ reject</td></tr>
       <tr><td class="mono">13</td><td>Are down-migrations required before production?</td><td class="mono">packages/db/migrations/</td><td>☐ required ☐ not required</td></tr>
       <tr><td class="mono">14</td><td>Is the Phase 1 proposal the right next step, and its exit criterion the right bar?</td><td class="mono">section 14</td><td>☐ approve ☐ changes ☐ reject</td></tr>
     </tbody>

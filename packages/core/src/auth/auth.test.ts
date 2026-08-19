@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import {
-  ELEVATION_WINDOW_MS, generateOtp, generateOtpCode, hashOtpCode, hashPassword,
-  isElevated, isSessionActive, issueSessionToken, needsRehash, normaliseEmail,
-  normalisePhone, sessionTokenMatches, verifyOtp, verifyPassword,
+  generateOtp, generateOtpCode, hashOtpCode, hashPassword,
+  needsRehash, normaliseEmail, normalisePhone, verifyOtp, verifyPassword,
 } from "./index";
 
 describe("password hashing", () => {
@@ -39,37 +38,6 @@ describe("password hashing", () => {
   it("normalises unicode so the same typed password verifies", async () => {
     const encoded = await hashPassword("café-au-lait-1");
     expect(await verifyPassword("café-au-lait-1", encoded)).toBe(true);
-  });
-});
-
-describe("sessions", () => {
-  it("stores only a hash, and matches the token against it", () => {
-    const issued = issueSessionToken();
-    expect(issued.tokenHash).not.toBe(issued.token);
-    expect(sessionTokenMatches(issued.token, issued.tokenHash)).toBe(true);
-    expect(sessionTokenMatches("some other token", issued.tokenHash)).toBe(false);
-  });
-
-  it("treats expired and revoked sessions as inactive", () => {
-    const future = new Date(Date.now() + 60_000);
-    const past = new Date(Date.now() - 60_000);
-    expect(isSessionActive({ expiresAt: future, revokedAt: null, elevatedAt: null })).toBe(true);
-    expect(isSessionActive({ expiresAt: past, revokedAt: null, elevatedAt: null })).toBe(false);
-    expect(isSessionActive({ expiresAt: future, revokedAt: new Date(), elevatedAt: null })).toBe(false);
-  });
-
-  it("only counts elevation inside the window", () => {
-    const expiresAt = new Date(Date.now() + 3_600_000);
-    const now = new Date();
-    expect(isElevated({ expiresAt, revokedAt: null, elevatedAt: now }, now)).toBe(true);
-    const stale = new Date(now.getTime() - ELEVATION_WINDOW_MS - 1_000);
-    expect(isElevated({ expiresAt, revokedAt: null, elevatedAt: stale }, now)).toBe(false);
-    expect(isElevated({ expiresAt, revokedAt: null, elevatedAt: null }, now)).toBe(false);
-  });
-
-  it("issues unpredictable tokens", () => {
-    const tokens = new Set(Array.from({ length: 500 }, () => issueSessionToken().token));
-    expect(tokens.size).toBe(500);
   });
 });
 

@@ -15,10 +15,11 @@
     "@afrinext/db": "workspace:*",
     "@afrinext/i18n": "workspace:*",
     "@afrinext/ui": "workspace:*",
+    "better-auth": "1.7.1",
+    "drizzle-orm": "^0.45.2",
     "next": "16.3.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "drizzle-orm": "^0.38.4"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

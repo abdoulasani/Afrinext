@@ -15,6 +15,34 @@
       "when": 1787133949787,
       "tag": "0001_ledger_invariants",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787159957515,
+      "tag": "0002_better_auth_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787159972894,
+      "tag": "0003_retire_superseded_auth_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787160684089,
+      "tag": "0004_commission_and_settlement",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787160685089,
+      "tag": "0005_fee_snapshot_immutable",
+      "breakpoints": true
     }
   ]
 }

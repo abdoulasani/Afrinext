@@ -171,7 +171,18 @@ export async function post(db: Database, input: PostInput): Promise<PostedTransa
       countByAccount.set(e.accountId, (countByAccount.get(e.accountId) ?? 0n) + 1n);
     }
 
-    for (const [accountId, amount] of delta) {
+    // Lock the balance rows in a deterministic order.
+    //
+    // Without this, a transfer A->B and a concurrent transfer B->A each lock
+    // their two rows in the order the transfers were written, so one holds A and
+    // wants B while the other holds B and wants A: PostgreSQL detects the cycle
+    // and aborts one with a deadlock. Sorting by account id means every
+    // transaction in the system acquires these locks in the same order, which
+    // makes such a cycle impossible. Found by the concurrent-posting test, not
+    // by reasoning.
+    const orderedDelta = [...delta].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+
+    for (const [accountId, amount] of orderedDelta) {
       await tx
         .insert(schema.accountBalances)
         .values({

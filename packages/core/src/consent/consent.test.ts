@@ -4,7 +4,7 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDb, schema, type Database } from "@afrinext/db";
 import { ConsentRequiredError } from "../errors";
 import { uuidv7 } from "../ids";
-import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, resetData, testDb, expectRejection } from "../test/harness";
 import { consentHistory, currentVersions, outstandingConsents, recordConsent, requireConsent } from "./index";
 
 let db: Database;
@@ -81,8 +81,8 @@ describe("versioned consent", () => {
     const [version] = await currentVersions(db, ["privacy_policy"], { locale: "fr" });
     await recordConsent(db, { userId: user, documentVersionId: version!.versionId, method: "signup" });
 
-    await expect(db.execute(sql`update consent_records set method = 'x'`)).rejects.toThrow(/append-only/i);
-    await expect(db.execute(sql`delete from consent_records`)).rejects.toThrow(/append-only/i);
+    await expectRejection(db.execute(sql`update consent_records set method = 'x'`), /append-only/i);
+    await expectRejection(db.execute(sql`delete from consent_records`), /append-only/i);
   });
 
   it("names every outstanding document, not just the first", async () => {

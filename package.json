@@ -25,6 +25,15 @@
     "onlyBuiltDependencies": [
       "esbuild",
       "unrs-resolver"
-    ]
+    ],
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@better-auth/drizzle-adapter>drizzle-orm": "0.38.4"
+      }
+    },
+    "overrides": {
+      "vite": ">=6.4.3",
+      "esbuild": ">=0.25.0"
+    }
   }
 }

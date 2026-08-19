@@ -27,6 +27,13 @@ export interface CurrentVersion {
  * The version of a document in force right now for a country and locale.
  * A country-specific document wins over the global one.
  */
+/*
+ * Note on parameterisation: `kinds` is bound as a query parameter rather than
+ * interpolated into the SQL text. TypeScript already constrains it to a union,
+ * but a typed boundary is not a security control — an untyped caller, a JSON
+ * body, or a future refactor would turn string interpolation here into SQL
+ * injection.
+ */
 export async function currentVersions(
   db: Database,
   kinds: readonly LegalDocumentKind[],
@@ -44,7 +51,7 @@ export async function currentVersions(
            v.version, v.locale, v.content_hash
       from legal_documents d
       join legal_document_versions v on v.document_id = d.id
-     where d.kind = any(${sql.raw(`array[${kinds.map((k) => `'${k}'`).join(",")}]`)}::text[])
+       where d.kind in (${sql.join(kinds.map((k) => sql`${k}`), sql`, `)})
        and v.locale = ${options.locale}
        and v.effective_from <= ${now.toISOString()}
        and (d.country_code is null or d.country_code = ${options.countryCode ?? null})

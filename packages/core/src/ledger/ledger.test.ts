@@ -5,7 +5,7 @@ import { closeDb, type Database } from "@afrinext/db";
 import { IdempotencyConflictError } from "../errors";
 import { uuidv7 } from "../ids";
 import { money } from "../money";
-import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, resetData, testDb, expectRejection } from "../test/harness";
 import { cachedBalance, derivedBalance, platformAccount, resolveAccount, userAccount } from "./accounts";
 import {
   approvePayout, failPayout, recordCapture, recordProviderSettlement,
@@ -41,7 +41,7 @@ describe("ledger invariants enforced by the database", () => {
     const account = await resolveAccount(db, platformAccount("platform_escrow", "XOF"));
     const txId = uuidv7();
 
-    await expect(
+    await expectRejection(
       db.transaction(async (tx) => {
         await tx.execute(sql`insert into ledger_transactions (id, kind) values (${txId}, 'adjustment')`);
         // Two entries in the same direction: this creates money from nowhere.
@@ -51,7 +51,8 @@ describe("ledger invariants enforced by the database", () => {
                  (${uuidv7()}, ${txId}, ${account.id}, 1, 500, 'XOF')
         `);
       }),
-    ).rejects.toThrow(/does not balance/i);
+      /does not balance/i,
+    );
 
     await assertLedgerSound(db);
   });
@@ -62,7 +63,7 @@ describe("ledger invariants enforced by the database", () => {
   it("rejects a transaction with a single entry", async () => {
     const account = await resolveAccount(db, platformAccount("platform_escrow", "XOF"));
     const txId = uuidv7();
-    await expect(
+    await expectRejection(
       db.transaction(async (tx) => {
         await tx.execute(sql`insert into ledger_transactions (id, kind) values (${txId}, 'adjustment')`);
         await tx.execute(sql`
@@ -70,13 +71,14 @@ describe("ledger invariants enforced by the database", () => {
           values (${uuidv7()}, ${txId}, ${account.id}, 1, 500, 'XOF')
         `);
       }),
-    ).rejects.toThrow(/does not balance|fewer than two entries/i);
+      /does not balance|fewer than two entries/i,
+    );
   });
 
   it("rejects an entry whose currency differs from its account", async () => {
     const account = await resolveAccount(db, platformAccount("platform_escrow", "XOF"));
     const txId = uuidv7();
-    await expect(
+    await expectRejection(
       db.transaction(async (tx) => {
         await tx.execute(sql`insert into ledger_transactions (id, kind) values (${txId}, 'adjustment')`);
         await tx.execute(sql`
@@ -84,18 +86,17 @@ describe("ledger invariants enforced by the database", () => {
           values (${uuidv7()}, ${txId}, ${account.id}, 1, 500, 'NGN')
         `);
       }),
-    ).rejects.toThrow(/does not match account/i);
+      /does not match account/i,
+    );
   });
 
   it("refuses UPDATE and DELETE on ledger entries", async () => {
     const user = await createTestUser(db);
     await recordCapture(db, { gross: money(1000n, "XOF"), idempotencyKey: `cap-${user}` });
 
-    await expect(db.execute(sql`update ledger_entries set amount_minor = 1`)).rejects.toThrow(
-      /append-only/i,
-    );
-    await expect(db.execute(sql`delete from ledger_entries`)).rejects.toThrow(/append-only/i);
-    await expect(db.execute(sql`delete from ledger_transactions`)).rejects.toThrow(/append-only/i);
+    await expectRejection(db.execute(sql`update ledger_entries set amount_minor = 1`), /append-only/i);
+    await expectRejection(db.execute(sql`delete from ledger_entries`), /append-only/i);
+    await expectRejection(db.execute(sql`delete from ledger_transactions`), /append-only/i);
   });
 
   it("refuses a non-positive amount", async () => {

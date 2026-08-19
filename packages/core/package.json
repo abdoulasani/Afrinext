@@ -22,15 +22,19 @@
   },
   "dependencies": {
     "@afrinext/db": "workspace:*",
-    "drizzle-orm": "^0.38.4"
+    "better-auth": "1.7.1",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.23.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^22",
-    "fast-check": "^3.23.2",
-    "typescript": "^5.9.3",
-    "vitest": "^2.1.9",
-    "tsx": "^4.19.2",
     "@afrinext/config": "workspace:*",
-    "eslint": "^9.17.0"
+    "@types/node": "^22",
+    "@types/pg": "^8.23.1",
+    "eslint": "^9.17.0",
+    "fast-check": "^3.23.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
   }
 }

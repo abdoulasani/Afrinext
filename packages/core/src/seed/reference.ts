@@ -43,6 +43,18 @@ const LOCALES = [
   { code: "en", name: "English", isActive: true, sortOrder: 1 },
 ];
 
+/**
+ * Launch commission rules. Data, not constants — the admin console will edit
+ * these, and a sale resolves them once and freezes the outcome, so changing a
+ * rate never rewrites what a seller already earned.
+ */
+const COMMISSION_RULES = [
+  { transactionType: "course", rateBps: 1800, priority: 0 },
+  { transactionType: "digital", rateBps: 1800, priority: 0 },
+  { transactionType: "service", rateBps: 1500, priority: 0 },
+  { transactionType: "physical", rateBps: 1200, priority: 0 },
+];
+
 const SETTINGS = [
   { key: "platform.name", value: "Afrinext", description: "Display name of the platform." },
   { key: "platform.operator", value: "AFRI NEXT TECHNOLOGIE", description: "Legal operator (Entreprise Individuelle, Niger)." },
@@ -80,6 +92,23 @@ export async function seedReferenceData(db: Database, options: { quiet?: boolean
       .insert(schema.rolePermissions)
       .values(role.permissions.map((permissionKey) => ({ roleId: stored.id, permissionKey })))
       .onConflictDoNothing();
+  }
+
+  for (const rule of COMMISSION_RULES) {
+    const existing = await db.query.commissionRules.findFirst({
+      where: (r, { and, eq, isNull }) =>
+        and(eq(r.transactionType, rule.transactionType), isNull(r.countryCode), isNull(r.storeId)),
+    });
+    if (existing === undefined) {
+      await db.insert(schema.commissionRules).values({
+        id: randomUUID(),
+        transactionType: rule.transactionType,
+        rateBps: rule.rateBps,
+        currency: "XOF",
+        priority: rule.priority,
+        effectiveFrom: new Date("2026-01-01T00:00:00Z"),
+      });
+    }
   }
 
   await db
@@ -127,7 +156,8 @@ export async function seedReferenceData(db: Database, options: { quiet?: boolean
     console.log(
       `Seeded ${CURRENCIES.length} currencies, ${COUNTRIES.length} countries, ` +
         `${Object.keys(PERMISSIONS).length} permissions, ${ROLE_DEFINITIONS.length} roles, ` +
-        `${SETTINGS.length} settings, ${kinds.length} legal documents (placeholder texts).`,
+        `${SETTINGS.length} settings, ${COMMISSION_RULES.length} commission rules, ` +
+        `${kinds.length} legal documents (placeholder texts).`,
     );
   }
 }

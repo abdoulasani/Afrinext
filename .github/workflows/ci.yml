@@ -13,6 +13,35 @@ env:
   NODE_VERSION: "22"
 
 jobs:
+  audit:
+    name: dependency scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Fails the job on a high or critical advisory. Moderate and low are
+      # reported but do not block, so the signal stays actionable rather than
+      # becoming noise everyone learns to ignore.
+      - name: Audit dependencies (high and critical block)
+        run: pnpm audit --audit-level high
+      - name: Report all advisories
+        if: always()
+        run: pnpm audit --json > audit.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-audit
+          path: audit.json
+          retention-days: 30
+
   verify:
     name: lint · typecheck · test
     runs-on: ubuntu-latest
@@ -35,6 +64,10 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/afrinext
       TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/afrinext_test
       PAYMENT_PROVIDER: mock
+      # Not a real secret: CI never touches production data. Production reads
+      # this from its own environment.
+      SESSION_SECRET: ci-only-secret-0123456789abcdef0123456789abcdef
+      APP_URL: http://localhost:3000
 
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +107,11 @@ jobs:
 
       - name: Build the web app
         run: pnpm build
+
+      # Called out separately so a regression here is obvious in the run summary:
+      # the ledger's concurrency guarantees are the ones that cannot be argued.
+      - name: Ledger concurrency and idempotency under parallel load
+        run: pnpm --filter @afrinext/core exec vitest run src/ledger/concurrency.test.ts
 
       - name: Assert the ledger reconciles after the suite
         run: pnpm --filter @afrinext/core exec tsx scripts/reconcile-check.ts
