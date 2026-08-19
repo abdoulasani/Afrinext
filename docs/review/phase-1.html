@@ -1,0 +1,549 @@
+<title>Afrinext Phase 1 Review Packet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · Phase 1 · for senior developer review</p>
+  <h1>Phase 1 Review Packet</h1>
+  <p class="lede">Everything produced so far, how to verify it independently, what was and was not tested, and the decisions that need a sign-off before Phase 0 starts.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>Head <b>13cc87d</b></span>
+    <span>2 commits</span>
+    <span>Build <b class="ok">green</b></span>
+    <span>Lint <b class="ok">clean</b></span>
+    <span>Automated tests <b>none</b></span>
+  </div>
+</header>
+
+<div class="jump">
+  <a href="#what">1 · What exists</a>
+  <a href="#verify">2 · Verify it yourself</a>
+  <a href="#tested">3 · Tested / not tested</a>
+  <a href="#review-bp">4 · Review the blueprint</a>
+  <a href="#review-code">5 · Review the code</a>
+  <a href="#signoff">6 · Sign-off sheet</a>
+  <a href="#next">7 · What happens next</a>
+  <a href="#format">8 · Handoff format</a>
+</div>
+
+<section id="what">
+  <div class="sec-head"><div class="sec-mark">1</div><h2 class="sec-title">What exists</h2></div>
+
+  <p>Two deliverables, with <strong>very different review weight</strong>. Read this before allocating time — most of the code in the repository is deliberately temporary, and reviewing it carefully would be wasted effort.</p>
+
+  <div class="weight" role="img" aria-label="Review effort split: about 88 percent on the architecture blueprint, about 12 percent on the prototype code.">
+    <div class="w-a">Blueprint — decisions that are expensive to reverse</div>
+    <div class="w-b">Code</div>
+  </div>
+  <p class="weight-key">Suggested split of a ~2 hour review: <span class="mono">~1h45 blueprint · ~15 min code skim</span></p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Deliverable</th><th>Where</th><th>Size</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">D1</td>
+        <td><strong>Phase 1 technical blueprint</strong><br><span style="color:var(--ink-2)">Stack, schema, ledger design, permissions, security, roadmap</span></td>
+        <td class="mono">commit 13cc87d<br>docs/architecture/</td>
+        <td class="num">~9 000 words<br>3 diagrams</td>
+        <td><span class="chip info">needs deep review</span><br>Architecture only — no code written from it.</td>
+      </tr>
+      <tr>
+        <td class="mono">D2</td>
+        <td><strong>Working prototype</strong><br><span style="color:var(--ink-2)">Mobile-first PWA directory: browse, search, detail, submit, saved, offline</span></td>
+        <td class="mono">commit 0af2da2<br>src/</td>
+        <td class="num">2 243 LOC<br>9 routes</td>
+        <td><span class="chip hold">skim only</span><br>Runs and is verified, but ~70% is replaced in Phase 0.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note key">
+    <span class="n-label">Why D2 is not the foundation</span>
+    <p>D2 was built to answer "can we create an app in this repository?" before the SaaS brief arrived. It has <strong>no database, no authentication, no payments and no money</strong> — listings live in an in-memory object that resets when the server restarts. What survives into Phase 0 is the UI layer (design tokens, PWA shell, mobile components) and two patterns worth keeping: URL-driven search state, and server-side revalidation of every submission. The data layer is discarded.</p>
+  </div>
+
+  <p>The blueprint is published as a browsable document here: <a href="https://claude.ai/code/artifact/5b36e98c-2699-4dad-a6ed-53efafdd7f7f">Afrinext Technical Blueprint</a>. The same file is in the repository at <code>docs/architecture/blueprint.html</code>, with a Markdown decision index beside it at <code>docs/architecture/README.md</code> — that index is the fastest way in, and is the thing worth diffing as decisions change.</p>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+<section id="verify">
+  <div class="sec-head"><div class="sec-mark">2</div><h2 class="sec-title">Verify it yourself</h2></div>
+
+  <p>Nothing below needs credentials, an account, or network access beyond npm and GitHub. Roughly ten minutes end to end.</p>
+
+  <ol class="steps">
+    <li>
+      <b>Check out the branch</b>
+<pre><code>git clone https://github.com/abdoulasani/Afrinext.git
+cd Afrinext
+git checkout claude/create-app-repository-1cxsih
+git log --oneline main..HEAD   <span class="cm"># expect exactly 2 commits</span></code></pre>
+    </li>
+    <li>
+      <b>Install</b>
+      <p>Node 22 or newer. No postinstall scripts, no native builds.</p>
+<pre><code>npm install</code></pre>
+    </li>
+    <li>
+      <b>Typecheck, lint and build</b>
+      <p><code>next build</code> runs the TypeScript check, so a green build is also a green typecheck. Both should exit zero with no warnings.</p>
+<pre><code>npm run lint
+npm run build</code></pre>
+      <p>Expected: <span class="mono ok">Compiled successfully</span>, <span class="mono ok">Finished TypeScript</span>, and a route table listing 9 routes.</p>
+    </li>
+    <li>
+      <b>Run it and exercise the API</b>
+<pre><code>npm run start &amp;                       <span class="cm"># serves the production build on :3000</span>
+
+<span class="cm"># search, filter and sort</span>
+curl -s 'localhost:3000/api/listings?q=shea'
+curl -s 'localhost:3000/api/listings?category=logistics&amp;verified=1'
+curl -s 'localhost:3000/api/listings?sort=newest'
+
+<span class="cm"># server-side validation — expect HTTP 422 with per-field errors</span>
+curl -i -X POST localhost:3000/api/listings \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"X","tagline":"short","category":"nope","contact":{}}'
+
+<span class="cm"># malformed body — expect HTTP 400</span>
+curl -i -X POST localhost:3000/api/listings \
+  -H 'Content-Type: application/json' -d 'not json'
+
+<span class="cm"># unknown listing — expect HTTP 404</span>
+curl -i localhost:3000/api/listings/does-not-exist</code></pre>
+    </li>
+    <li>
+      <b>Open it on a phone-sized viewport</b>
+      <p><code>localhost:3000</code> at 390×844. Check the bottom tab bar, the browse filters, a listing page, and the submit form. Bookmark a listing and confirm it appears under <em>Saved</em> — that state is <code>localStorage</code>, per device, by design.</p>
+    </li>
+    <li>
+      <b>Read the blueprint</b>
+      <p>Start with <code>docs/architecture/README.md</code> — thirteen decisions in a table, then the open questions. Follow into the full document only where a decision looks wrong.</p>
+    </li>
+  </ol>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="tested">
+  <div class="sec-head"><div class="sec-mark">3</div><h2 class="sec-title">What was tested, and what was not</h2></div>
+
+  <p>Stated plainly so the review starts from an accurate baseline rather than an assumption.</p>
+
+  <h3>Verified, against a running production build</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Check</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Production build and TypeScript check</td><td><span class="chip yes">pass</span> 9 routes emitted</td></tr>
+      <tr><td>ESLint</td><td><span class="chip yes">pass</span> clean, zero warnings</td></tr>
+      <tr><td>Search, category/country filter, verified filter, three sort orders</td><td><span class="chip yes">pass</span> correct result sets</td></tr>
+      <tr><td>Invalid submission</td><td><span class="chip yes">pass</span> HTTP 422 with per-field errors</td></tr>
+      <tr><td>Valid submission</td><td><span class="chip yes">pass</span> HTTP 201, appears in search, renders its own page</td></tr>
+      <tr><td>Duplicate business name</td><td><span class="chip yes">pass</span> unique slug generated (<code>…-2</code>)</td></tr>
+      <tr><td>Malformed JSON body</td><td><span class="chip yes">pass</span> HTTP 400</td></tr>
+      <tr><td>Unknown listing id</td><td><span class="chip yes">pass</span> HTTP 404 on both API and page</td></tr>
+      <tr><td>Render at 390×844 (Chromium)</td><td><span class="chip yes">pass</span> no console errors, no horizontal overflow on any screen</td></tr>
+      <tr><td>Save → Saved round trip</td><td><span class="chip yes">pass</span> persists across navigation</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note block">
+    <span class="n-label">Not tested — assume nothing here works until proven</span>
+    <ul>
+      <li><strong>There is no automated test suite.</strong> Every result above came from driving the running app by hand. Nothing guards against regression. Vitest and Playwright are scheduled in Phase 0.</li>
+      <li><strong>No browser other than Chromium</strong>, and no real device — desktop Chromium at a phone viewport is not the same as a mid-range Android on a 3G connection.</li>
+      <li><strong>No load, soak or concurrency testing.</strong> The in-memory store is not concurrency-safe and was never intended to be.</li>
+      <li><strong>No security review.</strong> The prototype has no authentication, so every API route is open by design — including <code>POST /api/listings</code>, which anyone can call. Acceptable for a demo, disqualifying for anything public.</li>
+      <li><strong>No accessibility audit</strong> beyond semantic markup, focus states and labelled controls.</li>
+      <li><strong>Nothing from the blueprint is implemented.</strong> No database, no ledger, no auth, no payments. The document describes work not yet begun.</li>
+    </ul>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+<section id="review-bp">
+  <div class="sec-head"><div class="sec-mark">4</div><h2 class="sec-title">Review checklist — the blueprint</h2></div>
+
+  <p>These are the questions worth an opinion. Each names the decision, why it was made, and the specific thing that would make it wrong. A "no" on any row is more valuable than a "looks fine" on all of them.</p>
+
+  <h3>Money — the decisions that cannot be retrofitted</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Decision</th><th class="q">Question for you</th></tr></thead>
+    <tbody>
+      <tr><td>Double-entry ledger, immutable entries, per-transaction balancing enforced by a deferred database trigger</td><td class="q">Is the invariant set complete? Specifically: is a deferred <code>CONSTRAINT TRIGGER</code> the right enforcement point, or would you prefer the balance check inside a stored procedure that owns all posting?</td></tr>
+      <tr><td>Pending and available are two separate ledger accounts; settlement is a transfer between them</td><td class="q">Agree, or would you model it as a status on the transaction? The claim is that two accounts make "why is my money still pending" answerable by pointing at a row.</td></tr>
+      <tr><td>Balances are a cache in <code>account_balances</code>, verified nightly against the sum of entries</td><td class="q">Is nightly frequent enough? Should drift detection block payouts automatically, or only alarm?</td></tr>
+      <tr><td>Money is <code>bigint</code> minor units + currency code; the exponent comes from a <code>currencies</code> table because XOF and XAF have zero decimals</td><td class="q">Any place in the plan where this leaks — API responses, CSV exports, the admin console?</td></tr>
+      <tr><td>Rounding: non-seller lines round half-up, the seller gets <code>gross − Σ(other lines)</code></td><td class="q">Does the residual-to-seller rule hold up commercially, and is it defensible if a seller queries it?</td></tr>
+      <tr><td>Commission rules resolved once at order creation and frozen in <code>order_fee_lines</code></td><td class="q">Is the resolution order (most-specific-wins, then priority, then <code>effective_from</code>) unambiguous enough to avoid two rules tying?</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Stack — where I want a second opinion</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Decision</th><th class="q">Question for you</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip hold">contested</span> Drizzle ORM over Prisma</td><td class="q"><strong>Your call, and it depends on the team.</strong> Drizzle for SQL-first migrations and native CHECK constraints; Prisma for migration tooling and DX on a 40-table schema. What does the team actually know?</td></tr>
+      <tr><td>pg-boss over BullMQ + Redis</td><td class="q">The argument is transactional enqueue — a settlement job commits with the ledger rows it will act on. Do you accept the throughput ceiling that comes with it?</td></tr>
+      <tr><td>Domain logic in a framework-free <code>packages/core</code>, enforced by an ESLint boundary rule</td><td class="q">Is the boundary drawn in the right place? Anything that will inevitably want to import from Next.js?</td></tr>
+      <tr><td>Database sessions rather than JWTs; phone OTP as the primary credential</td><td class="q">Agree on revocability over statelessness? Any concern about session-table load at scale?</td></tr>
+      <tr><td>Postgres in <code>eu-west-3</code> (Paris) rather than <code>af-south-1</code></td><td class="q"><span class="chip hold">unverified</span> This is an assumption about routing, not a measurement. Do you have real latency numbers from the launch cities?</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Model and scope</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Decision</th><th class="q">Question for you</th></tr></thead>
+    <tbody>
+      <tr><td>Narrow the first launch to digital products and courses, one country, one payment rail</td><td class="q">~18 weeks instead of ~32. Does dropping physical goods and delivery from launch cost more commercially than the schedule saves?</td></tr>
+      <tr><td>Build the ledger in P1, before any product feature</td><td class="q">Three weeks with nothing visible to show. Is that defensible to the business, and would you sequence it differently?</td></tr>
+      <tr><td>Referral is single-level, paid only from settled transactions, basis is platform revenue not gross</td><td class="q">The bound is structural — the platform can never owe more than it earned. Does single-level cost too much growth to accept?</td></tr>
+      <tr><td>Roles are scoped rows; no <code>role</code> column on <code>users</code>; IDOR prevented by scoping queries rather than post-fetch checks</td><td class="q">Does the <code>authorize(actor, permission, scope)</code> choke point cover every case you can think of?</td></tr>
+      <tr><td>Paid video protected by short-TTL signed tokens and a viewer overlay, with DRM explicitly out of scope</td><td class="q">Is that honest tier acceptable to tell instructors, or does the business need real DRM at launch?</td></tr>
+      <tr><td>iPay behind a provider interface, with <code>createPayout</code> optional; a manual transfer rail closes the economic cycle in P3</td><td class="q">Anything in the interface that will not survive contact with the real API?</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">Outside engineering, but it gates the schedule</span>
+    <p>The blueprint flags that holding and disbursing user funds may be a licensed activity under BCEAO rules in the UEMOA zone, with separate regimes in Nigeria and Ghana. That is a legal question, not an architectural one — but it gates Phase 6 (payouts) and could reshape the wallet's legal model. If you know the answer or know who does, that unblocks the largest open risk in the plan.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="review-code">
+  <div class="sec-head"><div class="sec-mark">5</div><h2 class="sec-title">Review checklist — the code</h2></div>
+
+  <p>Fifteen minutes. The question is not "is this production quality" — it is not, and it is not meant to be. The question is <strong>whether the patterns worth keeping are the right ones</strong>.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Lines</th><th>What to look for</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">src/lib/store.ts</td><td class="num">64</td><td>The storage boundary. Everything that reads or writes goes through here, so the module can be swapped for Drizzle without touching callers. <strong>Is the surface right?</strong> If it is wrong, it is wrong in Phase 0 too.</td></tr>
+      <tr><td class="mono">src/lib/search.ts</td><td class="num">109</td><td>Search state lives entirely in URL params, so results are linkable and the back button works. Pattern carries forward; the implementation moves to SQL.</td></tr>
+      <tr><td class="mono">src/lib/validate.ts</td><td class="num">104</td><td>Server always revalidates; client checks are a convenience. Becomes Zod schemas shared across HTTP, server actions and jobs.</td></tr>
+      <tr><td class="mono">src/app/api/listings/route.ts</td><td class="num">32</td><td>Status-code discipline: 201 / 400 / 422 / 404. Note there is <strong>no authentication</strong> — deliberate for a demo, and exactly what Phase 0 fixes.</td></tr>
+      <tr><td class="mono">src/lib/useSaved.ts</td><td class="num">74</td><td><code>useSyncExternalStore</code> over <code>localStorage</code>, with a hydration guard so saved state never flashes on SSR. Replaced by server-side favourites once accounts exist.</td></tr>
+      <tr><td class="mono">src/components/</td><td class="num">~700</td><td>Design tokens, mobile shell, safe-area handling. This is the part that survives into <code>packages/ui</code>.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Worth <strong>not</strong> spending time on: <code>src/lib/seed.ts</code> (310 lines of fixture data, deleted in Phase 0), the visual design (subject to change once there is a real product), and anything about how listings are ranked (the ranking function is a placeholder).</p>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+<section id="signoff">
+  <div class="sec-head"><div class="sec-mark">6</div><h2 class="sec-title">Sign-off sheet</h2></div>
+
+  <p>Four items block Phase 0. Six can be settled during it. Nothing starts until the four are answered — an approval that skips them would be approving an unknown.</p>
+
+  <h3>Blocking</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Question</th><th>My recommendation</th><th>Who decides</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">B1</td><td>Who is advising on whether Afrinext may hold and disburse user funds in the launch country?</td><td>Engage local counsel before Phase 6. Structure so funds sit with the licensed PSP and Afrinext records entitlement.</td><td>Business / legal</td></tr>
+      <tr><td class="mono">B2</td><td>Launch scope — digital and courses first, or physical goods at launch?</td><td>Digital and courses. ~18 weeks vs ~32, and it de-risks the hardest parts first.</td><td>Business</td></tr>
+      <tr><td class="mono">B3</td><td>Is the iPay contract signed, and can we get the documentation and sandbox credentials?</td><td>If not, the manual transfer rail from P3 becomes the launch payment method — plan for it openly rather than waiting.</td><td>Business</td></tr>
+      <tr><td class="mono">B4</td><td>Referral — single level only?</td><td>Yes. Tiers materially increase regulatory exposure and contradict the brief's own principle.</td><td>Business, with legal input from B1</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Settle during Phase 0</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Question</th><th>Decides</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">S1</td><td>Team size and Prisma vs SQL experience</td><td>The ORM choice — the only reason it is still open</td></tr>
+      <tr><td class="mono">S2</td><td>Launch country and currency (Niger / XOF assumed)</td><td>Seed data, locale default, payment channels</td></tr>
+      <tr><td class="mono">S3</td><td>Hosting — managed (Vercel + Neon) or containers (Hetzner / Fly)</td><td>Deployment shape and unit cost</td></tr>
+      <tr><td class="mono">S4</td><td>Is the PWA sufficient, or is a store-distributed app required?</td><td>How much weight the REST layer carries early</td></tr>
+      <tr><td class="mono">S5</td><td>Cash on delivery at physical-goods launch?</td><td>Whether the rider cash-float model is in scope</td></tr>
+      <tr><td class="mono">S6</td><td>KYC — which documents are verifiable locally, and is there an existing provider?</td><td>Withdrawal tiers in Phase 6</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="n-label">Record the verdict</span>
+    <p>Per item: <span class="chip yes">approved</span> <span class="chip hold">approved with changes</span> <span class="chip no">rejected</span> — and for anything other than a clean approval, the reason. I will revise the blueprint against the feedback and reissue it before any code is written, rather than starting and patching later.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="next">
+  <div class="sec-head"><div class="sec-mark">7</div><h2 class="sec-title">What happens after approval</h2></div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 940 148" role="img" aria-label="Progress track: Phase 1 blueprint is delivered, the senior developer review gate is the current position, then Phase 0 foundations for two weeks, Phase 1 ledger for three weeks, then phases 2 to 10 of feature work over roughly 27 weeks.">
+        <defs>
+          <marker id="rh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <g color="var(--ledger)"><line x1="92" y1="72" x2="244" y2="72" stroke="var(--ledger)" stroke-width="1.8" marker-end="url(#rh)"/></g>
+        <g color="var(--indigo)"><line x1="278" y1="72" x2="446" y2="72" stroke="var(--indigo)" stroke-width="1.8" marker-end="url(#rh)"/></g>
+        <g color="var(--rule-strong)"><line x1="474" y1="72" x2="626" y2="72" stroke="var(--rule-strong)" stroke-width="1.6" marker-end="url(#rh)"/></g>
+        <g color="var(--rule-strong)"><line x1="654" y1="72" x2="812" y2="72" stroke="var(--rule-strong)" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#rh)"/></g>
+
+        <circle cx="80"  cy="72" r="11" fill="var(--ledger-soft)" stroke="var(--ledger)" stroke-width="1.6"/>
+        <path d="M 75 72 L 79 76 L 86 68" fill="none" stroke="var(--ledger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <text class="svg-d" x="80" y="44" text-anchor="middle">DELIVERED</text>
+        <text class="svg-t" x="80" y="103" text-anchor="middle">Phase 1</text>
+        <text class="svg-s" x="80" y="119" text-anchor="middle">blueprint</text>
+
+        <circle cx="261" cy="72" r="15" fill="var(--indigo-soft)" stroke="var(--indigo)" stroke-width="2"/>
+        <circle cx="261" cy="72" r="5"  fill="var(--indigo)"/>
+        <text class="svg-u" x="261" y="41" text-anchor="middle">YOU ARE HERE</text>
+        <text class="svg-t" x="261" y="105" text-anchor="middle">Review gate</text>
+        <text class="svg-s" x="261" y="121" text-anchor="middle">4 blocking answers</text>
+
+        <circle cx="461" cy="72" r="11" fill="var(--surface)" stroke="var(--indigo)" stroke-width="1.6"/>
+        <text class="svg-u" x="461" y="44" text-anchor="middle">NEXT</text>
+        <text class="svg-t" x="461" y="103" text-anchor="middle">P0 · foundations</text>
+        <text class="svg-s" x="461" y="119" text-anchor="middle">2 weeks</text>
+
+        <circle cx="641" cy="72" r="11" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1.6"/>
+        <text class="svg-t" x="641" y="103" text-anchor="middle">P1 · ledger</text>
+        <text class="svg-s" x="641" y="119" text-anchor="middle">3 weeks</text>
+
+        <circle cx="833" cy="72" r="11" fill="none" stroke="var(--rule-strong)" stroke-width="1.4" stroke-dasharray="3 2.5"/>
+        <text class="svg-t" x="833" y="103" text-anchor="middle">P2 – P10</text>
+        <text class="svg-s" x="833" y="119" text-anchor="middle">features · ~27 weeks</text>
+      </svg>
+    </div>
+    <figcaption><b>The gate is real, not ceremonial.</b> Phase 0 writes the database schema and the permission model — both are load-bearing for everything after, and both change shape depending on the four blocking answers in section 6.</figcaption>
+  </figure>
+
+  <h3>Phase 0 — foundations · 2 weeks</h3>
+  <p>Turn the repository into the monorepo the blueprint describes, and stand up the parts every later phase depends on.</p>
+  <ul>
+    <li>pnpm workspaces + Turborepo; move today's app into <code>apps/web</code>, extract components into <code>packages/ui</code>.</li>
+    <li>Postgres, Drizzle schema v1 (or Prisma, pending <span class="mono">S1</span>), forward and rollback migrations in CI.</li>
+    <li>Authentication: phone OTP and email, database sessions.</li>
+    <li>Scoped RBAC with the single <code>authorize()</code> choke point.</li>
+    <li>i18n with French default; <code>packages/i18n</code> shared with the worker.</li>
+    <li>CI: typecheck, lint, test, migrate up and down on every commit. Vitest and Playwright wired up — <strong>this is where the missing test suite gets fixed</strong>.</li>
+    <li>Observability skeleton: structured logs with request and actor ids.</li>
+  </ul>
+  <p><strong>Exit criterion:</strong> a user registers by phone, signs in, switches language; CI is green on typecheck, lint, tests and migrations in both directions.</p>
+
+  <h3>Phase 1 — the money spine · 3 weeks</h3>
+  <p>Nothing visible ships. This is the part that cannot be retrofitted, so it is built before anything depends on it.</p>
+  <ul>
+    <li><code>packages/core/money</code> — Money type, currency minor units, the rounding rule.</li>
+    <li><code>packages/core/ledger</code> — posting, immutability, the balance trigger, settlement holds.</li>
+    <li>Commission engine with rule resolution and frozen fee snapshots.</li>
+    <li>Idempotency keys on every money-moving operation.</li>
+    <li>Nightly reconciliation job with drift alarms, and an admin ledger viewer.</li>
+  </ul>
+  <p><strong>Exit criterion:</strong> property-based tests over 10 000 randomised operations prove every transaction balances and the cached balance equals the sum of entries; an injected drift is caught by the reconciliation job. Your senior developer should be able to read that test file and agree it proves what it claims.</p>
+
+  <div class="note good">
+    <span class="n-label">What the next packet will contain</span>
+    <p>Phase 0 hands over a running monorepo, a migration you can run against your own Postgres, and a CI run to inspect. Phase 1 hands over the ledger with its property tests — and that one is the most important review in the whole project, because a ledger bug is discovered by users, in money.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="format">
+  <div class="sec-head"><div class="sec-mark">8</div><h2 class="sec-title">Standing handoff format</h2></div>
+
+  <p>Every phase from here produces a packet in this shape, so the review is the same shape each time and nothing depends on remembering what happened last month.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Section</th><th>Contents</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1 · What exists</td><td>Deliverables, commit hashes, size, and where to spend review time</td></tr>
+      <tr><td class="mono">2 · Verify it yourself</td><td>Copy-pasteable commands, no credentials needed, expected output stated</td></tr>
+      <tr><td class="mono">3 · Tested / not tested</td><td>Every check run and its result — and an explicit list of what was <em>not</em> covered</td></tr>
+      <tr><td class="mono">4 · Review checklist</td><td>Targeted questions, not "please review". Each names what would make the decision wrong</td></tr>
+      <tr><td class="mono">5 · Exit criterion</td><td>The phase's stated criterion, and the evidence that it passed</td></tr>
+      <tr><td class="mono">6 · Sign-off sheet</td><td>Blocking items separated from ones that can be settled in flight</td></tr>
+      <tr><td class="mono">7 · What happens next</td><td>Next phase scope and its exit criterion, so approval is informed</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Two commitments that make the packet worth trusting: <strong>nothing is reported as working unless it was run</strong>, and anything unimplemented, unverified or assumed is labelled as such rather than left to inference. Where a check was skipped, the packet says so — see section 3 of this one, which lists six things that were not tested.</p>
+
+  <hr class="soft">
+
+  <p style="color:var(--ink-2)">Prepared for review · branch <span class="mono">claude/create-app-repository-1cxsih</span> · head <span class="mono">13cc87d</span></p>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+</div>
