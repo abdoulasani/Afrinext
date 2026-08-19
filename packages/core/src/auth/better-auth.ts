@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { emailOTP, phoneNumber } from "better-auth/plugins";
 import type { Pool } from "pg";
 import { sql } from "drizzle-orm";
@@ -20,10 +21,12 @@ import type { MessageSender } from "./messaging";
  * proves who someone is; it never implies what they may do.
  *
  * It reaches PostgreSQL through the pg Pool directly rather than through its
- * Drizzle adapter, because that adapter requires drizzle-orm >= 0.45.2 and the
- * review confirmed Drizzle 0.38.4. The four tables it uses are declared in our
- * own schema and migrations, so they are reviewed and rebuilt from zero in CI
- * like everything else.
+ * Drizzle adapter. The adapter would generate and own its own tables; going
+ * through the Pool keeps the four tables it uses declared in our own schema and
+ * migrations, so they are reviewed, diffed and rebuilt from zero in CI like
+ * everything else. (The version constraint that originally forced this choice
+ * is gone — drizzle-orm is now 0.45.2 — but the ownership argument is the
+ * reason it stays.)
  *
  * This module imports no framework. Next.js mounts the returned handler in
  * apps/web; nothing here knows that.
@@ -68,7 +71,20 @@ export function createAuth(deps: AuthDeps) {
         targetId: identifier,
         context: { channel, used: verdict.used, limit: verdict.limit },
       });
-      throw new RateLimitedError("verification code", verdict.retryAfterMs);
+      /**
+       * Better Auth turns an unrecognised throw into a bare 500, which tells the
+       * caller nothing and reads as an Afrinext fault in monitoring. A refusal
+       * to issue is a client-visible, retryable condition, so it leaves the
+       * handler as a real 429 carrying `Retry-After`. The domain error is still
+       * constructed, so the wording and the `ratelimit.exceeded` code stay in
+       * one place and match what `apps/web/src/lib/api.ts` returns elsewhere.
+       */
+      const refusal = new RateLimitedError("verification code", verdict.retryAfterMs);
+      throw new APIError(
+        "TOO_MANY_REQUESTS",
+        { code: refusal.code, message: refusal.message },
+        { "Retry-After": String(Math.max(1, Math.ceil(verdict.retryAfterMs / 1000))) },
+      );
     }
 
     if (channel === "sms") {

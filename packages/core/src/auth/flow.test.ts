@@ -101,9 +101,17 @@ describe("phone sign-in, end to end", () => {
     await auth.api.sendPhoneNumberOTP({ body: { phoneNumber: phone } });
     // The cooldown makes an immediate second request a refusal — every SMS costs
     // money, and unlimited issuance makes attempt limits meaningless.
-    await expect(
-      auth.api.sendPhoneNumberOTP({ body: { phoneNumber: phone } }),
-    ).rejects.toThrow();
+    const refusal = await auth.api
+      .sendPhoneNumberOTP({ body: { phoneNumber: phone } })
+      .then(() => undefined, (e: unknown) => e);
+    expect(refusal, "a second immediate request must be refused").toBeDefined();
+
+    // And refused as a 429 the caller can act on, not a 500. Asserting the
+    // status is the point: an unrecognised throw out of a Better Auth callback
+    // becomes a bare 500, which is indistinguishable from a server fault.
+    const status = (refusal as { statusCode?: number; body?: { code?: string } });
+    expect(status.statusCode).toBe(429);
+    expect(status.body?.code).toBe("ratelimit.exceeded");
 
     const audits = await db.execute<{ action: string }>(
       sql`select action from audit_logs where action = 'auth.otp.rate_limited'`,
