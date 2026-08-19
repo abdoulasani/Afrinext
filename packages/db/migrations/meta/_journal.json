@@ -43,6 +43,13 @@
       "when": 1787160685089,
       "tag": "0005_fee_snapshot_immutable",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787160686089,
+      "tag": "0006_phone_otp_in_our_table",
+      "breakpoints": true
     }
   ]
 }

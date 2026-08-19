@@ -35,11 +35,11 @@ beforeEach(async () => {
 
 /** Drives a full phone sign-in and returns the resulting session. */
 async function signInByPhone(phone: string): Promise<{ sessionId: string; authUserId: string }> {
-  await auth.api.sendPhoneNumberOTP({ body: { phoneNumber: phone } });
+  await auth.api.sendPhoneOtp({ body: { phoneNumber: phone } });
   const code = sender.lastCodeTo(phone);
   expect(code, "a code should have been sent").toBeDefined();
 
-  await auth.api.verifyPhoneNumber({ body: { phoneNumber: phone, code: code as string } });
+  await auth.api.verifyPhoneOtp({ body: { phoneNumber: phone, code: code as string } });
 
   const rows = await db.execute<{ id: string; userId: string }>(sql`
     select s.id, s."userId" from session s
@@ -90,19 +90,19 @@ describe("phone sign-in, end to end", () => {
 
   it("refuses a wrong code", async () => {
     const phone = "+22790000103";
-    await auth.api.sendPhoneNumberOTP({ body: { phoneNumber: phone } });
+    await auth.api.sendPhoneOtp({ body: { phoneNumber: phone } });
     await expect(
-      auth.api.verifyPhoneNumber({ body: { phoneNumber: phone, code: "000000" } }),
+      auth.api.verifyPhoneOtp({ body: { phoneNumber: phone, code: "000000" } }),
     ).rejects.toThrow();
   });
 
   it("rate-limits code requests, so issuance is never unlimited", async () => {
     const phone = "+22790000104";
-    await auth.api.sendPhoneNumberOTP({ body: { phoneNumber: phone } });
+    await auth.api.sendPhoneOtp({ body: { phoneNumber: phone } });
     // The cooldown makes an immediate second request a refusal — every SMS costs
     // money, and unlimited issuance makes attempt limits meaningless.
     const refusal = await auth.api
-      .sendPhoneNumberOTP({ body: { phoneNumber: phone } })
+      .sendPhoneOtp({ body: { phoneNumber: phone } })
       .then(() => undefined, (e: unknown) => e);
     expect(refusal, "a second immediate request must be refused").toBeDefined();
 

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import {
-  generateOtp, generateOtpCode, hashOtpCode, hashPassword,
+  deriveOtpKey, generateOtp, generateOtpCode, hashOtpCode, hashPassword,
   needsRehash, normaliseEmail, normalisePhone, verifyOtp, verifyPassword,
 } from "./index";
+
+const KEY = deriveOtpKey("test-application-secret-0123456789abcdef");
 
 describe("password hashing", () => {
   it("verifies a correct password and rejects a wrong one", async () => {
@@ -43,40 +45,65 @@ describe("password hashing", () => {
 
 describe("one-time codes", () => {
   it("accepts the right code and rejects a wrong one", () => {
-    const otp = generateOtp("+22790000001", "sign_in");
+    const otp = generateOtp("+22790000001", "sign_in", KEY);
     const challenge = {
-      codeHash: otp.codeHash, attempts: 0, maxAttempts: 5,
+      codeHash: otp.codeHash, attempts: 1, maxAttempts: 5,
       expiresAt: otp.expiresAt, consumedAt: null,
     };
-    expect(verifyOtp(challenge, otp.code, "+22790000001", "sign_in")).toEqual({ ok: true });
-    expect(verifyOtp(challenge, "000000", "+22790000001", "sign_in")).toEqual({
+    expect(verifyOtp(challenge, otp.code, "+22790000001", "sign_in", KEY)).toEqual({ ok: true });
+    expect(verifyOtp(challenge, "000000", "+22790000001", "sign_in", KEY)).toEqual({
       ok: false, reason: "mismatch",
     });
   });
 
   it("binds a code to its identifier and purpose", () => {
-    const otp = generateOtp("+22790000001", "sign_in");
+    const otp = generateOtp("+22790000001", "sign_in", KEY);
     const challenge = {
-      codeHash: otp.codeHash, attempts: 0, maxAttempts: 5,
+      codeHash: otp.codeHash, attempts: 1, maxAttempts: 5,
       expiresAt: otp.expiresAt, consumedAt: null,
     };
     // The same digits issued to someone else must not verify here.
-    expect(verifyOtp(challenge, otp.code, "+22790000002", "sign_in").ok).toBe(false);
-    expect(verifyOtp(challenge, otp.code, "+22790000001", "step_up").ok).toBe(false);
+    expect(verifyOtp(challenge, otp.code, "+22790000002", "sign_in", KEY).ok).toBe(false);
+    expect(verifyOtp(challenge, otp.code, "+22790000001", "step_up", KEY).ok).toBe(false);
+  });
+
+  it("binds a code to the key, so a stolen table alone verifies nothing", () => {
+    const otp = generateOtp("+22790000001", "sign_in", KEY);
+    const attacker = deriveOtpKey("a-different-secret-the-attacker-guessed");
+    const challenge = {
+      codeHash: otp.codeHash, attempts: 1, maxAttempts: 5,
+      expiresAt: otp.expiresAt, consumedAt: null,
+    };
+    // This is the whole point of keying the hash: knowing the code and the
+    // phone number is not enough without the application secret.
+    expect(verifyOtp(challenge, otp.code, "+22790000001", "sign_in", attacker).ok).toBe(false);
   });
 
   it("refuses expired, consumed and exhausted challenges", () => {
-    const otp = generateOtp("+22790000001", "sign_in");
-    const base = { codeHash: otp.codeHash, attempts: 0, maxAttempts: 5, consumedAt: null };
+    const otp = generateOtp("+22790000001", "sign_in", KEY);
+    const base = { codeHash: otp.codeHash, attempts: 1, maxAttempts: 5, consumedAt: null };
     expect(
-      verifyOtp({ ...base, expiresAt: new Date(Date.now() - 1) }, otp.code, "+22790000001", "sign_in"),
+      verifyOtp({ ...base, expiresAt: new Date(Date.now() - 1) }, otp.code, "+22790000001", "sign_in", KEY),
     ).toEqual({ ok: false, reason: "expired" });
     expect(
-      verifyOtp({ ...base, expiresAt: otp.expiresAt, consumedAt: new Date() }, otp.code, "+22790000001", "sign_in"),
+      verifyOtp({ ...base, expiresAt: otp.expiresAt, consumedAt: new Date() }, otp.code, "+22790000001", "sign_in", KEY),
     ).toEqual({ ok: false, reason: "consumed" });
     expect(
-      verifyOtp({ ...base, expiresAt: otp.expiresAt, attempts: 5 }, otp.code, "+22790000001", "sign_in"),
+      verifyOtp({ ...base, expiresAt: otp.expiresAt, attempts: 6 }, otp.code, "+22790000001", "sign_in", KEY),
     ).toEqual({ ok: false, reason: "too_many_attempts" });
+  });
+
+  it("still verifies on the last attempt the budget allows", () => {
+    // `attempts` counts the attempt being made, so attempts === maxAttempts is
+    // the fifth of five and must succeed. Getting this off by one would either
+    // give a free guess or swallow a legitimate one.
+    const otp = generateOtp("+22790000001", "sign_in", KEY);
+    expect(
+      verifyOtp(
+        { codeHash: otp.codeHash, attempts: 5, maxAttempts: 5, expiresAt: otp.expiresAt, consumedAt: null },
+        otp.code, "+22790000001", "sign_in", KEY,
+      ),
+    ).toEqual({ ok: true });
   });
 
   it("generates uniformly distributed six-digit codes", () => {
@@ -87,7 +114,12 @@ describe("one-time codes", () => {
   });
 
   it("hashes differently per identifier", () => {
-    expect(hashOtpCode("123456", "+227A", "sign_in")).not.toBe(hashOtpCode("123456", "+227B", "sign_in"));
+    expect(hashOtpCode("123456", "+227A", "sign_in", KEY))
+      .not.toBe(hashOtpCode("123456", "+227B", "sign_in", KEY));
+  });
+
+  it("refuses to derive a key from an empty secret", () => {
+    expect(() => deriveOtpKey("")).toThrow();
   });
 });
 

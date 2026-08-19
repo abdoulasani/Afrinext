@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { sendPhoneOtp, verifyPhoneOtp } from "@/lib/auth-client";
 
 type Labels = {
   phone: string;
@@ -33,7 +33,7 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
     setBusy(true);
     setError(null);
     try {
-      const result = await authClient.phoneNumber.sendOtp({ phoneNumber: phone });
+      const result = await sendPhoneOtp(phone);
       if (result.error) {
         setError(result.error.message ?? labels.generic);
       } else {
@@ -51,7 +51,7 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
     setBusy(true);
     setError(null);
     try {
-      const result = await authClient.phoneNumber.verify({ phoneNumber: phone, code });
+      const result = await verifyPhoneOtp(phone, code);
       if (result.error) {
         setError(result.error.message ?? labels.generic);
       } else {

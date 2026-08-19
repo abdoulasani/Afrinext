@@ -1,16 +1,18 @@
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
-import { emailOTP, phoneNumber } from "better-auth/plugins";
+import { emailOTP } from "better-auth/plugins";
 import type { Pool } from "pg";
 import { sql } from "drizzle-orm";
 import type { Database } from "@afrinext/db";
 import { audit } from "../audit";
 import { uuidv7 } from "../ids";
 import { logger } from "../observability";
-import { consumeAll, otpSendRules, OTP_POLICY } from "../ratelimit";
+import { consumeAll, otpSendRules, OTP_POLICY, type OtpPolicy } from "../ratelimit";
 import { RateLimitedError } from "./errors";
 import { hashPassword, verifyPassword } from "./password";
 import type { MessageSender } from "./messaging";
+import { deriveOtpKey } from "./otp";
+import { phoneOtp } from "./phone-otp-plugin";
 
 /**
  * Better Auth, configured for Afrinext.
@@ -39,6 +41,11 @@ export interface AuthDeps {
   readonly secret: string;
   /** Supplied per request by the HTTP layer, for per-IP limits. */
   readonly ipAddressForRequest?: () => string | undefined;
+  /**
+   * OTP limits, normally from `loadOtpPolicy()` so an operator can change them
+   * without a deploy. Omitted means the defaults.
+   */
+  readonly otpPolicy?: OtpPolicy | undefined;
 }
 
 export type AfrinextAuth = ReturnType<typeof createAuth>;
@@ -49,6 +56,9 @@ export const SESSION_UPDATE_AGE_SECONDS = 24 * 60 * 60;
 
 export function createAuth(deps: AuthDeps) {
   const log = logger.child({ component: "auth" });
+  const policy = deps.otpPolicy ?? OTP_POLICY;
+  const otpKey = deriveOtpKey(deps.secret);
+  const timing = { ttlMs: policy.ttlMs, maxAttempts: policy.verificationAttempts };
 
   /**
    * Guards every code we send. Better Auth's own attempt limits stop guessing;
@@ -61,7 +71,7 @@ export function createAuth(deps: AuthDeps) {
     channel: "sms" | "email",
   ): Promise<void> => {
     const ip = deps.ipAddressForRequest?.();
-    const verdict = await consumeAll(deps.db, otpSendRules(identifier, ip));
+    const verdict = await consumeAll(deps.db, otpSendRules(identifier, ip, policy));
     if (!verdict.allowed) {
       log.warn("otp issuance refused", { identifier, channel, used: verdict.used, limit: verdict.limit });
       await audit(deps.db, {
@@ -185,26 +195,34 @@ export function createAuth(deps: AuthDeps) {
     },
 
     plugins: [
-      phoneNumber({
-        sendOTP: async ({ phoneNumber: to, code }) => {
-          await guardedSend(to, code, "sms");
-        },
-        otpLength: 6,
-        expiresIn: 5 * 60,
-        allowedAttempts: OTP_POLICY.verificationAttempts,
-        signUpOnVerification: {
-          // A phone-first market: most people will never have an email address
-          // on file, so one is synthesised and never used for delivery.
-          getTempEmail: (phone) => `${phone.replace(/[^0-9]/g, "")}@phone.afrinext.local`,
-          getTempName: (phone) => phone,
-        },
+      /**
+       * Phone sign-in, with the code in our own hashed table.
+       *
+       * Better Auth's `phoneNumber` plugin is deliberately absent: it writes
+       * the code to `verification.value` in the clear and exposes no hook to
+       * change that, so the only way to close the plaintext path is not to
+       * mount it. See `phone-otp-plugin.ts` and review decision 1.
+       */
+      phoneOtp({
+        db: deps.db,
+        sender: deps.sender,
+        key: otpKey,
+        policy,
+        timing,
+        // A phone-first market: most people will never have an email address on
+        // file, so one is synthesised and never used for delivery.
+        tempEmail: (phone) => `${phone.replace(/[^0-9]/g, "")}@phone.afrinext.local`,
       }),
       emailOTP({
         sendVerificationOTP: async ({ email, otp }) => {
           await guardedSend(email, otp, "email");
         },
         otpLength: 6,
-        expiresIn: 5 * 60,
+        expiresIn: Math.floor(timing.ttlMs / 1000),
+        // Email is not the launch path, and this plugin does offer the option
+        // the phone one does not. Its default is "plain"; leaving that would be
+        // the same defect on a quieter road.
+        storeOTP: "hashed",
       }),
     ],
   });

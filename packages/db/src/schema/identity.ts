@@ -39,7 +39,7 @@ export const otpChallenges = pgTable(
     kind: text("kind").notNull(), // phone | email
     identifier: text("identifier").notNull(),
     codeHash: text("code_hash").notNull(),
-    purpose: text("purpose").notNull(), // step_up only — see the table comment
+    purpose: text("purpose").notNull(), // sign_in | verify_identity | step_up
     attempts: smallint("attempts").notNull().default(0),
     maxAttempts: smallint("max_attempts").notNull().default(5),
     consumedAt: timestamp("consumed_at", { withTimezone: true }),
@@ -52,7 +52,12 @@ export const otpChallenges = pgTable(
     index("otp_expires_idx").on(t.expiresAt),
     check("otp_attempts_bounded", sql`${t.attempts} >= 0 and ${t.attempts} <= ${t.maxAttempts}`),
     check("otp_kind_valid", sql`${t.kind} in ('phone','email')`),
-    check("otp_purpose_step_up_only", sql`${t.purpose} = 'step_up'`),
+    check("otp_purpose_valid", sql`${t.purpose} in ('sign_in','verify_identity','step_up')`),
+    // One live challenge per identifier and purpose. Without this a caller
+    // could bank several usable codes and spend each one's attempt budget.
+    uniqueIndex("otp_one_live_challenge")
+      .on(t.kind, t.identifier, t.purpose)
+      .where(sql`consumed_at is null`),
   ],
 );
 

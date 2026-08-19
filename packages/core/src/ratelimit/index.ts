@@ -105,32 +105,87 @@ export async function pruneExpired(db: Database, olderThanMs: number = 24 * 60 *
  * OTP issuance policy.
  *
  * Deliberately tight: each send costs money, and a phone-first market makes SMS
- * the main abuse surface. Values are policy, not physics — move them to
- * platform_settings when the admin console can edit them.
+ * the main abuse surface.
+ *
+ * Review decision 7 approved these numbers *for now* and required that they
+ * stay configuration rather than literals buried in business logic. So this is
+ * a default, `loadOtpPolicy()` overlays whatever `platform_settings` holds, and
+ * every caller takes the policy as an argument. Changing a limit is an UPDATE,
+ * not a deploy.
+ *
+ * The per-IP limit is the production-tuning point to watch: carrier NAT and
+ * shared connections are the norm in Niger, so 20 per hour may prove too tight
+ * for a whole neighbourhood behind one address. It is the first number to
+ * revisit against real traffic.
  */
-export const OTP_POLICY = {
+export interface OtpPolicy {
+  readonly perPhonePerHour: number;
+  readonly perIpPerHour: number;
+  readonly cooldownMs: number;
+  readonly verificationAttempts: number;
+  readonly ttlMs: number;
+  readonly stepUpPerHour: number;
+}
+
+export const OTP_POLICY: OtpPolicy = {
   perPhonePerHour: 5,
   perIpPerHour: 20,
   cooldownMs: 60_000,
   verificationAttempts: 5,
-} as const;
+  ttlMs: 5 * 60 * 1000,
+  stepUpPerHour: 3,
+};
 
-export function otpSendRules(identifier: string, ipAddress: string | undefined): RateLimitRule[] {
+/** The `platform_settings` key the overlay is read from. */
+export const OTP_POLICY_SETTING_KEY = "auth.otp_policy";
+
+function positiveInt(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : fallback;
+}
+
+/**
+ * Reads the policy, falling back field by field.
+ *
+ * A malformed or partial settings row must never be able to *widen* a limit by
+ * accident, so each field is validated on its own and anything that is not a
+ * positive integer falls back to the default rather than to zero or Infinity.
+ */
+export async function loadOtpPolicy(db: Database): Promise<OtpPolicy> {
+  const rows = await db.execute<{ value: Record<string, unknown> | null }>(sql`
+    select value from platform_settings where key = ${OTP_POLICY_SETTING_KEY}
+  `);
+  const stored = rows.rows[0]?.value;
+  if (stored === null || stored === undefined || typeof stored !== "object") return OTP_POLICY;
+  return {
+    perPhonePerHour: positiveInt(stored["perPhonePerHour"], OTP_POLICY.perPhonePerHour),
+    perIpPerHour: positiveInt(stored["perIpPerHour"], OTP_POLICY.perIpPerHour),
+    cooldownMs: positiveInt(stored["cooldownMs"], OTP_POLICY.cooldownMs),
+    verificationAttempts: positiveInt(stored["verificationAttempts"], OTP_POLICY.verificationAttempts),
+    ttlMs: positiveInt(stored["ttlMs"], OTP_POLICY.ttlMs),
+    stepUpPerHour: positiveInt(stored["stepUpPerHour"], OTP_POLICY.stepUpPerHour),
+  };
+}
+
+export function otpSendRules(
+  identifier: string,
+  ipAddress: string | undefined,
+  policy: OtpPolicy = OTP_POLICY,
+): RateLimitRule[] {
   const rules: RateLimitRule[] = [
-    { bucket: `otp:send:id:${identifier}`, limit: OTP_POLICY.perPhonePerHour, windowMs: 3_600_000 },
+    { bucket: `otp:send:id:${identifier}`, limit: policy.perPhonePerHour, windowMs: 3_600_000 },
     // The cooldown is a one-per-window rule on a short window.
-    { bucket: `otp:cooldown:id:${identifier}`, limit: 1, windowMs: OTP_POLICY.cooldownMs },
+    { bucket: `otp:cooldown:id:${identifier}`, limit: 1, windowMs: policy.cooldownMs },
   ];
   if (ipAddress !== undefined && ipAddress !== "") {
-    rules.push({ bucket: `otp:send:ip:${ipAddress}`, limit: OTP_POLICY.perIpPerHour, windowMs: 3_600_000 });
+    rules.push({ bucket: `otp:send:ip:${ipAddress}`, limit: policy.perIpPerHour, windowMs: 3_600_000 });
   }
   return rules;
 }
 
 /** Purpose-specific: elevation challenges are rarer and limited harder. */
-export function stepUpSendRules(userId: string): RateLimitRule[] {
+export function stepUpSendRules(userId: string, policy: OtpPolicy = OTP_POLICY): RateLimitRule[] {
   return [
-    { bucket: `stepup:send:user:${userId}`, limit: 3, windowMs: 3_600_000 },
-    { bucket: `stepup:cooldown:user:${userId}`, limit: 1, windowMs: OTP_POLICY.cooldownMs },
+    { bucket: `stepup:send:user:${userId}`, limit: policy.stepUpPerHour, windowMs: 3_600_000 },
+    { bucket: `stepup:cooldown:user:${userId}`, limit: 1, windowMs: policy.cooldownMs },
   ];
 }
