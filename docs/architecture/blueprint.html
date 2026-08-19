@@ -1,0 +1,1366 @@
+<title>Afrinext Technical Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:       #F3F5F7;
+    --surface:      #FFFFFF;
+    --surface-2:    #E7ECF1;
+    --ink:          #0F1822;
+    --ink-2:        #55616E;
+    --rule:         #D5DCE4;
+    --rule-strong:  #B9C4CF;
+    --indigo:       #24356E;
+    --indigo-soft:  #E2E7F4;
+    --ledger:       #0E6B4F;
+    --ledger-soft:  #DBEFE6;
+    --ochre:        #8F5C12;
+    --ochre-soft:   #F5E9D2;
+    --crimson:      #9E2B2B;
+    --crimson-soft: #F6E1DF;
+
+    --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --f-body:    "Source Serif 4", Georgia, "Times New Roman", serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:       #0C1117;
+      --surface:      #131B23;
+      --surface-2:    #1B2530;
+      --ink:          #E6ECF2;
+      --ink-2:        #93A2B1;
+      --rule:         #253039;
+      --rule-strong:  #38454F;
+      --indigo:       #92AAE9;
+      --indigo-soft:  #1A2440;
+      --ledger:       #48C79A;
+      --ledger-soft:  #0F2E24;
+      --ochre:        #E2A852;
+      --ochre-soft:   #32270F;
+      --crimson:      #E8817A;
+      --crimson-soft: #351A1A;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:       #0C1117;
+    --surface:      #131B23;
+    --surface-2:    #1B2530;
+    --ink:          #E6ECF2;
+    --ink-2:        #93A2B1;
+    --rule:         #253039;
+    --rule-strong:  #38454F;
+    --indigo:       #92AAE9;
+    --indigo-soft:  #1A2440;
+    --ledger:       #48C79A;
+    --ledger-soft:  #0F2E24;
+    --ochre:        #E2A852;
+    --ochre-soft:   #32270F;
+    --crimson:      #E8817A;
+    --crimson-soft: #351A1A;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 96px; }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    border-bottom: 1px solid var(--rule);
+    padding: 56px 0 34px;
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--indigo);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 5.4vw, 3.4rem);
+    line-height: 1.02;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+    margin: 0 0 20px;
+  }
+  .lede {
+    font-size: clamp(1.05rem, 2.2vw, 1.24rem);
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0 0 26px;
+  }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; }
+  .meta span {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--ink-2);
+    border-radius: 2px;
+  }
+
+  /* ---------- layout ---------- */
+  .cols { display: grid; grid-template-columns: 212px minmax(0, 1fr); gap: 60px; align-items: start; }
+  @media (max-width: 940px) { .cols { grid-template-columns: 1fr; gap: 0; } }
+
+  nav.toc { position: sticky; top: 28px; }
+  @media (max-width: 940px) {
+    nav.toc { position: static; margin-bottom: 44px; border: 1px solid var(--rule); background: var(--surface); padding: 18px 20px; border-radius: 3px; }
+  }
+  nav.toc h2 {
+    font-family: var(--f-mono); font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-2);
+    margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+  nav.toc a {
+    display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: baseline;
+    font-family: var(--f-display); font-size: 13px; font-weight: 500; line-height: 1.35;
+    color: var(--ink-2); text-decoration: none; padding: 5px 6px; border-radius: 2px;
+    border-left: 2px solid transparent;
+  }
+  nav.toc a:hover { color: var(--ink); background: var(--surface); }
+  nav.toc a.active { color: var(--indigo); border-left-color: var(--indigo); background: var(--indigo-soft); }
+  nav.toc a b { font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; opacity: 0.75; }
+  nav.toc a:focus-visible, main a:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+
+  main { min-width: 0; }
+  section { scroll-margin-top: 24px; padding-bottom: 12px; }
+  section + section { margin-top: 60px; padding-top: 44px; border-top: 1px solid var(--rule); }
+
+  .sec-head { display: grid; grid-template-columns: 40px 1fr; gap: 18px; align-items: start; margin-bottom: 26px; }
+  .sec-mark {
+    font-family: var(--f-mono); font-size: 15px; font-weight: 600;
+    width: 40px; height: 40px; display: grid; place-items: center;
+    border: 1px solid var(--rule-strong); color: var(--indigo);
+    background: var(--surface); border-radius: 2px;
+  }
+  h2.sec-title {
+    font-family: var(--f-display); font-weight: 700;
+    font-size: clamp(1.5rem, 3.4vw, 1.95rem); line-height: 1.14;
+    letter-spacing: -0.017em; text-wrap: balance; margin: 4px 0 0;
+  }
+  h3 {
+    font-family: var(--f-display); font-weight: 600; font-size: 1.12rem;
+    letter-spacing: -0.008em; margin: 36px 0 12px; text-wrap: balance;
+  }
+  h4 {
+    font-family: var(--f-mono); font-weight: 600; font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2);
+    margin: 28px 0 10px;
+  }
+  p { margin: 0 0 16px; max-width: 70ch; }
+  main ul, main ol { max-width: 70ch; margin: 0 0 16px; padding-left: 22px; }
+  main li { margin-bottom: 7px; }
+  main li::marker { color: var(--ink-2); }
+  strong { font-weight: 600; }
+  code { font-family: var(--f-mono); font-size: 0.855em; background: var(--surface-2); padding: 1px 5px; border-radius: 2px; overflow-wrap: anywhere; }
+  a { color: var(--indigo); }
+
+  pre {
+    font-family: var(--f-mono); font-size: 12.5px; line-height: 1.62;
+    background: var(--surface); border: 1px solid var(--rule);
+    padding: 18px 20px; border-radius: 3px; overflow-x: auto; margin: 0 0 20px;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
+  .cm { color: var(--ink-2); }
+  .kw { color: var(--indigo); font-weight: 500; }
+
+  /* ---------- tables ---------- */
+  .tbl { overflow-x: auto; margin: 0 0 22px; border: 1px solid var(--rule); border-radius: 3px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.5; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-family: var(--f-mono); font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.11em; text-transform: uppercase; color: var(--ink-2);
+    background: var(--surface-2); white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.mono, td .mono { font-family: var(--f-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+  /* ---------- decision blocks ---------- */
+  .decision {
+    border: 1px solid var(--rule); border-left: 3px solid var(--indigo);
+    background: var(--surface); padding: 18px 22px; margin: 0 0 22px; border-radius: 0 3px 3px 0;
+  }
+  .decision > .d-label {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--indigo);
+    margin: 0 0 10px; display: block;
+  }
+  .decision h3 { margin: 0 0 12px; font-size: 1.05rem; }
+  .decision dl { display: grid; grid-template-columns: 132px 1fr; gap: 6px 16px; margin: 0; font-size: 14.5px; }
+  @media (max-width: 620px) { .decision dl { grid-template-columns: 1fr; gap: 2px; } .decision dd { margin-bottom: 10px; } }
+  .decision dt {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); padding-top: 4px;
+  }
+  .decision dd { margin: 0; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    border: 1px solid var(--rule); background: var(--surface);
+    padding: 16px 20px; margin: 0 0 22px; border-radius: 3px; border-left: 3px solid var(--ink-2);
+  }
+  .note.risk   { border-left-color: var(--ochre);  background: var(--ochre-soft); }
+  .note.block  { border-left-color: var(--crimson); background: var(--crimson-soft); }
+  .note.good   { border-left-color: var(--ledger); background: var(--ledger-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom: 0; }
+  .note .n-label {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase; display: block; margin-bottom: 8px;
+  }
+  .note.risk  .n-label { color: var(--ochre); }
+  .note.block .n-label { color: var(--crimson); }
+  .note.good  .n-label { color: var(--ledger); }
+  .note .n-label { color: var(--ink-2); }
+
+  /* ---------- chips ---------- */
+  .chip {
+    display: inline-block; font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 7px;
+    border-radius: 2px; white-space: nowrap; border: 1px solid transparent;
+  }
+  .chip.no   { background: var(--crimson-soft); color: var(--crimson); border-color: var(--crimson); }
+  .chip.yes  { background: var(--ledger-soft);  color: var(--ledger);  border-color: var(--ledger); }
+  .chip.hold { background: var(--ochre-soft);   color: var(--ochre);   border-color: var(--ochre); }
+  .chip.info { background: var(--indigo-soft);  color: var(--indigo);  border-color: var(--indigo); }
+
+  /* ---------- figures ---------- */
+  figure { margin: 26px 0 28px; }
+  .figbox { border: 1px solid var(--rule); background: var(--surface); border-radius: 3px; padding: 22px 20px; overflow-x: auto; }
+  figure svg { display: block; width: 100%; min-width: 560px; height: auto; color: var(--ink); }
+  figcaption {
+    font-size: 13.5px; line-height: 1.5; color: var(--ink-2);
+    margin-top: 12px; max-width: 70ch;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  .svg-box  { fill: var(--surface); stroke: var(--rule-strong); stroke-width: 1; }
+  .svg-box-a { fill: var(--indigo-soft); stroke: var(--indigo); stroke-width: 1; }
+  .svg-box-m { fill: var(--ledger-soft); stroke: var(--ledger); stroke-width: 1; }
+  .svg-box-d { fill: none; stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 4 3; }
+  .svg-t  { font-family: var(--f-display); font-size: 12.5px; font-weight: 600; fill: var(--ink); }
+  .svg-s  { font-family: var(--f-mono); font-size: 10px; fill: var(--ink-2); }
+  .svg-l  { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink-2); }
+  .svg-lm { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ledger); font-weight: 500; }
+  .svg-n  { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; fill: var(--ledger); }
+  .svg-line { stroke: var(--rule-strong); stroke-width: 1.4; fill: none; }
+  .svg-line-a { stroke: var(--indigo); stroke-width: 1.6; fill: none; }
+  .svg-line-m { stroke: var(--ledger); stroke-width: 1.6; fill: none; }
+  .svg-line-d { stroke: var(--rule-strong); stroke-width: 1.3; fill: none; stroke-dasharray: 4 3; }
+
+  hr.soft { border: none; border-top: 1px solid var(--rule); margin: 34px 0; }
+
+  .totop {
+    display: inline-block; font-family: var(--f-mono); font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2);
+    text-decoration: none; margin-top: 40px; border-top: 1px solid var(--rule); padding-top: 16px;
+  }
+  .totop:hover { color: var(--indigo); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · Phase 1 deliverable</p>
+  <h1>Afrinext Technical Blueprint</h1>
+  <p class="lede">The architecture for a multi-country African commerce and learning platform built around a double-entry ledger — stack, schema, permission model, money design, security controls and a phased build order.</p>
+  <div class="meta">
+    <span>Status: for review</span>
+    <span>Scope: architecture only</span>
+    <span>Code written: none</span>
+    <span>iPay: not integrated</span>
+  </div>
+</header>
+
+<div class="cols">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#read"><b>00</b><span>The read, and one pushback</span></a></li>
+    <li><a href="#stack"><b>A</b><span>Technology stack</span></a></li>
+    <li><a href="#system"><b>B</b><span>System architecture</span></a></li>
+    <li><a href="#schema"><b>C</b><span>Database schema</span></a></li>
+    <li><a href="#authz"><b>D</b><span>Auth &amp; permissions</span></a></li>
+    <li><a href="#money"><b>E</b><span>Financial architecture</span></a></li>
+    <li><a href="#market"><b>F</b><span>Marketplace</span></a></li>
+    <li><a href="#learn"><b>G</b><span>Learning &amp; video</span></a></li>
+    <li><a href="#referral"><b>H</b><span>Referral network</span></a></li>
+    <li><a href="#delivery"><b>I</b><span>Delivery</span></a></li>
+    <li><a href="#api"><b>J</b><span>API architecture</span></a></li>
+    <li><a href="#security"><b>K</b><span>Security</span></a></li>
+    <li><a href="#structure"><b>L</b><span>Project structure</span></a></li>
+    <li><a href="#roadmap"><b>M</b><span>Roadmap</span></a></li>
+    <li><a href="#risks"><b>R</b><span>Risk register</span></a></li>
+    <li><a href="#ipay"><b>P</b><span>What iPay needs</span></a></li>
+    <li><a href="#status"><b>S</b><span>Status register</span></a></li>
+    <li><a href="#open"><b>Q</b><span>Open decisions</span></a></li>
+  </ol>
+</nav>
+
+<main>
+<section id="read">
+  <div class="sec-head"><div class="sec-mark">00</div><h2 class="sec-title">The read, and one pushback</h2></div>
+
+  <p>Afrinext is three businesses sharing one identity system. A <strong>marketplace</strong> (physical goods, digital goods, services), a <strong>learning platform</strong> (paid video and documents with entitlement), and a <strong>money system</strong> (wallet, commissions, settlement, payouts). Delivery and the referral network are not separate products — they are two more sources of ledger events.</p>
+
+  <p>That framing decides the architecture. The ledger is the spine; everything else is a producer of financial events that the ledger records. A course purchase, a delivered parcel and an ambassador commission are the same shape of thing once they reach the money layer. If that layer is designed last, every module above it grows its own private notion of "balance" and the platform becomes unauditable.</p>
+
+  <p>The "one person, one account, many roles" principle is right and it is cheap to honour, provided one rule holds from the first migration: <strong>there is no <code>role</code> column on the user.</strong> Roles are rows, they are scoped to a resource, and they are additive.</p>
+
+  <h3>The pushback</h3>
+
+  <p>The module list in the brief is a two-to-three-year product. Built as specified — all modules in parallel — every part arrives shallow, and the hardest, least reversible part (money) gets exercised last, by which point the schema is load-bearing for a dozen features.</p>
+
+  <div class="decision">
+    <span class="d-label">Recommendation</span>
+    <h3>Launch one vertical: digital products and courses, one country, one payment rail.</h3>
+    <dl>
+      <dt>Why</dt>
+      <dd>It exercises identity, roles, stores, catalog, checkout, payments, ledger, commissions, wallet, withdrawals, entitlement and protected video — every hard part except logistics — with no inventory, no couriers, no cash handling and near-instant fulfilment. It is the shortest path to a real settled transaction, which is the only thing that proves the platform works.</dd>
+      <dt>Instead of</dt>
+      <dd>Launching the full marketplace, delivery network and creator marketplace together.</dd>
+      <dt>Trade-off</dt>
+      <dd>Physical goods and delivery slip to a second launch, roughly five weeks of work that starts later rather than never. Ambassadors have a thinner catalog to promote at day one.</dd>
+      <dt>Reversible?</dt>
+      <dd>Yes. Nothing in this blueprint's schema or module boundaries assumes the narrow scope — the tables for physical goods and delivery are designed here, just not built first.</dd>
+    </dl>
+  </div>
+
+  <p>This is a recommendation, not an assumption I have baked in. If you want physical goods at launch, say so and I will reorder the roadmap in section M — the architecture does not change, only the build order.</p>
+
+  <h3>What is in the repository today</h3>
+
+  <p>The current <code>Afrinext</code> repository holds a mobile-first PWA directory prototype: Next.js 16, Tailwind v4, an in-memory listing store, seed data, and a submission form. It is honest about what it is — there is no database, no authentication, no payments, and no money. In this plan:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Asset</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td>Design tokens, PWA shell, mobile navigation, card and form components</td><td><span class="chip yes">carries forward</span> Becomes the seed of <code>packages/ui</code>.</td></tr>
+      <tr><td>Next.js 16 + TypeScript + Tailwind v4 setup, lint and build config</td><td><span class="chip yes">carries forward</span> Becomes <code>apps/web</code> inside the monorepo.</td></tr>
+      <tr><td><code>src/lib/store.ts</code>, <code>src/lib/seed.ts</code>, the in-memory model</td><td><span class="chip no">discard</span> Replaced by Postgres and Drizzle.</td></tr>
+      <tr><td><code>src/lib/search.ts</code>, <code>validate.ts</code>, the URL-driven filter pattern</td><td><span class="chip hold">rewrite, keep the shape</span> The pattern is right; the implementation moves to the database and to shared Zod schemas.</td></tr>
+    </tbody>
+  </table></div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="stack">
+  <div class="sec-head"><div class="sec-mark">A</div><h2 class="sec-title">Technology stack</h2></div>
+
+  <p>Every choice below is stated with the alternative I rejected, because several of them are genuine trade-offs rather than obvious calls.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Choice</th><th>Why this, over the alternative</th></tr></thead>
+    <tbody>
+      <tr><td>Language</td><td class="mono">TypeScript 5, strict</td><td>One language across web, worker and shared domain code. <code>strict</code>, <code>noUncheckedIndexedAccess</code> and <code>exactOptionalPropertyTypes</code> on from day one — retrofitting them into a 40-table codebase is miserable.</td></tr>
+      <tr><td>Web</td><td class="mono">Next.js 16, App Router</td><td>A marketplace lives or dies on organic search, so product, store and course pages need server rendering and stable URLs. React Server Components also ship less JavaScript to the low-end Android devices that dominate the target market. Rejected: a SPA + separate API, which doubles the deployment surface and loses SEO.</td></tr>
+      <tr><td>Domain logic</td><td class="mono">packages/core</td><td>Framework-free TypeScript. Next.js is transport, not the application. This is the single most important structural decision in the document — see section L.</td></tr>
+      <tr><td>Database</td><td class="mono">PostgreSQL 16+</td><td>Not negotiable. Real transactions, <code>SERIALIZABLE</code> isolation, CHECK and EXCLUSION constraints, deferred constraint triggers, partial indexes, <code>NUMERIC</code>, row-level locking, full-text search. The financial invariants belong in the database, not only in application code.</td></tr>
+      <tr><td>ORM</td><td class="mono">Drizzle ORM</td><td>See the decision block below — this one is contested.</td></tr>
+      <tr><td>Background jobs</td><td class="mono">pg-boss (Postgres-backed)</td><td>Lets a job be enqueued <em>inside the same transaction</em> as the ledger rows that job refers to. With Redis you get a two-phase failure: the database commits, the enqueue fails, and settlement silently never runs. Rejected: BullMQ + Redis, which is faster but buys throughput we do not have yet with a correctness hole we cannot afford. Revisit above roughly 100 jobs/second.</td></tr>
+      <tr><td>Auth</td><td class="mono">Better Auth + DB sessions</td><td>Phone-first OTP is a first-class requirement in this market, not an add-on. Database-backed sessions rather than stateless JWTs, because a session that controls a wallet must be revocable instantly. Rejected: Clerk and Auth0 (per-MAU USD pricing against XOF revenue), Lucia (retired upstream).</td></tr>
+      <tr><td>Validation</td><td class="mono">Zod</td><td>One schema per boundary — HTTP body, server action input, job payload, webhook payload — with types inferred rather than restated.</td></tr>
+      <tr><td>i18n</td><td class="mono">next-intl</td><td>French as the default locale, English second, locale in the URL path (<code>/fr/…</code>) so both index separately. Message catalogs live in <code>packages/i18n</code> so the worker can localise SMS and email too.</td></tr>
+      <tr><td>Styling</td><td class="mono">Tailwind v4 + tokens</td><td>Already in the repository, already token-driven, already dark-mode aware. No reason to change it.</td></tr>
+      <tr><td>Object storage</td><td class="mono">Cloudflare R2</td><td>Zero egress fees. For a platform whose core product is video in a market where bandwidth is the dominant cost, this is the difference between viable and not. S3-compatible, so the provider interface stays portable.</td></tr>
+      <tr><td>Video</td><td class="mono">Cloudflare Stream</td><td>Signed playback tokens, HLS adaptive bitrate, per-video access control. We store a <code>playback_id</code>, never a file URL. Alternatives worth pricing: Bunny Stream (cheaper), Mux (best tooling, most expensive). Rejected: MP4 files in a bucket — no adaptive bitrate on a 3G connection, and no way to expire access.</td></tr>
+      <tr><td>SMS / email</td><td class="mono">provider interface</td><td>SMS matters more than email here (OTP, order status, payout confirmations). Concrete provider chosen per country at deploy time; the interface is ours.</td></tr>
+      <tr><td>Observability</td><td class="mono">OpenTelemetry + Sentry</td><td>Structured logs carrying request id, actor id and ledger transaction id. A money platform without traceable financial events is not operable.</td></tr>
+      <tr><td>Testing</td><td class="mono">Vitest + Playwright</td><td>Property-based unit tests on the ledger and commission engine; Playwright end-to-end on the purchase-to-payout path specifically.</td></tr>
+      <tr><td>Hosting</td><td class="mono">containers, Postgres in eu-west-3</td><td>Paris, not Cape Town: round-trip latency from Niamey, Bamako, Abidjan and Dakar to <code>eu-west-3</code> is materially better than to <code>af-south-1</code>. Cloudflare in front for edge caching. Vercel works for phases 0–2 but the worker is a long-running process that does not fit its model, so plan for containers.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="decision">
+    <span class="d-label">Contested decision</span>
+    <h3>Drizzle ORM rather than Prisma</h3>
+    <dl>
+      <dt>Why</dt>
+      <dd>Migrations are plain SQL that a human reviews before it touches money. CHECK constraints, deferred constraint triggers and <code>SELECT … FOR UPDATE</code> are expressible directly in the schema rather than through escape hatches. No query-engine binary, which matters for cold starts and for self-hosting cheaply.</dd>
+      <dt>Instead of</dt>
+      <dd>Prisma, which has better developer experience, better relational query ergonomics and far more mature migration tooling for a 40-table schema.</dd>
+      <dt>Trade-off</dt>
+      <dd>More SQL written by hand, a smaller ecosystem, and a steeper ramp for developers who have only used Prisma.</dd>
+      <dt>Switch if</dt>
+      <dd>The team is junior-weighted or Prisma-experienced. In that case take Prisma and write the ledger's critical paths as raw SQL — the schema in section C is unchanged either way. Tell me the team composition and I will pick.</dd>
+    </dl>
+  </div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+<section id="system">
+  <div class="sec-head"><div class="sec-mark">B</div><h2 class="sec-title">System architecture</h2></div>
+
+  <p>Four rules define the shape of the system. Everything else follows from them.</p>
+
+  <ol>
+    <li><strong>Only <code>packages/core</code> touches the database.</strong> Route handlers, server actions and job consumers all call the same domain services. There is no second path to the ledger.</li>
+    <li><strong>Jobs are enqueued in the transaction that creates their subject.</strong> A settlement job and the ledger rows it will settle commit together or not at all.</li>
+    <li><strong>Media never passes through the application server.</strong> The server mints a short-lived signed URL; the client fetches from storage directly.</li>
+    <li><strong>Webhooks are never processed inline.</strong> Verify the signature, persist the raw event, return 200, and let the worker do the work. Payment providers retry aggressively and time out fast.</li>
+  </ol>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 940 372" role="img" aria-label="Request flow: clients reach Next.js through Cloudflare; only packages/core touches Postgres, writing rows and enqueuing jobs in one transaction; the worker polls that queue and runs the same domain code; video and files are fetched directly from storage with signed URLs; the payment provider is reached through an abstraction that is not yet integrated.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect class="svg-box" x="16"  y="60"  width="146" height="58" rx="3"/>
+        <text class="svg-t" x="89"  y="84"  text-anchor="middle">Browser PWA</text>
+        <text class="svg-s" x="89"  y="101" text-anchor="middle">fr / en · mobile-first</text>
+
+        <rect class="svg-box" x="214" y="60"  width="146" height="58" rx="3"/>
+        <text class="svg-t" x="287" y="84"  text-anchor="middle">Cloudflare</text>
+        <text class="svg-s" x="287" y="101" text-anchor="middle">CDN · WAF · rate limit</text>
+
+        <rect class="svg-box-a" x="412" y="60" width="186" height="58" rx="3"/>
+        <text class="svg-t" x="505" y="84"  text-anchor="middle">apps/web</text>
+        <text class="svg-s" x="505" y="101" text-anchor="middle">RSC pages · /api/v1</text>
+
+        <rect class="svg-box-a" x="412" y="170" width="186" height="58" rx="3"/>
+        <text class="svg-t" x="505" y="194" text-anchor="middle">packages/core</text>
+        <text class="svg-s" x="505" y="211" text-anchor="middle">ledger · fees · entitlement</text>
+
+        <rect class="svg-box" x="412" y="280" width="186" height="70" rx="3"/>
+        <text class="svg-t" x="505" y="306" text-anchor="middle">PostgreSQL</text>
+        <text class="svg-s" x="505" y="323" text-anchor="middle">data + pg-boss queue</text>
+
+        <rect class="svg-box" x="214" y="280" width="146" height="70" rx="3"/>
+        <text class="svg-t" x="287" y="306" text-anchor="middle">apps/worker</text>
+        <text class="svg-s" x="287" y="323" text-anchor="middle">settlement · payouts</text>
+
+        <rect class="svg-box" x="666" y="60"  width="186" height="58" rx="3"/>
+        <text class="svg-t" x="759" y="84"  text-anchor="middle">Stream + R2</text>
+        <text class="svg-s" x="759" y="101" text-anchor="middle">private buckets</text>
+
+        <rect class="svg-box-d" x="666" y="170" width="186" height="58" rx="3"/>
+        <text class="svg-t" x="759" y="192" text-anchor="middle">iPay / PSP</text>
+        <text class="svg-s" x="759" y="209" text-anchor="middle">not integrated</text>
+
+        <g color="var(--rule-strong)">
+          <line class="svg-line" x1="162" y1="89"  x2="207" y2="89"  marker-end="url(#ah)"/>
+          <line class="svg-line" x1="360" y1="89"  x2="405" y2="89"  marker-end="url(#ah)"/>
+          <line class="svg-line" x1="598" y1="89"  x2="659" y2="89"  marker-end="url(#ah)"/>
+          <line class="svg-line" x1="505" y1="118" x2="505" y2="163" marker-end="url(#ah)"/>
+          <line class="svg-line" x1="505" y1="228" x2="505" y2="273" marker-end="url(#ah)"/>
+          <line class="svg-line" x1="412" y1="315" x2="367" y2="315" marker-end="url(#ah)"/>
+          <polyline class="svg-line-d" points="287,280 287,199 405,199" marker-end="url(#ah)"/>
+          <polyline class="svg-line-a" points="89,60 89,26 759,26 759,53" marker-end="url(#ah)"/>
+          <line class="svg-line" x1="598" y1="186" x2="659" y2="186" marker-end="url(#ah)"/>
+          <line class="svg-line" x1="666" y1="212" x2="605" y2="212" marker-end="url(#ah)"/>
+        </g>
+
+        <text class="svg-l" x="184" y="81"  text-anchor="middle">HTTPS</text>
+        <text class="svg-l" x="382" y="81"  text-anchor="middle">miss</text>
+        <text class="svg-l" x="628" y="81"  text-anchor="middle">mint URL</text>
+        <text class="svg-l" x="512" y="145">domain calls</text>
+        <text class="svg-l" x="512" y="249">rows + job,</text>
+        <text class="svg-l" x="512" y="262">one transaction</text>
+        <text class="svg-l" x="386" y="307" text-anchor="middle">job poll</text>
+        <text class="svg-l" x="297" y="192">same domain code</text>
+        <text class="svg-l" x="424" y="19"  text-anchor="middle">video and files stream direct to the client — never through the app server</text>
+        <text class="svg-l" x="632" y="179" text-anchor="middle">charge</text>
+        <text class="svg-l" x="632" y="228" text-anchor="middle">webhook</text>
+      </svg>
+    </div>
+    <figcaption><b>The database is the queue.</b> Because pg-boss stores jobs in Postgres, a settlement job is inserted in the same transaction as the ledger entries it will later act on — the failure mode where money is recorded but its follow-up work is lost cannot occur. The dashed line from the worker means it imports <code>packages/core</code> rather than calling the web app.</figcaption>
+  </figure>
+
+  <h3>Environments</h3>
+  <p>Three: local (Docker Compose — Postgres, MinIO standing in for R2, a mock PSP), staging (real PSP sandbox, real Stream, anonymised data), production. Migrations run forward-only in CI with a tested rollback for each. Staging must be able to run a full purchase-to-payout cycle before any production release touches the ledger.</p>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+<section id="schema">
+  <div class="sec-head"><div class="sec-mark">C</div><h2 class="sec-title">Database schema</h2></div>
+
+  <p>Conventions that apply everywhere: UUIDv7 primary keys (time-sortable, so they index well and leak no sequence count); <code>timestamptz</code> in UTC only; status enums rather than soft deletes except where retention law requires otherwise; and <strong>money is never a bare number</strong> — <code>amount_minor bigint</code> always travels with a <code>currency char(3)</code>.</p>
+
+  <div class="note risk">
+    <span class="n-label">Africa-specific correctness trap</span>
+    <p>XOF and XAF have <strong>zero</strong> decimal places. NGN (kobo) and GHS (pesewa) have two. Any code that assumes "minor units means cents, divide by 100" will be wrong by a factor of 100 across the entire UEMOA zone. The exponent comes from the <code>currencies</code> table, never from a constant.</p>
+  </div>
+
+  <h3>The financial core</h3>
+  <p>This is the part I would write first and change least. The rest of the schema can evolve; this cannot.</p>
+
+<pre><code><span class="cm">-- Money is always a pair, and the exponent is data, not a constant.</span>
+<span class="kw">CREATE TABLE</span> currencies (
+  code        char(3)  <span class="kw">PRIMARY KEY</span>,          <span class="cm">-- XOF, XAF, NGN, GHS</span>
+  minor_unit  smallint <span class="kw">NOT NULL CHECK</span> (minor_unit <span class="kw">BETWEEN</span> 0 <span class="kw">AND</span> 4),
+  is_active   boolean  <span class="kw">NOT NULL DEFAULT</span> true
+);
+
+<span class="kw">CREATE TYPE</span> ledger_account_kind <span class="kw">AS ENUM</span> (
+  'user_available',  <span class="cm">-- withdrawable</span>
+  'user_pending',    <span class="cm">-- earned, not yet releasable</span>
+  'platform_escrow', <span class="cm">-- captured, owed to somebody, not yet split</span>
+  'platform_revenue',
+  'psp_clearing',    <span class="cm">-- money at the payment provider</span>
+  'payout_payable'   <span class="cm">-- approved withdrawal, not yet paid out</span>
+);
+
+<span class="kw">CREATE TABLE</span> ledger_accounts (
+  id          uuid <span class="kw">PRIMARY KEY</span>,
+  kind        ledger_account_kind <span class="kw">NOT NULL</span>,
+  owner_type  text,                        <span class="cm">-- 'user' | 'store' | NULL for platform</span>
+  owner_id    uuid,
+  currency    char(3) <span class="kw">NOT NULL REFERENCES</span> currencies(code),
+  <span class="kw">UNIQUE</span> (kind, owner_type, owner_id, currency)
+);
+
+<span class="kw">CREATE TABLE</span> ledger_transactions (
+  id               uuid <span class="kw">PRIMARY KEY</span>,          <span class="cm">-- uuidv7</span>
+  kind             text <span class="kw">NOT NULL</span>,              <span class="cm">-- capture | settlement | refund | payout …</span>
+  occurred_at      timestamptz <span class="kw">NOT NULL DEFAULT</span> now(),
+  idempotency_key  text <span class="kw">UNIQUE</span>,
+  reverses_id      uuid <span class="kw">REFERENCES</span> ledger_transactions(id),
+  metadata         jsonb <span class="kw">NOT NULL DEFAULT</span> '{}'   <span class="cm">-- order_id, payment_id, actor…</span>
+);
+
+<span class="kw">CREATE TABLE</span> ledger_entries (
+  id              uuid <span class="kw">PRIMARY KEY</span>,
+  transaction_id  uuid    <span class="kw">NOT NULL REFERENCES</span> ledger_transactions(id),
+  account_id      uuid    <span class="kw">NOT NULL REFERENCES</span> ledger_accounts(id),
+  direction       smallint <span class="kw">NOT NULL CHECK</span> (direction <span class="kw">IN</span> (-1, 1)),
+  amount_minor    bigint   <span class="kw">NOT NULL CHECK</span> (amount_minor &gt; 0),
+  currency        char(3)  <span class="kw">NOT NULL REFERENCES</span> currencies(code)
+);
+
+<span class="cm">-- Append-only. The application role cannot rewrite history.</span>
+<span class="kw">REVOKE UPDATE</span>, <span class="kw">DELETE ON</span> ledger_entries, ledger_transactions <span class="kw">FROM</span> afrinext_app;
+
+<span class="cm">-- Every transaction balances, per currency. Deferred, so all entries</span>
+<span class="cm">-- can be inserted before the invariant is checked at COMMIT.</span>
+<span class="kw">CREATE CONSTRAINT TRIGGER</span> ledger_must_balance
+  <span class="kw">AFTER INSERT ON</span> ledger_entries
+  <span class="kw">DEFERRABLE INITIALLY DEFERRED</span>
+  <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> assert_transaction_balanced();
+
+<span class="cm">-- A cache, never the truth. Rebuilt and asserted nightly.</span>
+<span class="kw">CREATE TABLE</span> account_balances (
+  account_id    uuid <span class="kw">PRIMARY KEY REFERENCES</span> ledger_accounts(id),
+  balance_minor bigint <span class="kw">NOT NULL DEFAULT</span> 0,
+  entry_count   bigint <span class="kw">NOT NULL DEFAULT</span> 0,
+  updated_at    timestamptz <span class="kw">NOT NULL DEFAULT</span> now()
+);
+</code></pre>
+
+  <h3>Entities by module</h3>
+  <p>The brief listed candidate tables and asked me not to create them blindly. This is the filtered set, with the ones I would <em>not</em> build in phase 1 marked.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Module</th><th>Tables</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Identity</td>
+        <td class="mono">users, user_identities, sessions, profiles, roles, permissions, role_permissions, role_assignments, countries, currencies, locales</td>
+        <td><code>user_identities</code> holds one row per credential (phone, email, future OAuth) so a user can add a second login method without a schema change. <code>role_assignments</code> is scoped — see section D.</td>
+      </tr>
+      <tr>
+        <td>Stores</td>
+        <td class="mono">stores, store_settings, store_payout_accounts, <span class="chip hold">store_members</span></td>
+        <td>The <em>store</em> is the seller, not the user — orders reference <code>store_id</code>. <code>store_members</code> is deferred until multi-person stores are actually requested.</td>
+      </tr>
+      <tr>
+        <td>Catalog</td>
+        <td class="mono">categories, products, product_media, digital_assets, <span class="chip hold">product_variants</span>, <span class="chip hold">inventory_items</span>, <span class="chip hold">service_offerings</span></td>
+        <td>One <code>products</code> table with a <code>kind</code> discriminator plus kind-specific side tables. Variants and inventory arrive with physical goods; service offerings with the services module.</td>
+      </tr>
+      <tr>
+        <td>Learn</td>
+        <td class="mono">courses, course_modules, course_lessons, lesson_assets, course_enrollments, lesson_progress, <span class="chip hold">course_certificates</span></td>
+        <td>Certificates are a future feature in the brief and stay that way — but <code>enrollments</code> carries the completion data a certificate would need.</td>
+      </tr>
+      <tr>
+        <td>Commerce</td>
+        <td class="mono">carts, cart_items, checkout_groups, orders, order_items, order_fee_lines, order_events</td>
+        <td><code>order_fee_lines</code> is the frozen commission snapshot — the reason changing a commission rate never rewrites history.</td>
+      </tr>
+      <tr>
+        <td>Payments</td>
+        <td class="mono">payment_intents, payment_attempts, payment_events, refunds</td>
+        <td><code>payment_events</code> stores the raw provider payload with a <code>UNIQUE (provider, provider_event_id)</code> — this single constraint is what makes webhook replay harmless.</td>
+      </tr>
+      <tr>
+        <td>Ledger</td>
+        <td class="mono">ledger_accounts, ledger_transactions, ledger_entries, account_balances, settlement_holds, commission_rules, idempotency_keys</td>
+        <td>Above.</td>
+      </tr>
+      <tr>
+        <td>Payouts</td>
+        <td class="mono">withdrawal_requests, payout_batches, kyc_records</td>
+        <td>KYC tiers gate withdrawal ceilings. See section K.</td>
+      </tr>
+      <tr>
+        <td>Delivery</td>
+        <td class="mono">delivery_partners, delivery_orders, delivery_events, delivery_proofs, <span class="chip hold">cash_collections</span></td>
+        <td>Deferred to the physical-goods phase. <code>cash_collections</code> models the rider's cash float — see section I.</td>
+      </tr>
+      <tr>
+        <td>Referral</td>
+        <td class="mono">referral_programs, referral_codes, referral_attributions, referral_commissions</td>
+        <td>No <code>referral_relationships</code> tree — single level only, see section H.</td>
+      </tr>
+      <tr>
+        <td>Trust &amp; ops</td>
+        <td class="mono">reviews, notifications, audit_logs, platform_settings, feature_flags, <span class="chip hold">disputes</span>, <span class="chip hold">dispute_messages</span></td>
+        <td>Disputes arrive with physical goods, where they actually occur. Digital refunds in phase 1 are an admin action against an audited reversal.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <p>Tables from the brief I would <strong>not</strong> create: <code>referral_relationships</code> (implied by single-level attribution), <code>user_roles</code> (superseded by scoped <code>role_assignments</code>), and a separate <code>services</code> table (services are <code>products</code> with <code>kind = 'service'</code>).</p>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="authz">
+  <div class="sec-head"><div class="sec-mark">D</div><h2 class="sec-title">Authentication &amp; permissions</h2></div>
+
+  <h3>Authentication</h3>
+  <ul>
+    <li><strong>Phone + OTP is the primary method</strong>, email + password secondary. Phone penetration far exceeds email use in the target countries, and phone is already the identifier for mobile money.</li>
+    <li><strong>Database sessions, not JWTs.</strong> An opaque token in an <code>httpOnly; Secure; SameSite=Lax</code> cookie, resolved against <code>sessions</code> on each request. A JWT cannot be revoked before it expires; a session that can move money must be killable in one query.</li>
+    <li>Session rotation on privilege change, sign-in and password change. Shorter idle timeout for admin sessions than for shoppers.</li>
+    <li><strong>Step-up re-verification</strong> for money-sensitive actions: requesting a withdrawal, adding or changing a payout account, changing the phone number.</li>
+  </ul>
+
+  <h3>Authorization</h3>
+  <p>Roles are scoped, additive rows. A single user simultaneously being a buyer, an instructor, a rider in Niamey and staff on someone else's store is the normal case, not an edge case.</p>
+
+<pre><code><span class="kw">CREATE TABLE</span> role_assignments (
+  id          uuid <span class="kw">PRIMARY KEY</span>,
+  user_id     uuid <span class="kw">NOT NULL REFERENCES</span> users(id),
+  role_id     uuid <span class="kw">NOT NULL REFERENCES</span> roles(id),
+  scope_type  text <span class="kw">NOT NULL</span>,   <span class="cm">-- 'global' | 'store' | 'course' | 'zone'</span>
+  scope_id    uuid,             <span class="cm">-- NULL when scope_type = 'global'</span>
+  granted_by  uuid <span class="kw">REFERENCES</span> users(id),
+  granted_at  timestamptz <span class="kw">NOT NULL DEFAULT</span> now(),
+  <span class="kw">UNIQUE</span> (user_id, role_id, scope_type, scope_id)
+);
+</code></pre>
+
+  <p>Permissions are strings of the form <code>resource.action</code> — <code>product.publish</code>, <code>order.refund</code>, <code>withdrawal.approve</code>, <code>lesson.view</code>. Roles hold sets of them. Every check goes through one function:</p>
+
+<pre><code><span class="cm">// packages/core/authz — the only permission gate in the system.</span>
+<span class="kw">await</span> authorize(actor, <span class="mono">'product.publish'</span>, { type: <span class="mono">'store'</span>, id: storeId });
+</code></pre>
+
+  <div class="note">
+    <span class="n-label">Rule</span>
+    <p>IDOR is prevented by <strong>scoping the query</strong>, not by fetching a row and then checking it. Repository methods take the actor and constrain in SQL: a seller's order list is <code>WHERE store_id = ANY(actor.storeIds)</code>, never <code>findById()</code> followed by an ownership test. The second pattern works until someone forgets it once.</p>
+  </div>
+
+  <h4>Administrative roles are split by least privilege</h4>
+  <div class="tbl"><table>
+    <thead><tr><th>Role</th><th>Can</th><th>Cannot</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">support</td><td>Read users, orders, enrollments; resend receipts; open disputes</td><td>Touch the ledger, approve payouts, change commission rules</td></tr>
+      <tr><td class="mono">ops</td><td>Moderate catalog, verify stores, manage categories and delivery zones</td><td>Anything financial</td></tr>
+      <tr><td class="mono">finance</td><td>Approve withdrawals, issue refunds, post adjustments, view the ledger</td><td>Edit catalog, change permissions, alter user identities</td></tr>
+      <tr><td class="mono">superadmin</td><td>Role and settings administration</td><td>Approve their own withdrawal — a hard, code-level self-approval block</td></tr>
+    </tbody>
+  </table></div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+<section id="money">
+  <div class="sec-head"><div class="sec-mark">E</div><h2 class="sec-title">Financial architecture</h2></div>
+
+  <p>The wallet is not a balance field with rules around it. It is a <strong>double-entry ledger</strong>, and the balance is a derived quantity that we cache for speed and verify continuously.</p>
+
+  <h3>The four invariants</h3>
+  <ol>
+    <li><strong>Entries are immutable.</strong> No UPDATE, no DELETE — enforced by revoked grants, not by convention. A mistake is corrected by posting a compensating transaction linked through <code>reverses_id</code>.</li>
+    <li><strong>Every transaction balances.</strong> Per transaction, per currency, the signed sum of entries is zero. A deferred constraint trigger rejects the COMMIT otherwise. Money cannot be created or destroyed by application code.</li>
+    <li><strong>Balances are cached, not authoritative.</strong> <code>account_balances</code> is updated inside the same transaction under a row lock; a nightly job recomputes <code>SUM(direction × amount_minor)</code> per account and alarms on any drift.</li>
+    <li><strong>No floating point, anywhere.</strong> <code>bigint</code> minor units and a currency code, from the database through the API to the rendered price.</li>
+  </ol>
+
+  <h3>Pending versus available</h3>
+  <p>These are not statuses on a row. They are <strong>two different accounts</strong>, and "funds becoming withdrawable" is a transfer between them. That means the question "why is my money still pending?" is answerable by pointing at a specific ledger transaction and its <code>settlement_holds</code> row, rather than by reading application logic.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 940 340" role="img" aria-label="A ten thousand XOF course sale: the captured amount moves from psp_clearing into platform_escrow, and at settlement is split into seller_available 8200, platform_revenue 1620 and ambassador_pending 180, which re-sums exactly to the gross.">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <line class="svg-line-d" x1="668" y1="14" x2="668" y2="300" color="var(--rule-strong)"/>
+        <text class="svg-l" x="340" y="320" text-anchor="middle">1 · at capture</text>
+        <text class="svg-l" x="800" y="320" text-anchor="middle">2 · at settlement</text>
+
+        <rect class="svg-box-d" x="16"  y="132" width="150" height="58" rx="3"/>
+        <text class="svg-t" x="91"  y="156" text-anchor="middle">Buyer</text>
+        <text class="svg-s" x="91"  y="173" text-anchor="middle">mobile money</text>
+
+        <rect class="svg-box" x="246" y="132" width="160" height="58" rx="3"/>
+        <text class="svg-t" x="326" y="155" text-anchor="middle">psp_clearing</text>
+        <text class="svg-n" x="326" y="175" text-anchor="middle">10 000</text>
+
+        <rect class="svg-box-a" x="486" y="132" width="160" height="58" rx="3"/>
+        <text class="svg-t" x="566" y="155" text-anchor="middle">platform_escrow</text>
+        <text class="svg-n" x="566" y="175" text-anchor="middle">10 000</text>
+        <text class="svg-l" x="566" y="120" text-anchor="middle">settlement_holds.release_at reached</text>
+
+        <rect class="svg-box-m" x="726" y="32"  width="198" height="56" rx="3"/>
+        <text class="svg-t" x="825" y="55"  text-anchor="middle">seller_available</text>
+        <text class="svg-n" x="825" y="75"  text-anchor="middle">+8 200</text>
+
+        <rect class="svg-box-m" x="726" y="132" width="198" height="56" rx="3"/>
+        <text class="svg-t" x="825" y="155" text-anchor="middle">platform_revenue</text>
+        <text class="svg-n" x="825" y="175" text-anchor="middle">+1 620</text>
+
+        <rect class="svg-box-m" x="726" y="232" width="198" height="56" rx="3"/>
+        <text class="svg-t" x="825" y="255" text-anchor="middle">ambassador_pending</text>
+        <text class="svg-n" x="825" y="275" text-anchor="middle">+180</text>
+
+        <g color="var(--rule-strong)">
+          <line class="svg-line" x1="166" y1="161" x2="241" y2="161" marker-end="url(#ah2)"/>
+          <line class="svg-line" x1="406" y1="161" x2="481" y2="161" marker-end="url(#ah2)"/>
+        </g>
+        <g color="var(--ledger)">
+          <polyline class="svg-line-m" points="646,148 692,148 692,60 721,60" marker-end="url(#ah2)"/>
+          <line     class="svg-line-m" x1="646" y1="161" x2="721" y2="161" marker-end="url(#ah2)"/>
+          <polyline class="svg-line-m" points="646,174 692,174 692,260 721,260" marker-end="url(#ah2)"/>
+        </g>
+
+        <text class="svg-l" x="203" y="152" text-anchor="middle">capture</text>
+        <text class="svg-l" x="443" y="152" text-anchor="middle">hold</text>
+      </svg>
+    </div>
+    <figcaption><b>One 10 000 XOF course sale, at an 18% platform commission with a 10% referral program.</b> Every arrow is one balanced ledger transaction. Note where the referral is drawn from: 180 is 10% of the <em>platform's</em> 1 800, not of the gross — so referral cost can never exceed what the platform earned on that sale. The ambassador's share lands in <code>pending</code> and is released separately once the buyer's refund window closes. For physical goods the seller's share also lands in <code>seller_pending</code> and moves to <code>available</code> on a second transaction when the delivery hold expires.</figcaption>
+  </figure>
+
+  <h3>Rounding: the residual rule</h3>
+  <p>Commission percentages rarely divide cleanly into whole francs. The rule is fixed and applied everywhere:</p>
+  <ol>
+    <li>Compute every non-seller line (platform, referral, delivery) in minor units, rounding <strong>half up</strong>.</li>
+    <li>The seller's line is <code>gross − Σ(all other lines)</code>, never computed independently.</li>
+  </ol>
+  <p>The split therefore re-sums to the gross by construction. No minor unit is ever created or lost to rounding, and the residual consistently favours the seller — a defensible position if it is ever questioned.</p>
+
+  <h3>When money moves</h3>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 700 480" role="img" aria-label="Order state machine from created through awaiting payment, paid into escrow, fulfilled, hold elapsed, to settled, with branches to payment failed and refunded; ledger entries are posted on the payment, refund and settlement transitions only.">
+        <defs>
+          <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect class="svg-box"   x="230" y="16"  width="220" height="44" rx="3"/>
+        <text class="svg-t" x="340" y="43"  text-anchor="middle">created</text>
+
+        <rect class="svg-box"   x="230" y="96"  width="220" height="44" rx="3"/>
+        <text class="svg-t" x="340" y="123" text-anchor="middle">awaiting_payment</text>
+
+        <rect class="svg-box-a" x="230" y="176" width="220" height="44" rx="3"/>
+        <text class="svg-t" x="340" y="203" text-anchor="middle">paid · funds in escrow</text>
+
+        <rect class="svg-box"   x="230" y="256" width="220" height="44" rx="3"/>
+        <text class="svg-t" x="340" y="283" text-anchor="middle">fulfilled</text>
+
+        <rect class="svg-box"   x="230" y="336" width="220" height="44" rx="3"/>
+        <text class="svg-t" x="340" y="363" text-anchor="middle">hold elapsed</text>
+
+        <rect class="svg-box-m" x="230" y="416" width="220" height="44" rx="3"/>
+        <text class="svg-t" x="340" y="443" text-anchor="middle">settled</text>
+
+        <rect class="svg-box-d" x="20" y="96"  width="140" height="44" rx="3"/>
+        <text class="svg-t" x="90"  y="123" text-anchor="middle">payment_failed</text>
+
+        <rect class="svg-box-d" x="20" y="176" width="140" height="44" rx="3"/>
+        <text class="svg-t" x="90"  y="203" text-anchor="middle">refunded</text>
+
+        <g color="var(--rule-strong)">
+          <line class="svg-line" x1="340" y1="60"  x2="340" y2="89"  marker-end="url(#ah3)"/>
+          <line class="svg-line" x1="340" y1="220" x2="340" y2="249" marker-end="url(#ah3)"/>
+          <line class="svg-line" x1="340" y1="300" x2="340" y2="329" marker-end="url(#ah3)"/>
+          <line class="svg-line" x1="230" y1="118" x2="167" y2="118" marker-end="url(#ah3)"/>
+        </g>
+        <g color="var(--ledger)">
+          <line class="svg-line-m" x1="340" y1="140" x2="340" y2="169" marker-end="url(#ah3)"/>
+          <line class="svg-line-m" x1="340" y1="380" x2="340" y2="409" marker-end="url(#ah3)"/>
+          <line class="svg-line-m" x1="230" y1="198" x2="167" y2="198" marker-end="url(#ah3)"/>
+          <polyline class="svg-line-m" points="230,278 200,278 200,211 167,211" marker-end="url(#ah3)"/>
+        </g>
+
+        <text class="svg-l"  x="197" y="110" text-anchor="middle">declined</text>
+        <text class="svg-lm" x="197" y="190" text-anchor="middle">refund</text>
+
+        <text class="svg-l"  x="462" y="82">buyer confirms checkout</text>
+        <text class="svg-lm" x="462" y="156">provider webhook, verified</text>
+        <text class="svg-lm" x="462" y="169">posts: psp_clearing → escrow</text>
+        <text class="svg-l"  x="462" y="230">digital: access granted at once</text>
+        <text class="svg-l"  x="462" y="243">physical: delivery confirmed</text>
+        <text class="svg-l"  x="462" y="316">refund window, T + N days</text>
+        <text class="svg-lm" x="462" y="390">settlement job posts</text>
+        <text class="svg-lm" x="462" y="403">the split</text>
+      </svg>
+    </div>
+    <figcaption><b>Green transitions post ledger entries; grey ones only change order state.</b> Money enters escrow when the provider webhook is verified — never when the buyer returns from a redirect. A dispute does not get its own state: it <em>extends</em> the hold by pushing <code>settlement_holds.release_at</code> forward, so disputed money simply never reaches <code>available</code> while the dispute is open.</figcaption>
+  </figure>
+
+  <h3>The commission engine</h3>
+  <p>Rules are data. Resolution happens once, at order creation, and the result is frozen.</p>
+
+<pre><code><span class="kw">CREATE TABLE</span> commission_rules (
+  id              uuid <span class="kw">PRIMARY KEY</span>,
+  transaction_type text <span class="kw">NOT NULL</span>,   <span class="cm">-- digital | course | physical | service | delivery | referral</span>
+  country_code    char(2),               <span class="cm">-- NULL = any</span>
+  category_id     uuid,                  <span class="cm">-- NULL = any</span>
+  store_id        uuid,                  <span class="cm">-- NULL = any; a negotiated rate for one seller</span>
+  rate_bps        integer,               <span class="cm">-- basis points; 1800 = 18.00%</span>
+  fixed_minor     bigint,
+  currency        char(3) <span class="kw">REFERENCES</span> currencies(code),
+  priority        integer <span class="kw">NOT NULL</span>,
+  effective_from  timestamptz <span class="kw">NOT NULL</span>,
+  effective_to    timestamptz
+);
+</code></pre>
+
+  <p>Resolution is most-specific-wins, broken by <code>priority</code> and then by <code>effective_from</code> — deterministic, and unit-testable in isolation. The resolved outcome is written to <code>order_fee_lines</code> with the <code>rule_id</code>, the basis and the computed amount.</p>
+
+  <div class="note good">
+    <span class="n-label">Why the snapshot matters</span>
+    <p>Raise the platform commission from 18% to 20% next quarter and <strong>no historical order changes</strong>. Every past settlement can still be re-derived from its own fee lines, and any seller asking "why did I receive this amount?" gets an answer that references the rule that was live at the moment they sold. A system that recomputes fees from current rules cannot answer that question truthfully.</p>
+  </div>
+
+  <h3>Withdrawals</h3>
+  <ol>
+    <li>Request → validated against KYC tier ceiling, minimum amount, available balance, payout-account cooling period, and absence of open disputes.</li>
+    <li>Approved (automatically under a configured threshold, by <code>finance</code> above it) → ledger posts <code>user_available → payout_payable</code>. The money leaves the withdrawable balance at approval, so it cannot be double-spent while the payout is in flight.</li>
+    <li>Payout executed through the provider → on confirmation, <code>payout_payable → psp_clearing</code>.</li>
+    <li>On failure, a compensating transaction returns the amount to <code>user_available</code> and the request is marked failed with the provider's reason.</li>
+  </ol>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+<section id="market">
+  <div class="sec-head"><div class="sec-mark">F</div><h2 class="sec-title">Marketplace architecture</h2></div>
+
+  <h3>One products table, three kinds</h3>
+  <p><code>products.kind ∈ {physical, digital, service}</code>, with kind-specific side tables (<code>product_variants</code> + <code>inventory_items</code>, <code>digital_assets</code>, <code>service_offerings</code>). Not three separate tables — because carts, order items, reviews, search, favourites and fee resolution all need a single polymorphic target, and a three-table design forces a nullable triple foreign key into <code>order_items</code> that every query then has to unpack.</p>
+
+  <p>What differs between kinds is <strong>fulfilment and hold policy</strong>, and that lives in one place:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Kind</th><th>Fulfilled when</th><th>Default hold</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">digital</td><td>Payment verified</td><td class="num">24 h</td></tr>
+      <tr><td class="mono">course</td><td>Enrollment created</td><td class="num">72 h</td></tr>
+      <tr><td class="mono">service</td><td>Buyer confirms, or auto after N days</td><td class="num">7 d</td></tr>
+      <tr><td class="mono">physical</td><td>Delivery confirmed with proof</td><td class="num">7 d</td></tr>
+    </tbody>
+  </table></div>
+  <p>These are defaults in <code>platform_settings</code>, overridable per country and per category from the admin console — not constants in code.</p>
+
+  <h3>Stores are the seller</h3>
+  <p>Orders reference <code>store_id</code>, never <code>user_id</code>. This costs nothing now and buys three things later: a user can run more than one store; a store can gain staff without reshaping the order history; and a store can be transferred or suspended without touching the person's account, wallet or other roles.</p>
+
+  <h3>Multi-store carts</h3>
+  <p>A buyer will put a course from Dakar and a bag of shea butter from Bamako in one cart. At checkout the cart splits into <strong>one order per store</strong>, grouped under a <code>checkout_group_id</code>, paid by a single payment intent. Each order then settles independently on its own timeline — the course in 72 hours, the shea butter when it is delivered. Attempting to keep them as one order forces every fulfilment and refund decision to be all-or-nothing.</p>
+
+  <h3>Search</h3>
+  <p>Postgres full-text search with a generated <code>tsvector</code> column, plus <code>pg_trgm</code> for typo tolerance, and a French text-search configuration alongside English. Facets come from ordinary indexed columns. Move to Meilisearch or Typesense when the catalog passes roughly 100 000 rows or when faceted search gets heavy — not before, and not to Elasticsearch, which is an operational burden this team should not carry at launch.</p>
+
+  <h3>Reviews</h3>
+  <p>Only from a verified purchase: <code>reviews.order_item_id</code> is a required foreign key, unique per buyer per item. This kills fake-review farming structurally rather than through moderation, which matters when reviews feed seller ranking and seller ranking feeds income.</p>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="learn">
+  <div class="sec-head"><div class="sec-mark">G</div><h2 class="sec-title">Afrinext Learn &amp; video access</h2></div>
+
+  <p>Structure is conventional — <code>courses → course_modules → course_lessons → lesson_assets</code>, with lesson kinds <code>video | pdf | text</code>. The interesting parts are entitlement and bandwidth.</p>
+
+  <h3>Entitlement is checked at token-mint time, on every request</h3>
+  <ol>
+    <li>The player asks <code>GET /api/v1/learn/lessons/:id/playback</code>.</li>
+    <li>The server resolves the actor, checks <code>course_enrollments</code> for a live entitlement (and <code>access_expires_at</code> if the course is time-limited), and calls <code>authorize(actor, 'lesson.view', {course})</code>.</li>
+    <li>Only then does it mint a <strong>signed Stream token, scoped to that user, valid 2–5 minutes</strong>, and return an HLS manifest URL.</li>
+    <li>The player refreshes the token mid-playback as it nears expiry.</li>
+    <li>Every mint is written to <code>audit_logs</code> — which also gives instructors real "who watched what" analytics for free.</li>
+  </ol>
+
+  <div class="note block">
+    <span class="n-label">Never</span>
+    <p>Paid course content never has a permanent public URL. Not in a public bucket, not behind an unguessable path, not with a long-lived signed URL. An unguessable URL is a password that gets forwarded on WhatsApp.</p>
+  </div>
+
+  <h3>Downloads are a per-asset instructor choice</h3>
+  <p><code>lesson_assets.downloadable boolean</code>, set by the instructor per asset. When true, downloading issues a separate short-TTL signed URL, logged, and rate-limited per user. When false, no download URL is ever minted — the flag is enforced server-side at mint time, not by hiding a button.</p>
+
+  <h3>What is realistic about protection</h3>
+  <div class="note risk">
+    <span class="n-label">Be honest with instructors</span>
+    <p>Signed short-lived URLs plus a burned-in overlay carrying the viewer's phone number make casual re-sharing traceable and inconvenient. They do <strong>not</strong> prevent a determined screen recording. Genuine prevention requires Widevine/FairPlay DRM, which is expensive and out of scope here. Instructors should be told this plainly rather than sold an assurance the platform cannot honour.</p>
+  </div>
+
+  <h3>Progress and resume</h3>
+  <p><code>lesson_progress(enrollment_id, lesson_id, position_seconds, furthest_seconds, completed_at)</code>, written by a heartbeat every ~15 seconds, throttled, and flushed on pause and on unload via <code>sendBeacon</code>. <code>course_enrollments.last_lesson_id</code> gives cross-device resume: the learner picks up on their phone exactly where they stopped on a shared laptop. Keeping <code>furthest_seconds</code> separate from <code>position_seconds</code> means scrubbing backwards does not destroy completion state.</p>
+
+  <h3>Built for the actual network</h3>
+  <ul>
+    <li>An encoding ladder that <strong>starts at 240p</strong>, not at 720p. Adaptive bitrate matters far more here than peak quality.</li>
+    <li>An audio-only rendition for lecture-style courses, selectable by the learner to save data.</li>
+    <li>Progress writes are a few dozen bytes and batched — a learner should never lose their place because the heartbeat could not get through.</li>
+    <li>Where the instructor permits downloads, offline viewing is the difference between a finished course and an abandoned one.</li>
+  </ul>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="referral">
+  <div class="sec-head"><div class="sec-mark">H</div><h2 class="sec-title">Afrinext Network (referrals)</h2></div>
+
+  <p>The brief's principle — pay for real economic activity, never for recruitment — is enforced structurally here, not by policy text.</p>
+
+  <h3>Attribution</h3>
+  <ul>
+    <li>An ambassador gets a code; the link is <code>/r/:code</code>, which sets a first-party cookie (90 days) and redirects.</li>
+    <li>At signup the cookie is consumed into <code>referral_attributions(referrer_user_id, referred_user_id, program_id, attributed_at, expires_at)</code>, with <code>UNIQUE(referred_user_id)</code>.</li>
+    <li><strong>First touch, immutable.</strong> The first ambassador to introduce someone keeps the attribution. Last-touch invites a scramble to overwrite each other's referrals just before a purchase.</li>
+  </ul>
+
+  <h3>Qualification</h3>
+  <p>A commission is created only when a <strong>settled ledger transaction</strong> of a configured type exists — not at signup, not on profile completion, not on "becoming active". There is no code path that pays for a registration, because commissions are computed by a job that reads settled transactions and has no other input.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Configurable per program</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td>Basis</td><td class="mono">platform_revenue</td></tr>
+      <tr><td>Rate</td><td class="mono">1000 bps (10%)</td></tr>
+      <tr><td>Duration from attribution</td><td class="mono">365 days</td></tr>
+      <tr><td>Per-referral lifetime cap</td><td class="mono">150 000 XOF</td></tr>
+      <tr><td>Eligible transaction types</td><td class="mono">course, digital, physical, service</td></tr>
+      <tr><td>Country scope</td><td class="mono">NE, ML, BF …</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="decision">
+    <span class="d-label">Recommendation, needs your sign-off</span>
+    <h3>Single level only — no downline of a downline</h3>
+    <dl>
+      <dt>Why</dt>
+      <dd>Multi-level structures are where recruitment-scheme regulatory attention concentrates, and they contradict the brief's own stated principle. One level keeps the model explainable to a regulator in one sentence: "we share part of our commission with whoever introduced the seller."</dd>
+      <dt>Instead of</dt>
+      <dd>Two or more tiers, which measurably increases ambassador enthusiasm and measurably increases legal exposure.</dd>
+      <dt>Trade-off</dt>
+      <dd>Slower ambassador-network growth than a tiered scheme would produce.</dd>
+      <dt>Note</dt>
+      <dd>Because the commission basis is platform revenue, the payout is bounded by definition — the platform can never owe more in referral than it earned on the sale. That guardrail is what makes the program safe to run at all, and it disappears if the basis is ever changed to gross.</dd>
+    </dl>
+  </div>
+
+  <h3>Fraud controls</h3>
+  <ul>
+    <li>Self-referral detection across phone number, device fingerprint, payout account and payment instrument.</li>
+    <li>Referral commissions land in <code>ambassador_pending</code> and release only after the underlying order clears its refund window — so a wash sale that is refunded never pays out.</li>
+    <li>Velocity limits per ambassador, with automatic hold and review above configured thresholds.</li>
+    <li>Circular attribution (A refers B refers A) rejected at write time.</li>
+  </ul>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="delivery">
+  <div class="sec-head"><div class="sec-mark">I</div><h2 class="sec-title">Delivery architecture</h2></div>
+
+  <p>Deferred to the physical-goods phase, but designed now because it constrains the order state machine.</p>
+
+  <h4>State machine</h4>
+  <p><code>requested → offered → accepted → picked_up → in_transit → delivered</code>, with <code>failed</code> and <code>cancelled</code> as terminal branches. Every transition writes a <code>delivery_events</code> row with actor, timestamp and GPS point — the audit trail is the record, the current status is a cached projection of it.</p>
+
+  <h4>Dispatch</h4>
+  <p>Offers broadcast to eligible partners in the zone; first acceptance wins via a conditional update (<code>UPDATE … WHERE status = 'offered'</code>) so two riders can never both hold the same job. Unaccepted offers expire and re-broadcast with a widening radius.</p>
+
+  <h4>Proof of delivery</h4>
+  <p>A short OTP shown in the buyer's app and entered by the rider, plus an optional photo and the GPS fix at completion. The OTP is what flips the order to <code>fulfilled</code> and starts the settlement hold — a rider cannot self-declare a delivery into existence.</p>
+
+  <h4>Riders lose signal constantly</h4>
+  <p>The rider interface queues state transitions locally and replays them with idempotency keys when connectivity returns. A transition applied twice must be a no-op; a transition applied out of order must be rejected by the state machine, not silently accepted.</p>
+
+  <div class="note risk">
+    <span class="n-label">Cash on delivery is a bigger problem than it looks</span>
+    <p>COD is the dominant payment method for physical goods across much of the region, and it inverts the money flow: the rider collects cash, so the platform is owed money by the rider rather than holding the buyer's funds. That needs a <code>cash_collections</code> liability account per rider, a deposit and reconciliation process, float limits, and a real operational routine — it is a project, not a checkbox. <strong>My recommendation is to launch physical goods prepaid-only</strong> and add COD as its own phase with its own design.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+<section id="api">
+  <div class="sec-head"><div class="sec-mark">J</div><h2 class="sec-title">API architecture</h2></div>
+
+  <p>Two entry styles, one implementation. <strong>Server Actions</strong> for first-party form mutations (fewer round trips, progressive enhancement) and <strong>versioned REST</strong> at <code>/api/v1/*</code> for everything a future native app, an ambassador tool or a partner integration would consume. Both call the same <code>packages/core</code> services. Logic is never duplicated between them, and neither one is allowed a private path to the database.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Domain</th><th>Representative endpoints</th></tr></thead>
+    <tbody>
+      <tr><td>auth</td><td class="mono">POST /auth/otp/request · /auth/otp/verify · /auth/session · DELETE /auth/session</td></tr>
+      <tr><td>me</td><td class="mono">GET /me · PATCH /me · GET /me/roles · GET /me/orders · GET /me/enrollments</td></tr>
+      <tr><td>stores</td><td class="mono">POST /stores · GET /stores/:slug · PATCH /stores/:id · GET /stores/:id/analytics</td></tr>
+      <tr><td>catalog</td><td class="mono">GET /products · GET /products/:slug · POST /stores/:id/products · POST /products/:id/publish</td></tr>
+      <tr><td>search</td><td class="mono">GET /search?q&amp;kind&amp;category&amp;country&amp;cursor</td></tr>
+      <tr><td>cart · checkout</td><td class="mono">GET/POST /cart/items · POST /checkout · GET /checkout/:groupId</td></tr>
+      <tr><td>orders</td><td class="mono">GET /orders · GET /orders/:id · POST /orders/:id/cancel · POST /orders/:id/refund</td></tr>
+      <tr><td>payments</td><td class="mono">POST /payments/intents · GET /payments/:id · POST /webhooks/:provider</td></tr>
+      <tr><td>wallet</td><td class="mono">GET /wallet · GET /wallet/transactions · POST /wallet/withdrawals · GET /wallet/withdrawals/:id</td></tr>
+      <tr><td>learn</td><td class="mono">GET /courses/:slug · GET /learn/lessons/:id · POST /learn/lessons/:id/progress · GET /learn/lessons/:id/playback</td></tr>
+      <tr><td>delivery</td><td class="mono">GET /delivery/offers · POST /delivery/:id/accept · POST /delivery/:id/transition</td></tr>
+      <tr><td>referrals</td><td class="mono">GET /referrals/me · GET /referrals/commissions · GET /r/:code</td></tr>
+      <tr><td>admin</td><td class="mono">/admin/* — mirrors the above under <code>admin.*</code> permissions</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Conventions</h4>
+  <ul>
+    <li><strong><code>Idempotency-Key</code> is required</strong> on every POST that moves money. The key, the request hash and the resulting transaction id are stored; a replay returns the original response rather than acting twice.</li>
+    <li>Cursor pagination everywhere (<code>?cursor=&amp;limit=</code>). Offset pagination on a growing catalog silently skips and duplicates rows.</li>
+    <li>Responses are <code>{ data, meta }</code>; errors are <code>{ error: { code, message, fields } }</code> with <strong>stable machine-readable codes</strong> — clients must never branch on message text, which is localised.</li>
+    <li>Money crosses the wire as <code>{ amountMinor: 8200, currency: "XOF" }</code>. Never a formatted string, never a float.</li>
+    <li>Rate limits by route class: strictest on OTP send and verify, then auth, then write, then read.</li>
+    <li>Webhooks return <code>200</code> as fast as possible after signature verification and persistence. All work happens in the worker.</li>
+  </ul>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="security">
+  <div class="sec-head"><div class="sec-mark">K</div><h2 class="sec-title">Security architecture</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Control</th><th>Where it is enforced</th></tr></thead>
+    <tbody>
+      <tr><td>Authentication</td><td>Opaque session tokens in <code>httpOnly; Secure; SameSite=Lax</code> cookies, resolved server-side. Rotated on sign-in and privilege change. Argon2id for the password path.</td></tr>
+      <tr><td>Step-up verification</td><td>Fresh OTP required for withdrawal requests, payout-account changes and phone changes — regardless of session age.</td></tr>
+      <tr><td>Authorization</td><td>One <code>authorize()</code> choke point in <code>packages/core/authz</code>. No route handler makes its own decision.</td></tr>
+      <tr><td>IDOR</td><td>Prevented by scoping queries to the actor in SQL, not by post-fetch ownership checks.</td></tr>
+      <tr><td>Input validation</td><td>Zod at every boundary; database CHECK and FK constraints as the last line. Frontend validation is a convenience and is never trusted.</td></tr>
+      <tr><td>Rate limiting</td><td>Per IP and per user, at the edge and in the app. Hardest limits on OTP send/verify, login, withdrawal, and playback-token minting.</td></tr>
+      <tr><td>Webhook integrity</td><td>Signature verified against the <strong>raw</strong> body before parsing; timestamp freshness window; <code>UNIQUE (provider, provider_event_id)</code> makes replay a no-op.</td></tr>
+      <tr><td>File access</td><td>Private buckets only. Short-TTL signed URLs minted after an entitlement check. Every mint audited.</td></tr>
+      <tr><td>Payment card data</td><td>Never touched. Provider-hosted collection only, which keeps PCI scope at SAQ-A. This is a deliberate architectural constraint, not an oversight.</td></tr>
+      <tr><td>Audit</td><td>Append-only <code>audit_logs</code> for every admin action and every financial state change: actor, action, target, before/after, IP, user agent, request id.</td></tr>
+      <tr><td>Fraud</td><td>Velocity checks, device fingerprinting, a cooling period before first withdrawal to a newly added payout account, and automatic hold-and-review thresholds.</td></tr>
+      <tr><td>Separation of duty</td><td>No user can approve a withdrawal to an account they control. Enforced in code, not in policy.</td></tr>
+      <tr><td>Secrets</td><td>Environment only, distinct per environment, rotated. Sandbox and production provider credentials never coexist in one config.</td></tr>
+      <tr><td>Data protection</td><td>PII minimised and encrypted at rest; retention policy per data class; export and deletion paths built for Nigeria's NDPR, Ghana's Data Protection Act and UEMOA national regimes.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note block">
+    <span class="n-label">Explicitly out of scope, and named as such</span>
+    <p>DRM for video (Widevine/FairPlay). A third-party penetration test — which should be scheduled and budgeted <em>before</em> public launch, not after. Formal PCI-DSS certification beyond SAQ-A. Automated AML transaction-monitoring beyond threshold rules.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="structure">
+  <div class="sec-head"><div class="sec-mark">L</div><h2 class="sec-title">Project structure</h2></div>
+
+  <p>pnpm workspaces plus Turborepo. The directory layout is not cosmetic — it is what physically prevents domain logic from leaking into the framework.</p>
+
+<pre><code>afrinext/
+├─ apps/
+│  ├─ web/                 <span class="cm">Next.js 16 — pages, route handlers, server actions</span>
+│  └─ worker/              <span class="cm">long-running pg-boss consumers</span>
+├─ packages/
+│  ├─ core/                <span class="cm">framework-free domain logic — the application</span>
+│  │  ├─ money/            <span class="cm">Money type, minor units, rounding, formatting</span>
+│  │  ├─ ledger/           <span class="cm">posting, balances, reconciliation</span>
+│  │  ├─ commissions/      <span class="cm">rule resolution, fee snapshots</span>
+│  │  ├─ orders/           <span class="cm">order + settlement state machines</span>
+│  │  ├─ payments/         <span class="cm">PaymentProvider interface + registry</span>
+│  │  ├─ learn/            <span class="cm">entitlement, playback tokens, progress</span>
+│  │  ├─ delivery/
+│  │  ├─ referrals/
+│  │  └─ authz/            <span class="cm">permissions, authorize()</span>
+│  ├─ db/                  <span class="cm">Drizzle schema, SQL migrations, seeds</span>
+│  ├─ providers/           <span class="cm">psp-ipay, psp-manual, storage-r2, video-stream, sms, email</span>
+│  ├─ ui/                  <span class="cm">design system (seeded from today's prototype)</span>
+│  ├─ i18n/                <span class="cm">fr / en message catalogs, shared with the worker</span>
+│  └─ config/              <span class="cm">tsconfig, eslint, tailwind preset</span>
+├─ docs/
+│  ├─ architecture/        <span class="cm">this document</span>
+│  ├─ adr/                 <span class="cm">architecture decision records, numbered</span>
+│  └─ runbooks/            <span class="cm">reconciliation drift, stuck payout, failed webhook</span>
+└─ infra/                  <span class="cm">docker, compose, CI, deploy</span>
+</code></pre>
+
+  <div class="note good">
+    <span class="n-label">The rule that makes this worth doing</span>
+    <p><code>packages/core</code> may import <code>packages/db</code>. It may <strong>not</strong> import anything from <code>next</code>, and this is enforced by an ESLint boundary rule in CI, not by discipline. The consequence: the ledger and commission engine are testable in milliseconds without a server, the worker runs identical business logic to the web app, and extracting a standalone API service later is a packaging change rather than a rewrite.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+<section id="roadmap">
+  <div class="sec-head"><div class="sec-mark">M</div><h2 class="sec-title">Development roadmap</h2></div>
+
+  <p>Phases are ordered by <em>irreversibility</em>, not by visibility. The money spine comes before any product feature, because it is the thing that cannot be retrofitted. Durations assume two to three engineers and are estimates, not commitments.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Phase</th><th>Scope</th><th>Exit criterion — the thing that must demonstrably work</th><th>Est.</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">P0<br>Foundations</td>
+        <td>Monorepo, Postgres, Drizzle schema v1, auth (phone OTP + email), scoped RBAC, i18n, design system extraction, CI, observability skeleton</td>
+        <td>A user registers by phone, signs in, switches language. CI runs typecheck, lint, tests and migrations forward and back on every commit.</td>
+        <td class="num">2 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P1<br>Money spine</td>
+        <td><code>money</code>, <code>ledger</code>, commission engine, idempotency, settlement holds, reconciliation job, admin ledger viewer</td>
+        <td>Property-based tests over 10 000 randomised operations prove every transaction balances and the cached balance equals the sum of entries. An injected drift is caught by the reconciliation job. <strong>No product feature is built before this passes.</strong></td>
+        <td class="num">3 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P2<br>Stores &amp; catalog</td>
+        <td>Store creation, digital products and courses as products, categories, media upload to R2, public storefront and product pages, search</td>
+        <td>A seller publishes a paid digital product that renders server-side at a public URL with correct metadata and appears in search.</td>
+        <td class="num">3 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P3<br>Cycle closed, no PSP</td>
+        <td>Cart, checkout, orders, fee snapshots, and a <code>ManualTransferProvider</code> where an admin confirms receipt</td>
+        <td>The complete economic cycle runs end to end without any payment integration: buyer orders → admin confirms → ledger settles → seller sees earnings → requests withdrawal → finance marks it paid. <strong>This de-risks everything that depends on iPay.</strong></td>
+        <td class="num">3 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P4<br>iPay</td>
+        <td>Real provider implementation behind the existing interface</td>
+        <td>In sandbox: charge created, webhook signature verified, status query reconciled, refund executed, replay proven harmless. <span class="chip hold">gated</span> Cannot start until the documentation and sandbox credentials in section P are in hand.</td>
+        <td class="num">unknown</td>
+      </tr>
+      <tr>
+        <td class="mono">P5<br>Afrinext Learn</td>
+        <td>Modules, lessons, Stream upload, entitlement, signed playback, progress and resume, download flag, learner interface</td>
+        <td>An automated test proves a paid lesson is unplayable without entitlement, and that resume works across two devices for one learner.</td>
+        <td class="num">4 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P6<br>Wallet &amp; payouts</td>
+        <td>Wallet interface, KYC tiers, withdrawal flow with step-up auth, payout batches, finance console</td>
+        <td>Full withdrawal lifecycle including a provider failure that correctly reverses back to available balance.</td>
+        <td class="num">3 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P7<br>Network</td>
+        <td>Referral programs, attribution, qualification, commissions, ambassador dashboard, fraud checks</td>
+        <td>Tests prove a commission can only originate from a settled transaction, that self-referral is blocked, and that a refunded order pays nothing.</td>
+        <td class="num">3 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P8<br>Physical &amp; delivery</td>
+        <td>Variants, inventory, shipping, delivery partner interface, state machine, proof of delivery, delivery earnings</td>
+        <td>A physical order settles only on OTP-confirmed delivery, and a rider replaying a queued transition twice changes nothing.</td>
+        <td class="num">5 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P9<br>Services &amp; creators</td>
+        <td>Service offerings, booking and request flow, creator categories and portfolios</td>
+        <td>A service settles on buyer confirmation, and on auto-confirmation after the configured window.</td>
+        <td class="num">3 wk</td>
+      </tr>
+      <tr>
+        <td class="mono">P10<br>Hardening</td>
+        <td>Load test, penetration test, runbooks, restore drill, compliance review, admin settings completeness</td>
+        <td>A database restore is performed from backup against a stopwatch, and the recovery time is written down.</td>
+        <td class="num">3 wk</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <p>The admin console is <strong>not</strong> a phase. Each phase ships the admin surface for what it built; an admin console deferred to the end is an admin console that never gets finished.</p>
+
+  <p><strong>To the recommended launch vertical</strong> (P0–P3, P5, P6, plus P4 whenever iPay unblocks): roughly <strong>18 weeks</strong>. Full scope as briefed: roughly <strong>32 weeks</strong>. If iPay stalls, P3's manual rail means you can onboard real sellers and take real money by bank transfer while it is resolved.</p>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="risks">
+  <div class="sec-head"><div class="sec-mark">R</div><h2 class="sec-title">Risk register</h2></div>
+
+  <div class="note block">
+    <span class="n-label">Risk 1 — the one that can stop the project</span>
+    <p><strong>Holding customer funds may be a regulated activity.</strong> In the UEMOA zone, taking money from a buyer, holding a seller's balance and disbursing it can fall under BCEAO e-money and payment-services rules; Nigeria and Ghana have their own regimes. This is not an engineering problem and I cannot solve it in the architecture — but the architecture can be shaped to reduce exposure by keeping funds at the licensed provider and having Afrinext record <em>entitlement</em> rather than custody. <strong>Get local counsel before P6 (payouts) ships.</strong> Please tell me who is advising on this.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>Sev</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Ledger correctness — a bug here is money, and it is discovered by users</td><td><span class="chip no">high</span></td><td>Double-entry with database-enforced balancing, immutability by revoked grants, property-based tests, nightly reconciliation with alarms, ledger built in P1 before anything depends on it</td></tr>
+      <tr><td>iPay is an unknown — the API may lack payouts or refunds entirely</td><td><span class="chip hold">high</span></td><td>Provider abstraction plus the manual rail in P3, so no other phase is blocked. Section P lists exactly what is needed to remove this risk</td></tr>
+      <tr><td>Referral fraud and scheme perception</td><td><span class="chip hold">med</span></td><td>Single level, commission drawn from platform revenue only, qualification from settled transactions only, pending-until-refund-window, self-referral detection</td></tr>
+      <tr><td>Scope — the brief is a 32-week product and enthusiasm compounds</td><td><span class="chip hold">high</span></td><td>The launch vertical in section 00; phases with hard exit criteria; nothing starts until the prior phase's criterion demonstrably passes</td></tr>
+      <tr><td>KYC and AML on withdrawals</td><td><span class="chip hold">med</span></td><td>Tiered KYC with withdrawal ceilings per tier; identity verification before the first payout; threshold-based holds. Provider choice still open</td></tr>
+      <tr><td>Mobile money reversal semantics differ from cards and vary by operator</td><td><span class="chip hold">med</span></td><td>Conservative hold windows, configurable per country and per provider; never assume card-like chargeback behaviour</td></tr>
+      <tr><td>Video bandwidth cost and learner data cost</td><td><span class="chip hold">med</span></td><td>R2 zero-egress, ladder starting at 240p, audio-only rendition, permitted offline download</td></tr>
+      <tr><td>Latency from West Africa</td><td><span class="chip info">low</span></td><td>Postgres in <code>eu-west-3</code>, Cloudflare edge caching. Measure real round-trip from Niamey, Lagos and Accra in P0 and revisit if the numbers disagree with the assumption</td></tr>
+      <tr><td>Cash on delivery reconciliation</td><td><span class="chip hold">med</span></td><td>Recommend launching physical goods prepaid-only; COD gets its own phase and its own liability model</td></tr>
+      <tr><td>Cross-jurisdiction data protection</td><td><span class="chip hold">med</span></td><td>PII minimisation, encryption at rest, per-class retention, export and deletion paths built in P0 rather than bolted on</td></tr>
+      <tr><td>Operating a money system on-call</td><td><span class="chip hold">med</span></td><td>Runbooks written in the phase that creates the failure mode; reconciliation alarms route to a human; restore drill rehearsed in P10</td></tr>
+    </tbody>
+  </table></div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="ipay">
+  <div class="sec-head"><div class="sec-mark">P</div><h2 class="sec-title">What the iPay integration needs</h2></div>
+
+  <div class="note block">
+    <span class="n-label">Nothing is integrated</span>
+    <p>No iPay endpoint, parameter, signature scheme or webhook payload appears anywhere in this document, and none will be written until the official documentation and sandbox credentials are in hand. What exists in the plan is an <em>interface</em> that iPay will be implemented behind. Any code claiming otherwise would be fiction.</p>
+  </div>
+
+  <p>The abstraction Afrinext codes against:</p>
+
+<pre><code><span class="kw">interface</span> PaymentProvider {
+  createCharge(input: ChargeInput): Promise&lt;ChargeResult&gt;;
+  getCharge(providerRef: string): Promise&lt;ChargeStatus&gt;;
+  verifyWebhook(rawBody: Buffer, headers: Headers): Promise&lt;VerifiedEvent&gt;;
+  refund(providerRef: string, amount: Money): Promise&lt;RefundResult&gt;;
+  createPayout?(input: PayoutInput): Promise&lt;PayoutResult&gt;;   <span class="cm">// optional — may not exist</span>
+  getPayout?(providerRef: string): Promise&lt;PayoutStatus&gt;;
+}
+</code></pre>
+
+  <p><code>createPayout</code> is optional on purpose. If iPay has no disbursement API, payouts run as an operational batch and the platform still works — that fact should be established early, because it changes the finance team's workload substantially.</p>
+
+  <h4>Required from the official iPay documentation, before P4 can begin</h4>
+  <ol>
+    <li>Base URLs for sandbox and production.</li>
+    <li>Authentication scheme — API key, HMAC, OAuth client credentials — and where credentials belong in a request.</li>
+    <li>Charge initiation: request and response schema, and the supported channels per country (Orange Money, MTN MoMo, Moov, Wave, Airtel, card, bank).</li>
+    <li>Flow type: hosted redirect, inline widget, or USSD push. This changes the checkout UI, not just the backend.</li>
+    <li>Status query endpoint and the complete status enumeration, including every terminal and non-terminal value.</li>
+    <li>Webhooks: how the URL is registered, payload schema, signature algorithm and header name, timestamp tolerance, and retry policy.</li>
+    <li>Currency handling and the minor-unit convention — specifically whether XOF amounts are sent as whole francs.</li>
+    <li>Whether a disbursement or payout API exists, and its settlement timing.</li>
+    <li>Refund API and its constraints — partial refunds, time limits.</li>
+    <li>Idempotency support on charge creation, and rate limits.</li>
+    <li>Settlement schedule to the merchant account (T+N), and the fee structure.</li>
+    <li>Sandbox credentials plus test phone numbers or accounts for each channel.</li>
+  </ol>
+
+  <p>Items 6, 7 and 8 are the ones that most often invalidate an assumed design. If only a subset is available now, send items 1–6 and P4 can begin against a partial implementation.</p>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="status">
+  <div class="sec-head"><div class="sec-mark">S</div><h2 class="sec-title">Status register</h2></div>
+
+  <p>The brief asked that anything unimplemented be marked as such. This is that list, and it is complete as of this document.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Everything in this blueprint</td><td><span class="chip no">not implemented</span> Architecture only. No code from this plan has been written.</td></tr>
+      <tr><td>iPay payment integration</td><td><span class="chip no">not implemented</span> Blocked on the documentation in section P. Not designed against, not tested, not stubbed with invented shapes.</td></tr>
+      <tr><td>Database, authentication, wallet, ledger, courses, delivery, referrals</td><td><span class="chip no">not implemented</span> None exist in the repository today.</td></tr>
+      <tr><td>Cloudflare Stream / R2, SMS provider, KYC provider</td><td><span class="chip no">not selected</span> Recommended, not procured, no accounts created, no pricing confirmed.</td></tr>
+      <tr><td>Latency assumption (<code>eu-west-3</code> over <code>af-south-1</code>)</td><td><span class="chip hold">unverified</span> Based on general routing, not on measurement from the target cities. Verify in P0.</td></tr>
+      <tr><td>Effort estimates in section M</td><td><span class="chip hold">estimates</span> Two to three engineers assumed. Not commitments.</td></tr>
+      <tr><td>Regulatory position on holding funds</td><td><span class="chip no">unresolved</span> Requires local legal counsel. Outside what I can determine.</td></tr>
+      <tr><td>Existing repository prototype</td><td><span class="chip yes">working</span> Builds, lints, and was verified against a running server — but it is a directory demo with an in-memory store, not a foundation for this plan beyond its UI layer.</td></tr>
+    </tbody>
+  </table></div>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+
+<section id="open">
+  <div class="sec-head"><div class="sec-mark">Q</div><h2 class="sec-title">Open decisions I need from you</h2></div>
+
+  <p>Answers to 1–4 change the plan materially. The rest can be settled during P0 without blocking anything.</p>
+
+  <ol>
+    <li><strong>Regulatory posture.</strong> Who is advising on whether Afrinext may hold and disburse user funds in the launch country? This gates P6 and could reshape the wallet's legal model.</li>
+    <li><strong>Launch scope.</strong> Do you accept the digital-and-courses-first vertical, or do physical goods and delivery ship at launch? This reorders roughly nine weeks of work.</li>
+    <li><strong>iPay status.</strong> Is the contract signed, and can you obtain the documentation and sandbox credentials listed in section P? If not, P3's manual rail becomes the launch payment method and we should plan for that openly.</li>
+    <li><strong>Referral levels.</strong> Confirm single-level. If you want tiers, that needs the legal review in item 1 to cover it explicitly.</li>
+    <li><strong>Launch country and currency.</strong> Niger and XOF assumed. Confirm, or name the first two.</li>
+    <li><strong>Team composition.</strong> How many engineers, and what is their Prisma versus SQL experience? This settles the ORM question in section A, and it is the only reason that decision is still open.</li>
+    <li><strong>Hosting preference.</strong> Managed and simple (Vercel + Neon, higher unit cost) or containers (Hetzner or Fly, cheaper, more operations)?</li>
+    <li><strong>Native app.</strong> Is the PWA sufficient at launch, or is a store-distributed app required? It does not change the API design, but it changes how much weight the REST layer carries in P2 and P3.</li>
+    <li><strong>Cash on delivery.</strong> Required at physical-goods launch, or can it be its own phase?</li>
+    <li><strong>KYC.</strong> Which identity documents are practical to verify in the launch country, and is there a provider you already work with?</li>
+  </ol>
+
+  <hr class="soft">
+
+  <p>On approval, P0 and P1 are what I would start on — the monorepo, the schema, and the ledger with its property tests — because they are the parts that everything else is built on top of and the parts that are most expensive to change later. Nothing above is locked; tell me where you disagree and I will revise the blueprint before any code is written.</p>
+
+  <a class="totop" href="#">↑ Contents</a>
+</section>
+</main>
+</div>
+</div>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function (a) {
+      var id = a.getAttribute('href').slice(1);
+      if (id) map[id] = a;
+    });
+    var sections = Array.prototype.slice.call(document.querySelectorAll('main section'));
+    if (!sections.length || !('IntersectionObserver' in window)) return;
+
+    var visible = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting; });
+      var current = null;
+      for (var i = 0; i < sections.length; i++) {
+        if (visible[sections[i].id]) { current = sections[i].id; break; }
+      }
+      links.forEach(function (a) { a.classList.remove('active'); });
+      if (current && map[current]) map[current].classList.add('active');
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+
+    sections.forEach(function (s) { io.observe(s); });
+  })();
+</script>
