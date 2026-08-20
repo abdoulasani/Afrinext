@@ -172,13 +172,28 @@ describe("the state machines are declared, not improvised", () => {
     expect(canTransitionOrder("pending_payment", "expired")).toBe(true);
     expect(canTransitionOrder("pending_payment", "failed")).toBe(true);
 
-    // Every terminal state is terminal. A paid order does not become cancelled,
-    // and a failed one does not quietly become paid.
-    for (const from of ORDER_STATES.filter((s) => s !== "pending_payment")) {
+    /*
+     * Every state except `expired` is terminal. A paid order does not become
+     * cancelled, and a failed one does not quietly become paid.
+     *
+     * `expired` is the one exception, and it is a policy decision rather than a
+     * looseness: a provider can confirm a charge after we stopped waiting, and
+     * money that has actually moved cannot be answered with silence. It has two
+     * remaining ends — `paid` if fulfilling is still safe, `refund_due` if it is
+     * not — and both are proved in `late-payment.test.ts`.
+     */
+    for (const from of ORDER_STATES.filter((s) => s !== "pending_payment" && s !== "expired")) {
       expect(isTerminalOrderState(from), `${from} must be terminal`).toBe(true);
       for (const to of ORDER_STATES) {
         expect(canTransitionOrder(from, to), `${from} → ${to}`).toBe(false);
       }
+    }
+
+    expect(isTerminalOrderState("expired")).toBe(false);
+    expect(canTransitionOrder("expired", "paid")).toBe(true);
+    expect(canTransitionOrder("expired", "refund_due")).toBe(true);
+    for (const to of ORDER_STATES.filter((t) => t !== "paid" && t !== "refund_due")) {
+      expect(canTransitionOrder("expired", to), `expired → ${to}`).toBe(false);
     }
   });
 
@@ -874,10 +889,22 @@ describe("expiry", () => {
     expect(await statusOfOrder(paid.order.id)).toBe("paid");
   });
 
-  it("refuses a confirmation arriving after the order expired", async () => {
+  it("does not leave a confirmation after expiry in limbo", async () => {
+    /*
+     * This test used to assert that a late confirmation moved the payment,
+     * left the order expired, and granted nothing — money arriving and leaving
+     * no commercial trace. That WAS the behaviour, it was raised as an open
+     * risk, and the review gate decided it: an expired order now ends as
+     * `paid` if fulfilling is still safe, or `refund_due` if it is not.
+     *
+     * What this test keeps is the invariant that matters here — a succeeded
+     * payment never leaves its order in limbo. The policy's edges belong to
+     * `late-payment.test.ts` and are proved there in detail.
+     */
     const { order, payment, priceMinor } = await pendingOrder();
     await db.execute(sql`update orders set expires_at = now() - interval '1 second'`);
     await expireLapsedOrders(db);
+    expect(await statusOfOrder(order.id)).toBe("expired");
 
     const late = provider.event({
       id: "evt-late", providerRef: payment.providerRef as string, status: "succeeded",
@@ -885,17 +912,10 @@ describe("expiry", () => {
     });
     const result = await applyProviderEvent(db, provider, late.body, late.headers);
 
-    /*
-     * The payment moved; the order did not, because its guarded UPDATE names
-     * `pending_payment` and the order is expired. That mismatch is a real
-     * operational event — the buyer's money may have left their account — and
-     * it is exactly what a reconciliation report has to surface. It is listed
-     * as an open risk in the milestone note.
-     */
     expect(result.outcome).toBe("applied");
-    expect(await statusOfOrder(order.id)).toBe("expired");
-    const grants = await db.execute<{ n: string }>(sql`select count(*) as n from entitlements`);
-    expect(Number(grants.rows[0]?.n), "an expired order grants nothing").toBe(0);
+    // A second late, so inside the grace window: fulfilled.
+    expect(await statusOfOrder(order.id)).toBe("paid");
+    expect(["paid", "refund_due"]).toContain(await statusOfOrder(order.id));
   });
 });
 

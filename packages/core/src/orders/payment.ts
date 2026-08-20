@@ -10,7 +10,7 @@ import { logger } from "../observability";
 import type {
   HeadersLike, PaymentProvider, VerifiedEvent,
 } from "../payments";
-import { OrderNotFoundError } from "./checkout";
+import { loadLatePaymentGraceSeconds, OrderNotFoundError } from "./checkout";
 import {
   assertPaymentTransition, orderStateForPayment,
   type OrderState, type PaymentState,
@@ -301,6 +301,13 @@ export async function applyProviderEvent(
   provider: PaymentProvider,
   rawBody: Buffer,
   headers: HeadersLike,
+  /**
+   * When the event is being processed. Defaults to now, and exists so the grace
+   * boundary can be tested at the exact millisecond rather than approximately —
+   * "24 hours and one millisecond" is a rule, and a rule nobody can test at its
+   * edge is a rule nobody has checked.
+   */
+  now: number = Date.now(),
 ): Promise<AppliedEvent> {
   let event: VerifiedEvent;
   try {
@@ -401,12 +408,18 @@ export async function applyProviderEvent(
     orderStatus: payment.order_status as OrderState,
     from,
     to,
+    now,
   });
 
   if (applied.outcome === "applied") {
     await audit(db, {
       actorKind: "system",
-      action: "order.payment.confirmed",
+      action:
+        applied.orderStatus === "refund_due"
+          ? "order.payment.refund_due"
+          : applied.reason === "late_accepted"
+            ? "order.payment.late_accepted"
+            : "order.payment.confirmed",
       targetType: "order",
       targetId: payment.order_id,
       context: {
@@ -414,6 +427,9 @@ export async function applyProviderEvent(
         providerEventId: event.providerEventId,
         paymentStatus: to,
         orderStatus: applied.orderStatus,
+        // Why a late payment was or was not fulfilled, in the record that
+        // outlives the incident.
+        ...(applied.reason !== undefined ? { decision: applied.reason } : {}),
       },
     });
   }
@@ -449,8 +465,11 @@ async function confirm(
     orderStatus: OrderState;
     from: PaymentState;
     to: PaymentState;
+    now: number;
   },
 ): Promise<AppliedEvent> {
+  const graceSeconds = await loadLatePaymentGraceSeconds(db);
+
   return db.transaction(async (tx) => {
     const recordIn = async (outcome: EventOutcome, reason: string | undefined): Promise<void> => {
       await tx.execute(sql`
@@ -462,6 +481,34 @@ async function confirm(
         on conflict (provider, provider_event_id) do nothing
       `);
     };
+
+    /*
+     * The order row is LOCKED before anything is decided.
+     *
+     * A confirmation and the expiry sweeper race for the same row, and the
+     * answer must not depend on who reads first. `for update` makes them queue:
+     * whichever arrives second sees the state the first one committed, and
+     * takes the branch that state deserves. Without it, both could read
+     * `pending_payment`, and the sweeper could expire an order that had just
+     * been paid.
+     */
+    const locked = await tx.execute<{
+      [key: string]: unknown;
+      status: string;
+      buyer_user_id: string;
+      within_grace: boolean;
+    }>(sql`
+      select status, buyer_user_id,
+             (${new Date(input.now).toISOString()}::timestamptz
+                <= expires_at + make_interval(secs => ${graceSeconds})) as within_grace
+        from orders where id = ${input.orderId}::uuid
+        for update
+    `);
+    const order = locked.rows[0];
+    if (order === undefined) {
+      await recordIn("rejected", "the order disappeared");
+      throw new WebhookRejectedError("That charge is not known here.");
+    }
 
     const paymentMoved = await tx.execute(sql`
       update payments
@@ -477,54 +524,131 @@ async function confirm(
         reason: "replay",
         paymentId: input.paymentId,
         orderId: input.orderId,
-        orderStatus: input.orderStatus,
+        orderStatus: order.status as OrderState,
       };
     }
 
-    const orderState = orderStateForPayment(input.to);
-    let reached = input.orderStatus;
+    const from = order.status as OrderState;
+    let reached = from;
+    let note: string | undefined;
 
-    if (orderState !== undefined) {
-      const orderMoved = await tx.execute(sql`
-        update orders
-           set status = ${orderState},
-               paid_at = case when ${orderState === "paid"} then now() else paid_at end,
-               closed_at = now(),
-               updated_at = now()
-         where id = ${input.orderId}::uuid and status = 'pending_payment'
+    if (from === "pending_payment") {
+      // The ordinary path, unchanged: whatever the payment became, the order
+      // follows it.
+      const orderState = orderStateForPayment(input.to);
+      if (orderState !== undefined) {
+        const moved = await tx.execute(sql`
+          update orders
+             set status = ${orderState},
+                 paid_at = case when ${orderState === "paid"} then now() else paid_at end,
+                 closed_at = now(),
+                 updated_at = now()
+           where id = ${input.orderId}::uuid and status = 'pending_payment'
+        `);
+        if ((moved.rowCount ?? 0) > 0) {
+          reached = orderState;
+          if (orderState === "paid") await fulfil(tx, input.orderId);
+        }
+      }
+    } else if (from === "expired" && input.to === "succeeded") {
+      /*
+       * Money arrived after we stopped waiting.
+       *
+       * It is real whatever our timer did, so it cannot be ignored — the only
+       * question is whether fulfilling is still safe. Four conditions, all
+       * checked here, all in SQL against the current state rather than against
+       * anything the event claimed:
+       *
+       *   - the payment is inside the grace window;
+       *   - the product is still published;
+       *   - its store is still published;
+       *   - the buyer does not already own the product.
+       *
+       * The last is the one that protects the buyer's money: if they gave up,
+       * bought again and were fulfilled, granting a second time would silently
+       * consume a second payment for one thing they own. It becomes a refund
+       * instead.
+       */
+      const blocking = await tx.execute<{ [key: string]: unknown; reason: string }>(sql`
+        select 'product_unpublished' as reason
+          from order_items i join products p on p.id = i.product_id
+         where i.order_id = ${input.orderId}::uuid and p.status <> 'published'
+        union all
+        select 'store_unpublished'
+          from order_items i join products p on p.id = i.product_id
+               join stores s on s.id = p.store_id
+         where i.order_id = ${input.orderId}::uuid and s.status <> 'published'
+        union all
+        select 'already_owned'
+          from order_items i
+               join entitlements e on e.product_id = i.product_id
+         where i.order_id = ${input.orderId}::uuid
+           and e.user_id = ${order.buyer_user_id}::uuid
+           and e.revoked_at is null
       `);
 
-      /*
-       * The order may legitimately refuse to move — it expired while the buyer
-       * was on the provider's page, for instance. The payment still moved,
-       * because it did: money may genuinely have left an account. That
-       * divergence is a real operational event, and it is visible precisely
-       * because the two are separate rows with separate states.
-       */
-      if ((orderMoved.rowCount ?? 0) > 0) {
-        reached = orderState;
+      const reasons = blocking.rows.map((r) => r.reason);
+      if (!order.within_grace) reasons.unshift("grace_window_elapsed");
 
-        if (orderState === "paid") {
-          await tx.execute(sql`
-            insert into entitlements (id, user_id, product_id, order_id, source)
-            select ${uuidv7()}, o.buyer_user_id, i.product_id, o.id, 'purchase'
-              from orders o join order_items i on i.order_id = o.id
-             where o.id = ${input.orderId}::uuid
-            on conflict (user_id, product_id) do nothing
-          `);
-          await freezeOrderEconomics(tx, input.orderId);
+      if (reasons.length === 0) {
+        const moved = await tx.execute(sql`
+          update orders
+             set status = 'paid', paid_at = now(), late_payment_at = now(),
+                 closed_at = now(), updated_at = now()
+           where id = ${input.orderId}::uuid and status = 'expired'
+        `);
+        if ((moved.rowCount ?? 0) > 0) {
+          reached = "paid";
+          note = "late_accepted";
+          await fulfil(tx, input.orderId);
+        }
+      } else {
+        /*
+         * Not fulfilled, and not silent. `refund_due` is a queue: the payment
+         * succeeded, Afrinext did not deliver, and a refund must later be
+         * executed through the provider. Nothing here executes one.
+         */
+        const moved = await tx.execute(sql`
+          update orders
+             set status = 'refund_due', late_payment_at = now(),
+                 closed_at = now(), updated_at = now()
+           where id = ${input.orderId}::uuid and status = 'expired'
+        `);
+        if ((moved.rowCount ?? 0) > 0) {
+          reached = "refund_due";
+          note = reasons.join(",");
         }
       }
     }
 
-    await recordIn("applied", undefined);
+    await recordIn("applied", note);
     return {
       outcome: "applied" as const,
       paymentId: input.paymentId,
       orderId: input.orderId,
       orderStatus: reached,
+      ...(note !== undefined ? { reason: note } : {}),
     };
   });
+}
+
+/**
+ * What being paid grants: the entitlement, then the frozen economics.
+ *
+ * One function, called from both the ordinary path and the late one, so a
+ * late-accepted order is fulfilled by exactly the same code as an on-time one.
+ * Two paths that both "grant access and freeze fees" would eventually stop
+ * agreeing about what that means.
+ */
+async function fulfil(tx: Database, orderId: string): Promise<void> {
+  await tx.execute(sql`
+    insert into entitlements (id, user_id, product_id, order_id, source)
+    select ${uuidv7()}, o.buyer_user_id, i.product_id, o.id, 'purchase'
+      from orders o join order_items i on i.order_id = o.id
+     where o.id = ${orderId}::uuid
+    on conflict (user_id, product_id) do nothing
+  `);
+  await freezeOrderEconomics(tx, orderId);
 }
 
 /**

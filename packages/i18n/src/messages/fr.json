@@ -94,5 +94,9 @@
   "sell.assetFile": "Fichier",
   "sell.noAssets": "Aucun fichier. Un acheteur ne recevrait rien.",
   "sell.deliveryDownload": "Téléchargeable",
-  "sell.deliveryViewOnly": "Consultation seule"
+  "sell.deliveryViewOnly": "Consultation seule",
+  "order.status.refund_due": "Remboursement dû",
+  "order.refundDueExplain": "Votre paiement a bien été confirmé, mais après l'expiration de la commande. Afrinext ne vous a pas livré et vous doit un remboursement.",
+  "order.refundNotYetExecuted": "Le remboursement n'a pas encore été effectué. Il sera traité auprès du prestataire de paiement.",
+  "order.lateAccepted": "Paiement reçu après l'expiration du délai, et accepté."
 }

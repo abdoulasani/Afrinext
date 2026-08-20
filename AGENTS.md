@@ -61,6 +61,12 @@ otherwise.
   balance rows it touches by account id before touching any of them. Without
   that, two transfers in opposite directions deadlock. Anything new that locks
   more than one row follows the same rule.
+- **A verified successful payment is never ignored.** If it arrives after the
+  checkout expired, the order ends as `paid` when fulfilling is still safe —
+  inside a 24-hour grace window, product and store still published, buyer does
+  not already own it — and as `refund_due` otherwise. `refund_due` is a queue
+  meaning "payment confirmed, not fulfilled, refund owed"; **no refund
+  execution exists**. See `docs/architecture/late-payment-policy.md`.
 - **Fee snapshots are frozen and append-only.** A `fee_schedules` row plus its
   `fee_lines` are written once, must total the gross, and are never edited —
   changing a commission rule later must not restate a past order.

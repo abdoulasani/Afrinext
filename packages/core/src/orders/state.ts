@@ -17,6 +17,7 @@ export const ORDER_STATES = [
   "failed",
   "cancelled",
   "expired",
+  "refund_due",
 ] as const;
 export type OrderState = (typeof ORDER_STATES)[number];
 
@@ -31,19 +32,33 @@ export const PAYMENT_STATES = [
 export type PaymentState = (typeof PAYMENT_STATES)[number];
 
 /**
- * An order leaves `pending_payment` exactly once and never comes back.
+ * An order leaves `pending_payment` exactly once. `expired` is the one state it
+ * can leave again, and only because money can arrive after it.
  *
  * `failed` is terminal on purpose. A failed charge does not reopen the order
  * for another attempt: the buyer starts a new checkout, which gets a new
  * idempotency key, a fresh price read and a fresh expiry. Reusing an order
  * across attempts is how a stale price gets charged.
+ *
+ * `expired` is different, and the difference is not symmetry — it is that a
+ * provider can confirm a charge after we stopped waiting. The money is real
+ * whatever our timer did, so an expired order has two remaining ends:
+ *
+ *   expired → paid        the late payment is still safe to fulfil;
+ *   expired → refund_due  it is not, and Afrinext owes the buyer their money.
+ *
+ * `refund_due` is a QUEUE, not a refund. It means: payment successfully
+ * confirmed, Afrinext did not fulfil the order, and a refund must later be
+ * executed through the payment provider. Nothing in this milestone executes
+ * one. See docs/architecture/late-payment-policy.md.
  */
 const ORDER_TRANSITIONS: Readonly<Record<OrderState, readonly OrderState[]>> = {
   pending_payment: ["paid", "failed", "cancelled", "expired"],
   paid: [],
   failed: [],
   cancelled: [],
-  expired: [],
+  expired: ["paid", "refund_due"],
+  refund_due: [],
 };
 
 const PAYMENT_TRANSITIONS: Readonly<Record<PaymentState, readonly PaymentState[]>> = {

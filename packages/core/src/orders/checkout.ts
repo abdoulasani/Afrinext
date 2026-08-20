@@ -54,6 +54,20 @@ export class CheckoutConflictError extends DomainError {
 export const CHECKOUT_TTL_SETTING_KEY = "checkout.ttl_seconds";
 export const DEFAULT_CHECKOUT_TTL_SECONDS = 30 * 60;
 
+/**
+ * How long after expiry a verified successful payment may still fulfil.
+ *
+ * Twenty-four hours, and the reason is the market rather than a preference.
+ * Mobile-money confirmations in Niger travel through a carrier and an
+ * aggregator before they reach us, and a delay of seconds is ordinary while a
+ * delay of hours happens. Refusing to fulfil those would take money from
+ * people who genuinely paid and hand every one of them to support. Beyond a
+ * day, the buyer has moved on — fulfilling then is a surprise, and a refund is
+ * the honest answer.
+ */
+export const LATE_PAYMENT_GRACE_SETTING_KEY = "checkout.late_payment_grace_seconds";
+export const DEFAULT_LATE_PAYMENT_GRACE_SECONDS = 24 * 60 * 60;
+
 export async function loadCheckoutTtlSeconds(db: Database): Promise<number> {
   const rows = await db.execute<{ value: unknown }>(sql`
     select value from platform_settings where key = ${CHECKOUT_TTL_SETTING_KEY}
@@ -61,6 +75,38 @@ export async function loadCheckoutTtlSeconds(db: Database): Promise<number> {
   const raw = rows.rows[0]?.value;
   const n = typeof raw === "number" ? raw : Number(raw);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : DEFAULT_CHECKOUT_TTL_SECONDS;
+}
+
+/**
+ * The grace window, read from settings and CLAMPED — never widened.
+ *
+ * The other settings in this system are read as written. This one is not, and
+ * the asymmetry is deliberate: every second of grace is a second in which
+ * Afrinext fulfils an order it had already closed, so the reviewed maximum is a
+ * ceiling rather than a default. An operator may narrow the window to zero
+ * without asking anyone; widening it past a day is a policy change and needs
+ * the review that produced the number, not an UPDATE.
+ *
+ * A malformed row — a string, a negative, NaN, null — is not an instruction. It
+ * falls back to the reviewed value rather than to "no limit", because the one
+ * thing a broken setting must never do is open the gate wider.
+ */
+export async function loadLatePaymentGraceSeconds(db: Database): Promise<number> {
+  const rows = await db.execute<{ value: unknown }>(sql`
+    select value from platform_settings where key = ${LATE_PAYMENT_GRACE_SETTING_KEY}
+  `);
+  const raw = rows.rows[0]?.value;
+  /*
+   * A number, or it is not a setting.
+   *
+   * `Number(null)` is 0, so a coercing read would turn a malformed row into
+   * "no grace at all" — a policy change nobody asked for, in the quiet
+   * direction. A broken setting means "use the reviewed policy", not "guess".
+   */
+  if (typeof raw !== "number" || !Number.isFinite(raw) || raw < 0) {
+    return DEFAULT_LATE_PAYMENT_GRACE_SECONDS;
+  }
+  return Math.min(Math.floor(raw), DEFAULT_LATE_PAYMENT_GRACE_SECONDS);
 }
 
 export interface OrderItemRecord {

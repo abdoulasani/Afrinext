@@ -7,7 +7,8 @@ import { acceptCurrentVersions, ACCOUNT_CONSENT_KINDS } from "../consent";
 import { PermissionDeniedError } from "../errors";
 import { money } from "../money";
 import {
-  applyProviderEvent, createCheckout, initiatePayment,
+  applyProviderEvent, createCheckout, DEFAULT_LATE_PAYMENT_GRACE_SECONDS,
+  expireLapsedOrders, initiatePayment,
 } from "../orders";
 import { MockPaymentProvider } from "../payments";
 import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
@@ -540,12 +541,16 @@ describe("entitlement creation is still payment's job", () => {
     await rejectsWith(read(buyer, listing.assetId), ContentForbiddenError);
   });
 
-  it("grants nothing when the order expired before the provider confirmed", async () => {
+  it("grants nothing when a late payment is queued for refund", async () => {
     /*
-     * The case the previous milestone flagged, re-asserted from the delivery
-     * side: the payment succeeds, the order stays expired, and NO entitlement
-     * is created — so no content is reachable. Nothing here invents a refund
-     * rule; it records that delivery does not paper over the gap.
+     * The case the previous milestone flagged, now decided and re-asserted from
+     * the delivery side.
+     *
+     * The payment succeeds after the grace window, so the order becomes
+     * `refund_due` — Afrinext owes the buyer their money and did not deliver.
+     * What matters here is the delivery half: a refund-due order grants no
+     * entitlement, so no content is reachable through it. Access still comes
+     * from an entitlement and from nothing else.
      */
     const listing = await publishedWithAsset();
     const buyer = await makeBuyer();
@@ -554,18 +559,57 @@ describe("entitlement creation is still payment's job", () => {
     });
     const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
 
+    // Aged past the checkout window, then swept, exactly as time would do it.
     await db.execute(sql`
-      update orders set status = 'expired', closed_at = now() where id = ${order.id}::uuid
+      update orders set expires_at = now() - interval '1 second' where id = ${order.id}::uuid
     `);
+    await expireLapsedOrders(db);
+
+    const expiry = await db.execute<{ expires_at: Date | string }>(sql`
+      select expires_at from orders where id = ${order.id}::uuid`);
+    const boundary = new Date(expiry.rows[0]!.expires_at).getTime();
 
     const event = provider.event({
       id: "evt-expired", providerRef: payment.providerRef as string, status: "succeeded",
       amountMinor: listing.priceMinor, currency: "XOF",
     });
-    await applyProviderEvent(db, provider, event.body, event.headers);
+    // A day and a millisecond after expiry: past the grace window.
+    await applyProviderEvent(
+      db, provider, event.body, event.headers,
+      boundary + DEFAULT_LATE_PAYMENT_GRACE_SECONDS * 1000 + 1,
+    );
+
+    const status = await db.execute<{ status: string }>(sql`
+      select status from orders where id = ${order.id}::uuid`);
+    expect(status.rows[0]?.status).toBe("refund_due");
 
     expect(await listEntitledProducts(db, buyer)).toEqual([]);
     await rejectsWith(read(buyer, listing.assetId), ContentForbiddenError);
+  });
+
+  it("DOES grant when a late payment is accepted inside the grace window", async () => {
+    // The other half of the same decision: a payment a minute late is a
+    // payment, and the buyer gets what they bought.
+    const listing = await publishedWithAsset();
+    const buyer = await makeBuyer();
+    const { order } = await createCheckout(db, buyer, {
+      storeSlug: listing.storeSlug, productSlug: listing.productSlug, checkoutKey: "just-late",
+    });
+    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+
+    await db.execute(sql`
+      update orders set expires_at = now() - interval '1 second' where id = ${order.id}::uuid
+    `);
+    await expireLapsedOrders(db);
+
+    const event = provider.event({
+      id: "evt-just-late", providerRef: payment.providerRef as string, status: "succeeded",
+      amountMinor: listing.priceMinor, currency: "XOF",
+    });
+    await applyProviderEvent(db, provider, event.body, event.headers);
+
+    expect((await listEntitledProducts(db, buyer)).length).toBe(1);
+    expect((await read(buyer, listing.assetId)).object.bytes.equals(PDF)).toBe(true);
   });
 
   it("creates exactly one entitlement under concurrent confirmations", async () => {

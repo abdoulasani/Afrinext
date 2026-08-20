@@ -58,6 +58,8 @@ const COMMISSION_RULES = [
 const SETTINGS = [
   { key: "platform.name", value: "Afrinext", description: "Display name of the platform." },
   { key: "platform.operator", value: "AFRI NEXT TECHNOLOGIE", description: "Legal operator (Entreprise Individuelle, Niger)." },
+  { key: "checkout.ttl_seconds", value: 1800, description: "How long an unpaid order stays payable. 30 minutes." },
+  { key: "checkout.late_payment_grace_seconds", value: 86400, description: "How long after expiry a verified successful payment may still fulfil the order. 24 hours, read as a ceiling — the loader clamps to it." },
   { key: "commission.default_bps", value: 1800, description: "Default platform commission in basis points." },
   { key: "referral.default_bps", value: 1000, description: "Referral share of Afrinext's commission, in basis points. Never of gross." },
   { key: "referral.levels", value: 1, description: "Referral depth. Single level only — A earns from B, never from B's referrals." },

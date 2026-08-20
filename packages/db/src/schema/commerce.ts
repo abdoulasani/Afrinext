@@ -131,12 +131,18 @@ export const orders = pgTable(
     buyerUserId: uuid("buyer_user_id").notNull().references(() => users.id),
     storeId: uuid("store_id").notNull().references(() => stores.id),
     checkoutKey: text("checkout_key").notNull(),
-    /** pending_payment | paid | failed | cancelled | expired */
+    /** pending_payment | paid | failed | cancelled | expired | refund_due */
     status: text("status").notNull().default("pending_payment"),
     totalMinor: bigint("total_minor", { mode: "bigint" }).notNull(),
     currency: char("currency", { length: 3 }).notNull().references(() => currencies.code),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     paidAt: timestamp("paid_at", { withTimezone: true }),
+    /**
+     * Set when a verified payment arrived AFTER expiry, whichever way it was
+     * then decided. The audit log holds the reasoning; this column is what
+     * makes the case countable without reading it.
+     */
+    latePaymentAt: timestamp("late_payment_at", { withTimezone: true }),
     closedAt: timestamp("closed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -148,7 +154,11 @@ export const orders = pgTable(
     index("orders_open_idx").on(t.status, t.expiresAt),
     check(
       "orders_status_valid",
-      sql`${t.status} in ('pending_payment','paid','failed','cancelled','expired')`,
+      sql`${t.status} in ('pending_payment','paid','failed','cancelled','expired','refund_due')`,
+    ),
+    check(
+      "orders_late_payment_after_expiry",
+      sql`${t.latePaymentAt} is null or ${t.latePaymentAt} >= ${t.expiresAt}`,
     ),
     check("orders_total_positive", sql`${t.totalMinor} > 0`),
     // A paid order knows when it was paid; an unpaid one must not claim to.

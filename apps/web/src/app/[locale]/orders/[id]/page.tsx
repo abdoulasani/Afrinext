@@ -71,6 +71,25 @@ export default async function OrderPage({
           </section>
         )}
 
+        {order.status === "refund_due" && (
+          <section className="flex flex-col gap-2 border-t border-border pt-5">
+            {/*
+              * Said plainly, and NOT as a completed refund.
+              *
+              * The money reached the provider and Afrinext did not deliver. The
+              * order is queued for a refund that has not been executed — saying
+              * anything warmer than that would be telling the buyer their money
+              * is on its way when no code sends it.
+              */}
+            <p data-testid="order-refund-due" className="text-sm font-medium">
+              {translate(locale, "order.refundDueExplain")}
+            </p>
+            <p className="text-xs text-muted">
+              {translate(locale, "order.refundNotYetExecuted")}
+            </p>
+          </section>
+        )}
+
         {order.status === "paid" && (
           <section className="flex flex-col gap-2 border-t border-border pt-5">
             <p data-testid="order-paid" className="text-sm font-medium">

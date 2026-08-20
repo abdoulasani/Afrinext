@@ -6,6 +6,7 @@ import {
   approvePayout, recordCapture, recordProviderSettlement, settlePayout, settleSale,
 } from "../src/ledger/flows";
 import { reconcile, reconciliationIsClean } from "../src/ledger/reconcile";
+import { commerceIsClean, reconcileCommerce } from "../src/ledger/commerce-reconcile";
 
 /**
  * CI gate: run one full economic cycle, then assert the books balance.
@@ -55,6 +56,31 @@ async function main(): Promise<void> {
   });
 
   const report = await reconcile(db);
+  /*
+   * The commerce invariants, over whatever the suite left behind.
+   *
+   * Deliberately NOT over a scenario built here. The ledger half posts its own
+   * cycle because the suite truncates and an empty ledger asserts nothing; the
+   * commerce half is the opposite — it is most useful applied to the orders and
+   * payments the tests actually created, because those are the states the code
+   * really produces.
+   */
+  const commerce = await reconcileCommerce(db);
+
+  /*
+   * And a live proof that the commerce detector still detects.
+   *
+   * A gate that reports "clean" is only worth anything if it can report
+   * something else. The suite truncates between tests, so on some runs there
+   * would be no orders left to check and the assertion would pass vacuously —
+   * exactly the failure mode this whole review gate exists to close.
+   *
+   * So the script builds one consistent order-and-payment pair, requires the
+   * detector to stay silent, breaks it in the one way the gate is meant to
+   * notice, requires the detector to speak, and puts it back.
+   */
+  const probe = await probeCommerceDetector(db);
+
   const summary = {
     scenario: {
       gross: gross.amountMinor.toString(),
@@ -68,6 +94,12 @@ async function main(): Promise<void> {
     netByCurrency: Object.fromEntries(
       [...report.systemNetByCurrency].map(([c, n]) => [c, n.toString()]),
     ),
+    commerce: {
+      ordersChecked: commerce.ordersChecked,
+      paymentsChecked: commerce.paymentsChecked,
+      anomalies: commerce.anomalies,
+      detectorProof: probe,
+    },
   };
   console.log(JSON.stringify(summary, null, 2));
 
@@ -86,11 +118,92 @@ async function main(): Promise<void> {
     console.error("Reconciliation checked no accounts — the gate would be vacuous.");
     process.exit(1);
   }
+  if (!probe.silentWhenConsistent || probe.detectedWhenBroken !== "succeeded_payment_orphaned") {
+    console.error(
+      "The commerce detector did not behave: " + JSON.stringify(probe) +
+        "\nA reconciliation that cannot report a fault is not a gate.",
+    );
+    process.exit(1);
+  }
+  if (!commerceIsClean(commerce)) {
+    console.error(
+      "Commerce reconciliation found impossible states:\n" +
+        commerce.anomalies.map((a) => `  ${a.kind} ${a.subject}: ${a.detail}`).join("\n"),
+    );
+    process.exit(1);
+  }
   if (!reconciliationIsClean(report)) {
     console.error("Ledger reconciliation FAILED — the books do not balance.");
     process.exit(1);
   }
   console.log("Ledger reconciliation clean over a real capture → settlement → payout cycle.");
+}
+
+/**
+ * Builds a consistent order and payment, checks, breaks, checks, restores.
+ *
+ * Raw SQL on purpose: the point is to exercise the DETECTOR, so going through
+ * the domain — which is what makes these states unreachable — would prove
+ * nothing about the query.
+ */
+async function probeCommerceDetector(
+  db: ReturnType<typeof getDb>,
+): Promise<{ silentWhenConsistent: boolean; detectedWhenBroken: string | null }> {
+  const buyer = uuidv7();
+  const seller = uuidv7();
+  const storeId = uuidv7();
+  const productId = uuidv7();
+  const orderId = uuidv7();
+  const paymentId = uuidv7();
+  const tag = orderId.slice(0, 8);
+
+  await db.execute(sql`
+    insert into users (id, locale, status) values (${buyer}, 'fr', 'active'), (${seller}, 'fr', 'active')
+  `);
+  await db.execute(sql`
+    insert into stores (id, owner_user_id, slug, name, status)
+    values (${storeId}, ${seller}, ${"probe-" + tag}, 'Probe', 'published')
+  `);
+  await db.execute(sql`
+    insert into products (id, store_id, slug, kind, title, price_minor, currency, status, published_at)
+    values (${productId}, ${storeId}, ${"probe-" + tag}, 'digital', 'Probe', 1000, 'XOF', 'published', now())
+  `);
+  await db.execute(sql`
+    insert into orders (id, buyer_user_id, store_id, checkout_key, status, total_minor,
+                        currency, expires_at, paid_at, closed_at)
+    values (${orderId}, ${buyer}, ${storeId}, ${"probe-" + tag}, 'paid', 1000, 'XOF',
+            now() + interval '1 hour', now(), now())
+  `);
+  await db.execute(sql`
+    insert into order_items (id, order_id, product_id, store_id, title_snapshot,
+                             unit_price_minor, currency, quantity, line_total_minor)
+    values (${uuidv7()}, ${orderId}, ${productId}, ${storeId}, 'Probe', 1000, 'XOF', 1, 1000)
+  `);
+  await db.execute(sql`
+    insert into payments (id, order_id, provider, provider_ref, status, amount_minor,
+                          currency, idempotency_key, confirmed_at)
+    values (${paymentId}, ${orderId}, 'probe', ${"probe-" + tag}, 'succeeded', 1000, 'XOF',
+            ${"probe-" + tag}, now())
+  `);
+
+  const consistent = await reconcileCommerce(db);
+  const silentWhenConsistent = consistent.anomalies.length === 0;
+
+  // Break exactly one invariant: the order stops agreeing with its payment.
+  await db.execute(sql`
+    update orders set status = 'expired', paid_at = null where id = ${orderId}::uuid
+  `);
+  const broken = await reconcileCommerce(db);
+  const detected = broken.anomalies.find((a) => a.subject === paymentId);
+
+  await db.execute(sql`delete from payments where id = ${paymentId}::uuid`);
+  await db.execute(sql`delete from order_items where order_id = ${orderId}::uuid`);
+  await db.execute(sql`delete from orders where id = ${orderId}::uuid`);
+  await db.execute(sql`delete from products where id = ${productId}::uuid`);
+  await db.execute(sql`delete from stores where id = ${storeId}::uuid`);
+  await db.execute(sql`delete from users where id in (${buyer}, ${seller})`);
+
+  return { silentWhenConsistent, detectedWhenBroken: detected?.kind ?? null };
 }
 
 main().catch((error: unknown) => {
