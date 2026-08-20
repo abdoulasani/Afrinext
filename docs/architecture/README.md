@@ -62,13 +62,17 @@ the payout rail sits behind an interface so the posture can change without a rew
 | 25 | OTP limits are read from `platform_settings` | Decision 7: limits are configuration; the per-IP limit is the production-tuning point | Confirmed |
 | 26 | Step-up is required for withdrawals, payout details, phone changes, and any admin action that moves where funds are paid | Decision 3 | Confirmed — mechanism built, enforcement lands with the payout path |
 | 27 | An SMS provider is selected only after a real handset test on all three Niger networks | Decision 8: no provider chosen from documentation alone | Confirmed — investigation not started |
+| 28 | Opening a store is gated on the current `seller_terms`, refused in `packages/core` | The blueprint fixes the principle, not the mapping; this is the mapping | Confirmed — milestone 3 |
+| 29 | `requireConsent` fails closed: an unresolvable document refuses the action | A missing translation would otherwise switch the gate off silently | Confirmed |
+| 30 | The consent locale is read from the user's row, and acceptance resolves the version server-side | A client that names either can walk past the gate or record a meaningless acceptance | Confirmed |
+| 31 | Seller eligibility stays a granted role — signing up does not confer it | Gated seller model, per review decision | Confirmed |
 
 ## Build order
 
 Phases are ordered by irreversibility, not visibility. The money spine ships before any product
 feature; P3 closes the economic cycle with a manual rail so nothing is blocked on iPayMoney.
 
-`P0` foundations ✓ → `P1` money spine ✓ → `P2` commerce vertical ← **in progress, milestones 1–2 of 5 done** → `P1` ledger-backed commerce → `P2` stores & catalog →
+`P0` foundations ✓ → `P1` money spine ✓ → `P2` commerce vertical ← **in progress, milestones 1–3 of 5 done** → `P1` ledger-backed commerce → `P2` stores & catalog →
 `P3` cycle closed, no PSP → `P4` iPayMoney *(gated on docs)* → `P5` Learn → `P6` wallet & payouts
 *(gated on layer G)* → `P7` network → `P8` physical & delivery → `P9` services → `P10` hardening
 
@@ -78,7 +82,9 @@ feature; P3 closes the economic cycle with a manual rail so nothing is blocked o
 2. **iPayMoney documentation** — the 13 items in blueprint section P. Sandbox credentials are the most useful single item.
 3. **Team composition** — settles Drizzle vs Prisma.
 4. **Hosting** — managed or containers.
-5. **SMS provider** for OTP in Niger — the practical critical path. Requirements and the
+5. **Signup consent** — nobody has accepted `terms_of_use` or `privacy_policy`, because the only
+   signup path is the OTP flow and gating it needs approval. Buyers never meet the seller gate at all.
+6. **SMS provider** for OTP in Niger — the practical critical path. Requirements and the
    delivery test that decides it are in `docs/providers/sms/README.md`; three candidates named
    for the first investigation, none assumed suitable.
 6. **Native app** — is the PWA enough at launch?
@@ -93,7 +99,8 @@ feature; P3 closes the economic cycle with a manual rail so nothing is blocked o
 | `review/phase-0.html` | Phase 0 — foundations | Corrected: its claim that CI had never run was wrong |
 | `review/phase-1-money-spine.html` | Phase 1 — money spine | Closed and approved at `aee5b4c` |
 | `review/phase-2-milestone-1.html` | Phase 2, milestone 1 — browser CI | Accepted |
-| `review/phase-2-milestone-2.html` | Phase 2, milestone 2 — stores and digital products | Current |
+| `review/phase-2-milestone-2.html` | Phase 2, milestone 2 — stores and digital products | Accepted |
+| `review/phase-2-milestone-3.html` | Phase 2, milestone 3 — the consent gate | Current |
 
 Each has a `-Review-Packet.pdf` (the packet alone) and a `-For-Review.pdf` (packet plus the
 blueprint, bookmarked as two parts).
