@@ -189,7 +189,7 @@
   <div class="meta">
     <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
     <span>Code state <b>4342c06</b></span>
-    <span>Re-verified at <b>9890cdf</b></span>
+    <span>Documentation-only since</span>
     <span>Tests <b class="ok">349 passed · 24 browser</b></span>
     <span>Mutations <b class="ok">8 of 8 caught</b></span>
   </div>
@@ -201,7 +201,7 @@
     <p><strong>Branch:</strong> <span class="mono">claude/create-app-repository-1cxsih</span>. Not merged into <span class="mono">main</span>.</p>
     <p><strong>Code state under review: <span class="mono">4342c06</span></strong> — the last commit that touches implementation. Everything after it on this branch is documentation, and that is checkable in one command:</p>
     <pre style="margin:10px 0"><code>git diff 4342c06 HEAD -- ':!docs'   <span class="cm"># returns nothing</span></code></pre>
-    <p><strong>Re-verified at <span class="mono">9890cdf</span></strong>, the branch head when this revision was prepared: full local suite green, CI run&nbsp;<span class="mono">#24</span> green.</p>
+    <p><strong>Every commit after <span class="mono">4342c06</span> on this branch is documentation.</strong> That is the whole reason this packet leads with a code state rather than a branch tip: the tip moves each time the packet itself is revised, and the code does not. CI has been green on the code state and on every documentation commit since — runs <span class="mono">#23</span>, <span class="mono">#24</span> and <span class="mono">#25</span>.</p>
   </div>
 
   <div class="tbl"><table>
@@ -210,7 +210,8 @@
       <tr><td class="mono">5d92c8e</td><td>The policy: state machine, grace window, row lock, commerce reconciliation, migration&nbsp;0011, 31 tests, architecture doc</td><td>yes</td><td><span class="chip no">#22 red</span> browser race, §7</td></tr>
       <tr><td class="mono">4342c06</td><td>The fix for that race. <strong>The last commit touching code.</strong></td><td>yes</td><td><span class="chip yes">#23 green</span></td></tr>
       <tr><td class="mono">9890cdf</td><td>This review packet, first issue</td><td>no</td><td><span class="chip yes">#24 green</span></td></tr>
-      <tr><td class="mono">this commit</td><td>This packet, reissued to correct its own provenance</td><td>no</td><td>runs on push</td></tr>
+      <tr><td class="mono">ec12792</td><td>Packet reissued with a provenance block</td><td>no</td><td><span class="chip yes">#25 green</span></td></tr>
+      <tr><td class="mono">…and this one</td><td>Packet reissued again so that no future documentation commit can make it read as stale. <strong>The list below the code state may grow; the code state cannot.</strong></td><td>no</td><td>runs on push</td></tr>
     </tbody>
   </table></div>
 
@@ -218,6 +219,7 @@
     <span class="n-label">Why the head shown is the CODE state and not the tip</span>
     <p>A document cannot contain the hash of the commit that adds it — writing the hash changes the content, which changes the hash. Any packet that names the branch tip is therefore stale by exactly one commit the moment it is committed, and the previous issue of this packet was stale for precisely that reason.</p>
     <p>So the identifier this packet leads with is the one that <em>stops moving</em>: the code state. It has not changed since <span class="mono">4342c06</span>, the command above proves it in one line, and every commit after it is listed in the table with what it contains. Nothing about the implementation under review is ambiguous.</p>
+    <p><strong>This document names no mutable identifier at all</strong>, so no number of further documentation commits can make it wrong. If a single immutable hash is wanted for the sign-off record, the right instrument is a git tag on the final commit — say so and one will be created; a document cannot be that instrument.</p>
   </div>
 </section>
 
@@ -420,7 +422,7 @@ mutation testing                 <span class="ok">8 of 8 caught</span></code></p
 
   <div class="note">
     <span class="n-label">CI</span>
-    <p><strong>CI:</strong> run&nbsp;<span class="mono">#23</span> (<span class="mono">32414854416</span>) on the code state <span class="mono">4342c06</span> — <span class="chip yes">all three jobs green</span>, and run&nbsp;<span class="mono">#24</span> (<span class="mono">32415407611</span>) on <span class="mono">9890cdf</span> — <span class="chip yes">green again</span>. Run&nbsp;<span class="mono">#22</span> on <span class="mono">5d92c8e</span> was <span class="chip no">red</span> on the browser job: a pre-existing race in the checkout test, described below and fixed in <span class="mono">4342c06</span>. <code>lint · typecheck · test</code> passed on all three.</p>
+    <p><strong>CI:</strong> run&nbsp;<span class="mono">#23</span> (<span class="mono">32414854416</span>) on the code state <span class="mono">4342c06</span> — <span class="chip yes">all three jobs green</span> — and green again on every documentation commit since: <span class="mono">#24</span> (<span class="mono">32415407611</span>) and <span class="mono">#25</span> (<span class="mono">32420898168</span>). Run&nbsp;<span class="mono">#22</span> on <span class="mono">5d92c8e</span> was <span class="chip no">red</span> on the browser job: a pre-existing race in the checkout test, described below and fixed in <span class="mono">4342c06</span>. <code>lint · typecheck · test</code> passed on all three.</p>
   </div>
 
   <div class="tbl"><table>
@@ -532,13 +534,13 @@ mutation testing                 <span class="ok">8 of 8 caught</span></code></p
     <span class="n-label">Provenance, repeated — identical to page one</span>
     <p><strong>Branch:</strong> <span class="mono">claude/create-app-repository-1cxsih</span> · not merged into <span class="mono">main</span>.<br>
        <strong>Code state under review:</strong> <span class="mono">4342c06</span> · CI run&nbsp;<span class="mono">#23</span> green.<br>
-       <strong>Re-verified at:</strong> <span class="mono">9890cdf</span> · CI run&nbsp;<span class="mono">#24</span> green.<br>
-       <strong>Gate commits:</strong> <span class="mono">5d92c8e</span> → <span class="mono">4342c06</span> → <span class="mono">9890cdf</span> → this reissue.<br>
+       <strong>Documentation-only since:</strong> <span class="mono">4342c06</span> · CI green on every commit after it — runs <span class="mono">#24</span>, <span class="mono">#25</span>.<br>
+       <strong>Gate commits:</strong> <span class="mono">5d92c8e</span> → <span class="mono">4342c06</span> → <span class="mono">9890cdf</span> → <span class="mono">ec12792</span> → this reissue.<br>
        <strong>Proof the packet is not stale:</strong> <code>git diff 4342c06 HEAD -- ':!docs'</code> returns nothing.</p>
     <p><strong>Final results:</strong> 349 domain tests · 24 browser tests · 8 of 8 mutations caught · ledger and commerce reconciliation clean · dependency audit clean.</p>
   </div>
 
-  <p style="color:var(--ink-2)">Phase&nbsp;2 · financial review gate · branch <span class="mono">claude/create-app-repository-1cxsih</span> · code state <span class="mono">4342c06</span> · re-verified at <span class="mono">9890cdf</span></p>
+  <p style="color:var(--ink-2)">Phase&nbsp;2 · financial review gate · branch <span class="mono">claude/create-app-repository-1cxsih</span> · code state <span class="mono">4342c06</span> · documentation-only since</p>
 </section>
 
 </div>
