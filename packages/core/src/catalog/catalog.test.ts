@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDb, type Database } from "@afrinext/db";
+import { acceptCurrentVersions } from "../consent";
 import { PermissionDeniedError } from "../errors";
 import { money } from "../money";
 import { createTestUser, ensureReferenceData, expectRejection, resetData, testDb } from "../test/harness";
@@ -31,10 +32,20 @@ async function grantGlobal(userId: string, roleKey: string): Promise<void> {
   `);
 }
 
+/**
+ * Someone who can actually open a store: the role AND the accepted terms.
+ *
+ * The consent gate is a real precondition of `createStore`, not a detail of the
+ * consent tests — so this helper carries it. These tests are about catalogue
+ * behaviour; that the gate exists is proved in `consent/gate.test.ts`.
+ */
 async function makeSeller(): Promise<Actor> {
-  const userId = await createTestUser(db);
+  const userId = await createTestUser(db, { locale: "fr" });
   await grantGlobal(userId, "member");
   await grantGlobal(userId, "seller");
+  await acceptCurrentVersions(db, userId, ["seller_terms"], { locale: "fr" }, {
+    method: "seller_onboarding",
+  });
   return { userId };
 }
 
@@ -79,6 +90,10 @@ describe("opening a store is a granted capability", () => {
     // `store.create` exists as a permission but `member` does not hold it.
     // Whether signing up should make someone a seller is a policy decision,
     // and until it is taken the answer is no.
+    //
+    // Authorization is checked before consent, so this is a permission refusal
+    // even though the terms are also unaccepted — asserting the specific error
+    // keeps the two gates distinguishable.
     await expect(createStore(db, { userId }, { name: "Chez Moi" }))
       .rejects.toBeInstanceOf(PermissionDeniedError);
 

@@ -24,6 +24,9 @@ export function apiError(error: unknown): NextResponse {
       : error.code.endsWith("_not_found") ? 404
       : error.code === "ratelimit.exceeded" ? 429
       : error.code === "consent.required" ? 451
+      // The person can do nothing about a document nobody published. This is
+      // an operator's problem, and 4xx would blame the caller for it.
+      : error.code === "consent.unavailable" ? 503
       : 400;
     const retryAfter = (error as { retryAfterMs?: number }).retryAfterMs;
     return NextResponse.json(

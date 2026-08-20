@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import type { Database } from "@afrinext/db";
 import { audit } from "../audit";
 import { authorize, type Actor } from "../authz";
+import { requireConsent, type LegalDocumentKind } from "../consent";
 import { DomainError } from "../errors";
 import { uuidv7 } from "../ids";
 import { money, type Money } from "../money";
@@ -94,12 +95,45 @@ function toStore(row: StoreRow): StoreRecord {
   };
 }
 
+/**
+ * The documents that govern opening a store.
+ *
+ * Review decision: `seller_terms` only. It is the document whose subject matter
+ * is the action being taken; the general terms are gated at signup, which is a
+ * later milestone and a different flow. Listed here rather than passed in by a
+ * caller, so no transport can shorten the list.
+ */
+export const SELLER_CONSENT_KINDS: readonly LegalDocumentKind[] = ["seller_terms"];
+
 export interface CreateStoreInput {
   readonly name: string;
   /** Optional: derived from the name when absent. */
   readonly slug?: string | undefined;
   readonly tagline?: string | undefined;
   readonly countryCode?: string | undefined;
+}
+
+/**
+ * Refuses to proceed unless the actor has accepted the current seller terms.
+ *
+ * The locale and country are read from the actor's own `users` row, never taken
+ * from the request. That is the whole difference between a gate and a
+ * suggestion: if a caller could name the locale, it could name one with no
+ * published document and — before `requireConsent` was made to fail closed —
+ * walk straight through. Now an unresolvable document is itself a refusal, but
+ * the identity of the person still decides which document applies.
+ */
+export async function requireSellerConsent(db: Database, actor: Actor): Promise<void> {
+  const rows = await db.execute<{ locale: string; country_code: string | null }>(sql`
+    select locale, country_code from users where id = ${actor.userId}::uuid
+  `);
+  const person = rows.rows[0];
+  if (person === undefined) throw new StoreNotFoundError(actor.userId);
+
+  await requireConsent(db, actor.userId, SELLER_CONSENT_KINDS, {
+    locale: person.locale,
+    ...(person.country_code !== null ? { countryCode: person.country_code } : {}),
+  });
 }
 
 /**
@@ -116,6 +150,7 @@ export async function createStore(
   input: CreateStoreInput,
 ): Promise<StoreRecord> {
   await authorize(db, actor, "store.create");
+  await requireSellerConsent(db, actor);
 
   const slug = input.slug ?? slugify(input.name);
   assertUsableSlug(slug, "store");

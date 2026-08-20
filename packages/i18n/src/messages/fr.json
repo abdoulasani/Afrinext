@@ -48,5 +48,10 @@
   "store.by": "Boutique",
   "store.noProducts": "Cette boutique n'a encore rien publié.",
   "product.buy": "Acheter",
-  "product.buySoon": "Le paiement arrive bientôt."
+  "product.buySoon": "Le paiement arrive bientôt.",
+  "consent.heading": "Conditions vendeur",
+  "consent.explain": "Avant d'ouvrir une boutique, vous devez accepter la version en vigueur des conditions vendeur.",
+  "consent.version": "Version",
+  "consent.placeholder": "Texte provisoire — le document définitif est un livrable juridique en attente.",
+  "consent.accept": "J'accepte les conditions vendeur"
 }

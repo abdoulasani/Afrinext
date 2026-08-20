@@ -126,19 +126,26 @@ test.describe("a seller publishes a digital product, and the public can see it",
 
     grantSeller(userId);
 
-    // 1. Create the store.
+    // 1. Holding the role is still not enough: the seller terms must be
+    //    accepted first. The create form is not even rendered yet.
     await page.goto("/fr/sell");
+    await expect(page.getByTestId("consent-gate")).toBeVisible();
+    await expect(page.locator('input[name="name"]')).toHaveCount(0);
+    await page.getByTestId("consent-accept").click();
+    await expect(page.getByTestId("consent-gate")).toHaveCount(0);
+
+    // 2. Now create the store.
     await page.locator('input[name="name"]').fill(storeSlug);
     await page.locator('form button[type="submit"]').click();
     await page.waitForURL(new RegExp(`/fr/sell/${storeSlug}$`));
 
-    // 2. Publishing the product must be impossible while the store is a draft,
+    // 3. Publishing the product must be impossible while the store is a draft,
     //    so the store is published first — which is also the seller's real order
     //    of operations.
     await page.getByRole("button", { name: "Publier la boutique" }).click();
     await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
 
-    // 3. Create a paid digital product. 15 000 XOF, typed the way a person types it.
+    // 4. Create a paid digital product. 15 000 XOF, typed the way a person types it.
     await page.locator('input[name="title"]').fill("Guide de Niamey");
     await page.locator('input[name="summary"]').fill("Un guide pratique");
     await page.locator('input[name="price"]').fill("15 000");
@@ -153,17 +160,17 @@ test.describe("a seller publishes a digital product, and the public can see it",
     );
     expect(storedMinor).toBe("15000");
 
-    // 4. Before publishing, the public URL must not exist.
+    // 5. Before publishing, the public URL must not exist.
     const anonymous = await browser.newContext();
     const visitor = await anonymous.newPage();
     const early = await visitor.goto(`/fr/s/${storeSlug}/${productSlug}`);
     expect(early?.status(), "a draft product must not be reachable").toBe(404);
 
-    // 5. Publish it.
+    // 6. Publish it.
     await page.getByRole("button", { name: "Publier", exact: true }).click();
     await expect(page.getByRole("link", { name: "Voir la page publique" })).toHaveCount(2);
 
-    // 6. The anonymous visitor — no cookies, no session — reaches the URL.
+    // 7. The anonymous visitor — no cookies, no session — reaches the URL.
     const response = await visitor.goto(`/fr/s/${storeSlug}/${productSlug}`);
     expect(response?.status()).toBe(200);
 

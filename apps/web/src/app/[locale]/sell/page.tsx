@@ -1,12 +1,15 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { authz, catalog } from "@afrinext/core";
+import { authz, catalog, consent } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate } from "@afrinext/i18n";
 import AppHeader from "@/components/AppHeader";
 import { CreateStoreForm } from "@/components/CatalogForms";
+import ConsentGate from "@/components/ConsentGate";
 import { createStoreAction } from "@/lib/catalog-actions";
+import { acceptSellerTermsAction } from "@/lib/consent-actions";
+import { actorLegalContext } from "@/lib/consent";
 import { currentActor } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +33,15 @@ export default async function SellPage({ params }: { params: Promise<{ locale: s
     catalog.listOwnStores(db, actor),
     authz.can(db, actor, "store.create"),
   ]);
+
+  // Asked only to decide what to render. The refusal itself happens inside
+  // createStore, which is why hiding or showing this form changes nothing about
+  // what the server will accept.
+  const outstanding = maySell
+    ? await consent.outstandingConsents(
+        db, actor.userId, catalog.SELLER_CONSENT_KINDS, await actorLegalContext(db, actor),
+      )
+    : [];
 
   return (
     <>
@@ -74,7 +86,22 @@ export default async function SellPage({ params }: { params: Promise<{ locale: s
           <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
             {translate(locale, "sell.createStore")}
           </h2>
-          {maySell ? (
+          {maySell && outstanding.length > 0 ? (
+            <ConsentGate
+              locale={locale}
+              action={acceptSellerTermsAction}
+              documents={outstanding.map((o) => ({
+                kind: o.kind, version: o.version, locale: o.locale, contentHash: o.contentHash,
+              }))}
+              labels={{
+                heading: translate(locale, "consent.heading"),
+                explain: translate(locale, "consent.explain"),
+                version: translate(locale, "consent.version"),
+                placeholder: translate(locale, "consent.placeholder"),
+                accept: translate(locale, "consent.accept"),
+              }}
+            />
+          ) : maySell ? (
             <CreateStoreForm
               locale={locale}
               action={createStoreAction}

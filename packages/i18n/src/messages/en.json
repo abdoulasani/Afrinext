@@ -48,5 +48,10 @@
   "store.by": "Store",
   "store.noProducts": "This store has not published anything yet.",
   "product.buy": "Buy",
-  "product.buySoon": "Payment is coming soon."
+  "product.buySoon": "Payment is coming soon.",
+  "consent.heading": "Seller terms",
+  "consent.explain": "Before opening a store you must accept the version of the seller terms currently in force.",
+  "consent.version": "Version",
+  "consent.placeholder": "Placeholder text — the final document is a pending legal deliverable.",
+  "consent.accept": "I accept the seller terms"
 }

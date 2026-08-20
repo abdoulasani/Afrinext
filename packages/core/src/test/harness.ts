@@ -47,11 +47,37 @@ export function testDb(): Database {
  */
 export async function resetData(db: Database): Promise<void> {
   await db.execute(sql.raw(`truncate table ${MUTABLE_TABLES.join(", ")} restart identity cascade`));
-  // Tests that publish a new legal document version must not leak it into the
-  // next run: restore the seeded placeholder baseline.
+  // Restore the seeded legal baseline in both directions.
+  //
+  // Removing versions a test published is the obvious half. The other half is
+  // re-creating placeholders a test DELETED — a gate that fails closed can only
+  // be tested by taking its document away, and without this the rest of the
+  // suite inherits a database where the document no longer exists and every
+  // later consent check fails for the wrong reason. That happened; this is the
+  // fix, in the harness rather than in the one test that noticed.
   await db.execute(
     sql`delete from legal_document_versions where version <> '0.0.0-placeholder'`,
   );
+  await db.execute(sql`
+    insert into legal_document_versions
+      (id, document_id, version, locale, content_hash, effective_from)
+    select gen_random_uuid(), d.id, '0.0.0-placeholder', l.locale,
+           encode(sha256((d.kind || ':' || l.locale)::bytea), 'hex'),
+           now() - interval '1 day'
+      from legal_documents d
+      cross join (values ('fr'), ('en')) as l(locale)
+     where not exists (
+       select 1 from legal_document_versions v
+        where v.document_id = d.id and v.locale = l.locale
+          and v.version = '0.0.0-placeholder'
+     )
+  `);
+  // And undo any shift of the baseline's effective date.
+  await db.execute(sql`
+    update legal_document_versions
+       set effective_from = now() - interval '1 day'
+     where version = '0.0.0-placeholder' and effective_from > now()
+  `);
 }
 
 export async function createTestUser(
