@@ -71,6 +71,13 @@
       "when": 1787160689089,
       "tag": "0009_checkout_and_mock_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787160690089,
+      "tag": "0010_digital_delivery",
+      "breakpoints": true
     }
   ]
 }

@@ -1,12 +1,14 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { catalog, money as m } from "@afrinext/core";
+import { catalog, content, money as m } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate } from "@afrinext/i18n";
 import AppHeader from "@/components/AppHeader";
-import { CreateProductForm, PublishButton } from "@/components/CatalogForms";
-import { createProductAction, publishProductAction, publishStoreAction } from "@/lib/catalog-actions";
+import { AttachAssetForm, CreateProductForm, PublishButton } from "@/components/CatalogForms";
+import {
+  attachAssetAction, createProductAction, publishProductAction, publishStoreAction,
+} from "@/lib/catalog-actions";
 import { currencyRegistry } from "@/lib/catalog";
 import { currentActor } from "@/lib/session";
 
@@ -47,6 +49,22 @@ export default async function StoreAdminPage({
 
   const registry = await currencyRegistry();
   const published = store.status === "published";
+
+  /*
+   * The files behind each product, read through the authorized seller path.
+   *
+   * `listProductAssets` re-checks the store scope per product rather than
+   * trusting that the listing above already did — the products came from a
+   * scoped query, but a read that depends on an earlier read having been
+   * correct is a read that stops being correct when the earlier one changes.
+   */
+  const assetsByProduct = new Map<string, content.AssetRecord[]>(
+    await Promise.all(
+      products.map(async (product) =>
+        [product.id, await content.listProductAssets(db, actor, product.id)] as const,
+      ),
+    ),
+  );
 
   return (
     <>
@@ -118,6 +136,38 @@ export default async function StoreAdminPage({
                       action={publishProductAction}
                     />
                   )}
+
+                  <div className="flex flex-col gap-2 border-t border-border pt-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                      {translate(locale, "sell.assets")}
+                    </span>
+                    {(assetsByProduct.get(product.id) ?? []).length === 0 ? (
+                      // Said plainly, because a published product with no file
+                      // is a product a buyer pays for and receives nothing from.
+                      <span data-testid={`no-assets-${product.id}`} className="text-xs text-muted">
+                        {translate(locale, "sell.noAssets")}
+                      </span>
+                    ) : (
+                      <ul className="flex flex-col gap-1">
+                        {(assetsByProduct.get(product.id) ?? []).map((asset) => (
+                          <li key={asset.id} className="font-mono text-xs text-muted">
+                            {asset.title} · {Math.max(1, Math.round(asset.byteSize / 1024))} KB
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <AttachAssetForm
+                      locale={locale}
+                      storeSlug={store.slug}
+                      productId={product.id}
+                      labels={{
+                        title: translate(locale, "sell.assetTitle"),
+                        file: translate(locale, "sell.assetFile"),
+                        submit: translate(locale, "sell.addAsset"),
+                      }}
+                      action={attachAssetAction}
+                    />
+                  </div>
                 </li>
               ))}
             </ul>

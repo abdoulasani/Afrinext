@@ -79,5 +79,20 @@
   "order.libraryEmpty": "Vous ne possédez encore aucun produit.",
   "order.signInToBuy": "Connectez-vous pour acheter.",
   "order.owned": "Vous possédez déjà ce produit.",
-  "order.openLibrary": "Ouvrir ma bibliothèque"
+  "order.openLibrary": "Ouvrir ma bibliothèque",
+  "library.title": "Ma bibliothèque",
+  "library.open": "Ouvrir",
+  "library.download": "Télécharger",
+  "library.view": "Consulter",
+  "library.viewOnly": "Consultation en ligne uniquement",
+  "library.noAssets": "Le vendeur n'a pas encore ajouté de fichier.",
+  "library.empty": "Vous ne possédez encore aucun produit.",
+  "library.notSettled": "Accès ouvert. Le règlement au vendeur est une étape distincte.",
+  "sell.assets": "Fichiers du produit",
+  "sell.addAsset": "Ajouter un fichier",
+  "sell.assetTitle": "Titre du fichier",
+  "sell.assetFile": "Fichier",
+  "sell.noAssets": "Aucun fichier. Un acheteur ne recevrait rien.",
+  "sell.deliveryDownload": "Téléchargeable",
+  "sell.deliveryViewOnly": "Consultation seule"
 }

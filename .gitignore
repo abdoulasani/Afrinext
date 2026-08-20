@@ -42,3 +42,6 @@ yarn-error.log*
 apps/web/.e2e/
 apps/web/test-results/
 apps/web/playwright-report/
+
+# Uploaded digital assets on a local filesystem store.
+.content-storage/

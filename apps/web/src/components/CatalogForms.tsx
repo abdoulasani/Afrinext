@@ -114,3 +114,53 @@ export function PublishButton({
     </form>
   );
 }
+
+/**
+ * The seller's file upload.
+ *
+ * A plain multipart form post to a Server Action. Nothing about the size or the
+ * type is decided here — the client-side `accept` attribute is a file-picker
+ * courtesy, and the server has an allow-list because a courtesy is not a
+ * control.
+ */
+export function AttachAssetForm({
+  locale, storeSlug, productId, labels, action,
+}: {
+  locale: string;
+  storeSlug: string;
+  productId: string;
+  labels: { title: string; file: string; submit: string };
+  action: (state: ActionState, form: FormData) => Promise<ActionState>;
+}) {
+  const [state, dispatch, pending] = useActionState(action, {});
+  return (
+    <form action={dispatch} className="flex flex-col gap-2">
+      <input type="hidden" name="locale" value={locale} />
+      <input type="hidden" name="storeSlug" value={storeSlug} />
+      <input type="hidden" name="productId" value={productId} />
+      <Error state={state} />
+      <input
+        name="title"
+        placeholder={labels.title}
+        className={field}
+        data-testid={`asset-title-${productId}`}
+      />
+      <input
+        type="file"
+        name="file"
+        required
+        accept=".pdf,.epub,.zip,.png,.jpg,.jpeg,.txt,.md"
+        data-testid={`asset-file-${productId}`}
+        className="text-xs"
+      />
+      <button
+        type="submit"
+        disabled={pending}
+        data-testid={`asset-submit-${productId}`}
+        className={button}
+      >
+        {labels.submit}
+      </button>
+    </form>
+  );
+}

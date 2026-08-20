@@ -69,5 +69,6 @@ export default function globalSetup(): void {
    * history rather than what the test just did.
    */
   psql("truncate table payment_events, payments, entitlements, order_items, orders cascade");
+  psql("truncate table digital_assets cascade");
   psql("delete from legal_document_versions where version <> '0.0.0-placeholder'");
 }

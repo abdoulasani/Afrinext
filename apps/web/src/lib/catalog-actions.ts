@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
-import { catalog, money as m } from "@afrinext/core";
+import { catalog, content, money as m } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { DEFAULT_LOCALE } from "@afrinext/i18n";
 import { requireActor } from "@/lib/session";
 import { currencyRegistry } from "@/lib/catalog";
+import { getContentStorage } from "@/lib/content";
 
 /**
  * Server Actions for the seller screens.
@@ -25,6 +26,44 @@ function fail(error: unknown): ActionState {
   // Anything else is not explained to them; it goes to the server log.
   if (error instanceof Error && "code" in error) return { error: error.message };
   throw error;
+}
+
+/**
+ * Attaches a file to a product.
+ *
+ * The store scope is resolved from the product row inside `attachAsset`, not
+ * from this form — a store id in a hidden input would be a store id somebody
+ * could change. The content type comes from the uploaded part and is checked
+ * against an allow-list, because these bytes are served back from an Afrinext
+ * origin.
+ */
+export async function attachAssetAction(
+  _previous: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const locale = String(form.get("locale") ?? DEFAULT_LOCALE);
+  const storeSlug = String(form.get("storeSlug") ?? "");
+  try {
+    const actor = await requireActor();
+    const file = form.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { error: "Choisissez un fichier." };
+    }
+    if (file.size > content.MAX_ASSET_BYTES) {
+      return { error: "Ce fichier est trop volumineux." };
+    }
+    const title = String(form.get("title") ?? "").trim();
+    await content.attachAsset(getDb(), getContentStorage(), actor, {
+      productId: String(form.get("productId") ?? ""),
+      title: title === "" ? file.name : title,
+      contentType: file.type,
+      bytes: Buffer.from(await file.arrayBuffer()),
+    });
+  } catch (error: unknown) {
+    return fail(error);
+  }
+  revalidatePath(`/${locale}/sell/${storeSlug}`);
+  return {};
 }
 
 export async function createStoreAction(

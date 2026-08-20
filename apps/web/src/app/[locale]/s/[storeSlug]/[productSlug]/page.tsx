@@ -77,7 +77,8 @@ export default async function PublicProductPage({
                 {translate(locale, "order.owned")}
               </p>
               <a
-                href={`/${locale}/orders`}
+                href={`/${locale}/library/${storeSlug}/${productSlug}`}
+                data-testid="open-library"
                 className="w-full rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-contrast"
               >
                 {translate(locale, "order.openLibrary")}

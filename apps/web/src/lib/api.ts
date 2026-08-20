@@ -18,6 +18,9 @@ export function apiError(error: unknown): NextResponse {
   if (error instanceof DomainError) {
     const status =
       error.code === "authz.denied" ? 403
+      // "Not yours", "not there" and "not any more" answer identically, so the
+      // endpoint cannot be used to learn which asset ids exist.
+      : error.code === "content.forbidden" ? 403
       : error.code === "auth.elevation_required" ? 403
       // A missing store or product is a 404, not a malformed request. The
       // suffix convention keeps this from needing a new branch per resource.

@@ -8,6 +8,7 @@ const MUTABLE_TABLES = [
   // Checkout. Listed before the catalogue they reference, and before the
   // ledger: an order is evidence about a product and a buyer, so it cannot
   // outlive either.
+  "digital_assets",
   "payment_events",
   "payments",
   "entitlements",

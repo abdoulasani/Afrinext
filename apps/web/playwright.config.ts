@@ -81,6 +81,9 @@ export default defineConfig({
       // misconfigured deployment gets wrong.
       `PAYMENT_PROVIDER=mock ALLOW_MOCK_PAYMENTS=yes ` +
       `MOCK_WEBHOOK_SECRET=${MOCK_WEBHOOK_SECRET} ` +
+      // Uploaded files go to a directory the run owns, so a suite never reads
+      // bytes a previous run left behind.
+      `CONTENT_STORAGE_DIR=.e2e/content ` +
       `pnpm exec next start -p ${PORT} > ${SERVER_LOG} 2>&1`,
     url: BASE_URL,
     // Never silently reuse a server someone left running: it could be a

@@ -79,5 +79,20 @@
   "order.libraryEmpty": "You do not own any products yet.",
   "order.signInToBuy": "Sign in to buy.",
   "order.owned": "You already own this product.",
-  "order.openLibrary": "Open my library"
+  "order.openLibrary": "Open my library",
+  "library.title": "My library",
+  "library.open": "Open",
+  "library.download": "Download",
+  "library.view": "View",
+  "library.viewOnly": "Viewable on the platform only",
+  "library.noAssets": "The seller has not added a file yet.",
+  "library.empty": "You do not own any products yet.",
+  "library.notSettled": "Access is open. Settling the seller is a separate step.",
+  "sell.assets": "Product files",
+  "sell.addAsset": "Add a file",
+  "sell.assetTitle": "File title",
+  "sell.assetFile": "File",
+  "sell.noAssets": "No files. A buyer would receive nothing.",
+  "sell.deliveryDownload": "Downloadable",
+  "sell.deliveryViewOnly": "View only"
 }

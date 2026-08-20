@@ -17,6 +17,7 @@ export const PERMISSIONS = {
 
   "product.create": "Create a product in a store",
   "product.publish": "Publish a product",
+  "product.manage_content": "Attach and list the files behind a product",
 
   "course.create": "Create a course",
   "course.publish": "Publish a course",
@@ -83,7 +84,8 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     description: "Owns a store and everything published under it.",
     permissions: [
       "store.update", "store.read_analytics", "order.read_store",
-      "product.create", "product.publish", "course.create", "course.publish",
+      "product.create", "product.publish", "product.manage_content",
+      "course.create", "course.publish",
     ],
   },
   {

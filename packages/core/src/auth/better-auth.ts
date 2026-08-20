@@ -169,9 +169,17 @@ export function createAuth(deps: AuthDeps) {
      * one; low enough that a flood from one address is still stopped before it
      * reaches the database.
      *
-     * Verify is different: attempt counts are bounded per challenge by
-     * PostgreSQL, but nothing bounds how fast one address may hammer the
-     * endpoint, so that rule is the only control there and stays tight.
+     * Verify is bounded the same way, and for a reason the browser suite
+     * taught me. It first carried a literal — twenty a minute — and that is
+     * exactly the defect the send rule was changed to avoid: a fixed per-IP cap
+     * that pre-empts the configured policy. It refused a legitimate sign-in
+     * once a run made enough of them from one address, which is precisely what
+     * carrier NAT in Niamey looks like from the server's side.
+     *
+     * Attempt counts are still bounded per challenge, in PostgreSQL, by
+     * `max_attempts` — that is the control that stops guessing. This rule only
+     * bounds flood volume, so it is derived from the same stored policy and
+     * sits above it.
      *
      * Note that Better Auth enables this whole layer only under
      * NODE_ENV=production. That is its default, not our choice, and it is why
@@ -181,7 +189,7 @@ export function createAuth(deps: AuthDeps) {
     rateLimit: {
       customRules: {
         "/phone-otp/send": async () => ({ window: 60, max: (await policy()).perIpPerHour * 2 }),
-        "/phone-otp/verify": { window: 60, max: 20 },
+        "/phone-otp/verify": async () => ({ window: 60, max: (await policy()).perIpPerHour * 2 }),
       },
     },
 

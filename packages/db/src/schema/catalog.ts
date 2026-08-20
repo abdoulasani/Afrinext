@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  bigint, check, index, pgTable, text, timestamp, uniqueIndex, uuid,
+  bigint, check, index, integer, pgTable, text, timestamp, uniqueIndex, uuid,
 } from "drizzle-orm/pg-core";
 import { currencies, countries } from "./reference";
 import { users } from "./identity";
@@ -58,6 +58,15 @@ export const products = pgTable(
     priceMinor: bigint("price_minor", { mode: "bigint" }).notNull(),
     currency: text("currency").notNull().references(() => currencies.code),
     status: text("status").notNull().default("draft"), // draft | published | archived
+    /**
+     * What a buyer may do with the files once entitled.
+     *
+     * `download` hands over the bytes; `view_only` serves them inline and
+     * refuses an attachment. That second mode is a POLICY, not a protection:
+     * anything a browser can render, a determined person can save. Calling it
+     * DRM would be a lie, so nothing in this codebase does.
+     */
+    deliveryMode: text("delivery_mode").notNull().default("download"),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -71,11 +80,49 @@ export const products = pgTable(
     check("products_status_valid", sql`${t.status} in ('draft','published','archived')`),
     check("products_slug_shape", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and length(${t.slug}) between 3 and 64`),
     check("products_price_positive", sql`${t.priceMinor} > 0`),
+    check("products_delivery_mode_valid", sql`${t.deliveryMode} in ('download','view_only')`),
     // A published product must know when. Without this, "published" is a label
     // with no timestamp behind it and no way to order a catalogue by recency.
     check(
       "products_published_has_timestamp",
       sql`(${t.status} <> 'published') or (${t.publishedAt} is not null)`,
     ),
+  ],
+);
+
+/**
+ * The files behind a digital product.
+ *
+ * One product, many assets — a guide with a PDF and a worksheet, say. This is
+ * deliberately the generic layer: a future Course → Module → Lesson structure
+ * hangs its video and document resources off a table shaped like this one
+ * rather than needing a parallel storage model. What it is NOT is that
+ * structure, which this milestone does not build.
+ *
+ * `storage_key` is opaque and never leaves the server. It is not a URL, not a
+ * path a client can construct, and not derived from anything a client knows —
+ * the bytes are only ever reachable through an authorized server route.
+ */
+export const digitalAssets = pgTable(
+  "digital_assets",
+  {
+    id: uuid("id").primaryKey(),
+    productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    /** document | file — coarse on purpose; `video` is a later milestone's word. */
+    kind: text("kind").notNull().default("document"),
+    contentType: text("content_type").notNull(),
+    byteSize: bigint("byte_size", { mode: "bigint" }).notNull(),
+    /** Lets a later integrity check prove the stored bytes are the stored bytes. */
+    checksumSha256: text("checksum_sha256").notNull(),
+    storageKey: text("storage_key").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("digital_assets_product_idx").on(t.productId, t.sortOrder),
+    uniqueIndex("digital_assets_storage_key").on(t.storageKey),
+    check("digital_assets_kind_valid", sql`${t.kind} in ('document','file')`),
+    check("digital_assets_size_positive", sql`${t.byteSize} > 0`),
   ],
 );

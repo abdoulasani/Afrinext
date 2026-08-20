@@ -42,9 +42,12 @@ export default async function OrdersPage({
             <ul data-testid="library" className="flex flex-col gap-2">
               {owned.map((item) => (
                 <li key={item.productId} className="rounded-xl bg-surface-muted px-3 py-2">
+                  {/* Into the library, not back to the sales page: this is the
+                      screen that can actually hand over the file. */}
                   <a
                     className="text-sm font-medium"
-                    href={`/${locale}/s/${item.storeSlug}/${item.productSlug}`}
+                    data-testid={`library-${item.productSlug}`}
+                    href={`/${locale}/library/${item.storeSlug}/${item.productSlug}`}
                   >
                     {item.title}
                   </a>

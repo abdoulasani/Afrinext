@@ -281,6 +281,18 @@ export const entitlements = pgTable(
     orderId: uuid("order_id").notNull().references(() => orders.id),
     source: text("source").notNull().default("purchase"),
     grantedAt: timestamp("granted_at", { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * Set, never deleted — the grant happened, and the record of it is part of
+     * why someone had access last month. Access reads `revoked_at is null`, so
+     * revoking is one statement and takes effect on the next request rather
+     * than on the next login.
+     *
+     * Nothing in this milestone revokes: that is a refund decision, and refunds
+     * are out of scope. The column exists so "a revoked entitlement grants
+     * nothing" is a property the access path can be tested against today.
+     */
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revokedReason: text("revoked_reason"),
   },
   (t) => [
     uniqueIndex("entitlements_user_product_key").on(t.userId, t.productId),
