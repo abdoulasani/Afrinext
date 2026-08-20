@@ -188,12 +188,38 @@
   <p class="lede">A verified payment can arrive after the checkout expired. The money moved whatever our timer did, so it is never ignored: the order ends as <strong>paid</strong> when fulfilling is still safe, and as <strong>refund_due</strong> when it is not. No confirmed payment is invisible any more.</p>
   <div class="meta">
     <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
-    <span>Head <b>4342c06</b></span>
-    <span>2 commits · 20 files</span>
+    <span>Code state <b>4342c06</b></span>
+    <span>Re-verified at <b>9890cdf</b></span>
     <span>Tests <b class="ok">349 passed · 24 browser</b></span>
     <span>Mutations <b class="ok">8 of 8 caught</b></span>
   </div>
 </header>
+
+<section id="provenance" style="margin-top:44px;padding-top:0;border-top:none">
+  <div class="note key">
+    <span class="n-label">Provenance — what this document describes, exactly</span>
+    <p><strong>Branch:</strong> <span class="mono">claude/create-app-repository-1cxsih</span>. Not merged into <span class="mono">main</span>.</p>
+    <p><strong>Code state under review: <span class="mono">4342c06</span></strong> — the last commit that touches implementation. Everything after it on this branch is documentation, and that is checkable in one command:</p>
+    <pre style="margin:10px 0"><code>git diff 4342c06 HEAD -- ':!docs'   <span class="cm"># returns nothing</span></code></pre>
+    <p><strong>Re-verified at <span class="mono">9890cdf</span></strong>, the branch head when this revision was prepared: full local suite green, CI run&nbsp;<span class="mono">#24</span> green.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Commit</th><th>What it is</th><th>Touches code</th><th>CI</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">5d92c8e</td><td>The policy: state machine, grace window, row lock, commerce reconciliation, migration&nbsp;0011, 31 tests, architecture doc</td><td>yes</td><td><span class="chip no">#22 red</span> browser race, §7</td></tr>
+      <tr><td class="mono">4342c06</td><td>The fix for that race. <strong>The last commit touching code.</strong></td><td>yes</td><td><span class="chip yes">#23 green</span></td></tr>
+      <tr><td class="mono">9890cdf</td><td>This review packet, first issue</td><td>no</td><td><span class="chip yes">#24 green</span></td></tr>
+      <tr><td class="mono">this commit</td><td>This packet, reissued to correct its own provenance</td><td>no</td><td>runs on push</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">Why the head shown is the CODE state and not the tip</span>
+    <p>A document cannot contain the hash of the commit that adds it — writing the hash changes the content, which changes the hash. Any packet that names the branch tip is therefore stale by exactly one commit the moment it is committed, and the previous issue of this packet was stale for precisely that reason.</p>
+    <p>So the identifier this packet leads with is the one that <em>stops moving</em>: the code state. It has not changed since <span class="mono">4342c06</span>, the command above proves it in one line, and every commit after it is listed in the table with what it contains. Nothing about the implementation under review is ambiguous.</p>
+  </div>
+</section>
 
 <nav class="jump" aria-label="Sections">
   <a href="#before">1 · What happened before</a>
@@ -394,7 +420,7 @@ mutation testing                 <span class="ok">8 of 8 caught</span></code></p
 
   <div class="note">
     <span class="n-label">CI</span>
-    <p><strong>CI:</strong> run&nbsp;<span class="mono">#23</span> (<span class="mono">32414854416</span>) on <span class="mono">4342c06</span> — <span class="chip yes">all three jobs green</span>. The previous run, <span class="mono">#22</span> on <span class="mono">5d92c8e</span>, was <span class="chip no">red</span> on the browser job: a pre-existing race in the checkout test, described below and fixed in the second commit. <code>lint · typecheck · test</code> passed on both.</p>
+    <p><strong>CI:</strong> run&nbsp;<span class="mono">#23</span> (<span class="mono">32414854416</span>) on the code state <span class="mono">4342c06</span> — <span class="chip yes">all three jobs green</span>, and run&nbsp;<span class="mono">#24</span> (<span class="mono">32415407611</span>) on <span class="mono">9890cdf</span> — <span class="chip yes">green again</span>. Run&nbsp;<span class="mono">#22</span> on <span class="mono">5d92c8e</span> was <span class="chip no">red</span> on the browser job: a pre-existing race in the checkout test, described below and fixed in <span class="mono">4342c06</span>. <code>lint · typecheck · test</code> passed on all three.</p>
   </div>
 
   <div class="tbl"><table>
@@ -422,6 +448,39 @@ mutation testing                 <span class="ok">8 of 8 caught</span></code></p
     <p>Removing <code>FOR UPDATE</code> changed nothing, because the concurrency test used <code>Promise.all</code> and two promises do not reliably interleave two transactions — it created a <em>possible</em> race, not a certain one. A test that passes whether or not the lock exists is not testing the lock.</p>
     <p>The replacement holds the row lock from a second connection and controls the ordering exactly. It now fails without the lock, every time.</p>
   </div>
+
+  <h3>Files changed — 21 across the gate</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td colspan="2" style="padding-top:12px"><strong>The policy</strong></td></tr>
+      <tr><td class="mono">core/orders/state.ts</td><td><code>refund_due</code> added; <code>expired</code> gains two exits and stops being terminal.</td></tr>
+      <tr><td class="mono">core/orders/payment.ts</td><td>The row lock, the late decision and its four conditions, the shared <code>fulfil()</code>, the injected clock, the decision written to the audit log.</td></tr>
+      <tr><td class="mono">core/orders/checkout.ts</td><td><code>loadLatePaymentGraceSeconds()</code> — clamped to the reviewed maximum, malformed values fall back rather than widen.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Reconciliation</strong></td></tr>
+      <tr><td class="mono">core/ledger/commerce-reconcile.ts</td><td><strong>New.</strong> The five impossible commerce states.</td></tr>
+      <tr><td class="mono">core/scripts/reconcile-check.ts</td><td>The CI gate, plus the probe that proves the detector can still report a fault.</td></tr>
+      <tr><td class="mono">core/ledger/index.ts</td><td>Export.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Schema and configuration</strong></td></tr>
+      <tr><td class="mono">db/migrations/0011 + meta/_journal.json</td><td>Widened status CHECK, <code>late_payment_at</code> and its constraint, the refund-queue index, both settings.</td></tr>
+      <tr><td class="mono">db/schema/commerce.ts</td><td>The same, in Drizzle.</td></tr>
+      <tr><td class="mono">core/seed/reference.ts</td><td><code>checkout.ttl_seconds</code> and <code>checkout.late_payment_grace_seconds</code> seeded explicitly.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Tests</strong></td></tr>
+      <tr><td class="mono">core/orders/late-payment.test.ts</td><td><strong>New.</strong> 31 tests: all fourteen requested scenarios, the configuration cases, the state machine, and the five reconciliation detections.</td></tr>
+      <tr><td class="mono">core/orders/orders.test.ts</td><td>Two tests updated to the approved policy — named below.</td></tr>
+      <tr><td class="mono">core/content/content.test.ts</td><td>One updated, one added, for the two halves of the decision.</td></tr>
+      <tr><td class="mono">web/e2e/checkout.spec.ts</td><td>Waits for the payment state instead of a static caption — the CI race.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Web and documentation</strong></td></tr>
+      <tr><td class="mono">web/[locale]/orders/[id]/page.tsx</td><td>Shows the charge's real status, and states a refund is owed <em>and not executed</em>.</td></tr>
+      <tr><td class="mono">i18n fr.json · en.json</td><td>4 keys per locale, worded so nothing claims a refund happened.</td></tr>
+      <tr><td class="mono">docs/architecture/late-payment-policy.md</td><td><strong>New.</strong> The decision, the table, the machine, the invariants, the settings, and what is not built.</td></tr>
+      <tr><td class="mono">AGENTS.md</td><td>The rule added to the non-negotiables.</td></tr>
+      <tr><td class="mono">docs/review/… .html · .pdf</td><td>This packet.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><strong>No new dependency</strong>; <code>pnpm-lock.yaml</code> is untouched. <code>ledger/flows.ts</code>, <code>ledger/post.ts</code>, <code>ledger/accounts.ts</code>, <code>money/</code>, <code>authz/</code>, <code>consent/</code>, <code>auth/</code> and <code>payments/</code> have <strong>no diff</strong>.</p>
 
   <h3>Three existing tests were updated, and why that is not a weakening</h3>
 
@@ -467,7 +526,19 @@ mutation testing                 <span class="ok">8 of 8 caught</span></code></p
 
   <p><strong>Is Phase 2 ready for approval?</strong> The financial policy gate is closed: the rule is decided, documented, implemented, enforced by guarded transitions and a row lock, and watched by a reconciliation that proves it can still report a fault. What is <em>not</em> closed is the consequence of that rule — <strong>a refund queue with no drain</strong>. My recommendation is to approve the gate and treat refund execution as the first item of the next milestone, before settlement, because it is the only open item that can leave a real buyer out of pocket.</p>
 
-  <p style="color:var(--ink-2)">Phase&nbsp;2 · financial review gate · branch <span class="mono">claude/create-app-repository-1cxsih</span> · head <span class="mono">4342c06</span></p>
+  <hr class="soft">
+
+  <div class="note key">
+    <span class="n-label">Provenance, repeated — identical to page one</span>
+    <p><strong>Branch:</strong> <span class="mono">claude/create-app-repository-1cxsih</span> · not merged into <span class="mono">main</span>.<br>
+       <strong>Code state under review:</strong> <span class="mono">4342c06</span> · CI run&nbsp;<span class="mono">#23</span> green.<br>
+       <strong>Re-verified at:</strong> <span class="mono">9890cdf</span> · CI run&nbsp;<span class="mono">#24</span> green.<br>
+       <strong>Gate commits:</strong> <span class="mono">5d92c8e</span> → <span class="mono">4342c06</span> → <span class="mono">9890cdf</span> → this reissue.<br>
+       <strong>Proof the packet is not stale:</strong> <code>git diff 4342c06 HEAD -- ':!docs'</code> returns nothing.</p>
+    <p><strong>Final results:</strong> 349 domain tests · 24 browser tests · 8 of 8 mutations caught · ledger and commerce reconciliation clean · dependency audit clean.</p>
+  </div>
+
+  <p style="color:var(--ink-2)">Phase&nbsp;2 · financial review gate · branch <span class="mono">claude/create-app-repository-1cxsih</span> · code state <span class="mono">4342c06</span> · re-verified at <span class="mono">9890cdf</span></p>
 </section>
 
 </div>
