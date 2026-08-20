@@ -1,0 +1,529 @@
+<title>Mock Checkout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 2 · checkout &amp; mock payments</p>
+  <h1>Mock Checkout</h1>
+  <p class="lede">A buyer buys a digital product. The server prices it, a provider is charged, and a <em>signed provider event</em> — never the browser — is what confirms the payment. The order domain and the payment state machine, complete; the ledger, deliberately untouched.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>Head <b>e9e16d5</b></span>
+    <span>1 commit · 30 files</span>
+    <span>Tests <b class="ok">284 passed · 22 browser</b></span>
+    <span>Mutations <b class="ok">11 of 11 caught</b></span>
+  </div>
+</header>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#boundary">1 · Confirmed ≠ settled</a>
+  <a href="#machine">2 · The state machines</a>
+  <a href="#trust">3 · The trust boundary</a>
+  <a href="#idempotency">4 · Idempotency</a>
+  <a href="#provider">5 · The provider port</a>
+  <a href="#mutations">6 · Mutation evidence</a>
+  <a href="#results">7 · Results and files</a>
+  <a href="#risks">8 · Risks and confirmations</a>
+</nav>
+
+<section id="boundary">
+  <div class="sec-head"><div class="sec-mark">1</div><h2 class="sec-title">Payment confirmed is not financial settlement</h2></div>
+
+  <div class="note key">
+    <span class="n-label">The line this milestone stops at</span>
+    <p><strong>Payment confirmed</strong> — a provider event, verified against the raw bytes we received and cross-checked against our own order, says a charge succeeded. That moves the payment, moves the order, freezes the commission split, and grants the buyer's entitlement.</p>
+    <p><strong>Financial settlement</strong> — ledger postings that turn a captured payment into a seller's claim on money. <strong>Not performed.</strong> Not by this code, and deliberately not by a mock.</p>
+  </div>
+
+  <h3>Why nothing is posted to the ledger</h3>
+
+  <p>The obvious implementation would post the capture leg — <code>external_customer → psp_clearing</code> — the moment a payment confirms. I did not, for three reasons, and a test asserts the absence rather than leaving it to a comment:</p>
+
+  <ul>
+    <li><strong>The ledger is append-only.</strong> A posting that says "a customer paid 15 000 XOF" when a mock invented the payment is a false entry in a book that cannot be corrected by deletion — only by a compensating transaction that also has to be explained. The browser suite alone would write a dozen of them.</li>
+    <li><strong>A capture is a claim about the outside world.</strong> Afrinext does not observe it; a provider asserts it. Recording the assertion as a movement of value conflates "iPayMoney told us" with "the money exists", and those separate the moment a provider has an incident.</li>
+    <li><strong>A seller entitlement before the funds arrive is a promise the balance cannot keep.</strong> Splitting the gross into seller and platform shares creates a claim on money Afrinext does not yet hold, in a system whose whole point is that <code>account_balances</code> is a cache of something true.</li>
+  </ul>
+
+  <h3>What confirmation <em>does</em> write</h3>
+
+  <p>The <strong>frozen fee schedule</strong>. <code>fee_schedules</code> and <code>fee_lines</code> were built in Phase 1 with a comment saying <code>subject_type</code> would be <code>'settlement'</code> now and <code>'order'</code> once orders existed; orders now exist, so it is <code>'order'</code>. The rows are append-only and must total the gross, so the sale's economics — 15 000 XOF gross, 2 700 platform, 12 300 seller — are permanent from the moment of confirmation. Change the commission rule next quarter and this order still says what it said today.</p>
+
+  <p><strong>It moves no money.</strong> It records what the sale charged, so that settlement — whenever it is built — reads a frozen decision instead of re-resolving rules that have since changed.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 660 232" role="img" aria-label="The buyer journey, showing where confirmation ends and settlement would begin.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.75" marker-end="url(#ar)">
+          <path d="M96 42 H150"/><path d="M246 42 H300"/><path d="M396 42 H450"/>
+          <path d="M523 60 V96"/>
+          <path d="M96 138 H150"/><path d="M246 138 H300"/>
+          <path d="M396 138 H450"/>
+        </g>
+        <g stroke="currentColor" fill="none" stroke-width="1.2">
+          <rect x="16" y="24" width="80" height="36" rx="3"/>
+          <rect x="150" y="24" width="96" height="36" rx="3"/>
+          <rect x="300" y="24" width="96" height="36" rx="3"/>
+          <rect x="450" y="24" width="146" height="36" rx="3"/>
+          <rect x="16" y="120" width="80" height="36" rx="3"/>
+          <rect x="150" y="120" width="96" height="36" rx="3"/>
+          <rect x="300" y="120" width="96" height="36" rx="3"/>
+        </g>
+        <g stroke="currentColor" fill="none" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.55">
+          <rect x="450" y="120" width="146" height="36" rx="3"/>
+        </g>
+        <text class="svg-t" x="56" y="46" text-anchor="middle">Buyer</text>
+        <text class="svg-t" x="198" y="46" text-anchor="middle">Product</text>
+        <text class="svg-t" x="348" y="46" text-anchor="middle">Checkout</text>
+        <text class="svg-t" x="523" y="40" text-anchor="middle">Order</text>
+        <text class="svg-s" x="523" y="53" text-anchor="middle">priced by the server</text>
+        <text class="svg-t" x="56" y="136" text-anchor="middle">Charge</text>
+        <text class="svg-s" x="56" y="149" text-anchor="middle">pending</text>
+        <text class="svg-t" x="198" y="136" text-anchor="middle">Signed event</text>
+        <text class="svg-s" x="198" y="149" text-anchor="middle">verified</text>
+        <text class="svg-t" x="348" y="136" text-anchor="middle">Paid</text>
+        <text class="svg-s" x="348" y="149" text-anchor="middle">+ entitlement, + fees</text>
+        <text class="svg-t" x="523" y="136" text-anchor="middle" opacity="0.6">Settlement</text>
+        <text class="svg-s" x="523" y="149" text-anchor="middle" opacity="0.6">not built</text>
+        <text class="svg-u" x="16" y="192">SOLID · IMPLEMENTED AND TESTED THIS MILESTONE</text>
+        <text class="svg-s" x="16" y="210">DASHED · the ledger. Needs a real provider settlement event, a refund window, and payout rails.</text>
+      </svg>
+    </div>
+    <figcaption>The journey, and where it stops. Everything left of the dashed box is implemented; <b>the dashed box is the whole of settlement</b> and is not in this milestone. A test asserts <code>ledger_entries</code> is empty after a confirmed sale, so the boundary is enforced rather than described.</figcaption>
+  </figure>
+</section>
+
+<section id="machine">
+  <div class="sec-head"><div class="sec-mark">2</div><h2 class="sec-title">The state machines, declared once and enforced twice</h2></div>
+
+  <p>Both machines live in <code>orders/state.ts</code> as data. Not as <code>if</code> chains at the call sites: a transition rule expressed in three places is a rule that will eventually disagree with itself.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Order</th><th>May become</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">pending_payment</td><td class="mono">paid · failed · cancelled · expired</td><td>Created and priced. The only non-terminal state.</td></tr>
+      <tr><td class="mono">paid</td><td>—</td><td>A provider confirmed a capture. <strong>Not</strong> "the seller has been paid".</td></tr>
+      <tr><td class="mono">failed</td><td>—</td><td>Terminal on purpose: a new attempt is a new checkout, with a fresh price read and a fresh expiry. Reusing an order across attempts is how a stale price gets charged.</td></tr>
+      <tr><td class="mono">cancelled · expired</td><td>—</td><td>Closed without payment.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Payment</th><th>May become</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">initiated</td><td class="mono">pending · failed · cancelled · expired</td><td>The row exists; the provider has not answered.</td></tr>
+      <tr><td class="mono">pending</td><td class="mono">succeeded · failed · cancelled · expired</td><td>A charge is in flight. The order stays <code>pending_payment</code>.</td></tr>
+      <tr><td class="mono">succeeded · failed · cancelled · expired</td><td>—</td><td>Terminal. A later event claiming otherwise is recorded and ignored.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="n-label">Enforced twice, and the second one is the real one</span>
+    <p>Every mutation is a <strong>guarded <code>UPDATE</code></strong> naming the state it expects — <code>where id = … and status = 'pending_payment'</code>. A row count of zero <em>is</em> the rejection. So a caller that skipped the table in TypeScript still cannot write an impossible history, and two confirmations racing each other produce one winner and one no-op rather than two sets of effects.</p>
+  </div>
+
+  <h3>One divergence that is deliberate</h3>
+
+  <p>A payment can succeed while its order refuses to move — the checkout expired while the buyer was on the provider's page. The payment transitions, because it did: money may genuinely have left an account. The order stays <code>expired</code> and <strong>no entitlement is granted</strong>. That divergence is a real operational event and it is visible precisely because the two are separate rows with separate states. It is listed as an open risk in section 8, because nothing yet reconciles it.</p>
+</section>
+
+<section id="trust">
+  <div class="sec-head"><div class="sec-mark">3</div><h2 class="sec-title">The trust boundary: five checks before anything is believed</h2></div>
+
+  <p>The browser is never believed. A buyer returning from a hosted checkout page with <code>?status=success</code> in the URL has proved only that they can type a URL. What is believed is a signed event, and only after five checks in this order:</p>
+
+  <ol class="steps">
+    <li><b>The signature verifies over the RAW bytes</b>
+      <p>The body is handed to the provider unparsed. Parsing first and verifying the parsed shape is how signature checks get bypassed — the signature covers the bytes, not our interpretation of them. A test signs a valid event, alters one digit of the amount, and requires the same signature to be refused.</p></li>
+    <li><b>The provider's event id has not been seen</b>
+      <p>Unique index on <code>(provider, provider_event_id)</code>.</p></li>
+    <li><b>The reference resolves to a payment we created</b>
+      <p>Not to an order id, which a caller could guess. An event for an unknown charge is recorded as rejected and refused.</p></li>
+    <li><b>The amount and currency match exactly</b>
+      <p>Minor units compared as <code>bigint</code>, currency compared as a string. A near miss is a mismatch. 4 999 against a 5 000 order is refused, and so is 5 000 EUR against 5 000 XOF.</p></li>
+    <li><b>The transition is legal from the state the payment is actually in</b>
+      <p>Not from the state the event assumes.</p></li>
+  </ol>
+
+  <div class="note block">
+    <span class="n-label">The endpoint requires no session — and that is the point</span>
+    <p>A provider has no cookie. Authentication at this endpoint <em>is</em> the signature. A browser test proves the consequence directly: the signed-in buyer posts a perfectly formed success event from inside their own session, and it is <strong>refused</strong>, because a session is not a signature and this handler has never cared about cookies.</p>
+    <p>Every refusal answers the same <code>400</code> and never says which check failed. Someone probing with forged amounts learns nothing from the response; the reason goes to <code>payment_events</code> and the audit log, where only we can read it.</p>
+  </div>
+
+  <h3>What the client is allowed to say</h3>
+
+  <p>A checkout request carries a store slug, a product slug, a quantity and an idempotency key. There is <strong>no price, currency, total, seller or commission field</strong> — not "validated and ignored", but absent, so there is nothing for a future edit to start trusting.</p>
+
+  <p>A browser test sends <code>priceMinor: "1"</code>, <code>totalMinor: "1"</code>, <code>currency: "EUR"</code> and <code>commissionBps: 0</code> anyway. The order comes back at <strong>9 000 XOF</strong>.</p>
+
+  <p>Visibility is in the <code>WHERE</code> clause, not applied after the read: <code>p.status = 'published' and s.status = 'published'</code>, the same condition the public product page uses. A buyer cannot check out something they could not have seen, and a draft product is not fetched-then-refused — it is not found.</p>
+</section>
+
+<section id="idempotency">
+  <div class="sec-head"><div class="sec-mark">4</div><h2 class="sec-title">Idempotency, at three layers</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Repeated thing</th><th>What stops it</th><th>Proved by</th></tr></thead>
+    <tbody>
+      <tr><td>A buyer double-taps <em>Buy</em></td><td>Unique <code>(buyer_user_id, checkout_key)</code>; the insert is <code>on conflict do nothing</code> and the row is read back, so the index arbitrates rather than a read-then-write race</td><td>three concurrent submissions → one order, one line</td></tr>
+      <tr><td>A retried <em>Pay</em></td><td>A partial unique index allows one <code>initiated</code>/<code>pending</code> payment per order; the provider is called with a derived key</td><td>the second call returns the first payment, one row</td></tr>
+      <tr><td>A provider retries a webhook</td><td>The guarded transition, then the unique event id</td><td>delivered three times → paid once, one grant, one fee schedule, one event row</td></tr>
+      <tr><td>Two deliveries arrive at once</td><td>Row locks plus the guarded <code>UPDATE</code></td><td>five concurrent deliveries → exactly one applies</td></tr>
+      <tr><td>Two <em>different</em> events race for one charge</td><td>Same guard: the loser's <code>UPDATE</code> matches nothing</td><td>the order has one outcome, and the entitlement matches it</td></tr>
+      <tr><td>Two orders for one product are both confirmed</td><td>Unique <code>(user_id, product_id)</code> on entitlements</td><td>both orders paid, <strong>one</strong> grant — access is not a quantity</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="n-label">Why one transaction, and why the event row is written last</span>
+    <p>Everything a confirmation changes happens in a single transaction: the guarded payment update, the guarded order update, the entitlement, the frozen fees, and finally the event record. The guard comes first because it is what makes the whole thing idempotent. The event row comes last because it then carries <em>what actually happened</em> rather than what we hoped would happen when we started.</p>
+    <p>Committing the status and repairing the rest afterwards was the first design, and it is wrong: a missing commission rule would leave a paid order with no record of what it charged, and the provider's retry would refuse to touch it because the event id had been seen. Rolling everything back leaves the provider a clean slate to retry into.</p>
+  </div>
+</section>
+
+<section id="provider">
+  <div class="sec-head"><div class="sec-mark">5</div><h2 class="sec-title">The provider port, and what the mock does not prove</h2></div>
+
+  <div class="note risk">
+    <span class="n-label">Stated plainly</span>
+    <p><strong>No iPayMoney integration was added.</strong> <code>IPayMoneyProvider</code> still throws on every method, and its documentation is still unavailable. <strong>Nothing here demonstrates iPayMoney compatibility.</strong> What it demonstrates is that <em>our</em> boundary — signature over raw bytes, reference lookup, amount equality, legal transition, idempotent application — exists and holds under adversarial input.</p>
+  </div>
+
+  <p>The order domain depends on the <code>PaymentProvider</code> interface that Phase 1 defined, never on the mock. <code>initiatePayment</code> and <code>applyProviderEvent</code> both take a provider as an argument; neither imports one. Replacing <code>MockPaymentProvider</code> with <code>IPayMoneyPaymentProvider</code> is a change at the composition root, not in the order domain.</p>
+
+  <h3>Three changes to the mock, each with a reason</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Change</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Charges are created <strong>pending</strong>, not succeeded</td><td>Answering "succeeded" synchronously permits an order domain written as <em>call the provider, believe the reply</em>, and that shape does not survive contact with a hosted-redirect provider. The asynchronous default forces the verification boundary to exist and be exercised by every test. The synchronous mode remains and is tested.</td></tr>
+      <tr><td>Permitted under a production build only with <code>ALLOW_MOCK_PAYMENTS=yes</code></td><td>The browser suite runs <code>next start</code>, which means <code>NODE_ENV=production</code>. Exempting the test suite would have left the guard untested exactly where it matters. This is the two-variable shape <code>ConsoleSender</code> already uses: <code>PAYMENT_PROVIDER</code> is the variable a deployment gets wrong, and getting it wrong still cannot select the mock.</td></tr>
+      <tr><td>References carry an instance nonce</td><td>A per-process counter restarted at <code>1</code> and collided with rows a previous run had written, under the unique index Afrinext keeps on provider references. A real provider's reference identifies a charge for all time; the mock's now does too.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The outcome a mock charge reaches is decided by its <em>reference</em>, which is derived from the order — so a test chooses success or failure when it creates the product it is going to buy, the way a real provider's outcome is decided by the buyer's funds rather than by our code path.</p>
+</section>
+
+<section id="mutations">
+  <div class="sec-head"><div class="sec-mark">6</div><h2 class="sec-title">Mutation evidence</h2></div>
+
+  <p>Eleven deliberate defects, each applied to the real source, run against the suite, then reverted. Every mutation asserts its pattern was found before its result is believed — a mutation that does not apply proves nothing and reads exactly like a test gap.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Deliberate defect</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Checkout ignores <code>status = 'published'</code> on the product and its store</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The webhook stops comparing the amount and currency</td><td><span class="chip yes">caught · 2 tests</span></td></tr>
+      <tr><td>The webhook accepts an unverified event instead of refusing it</td><td><span class="chip yes">caught · 3 tests</span></td></tr>
+      <tr><td>The payment <code>UPDATE</code> drops its <code>and status = …</code> guard</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The order <code>UPDATE</code> drops its <code>and status = 'pending_payment'</code> guard</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The entitlement insert drops <code>on conflict do nothing</code></td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The transition table is widened so terminal states are no longer terminal</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td><code>requireAccountConsent</code> is removed from checkout</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td><code>authorize()</code> is removed from checkout</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>Reading an order stops scoping to the buyer</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td><strong>A ledger capture is posted on confirmation</strong></td><td><span class="chip yes">caught</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note block">
+    <span class="n-label">Two were not caught at first, and that is the useful part</span>
+    <p><strong>The duplicate-grant guard.</strong> Removing <code>on conflict do nothing</code> from the entitlement insert changed nothing, because no test could reach it twice — the guarded transition already prevents a second attempt. So I looked for the case that <em>does</em> reach it: a buyer may open two orders for the same product, since the ownership check reads entitlements and neither order has granted one yet. Confirming both is reachable, and both confirmations must succeed — the buyer really did pay twice, and refusing the second would leave a captured charge with no order to explain it. There is now one grant and two paid orders, which is the correct answer and one nothing was asserting.</p>
+    <p><strong>The consent gate at checkout.</strong> A <code>pending_consent</code> account resolves to no actor, so the gate is unreachable in the running system and removing it broke nothing. "Unreachable today" is a property of <code>resolveActor</code>, and a checkout relying on it would be one refactor away from selling to an unconsented account. The test now constructs the actor directly to reach the gate anyway.</p>
+  </div>
+
+  <p>The last row is the one I would draw your attention to: <strong>adding</strong> a ledger posting on confirmation is caught, so the boundary in section 1 is enforced by a test rather than by my intention to remember it.</p>
+</section>
+
+<section id="results">
+  <div class="sec-head"><div class="sec-mark">7</div><h2 class="sec-title">Results and files</h2></div>
+
+<pre><code>pnpm lint                        <span class="cm">exit 0</span>
+pnpm typecheck                   <span class="cm">exit 0</span>
+pnpm test                        <span class="ok">284 passed | 3 skipped (20 files)</span>   <span class="cm">was 234</span>
+pnpm build                       <span class="cm">exit 0</span>
+playwright test                  <span class="ok">22 passed</span>                            <span class="cm">was 18 · production mode, DB from zero</span>
+ledger concurrency               <span class="ok">6 passed</span>
+reconcile-check                  <span class="ok">clean, zero drift</span>
+pnpm audit --audit-level high    <span class="ok">No known vulnerabilities found</span>
+mutation testing                 <span class="ok">11 of 11 caught</span></code></pre>
+
+  <p>New: <strong>46 domain tests</strong> in <code>orders/orders.test.ts</code>, <strong>4 browser tests</strong> in <code>checkout.spec.ts</code>, and 5 added to the payments suite. <strong>No new dependency</strong>; <code>pnpm-lock.yaml</code> is untouched.</p>
+
+  <div class="note">
+    <span class="n-label">CI</span>
+    <p><strong>CI, on this commit:</strong> run&nbsp;<span class="mono">#18</span> (<span class="mono">32383709772</span>) on <span class="mono">e9e16d5</span> — <span class="chip yes">all three jobs green</span>, 2&nbsp;m&nbsp;16&nbsp;s. That includes a database built from zero, the schema rebuilt a second time to prove the migration applies to an empty cluster, the ledger concurrency suite, the reconciliation check, and the browser suite against a production build.</p>
+  </div>
+
+  <h3>30 files</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td colspan="2" style="padding-top:12px"><strong>The domain</strong></td></tr>
+      <tr><td class="mono">core/orders/state.ts</td><td><strong>New.</strong> Both state machines as data, plus the one place a payment state maps to an order state.</td></tr>
+      <tr><td class="mono">core/orders/checkout.ts</td><td><strong>New.</strong> Pricing, visibility, idempotent order creation, buyer-scoped reads, entitlement listing.</td></tr>
+      <tr><td class="mono">core/orders/payment.ts</td><td><strong>New.</strong> Initiation, the five-check verification boundary, the confirming transaction, expiry, frozen economics.</td></tr>
+      <tr><td class="mono">core/orders/orders.test.ts</td><td><strong>New.</strong> 46 tests: transitions, pricing, idempotency, concurrency, adversarial webhooks, scoping, evidence.</td></tr>
+      <tr><td class="mono">core/orders/index.ts · core/index.ts</td><td>Exports.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Schema</strong></td></tr>
+      <tr><td class="mono">db/migrations/0009 + schema/commerce.ts</td><td><code>orders</code>, <code>order_items</code>, <code>payments</code>, <code>payment_events</code>, <code>entitlements</code>. Status checks, the partial unique index for one live payment per order, the unique event id, and an append-only trigger on <code>payment_events</code>.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Payments</strong></td></tr>
+      <tr><td class="mono">core/payments/mock.ts</td><td>Asynchronous by default; unique references; an <code>event()</code> helper that produces genuinely signed — or deliberately forged — callbacks. <strong>Not a back door:</strong> what it returns still has to survive every check.</td></tr>
+      <tr><td class="mono">core/payments/registry.ts · payments.test.ts</td><td>The <code>ALLOW_MOCK_PAYMENTS</code> opt-in, and tests for both halves of it. See section 8 for the two existing assertions this changed.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Authorization</strong></td></tr>
+      <tr><td class="mono">core/authz/permissions.ts</td><td><code>order.create</code> and <code>order.read_own</code> on <code>member</code>; <code>order.read_store</code> on <code>store_owner</code> and <code>support</code>. In the seed, not a migration — the milestone-2 lesson.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Web</strong></td></tr>
+      <tr><td class="mono">web/api/v1/checkout/route.ts</td><td>Slugs and a key. 201 for a new order, 200 for a replay.</td></tr>
+      <tr><td class="mono">web/api/v1/orders/[id]/pay/route.ts</td><td>Empty body by design: no parameter can influence what is charged.</td></tr>
+      <tr><td class="mono">web/api/v1/payments/webhook/route.ts</td><td>Raw bytes, no session, one opaque refusal.</td></tr>
+      <tr><td class="mono">web/lib/payments.ts</td><td>The provider singleton, and the production guard.</td></tr>
+      <tr><td class="mono">web/lib/order-actions.ts · BuyButton · PayButton</td><td>Server Actions calling the same domain functions the API calls, so a form post and an API call cannot disagree.</td></tr>
+      <tr><td class="mono">web/[locale]/orders/ · product page</td><td>Order detail, order list, library; a real buy button, and an "already owned" state read from <code>entitlements</code>.</td></tr>
+      <tr><td class="mono">web/e2e/checkout.spec.ts</td><td><strong>New.</strong> The buyer journey, the forged-confirmation attempt, price/replay, and scoping.</td></tr>
+      <tr><td class="mono">web/e2e/global-setup.ts · playwright.config.ts</td><td>Checkout tables cleared between local runs; the mock's two variables and its webhook secret passed to the server.</td></tr>
+      <tr><td class="mono">core/test/harness.ts</td><td>The new tables in the truncation list, ordered before the catalogue they reference.</td></tr>
+      <tr><td class="mono">i18n fr.json · en.json</td><td>19 keys per locale.</td></tr>
+      <tr><td class="mono">.env.example</td><td><code>NODE_ENV</code> removed — section 8.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="risks">
+  <div class="sec-head"><div class="sec-mark">8</div><h2 class="sec-title">Risks, and the confirmations you asked for</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Confirmation</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>No real iPayMoney integration was added</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No production payout, withdrawal, refund or referral commission was added</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No ledger or money-model change. <code>ledger/</code> and <code>money/</code> have no diff; money is <code>bigint</code> minor units throughout and no float appears in this milestone</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>OTP, consent, RBAC and catalogue guarantees intact — the OTP suite, the consent suites and the catalogue suite are unedited and pass</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>Nothing bypasses <code>pending_consent</code>; <code>seller_terms</code> enforcement is untouched</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No new dependency</td><td><span class="chip yes">confirmed</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Two existing tests changed, and why that is not a weakening</h3>
+
+  <div class="note risk">
+    <span class="n-label">Both in payments.test.ts, both reported here rather than buried</span>
+    <p><strong>"captures a charge and reports it"</strong> asserted <code>createCharge</code> returns <code>succeeded</code>. The mock is now asynchronous by default, so it asserts <code>pending</code> — and a new test covers the synchronous mode, so the old behaviour is still exercised rather than dropped.</p>
+    <p><strong>"never hands out the mock in production"</strong> matched the old refusal message. It now matches the new one, still asserts both the registry and the constructor refuse, and additionally asserts that <code>ALLOW_MOCK_PAYMENTS</code> must be exactly <code>"yes"</code>. Strictly more coverage than before.</p>
+  </div>
+
+  <h3>Open risks</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><strong>A payment can succeed against an order that has expired.</strong> The payment moves, the order does not, and nothing grants access — correct, but it means a buyer may have been charged for nothing. Nothing reconciles or refunds it yet, because refunds are not in scope. This is the highest-value thing to build next.</td><td><span class="chip no">needs work</span></td></tr>
+      <tr><td><strong>Nothing sweeps expired checkouts on a schedule.</strong> <code>expireLapsedOrders()</code> exists and is tested; no job calls it. An order past its expiry is still refused at initiation, so the effect is stale rows rather than a wrong outcome.</td><td><span class="chip hold">unscheduled</span></td></tr>
+      <tr><td><strong>Digital delivery does not exist.</strong> An entitlement is a row saying someone owns a product; there is no file, no download, no course access. The library screen links back to the product page.</td><td><span class="chip hold">next milestone</span></td></tr>
+      <tr><td><strong>The commission rule must exist or a confirmation rolls back.</strong> Freezing the economics is inside the confirming transaction, so a missing rule for a product kind means the webhook 500s and the provider retries. That is the safe failure — but it is an outage until an operator adds the rule, and no alert fires.</td><td><span class="chip hold">watch</span></td></tr>
+      <tr><td>The mock keeps charges in memory, so a server restart forgets them and a later event for an older charge is refused as unknown. Harmless for a mock; noted because it would be a data-loss bug in a real adapter.</td><td><span class="chip info">accepted</span></td></tr>
+      <tr><td>No refund path, no dispute path, no partial payment, no multi-item basket (the schema carries quantity and a line table, so a basket is a shape change rather than a new table).</td><td><span class="chip info">out of scope</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>One thing found on the way</h3>
+
+  <div class="note">
+    <span class="n-label">.env.example no longer sets NODE_ENV</span>
+    <p>Setting it there overrides every command that knows better: <code>next dev</code>, <code>next build</code>, <code>next start</code> and vitest each set the right value for themselves. With <code>NODE_ENV=development</code> exported from the file, <code>pnpm build</code> failed while prerendering the global error page — and it is the <em>same root cause</em> as last milestone's CI failure, where the browser suite served a development build while CI served a production one. One line removed; both symptoms gone.</p>
+  </div>
+
+  <hr class="soft">
+
+  <p><strong>Proposed next</strong>, in the order I would take them: digital delivery for a paid entitlement, then the reconciliation and refund path for the expired-order case above, then settlement — which is the first thing that should touch the ledger, and the first that needs a real provider. <strong>Not started.</strong></p>
+
+  <p style="color:var(--ink-2)">Phase&nbsp;2 · checkout &amp; mock payments · branch <span class="mono">claude/create-app-repository-1cxsih</span> · head <span class="mono">e9e16d5</span></p>
+</section>
+
+</div>
