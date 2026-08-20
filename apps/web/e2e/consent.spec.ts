@@ -19,6 +19,14 @@ function sqlOne(statement: string): string {
   return execFileSync("psql", [DB, "-Atc", statement], { encoding: "utf8" }).trim();
 }
 
+/**
+ * Store slugs are globally unique, so a fixed name collides with the previous
+ * run's row and the create fails for a reason the test is not about.
+ */
+function uniqueName(prefix: string): string {
+  return `${prefix} ${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+}
+
 function freshPhone(): string {
   return `+22790${String(Math.floor(100000 + Math.random() * 899999))}`;
 }
@@ -68,11 +76,41 @@ async function signIn(page: Page, phone: string): Promise<string> {
   await expect(page.locator('input[inputmode="numeric"]')).toBeVisible();
   await page.locator('input[inputmode="numeric"]').fill(await codeSentTo(phone, before));
   await page.locator('button[type="submit"]').click();
+
+  // A new account is `pending_consent`: the session exists and grants nothing
+  // until the general terms are accepted. This is part of signing up now.
+  //
+  // Wait for whichever arrives — a brand-new number gets the consent step, a
+  // returning one goes straight through. Polling isVisible() right after the
+  // click is a race: the panel has not rendered yet, so it reads false and the
+  // step is silently skipped.
+  await Promise.race([
+    page.getByTestId("signup-consent").waitFor({ state: "visible" }),
+    page.waitForURL(/\/wallet$/),
+  ]);
+  if (await page.getByTestId("signup-consent").isVisible()) {
+    await page.locator('input[name="agree"]').check();
+    await page.getByTestId("signup-consent-accept").click();
+  }
   await page.waitForURL(/\/wallet$/);
   return sqlOne(
     `select u.id from users u join "user" au on au.id = u.auth_user_id
       where au."phoneNumber" = '${phone}'`,
   );
+}
+
+/**
+ * Seller-terms acceptances only.
+ *
+ * Every signed-in account has also accepted the two general documents during
+ * signup, so a bare count of consent_records is no longer a measure of anything
+ * this file is testing.
+ */
+function sellerTermsRecords(userId: string): string {
+  return sqlOne(`select count(*) from consent_records c
+                   join legal_document_versions v on v.id = c.document_version_id
+                   join legal_documents d on d.id = v.document_id
+                  where c.user_id = '${userId}'::uuid and d.kind = 'seller_terms'`);
 }
 
 function grantSeller(userId: string): void {
@@ -90,7 +128,8 @@ test.describe("consent is a server gate, not a screen", () => {
 
     // Straight to the endpoint. This session has never rendered /fr/sell, so
     // no consent UI has ever been shown to it — and that changes nothing.
-    const refused = await api(page, "POST", "/api/v1/stores", { name: "Ungated Store" });
+    const ungated = uniqueName("Ungated Store");
+    const refused = await api(page, "POST", "/api/v1/stores", { name: ungated });
     expect(refused.status, "consent is required, and this is where it is enforced").toBe(451);
     const error = (refused.body as { error: { code: string; message: string } }).error;
     expect(error.code).toBe("consent.required");
@@ -98,8 +137,8 @@ test.describe("consent is a server gate, not a screen", () => {
     expect(error.message).toContain("seller_terms");
 
     // And nothing was written. A gate that refuses after inserting is not a gate.
-    expect(sqlOne("select count(*) from stores where name = 'Ungated Store'")).toBe("0");
-    expect(sqlOne(`select count(*) from consent_records where user_id = '${userId}'::uuid`)).toBe("0");
+    expect(sqlOne(`select count(*) from stores where name = '${ungated}'`)).toBe("0");
+    expect(sellerTermsRecords(userId)).toBe("0");
   });
 
   test("the panel is presentation: removing it from the DOM changes nothing", async ({ page }) => {
@@ -117,9 +156,10 @@ test.describe("consent is a server gate, not a screen", () => {
     await expect(page.getByTestId("consent-gate")).toHaveCount(0);
 
     // The server has not changed its mind.
-    const refused = await api(page, "POST", "/api/v1/stores", { name: "DOM Store" });
+    const domStore = uniqueName("DOM Store");
+    const refused = await api(page, "POST", "/api/v1/stores", { name: domStore });
     expect(refused.status).toBe(451);
-    expect(sqlOne("select count(*) from stores where name = 'DOM Store'")).toBe("0");
+    expect(sqlOne(`select count(*) from stores where name = '${domStore}'`)).toBe("0");
   });
 
   test("accepting through the UI records the exact version and opens the gate", async ({ page }) => {
@@ -143,11 +183,11 @@ test.describe("consent is a server gate, not a screen", () => {
         from consent_records c
         join legal_document_versions v on v.id = c.document_version_id
         join legal_documents d on d.id = v.document_id
-       where c.user_id = '${userId}'::uuid`);
+       where c.user_id = '${userId}'::uuid and d.kind = 'seller_terms'`);
     expect(recorded).toBe("seller_terms|0.0.0-placeholder|seller_onboarding|true");
 
     // And now the same API call that was 451 succeeds.
-    const created = await api(page, "POST", "/api/v1/stores", { name: "Gate Open" });
+    const created = await api(page, "POST", "/api/v1/stores", { name: uniqueName("Gate Open") });
     expect(created.status).toBe(201);
   });
 
@@ -172,7 +212,7 @@ test.describe("consent is a server gate, not a screen", () => {
     expect(again.status).toBe(200);
     expect((again.body as { data: { accepted: { newlyRecorded: boolean }[] } }).data.accepted[0]?.newlyRecorded)
       .toBe(false);
-    expect(sqlOne(`select count(*) from consent_records where user_id = '${userId}'::uuid`)).toBe("1");
+    expect(sellerTermsRecords(userId)).toBe("1");
   });
 
   test("a new version closes the gate again on the next action", async ({ page }) => {
@@ -181,7 +221,7 @@ test.describe("consent is a server gate, not a screen", () => {
     grantSeller(userId);
     await api(page, "POST", "/api/v1/consent", {});
 
-    const first = await api(page, "POST", "/api/v1/stores", { name: "Before New Terms" });
+    const first = await api(page, "POST", "/api/v1/stores", { name: uniqueName("Before New Terms") });
     expect(first.status).toBe(201);
 
     // An operator publishes new seller terms, effective now.
@@ -197,14 +237,15 @@ test.describe("consent is a server gate, not a screen", () => {
 
     // The previous acceptance is still on record and still true — it is simply
     // not an acceptance of what is in force now.
-    const second = await api(page, "POST", "/api/v1/stores", { name: "After New Terms" });
+    const afterTerms = uniqueName("After New Terms");
+    const second = await api(page, "POST", "/api/v1/stores", { name: afterTerms });
     expect(second.status).toBe(451);
-    expect(sqlOne("select count(*) from stores where name = 'After New Terms'")).toBe("0");
+    expect(sqlOne(`select count(*) from stores where name = '${afterTerms}'`)).toBe("0");
 
     // The screen re-prompts without anyone being told to.
     await page.goto("/fr/sell");
     await expect(page.getByTestId("consent-gate")).toBeVisible();
 
-    expect(sqlOne(`select count(*) from consent_records where user_id = '${userId}'::uuid`)).toBe("1");
+    expect(sellerTermsRecords(userId)).toBe("1");
   });
 });

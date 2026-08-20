@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import type { Database } from "@afrinext/db";
 import { audit } from "../audit";
 import { authorize, type Actor } from "../authz";
-import { requireConsent, type LegalDocumentKind } from "../consent";
+import { requireAccountConsent, requireConsent, type LegalDocumentKind } from "../consent";
 import { DomainError } from "../errors";
 import { uuidv7 } from "../ids";
 import { money, type Money } from "../money";
@@ -129,6 +129,10 @@ export async function requireSellerConsent(db: Database, actor: Actor): Promise<
   `);
   const person = rows.rows[0];
   if (person === undefined) throw new StoreNotFoundError(actor.userId);
+
+  // The general terms bind every account, not only sellers. An active account
+  // whose terms changed last week must accept the new ones here too.
+  await requireAccountConsent(db, actor.userId);
 
   await requireConsent(db, actor.userId, SELLER_CONSENT_KINDS, {
     locale: person.locale,

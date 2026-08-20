@@ -53,5 +53,12 @@
   "consent.explain": "Avant d'ouvrir une boutique, vous devez accepter la version en vigueur des conditions vendeur.",
   "consent.version": "Version",
   "consent.placeholder": "Texte provisoire — le document définitif est un livrable juridique en attente.",
-  "consent.accept": "J'accepte les conditions vendeur"
+  "consent.accept": "J'accepte les conditions vendeur",
+  "signup.consentTitle": "Avant de continuer",
+  "signup.consentExplain": "Pour créer votre compte Afrinext, vous devez accepter les documents suivants dans leur version en vigueur.",
+  "signup.termsOfUse": "Conditions d'utilisation",
+  "signup.privacyPolicy": "Politique de confidentialité",
+  "signup.consentRequired": "L'acceptation est obligatoire pour créer et utiliser votre compte.",
+  "signup.acceptAll": "J'accepte ces documents",
+  "signup.locale": "Langue"
 }

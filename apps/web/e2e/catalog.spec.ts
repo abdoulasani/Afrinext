@@ -85,6 +85,22 @@ async function signIn(page: Page, phone: string): Promise<string> {
   await expect(page.locator('input[inputmode="numeric"]')).toBeVisible();
   await page.locator('input[inputmode="numeric"]').fill(await codeSentTo(phone, before));
   await page.locator('button[type="submit"]').click();
+
+  // A new account is `pending_consent`: the session exists and grants nothing
+  // until the general terms are accepted. This is part of signing up now.
+  //
+  // Wait for whichever arrives — a brand-new number gets the consent step, a
+  // returning one goes straight through. Polling isVisible() right after the
+  // click is a race: the panel has not rendered yet, so it reads false and the
+  // step is silently skipped.
+  await Promise.race([
+    page.getByTestId("signup-consent").waitFor({ state: "visible" }),
+    page.waitForURL(/\/wallet$/),
+  ]);
+  if (await page.getByTestId("signup-consent").isVisible()) {
+    await page.locator('input[name="agree"]').check();
+    await page.getByTestId("signup-consent-accept").click();
+  }
   await page.waitForURL(/\/wallet$/);
 
   return sqlOne(

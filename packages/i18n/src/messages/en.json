@@ -53,5 +53,12 @@
   "consent.explain": "Before opening a store you must accept the version of the seller terms currently in force.",
   "consent.version": "Version",
   "consent.placeholder": "Placeholder text — the final document is a pending legal deliverable.",
-  "consent.accept": "I accept the seller terms"
+  "consent.accept": "I accept the seller terms",
+  "signup.consentTitle": "Before you continue",
+  "signup.consentExplain": "To create your Afrinext account you must accept the following documents, in the version currently in force.",
+  "signup.termsOfUse": "Terms of Use",
+  "signup.privacyPolicy": "Privacy Policy",
+  "signup.consentRequired": "Acceptance is required to create and use your account.",
+  "signup.acceptAll": "I accept these documents",
+  "signup.locale": "Language"
 }

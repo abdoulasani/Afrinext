@@ -4,6 +4,7 @@ import { closeDb, getPool, type Database } from "@afrinext/db";
 import { authorize, can } from "../authz";
 import { PermissionDeniedError } from "../errors";
 import { ensureReferenceData, resetData, testDb } from "../test/harness";
+import { activateAccountWithConsent } from "../consent";
 import { createAuth } from "./better-auth";
 import { ElevationRequiredError } from "./errors";
 import { ConsoleSender } from "./messaging";
@@ -33,7 +34,14 @@ beforeEach(async () => {
   });
 });
 
-/** Drives a full phone sign-in and returns the resulting session. */
+/**
+ * Drives a full phone sign-in and returns the resulting session.
+ *
+ * Includes accepting the general terms, because a new account is provisioned as
+ * `pending_consent` and resolves to no actor until it does. These tests are
+ * about sessions, elevation and the authorization boundary — that the pending
+ * state exists and holds is proved in `consent/signup.test.ts`.
+ */
 async function signInByPhone(phone: string): Promise<{ sessionId: string; authUserId: string }> {
   await auth.api.sendPhoneOtp({ body: { phoneNumber: phone } });
   const code = sender.lastCodeTo(phone);
@@ -49,6 +57,12 @@ async function signInByPhone(phone: string): Promise<{ sessionId: string; authUs
   `);
   const session = rows.rows[0];
   expect(session, "verification should have created a session").toBeDefined();
+
+  const domain = await db.execute<{ id: string }>(sql`
+    select id from users where auth_user_id = ${session!.userId}
+  `);
+  await activateAccountWithConsent(db, domain.rows[0]!.id, { method: "signup" });
+
   return { sessionId: session!.id, authUserId: session!.userId };
 }
 

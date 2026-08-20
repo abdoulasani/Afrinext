@@ -179,6 +179,18 @@ export async function recordConsent(db: Database, input: RecordConsentInput): Pr
   return id;
 }
 
+/**
+ * The documents every Afrinext account is bound by, whoever holds it.
+ *
+ * Distinct from the seller terms: these govern having an account at all, so a
+ * buyer who never opens a store still accepts them. Listed here rather than
+ * passed in, so no transport can shorten the list.
+ */
+export const ACCOUNT_CONSENT_KINDS: readonly LegalDocumentKind[] = [
+  "terms_of_use",
+  "privacy_policy",
+];
+
 export interface AcceptanceContext {
   readonly method: RecordConsentInput["method"];
   readonly ipAddress?: string | undefined;
@@ -247,6 +259,95 @@ export async function acceptCurrentVersions(
     });
   }
   return results;
+}
+
+/**
+ * Records the general terms and activates the account, or does neither.
+ *
+ * A new account is created with `status = 'pending_consent'`, which
+ * `resolveActor` already treats as "no actor" — the same door suspension has
+ * always used. This is the only thing that opens it.
+ *
+ * Both happen in one transaction. Recording consent without activating leaves
+ * someone permanently locked out of an account they agreed to; activating
+ * without recording is the whole failure this milestone exists to prevent. The
+ * activation is also conditional on the status still being `pending_consent`,
+ * so a suspended account cannot be revived by accepting terms.
+ */
+export async function activateAccountWithConsent(
+  db: Database,
+  userId: string,
+  context: AcceptanceContext,
+): Promise<{ accepted: Acceptance[]; activated: boolean }> {
+  const rows = await db.execute<{ locale: string; country_code: string | null; status: string }>(sql`
+    select locale, country_code, status from users where id = ${userId}::uuid
+  `);
+  const person = rows.rows[0];
+  if (person === undefined) throw new ConsentRequiredError(ACCOUNT_CONSENT_KINDS.slice());
+
+  // Server-resolved, from the account's own row. A caller that could name the
+  // locale could name one with no published document.
+  const options = {
+    locale: person.locale,
+    ...(person.country_code !== null ? { countryCode: person.country_code } : {}),
+  };
+
+  let accepted: Acceptance[] = [];
+  let activated = false;
+  await db.transaction(async (tx) => {
+    accepted = await acceptCurrentVersions(tx, userId, ACCOUNT_CONSENT_KINDS, options, context);
+
+    // Belt and braces: re-ask the gate rather than trusting the loop above. If
+    // anything is still outstanding this throws and the transaction rolls back,
+    // so an account is never activated on a partial acceptance.
+    await requireConsent(tx, userId, ACCOUNT_CONSENT_KINDS, options);
+
+    const updated = await tx.execute(sql`
+      update users set status = 'active', updated_at = now()
+       where id = ${userId}::uuid and status = 'pending_consent'
+      returning id
+    `);
+    activated = updated.rows.length > 0;
+  });
+
+  return { accepted, activated };
+}
+
+/**
+ * The re-accept gate for an already-active account.
+ *
+ * Activation is a one-time flip, so it cannot express "these terms changed
+ * last week". This is what a protected action calls to find out.
+ */
+export async function requireAccountConsent(db: Database, userId: string): Promise<void> {
+  const rows = await db.execute<{ locale: string; country_code: string | null }>(sql`
+    select locale, country_code from users where id = ${userId}::uuid
+  `);
+  const person = rows.rows[0];
+  if (person === undefined) throw new ConsentRequiredError(ACCOUNT_CONSENT_KINDS.slice());
+
+  await requireConsent(db, userId, ACCOUNT_CONSENT_KINDS, {
+    locale: person.locale,
+    ...(person.country_code !== null ? { countryCode: person.country_code } : {}),
+  });
+}
+
+/** What a pending account still has to accept before it can be used. */
+export async function accountConsentStatus(
+  db: Database,
+  userId: string,
+): Promise<{ status: string; outstanding: CurrentVersion[] }> {
+  const rows = await db.execute<{ locale: string; country_code: string | null; status: string }>(sql`
+    select locale, country_code, status from users where id = ${userId}::uuid
+  `);
+  const person = rows.rows[0];
+  if (person === undefined) return { status: "unknown", outstanding: [] };
+
+  const outstanding = await outstandingConsents(db, userId, ACCOUNT_CONSENT_KINDS, {
+    locale: person.locale,
+    ...(person.country_code !== null ? { countryCode: person.country_code } : {}),
+  });
+  return { status: person.status, outstanding };
 }
 
 /** Everything a user has ever accepted, newest first. */

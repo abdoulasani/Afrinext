@@ -57,6 +57,13 @@
       "when": 1787160687089,
       "tag": "0007_stores_and_products",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787160688089,
+      "tag": "0008_account_consent",
+      "breakpoints": true
     }
   ]
 }

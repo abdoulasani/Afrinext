@@ -170,9 +170,20 @@ export function createAuth(deps: AuthDeps) {
            */
           after: async (created: { id: string; email?: string | null; phoneNumber?: string | null }) => {
             const domainUserId = uuidv7();
+            /*
+             * `pending_consent`, not `active`.
+             *
+             * This one word is the whole signup consent gate. `resolveActor`
+             * already returns no actor for any status other than 'active' —
+             * that is how suspension has always worked — so the account exists,
+             * holds its credentials, and can do nothing until the general terms
+             * are accepted. Nothing about OTP generation, storage, expiry,
+             * attempt bounds or rate limiting is involved, which is why this
+             * change cannot weaken any of them.
+             */
             await deps.db.execute(sql`
               insert into users (id, display_name, locale, status, auth_user_id)
-              values (${domainUserId}, ${created.email ?? created.phoneNumber ?? null}, 'fr', 'active', ${created.id})
+              values (${domainUserId}, ${created.email ?? created.phoneNumber ?? null}, 'fr', 'pending_consent', ${created.id})
               on conflict (auth_user_id) do nothing
             `);
             await deps.db.execute(sql`

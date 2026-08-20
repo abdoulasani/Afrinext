@@ -7,8 +7,8 @@ import { ConsentRequiredError, PermissionDeniedError } from "../errors";
 import { money } from "../money";
 import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
 import {
-  acceptCurrentVersions, ConsentUnavailableError, consentHistory, currentVersions,
-  outstandingConsents, recordConsent, requireConsent,
+  acceptCurrentVersions, ACCOUNT_CONSENT_KINDS, ConsentUnavailableError, consentHistory,
+  currentVersions, outstandingConsents, recordConsent, requireConsent,
 } from "./index";
 
 /**
@@ -38,11 +38,21 @@ async function grantGlobal(userId: string, roleKey: string): Promise<void> {
   `);
 }
 
-/** A seller in every respect except that they have accepted nothing. */
+/**
+ * A seller who has accepted the GENERAL terms but not the seller terms.
+ *
+ * The account consents are deliberately in place. Without them `createStore`
+ * would refuse for the account gate and every assertion below would pass for
+ * the wrong reason — the file would prove the seller gate exists while
+ * actually exercising a different one.
+ */
 async function unconsentedSeller(): Promise<Actor> {
   const userId = await createTestUser(db, { locale: "fr" });
   await grantGlobal(userId, "member");
   await grantGlobal(userId, "seller");
+  await acceptCurrentVersions(db, userId, ACCOUNT_CONSENT_KINDS, { locale: "fr" }, {
+    method: "signup",
+  });
   return { userId };
 }
 
@@ -50,6 +60,18 @@ async function accept(actor: Actor): Promise<void> {
   await acceptCurrentVersions(db, actor.userId, ["seller_terms"], { locale: "fr" }, {
     method: "seller_onboarding", ipAddress: "10.0.0.7", userAgent: "vitest",
   });
+}
+
+/** Seller-terms acceptances only: the account consents are setup, not subject. */
+async function sellerTermsRecords(userId: string): Promise<number> {
+  const rows = await db.execute<{ n: string }>(sql`
+    select count(*)::text as n
+      from consent_records c
+      join legal_document_versions v on v.id = c.document_version_id
+      join legal_documents d on d.id = v.document_id
+     where c.user_id = ${userId}::uuid and d.kind = 'seller_terms'
+  `);
+  return Number(rows.rows[0]!.n);
 }
 
 async function storeCount(): Promise<number> {
@@ -194,10 +216,7 @@ describe("4 · acceptance is recorded exactly once", () => {
     });
     expect(second[0]?.newlyRecorded).toBe(false);
 
-    const rows = await db.execute<{ n: string }>(sql`
-      select count(*)::text as n from consent_records where user_id = ${actor.userId}::uuid
-    `);
-    expect(Number(rows.rows[0]!.n)).toBe(1);
+    expect(await sellerTermsRecords(actor.userId)).toBe(1);
   });
 
   it("survives simultaneous acceptance without a duplicate", async () => {
@@ -211,10 +230,7 @@ describe("4 · acceptance is recorded exactly once", () => {
     );
     // The unique index on (user, version) is what makes this true, not the
     // read-then-write above it.
-    const rows = await db.execute<{ n: string }>(sql`
-      select count(*)::text as n from consent_records where user_id = ${actor.userId}::uuid
-    `);
-    expect(Number(rows.rows[0]!.n)).toBe(1);
+    expect(await sellerTermsRecords(actor.userId)).toBe(1);
   });
 
   it("is append-only, as the database enforces", async () => {
@@ -239,7 +255,8 @@ describe("5 · the record identifies the actor and the version", () => {
              v.version, v.content_hash
         from consent_records c
         join legal_document_versions v on v.id = c.document_version_id
-       where c.user_id = ${actor.userId}::uuid
+        join legal_documents d on d.id = v.document_id
+       where c.user_id = ${actor.userId}::uuid and d.kind = 'seller_terms'
     `);
     const record = rows.rows[0]!;
     expect(record.user_id).toBe(actor.userId);
@@ -277,10 +294,7 @@ describe("7 · nobody can consent on someone else's behalf", () => {
       method: "seller_onboarding",
     });
 
-    const victimRows = await db.execute<{ n: string }>(sql`
-      select count(*)::text as n from consent_records where user_id = ${victim.userId}::uuid
-    `);
-    expect(Number(victimRows.rows[0]!.n)).toBe(0);
+    expect(await sellerTermsRecords(victim.userId)).toBe(0);
     await expect(createStore(db, victim, { name: "Victim", slug: "victim-store" }))
       .rejects.toBeInstanceOf(ConsentRequiredError);
   });
@@ -290,7 +304,13 @@ describe("the gate fails closed", () => {
   it("refuses when the document has no version in the actor's locale", async () => {
     const actor = await unconsentedSeller();
     await db.execute(sql`update users set locale = 'en' where id = ${actor.userId}::uuid`);
-    // English versions exist, so this works once accepted.
+
+    // Switching locale re-opens BOTH gates: the French acceptances are
+    // acceptances of the French documents, and this account is now bound by the
+    // English ones. English versions exist, so accepting them works.
+    await acceptCurrentVersions(db, actor.userId, ACCOUNT_CONSENT_KINDS, { locale: "en" }, {
+      method: "reaccept",
+    });
     await acceptCurrentVersions(db, actor.userId, ["seller_terms"], { locale: "en" }, {
       method: "seller_onboarding",
     });

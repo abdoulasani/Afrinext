@@ -31,6 +31,9 @@ export const SERVER_LOG = ".e2e/server.log";
 
 export default defineConfig({
   testDir: "./e2e",
+  // Raises only the per-IP OTP ceiling for the test database, because every
+  // browser test signs up from 127.0.0.1. See e2e/global-setup.ts.
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: false,
   workers: 1,
   forbidOnly: process.env["CI"] !== undefined,

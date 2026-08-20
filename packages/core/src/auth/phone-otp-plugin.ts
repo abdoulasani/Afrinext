@@ -9,6 +9,7 @@ import { logger } from "../observability";
 import { consumeAll, otpSendRules, type OtpPolicy } from "../ratelimit";
 import { RateLimitedError } from "./errors";
 import type { MessageSender } from "./messaging";
+import { accountConsentStatus } from "../consent";
 import { issueChallenge, consumeChallenge } from "./otp-store";
 import type { OtpTiming } from "./otp";
 
@@ -203,7 +204,31 @@ export function phoneOtp(opts: PhoneOtpOptions) {
             context: { challengeId: result.challengeId, authUserId: user.id },
           });
 
-          return ctx.json({ status: true, token: session.token });
+          /*
+           * The session is real, and it grants nothing yet.
+           *
+           * A new account is provisioned as `pending_consent`, so `resolveActor`
+           * refuses it. Telling the client what is outstanding is a courtesy so
+           * it can show the right screen — the refusal happens whether or not
+           * it listens.
+           */
+          const domain = await opts.db.execute<{ id: string }>(sql`
+            select id from users where auth_user_id = ${user.id}
+          `);
+          const domainUserId = domain.rows[0]?.id;
+          const consent =
+            domainUserId === undefined
+              ? { status: "unknown", outstanding: [] }
+              : await accountConsentStatus(opts.db, domainUserId);
+
+          return ctx.json({
+            status: true,
+            token: session.token,
+            accountStatus: consent.status,
+            consentRequired: consent.outstanding.map((o) => ({
+              kind: o.kind, version: o.version, locale: o.locale,
+            })),
+          });
         },
       ),
     },

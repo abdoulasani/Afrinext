@@ -24,6 +24,16 @@ export default async function SignInPage({
           continue: translate(locale, "common.continue"),
           back: translate(locale, "common.back"),
           generic: translate(locale, "error.generic"),
+          consentTitle: translate(locale, "signup.consentTitle"),
+          consentExplain: translate(locale, "signup.consentExplain"),
+          consentRequired: translate(locale, "signup.consentRequired"),
+          acceptAll: translate(locale, "signup.acceptAll"),
+          localeLabel: translate(locale, "signup.locale"),
+          // Document kinds are database values; these are what a person reads.
+          documentNames: {
+            terms_of_use: translate(locale, "signup.termsOfUse"),
+            privacy_policy: translate(locale, "signup.privacyPolicy"),
+          },
         }}
       />
     </>

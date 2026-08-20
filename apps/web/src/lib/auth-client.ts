@@ -28,10 +28,48 @@ export async function sendPhoneOtp(phoneNumber: string): Promise<OtpResult> {
   return { error };
 }
 
-export async function verifyPhoneOtp(phoneNumber: string, code: string): Promise<OtpResult> {
-  const { error } = await authClient.$fetch("/phone-otp/verify", {
+export interface OutstandingDoc {
+  readonly kind: string;
+  readonly version: string;
+  readonly locale: string;
+}
+
+export interface VerifyResult extends OtpResult {
+  /**
+   * What the new account must accept before it can be used.
+   *
+   * Reported so the client can show the right step. It is not what enforces
+   * anything: the account is provisioned as `pending_consent` and resolves to
+   * no actor regardless of whether this list is ever read.
+   */
+  readonly consentRequired?: readonly OutstandingDoc[];
+}
+
+export async function verifyPhoneOtp(phoneNumber: string, code: string): Promise<VerifyResult> {
+  const { data, error } = await authClient.$fetch<{
+    consentRequired?: OutstandingDoc[];
+  }>("/phone-otp/verify", {
     method: "POST",
     body: { phoneNumber, code },
   });
-  return { error };
+  return { error, consentRequired: data?.consentRequired ?? [] };
+}
+
+/**
+ * Accepts the general terms and activates the account.
+ *
+ * Plain fetch, not `authClient.$fetch`: this is an Afrinext v1 route, not a
+ * Better Auth one, and the auth client would prefix it with the auth base path.
+ */
+export async function acceptAccountConsent(): Promise<OtpResult> {
+  const response = await fetch("/api/v1/consent/account", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { accept: "application/json" },
+  });
+  if (response.ok) return {};
+  const body = (await response.json().catch(() => null)) as
+    | { error?: { message?: string } }
+    | null;
+  return { error: { message: body?.error?.message ?? "" } };
 }

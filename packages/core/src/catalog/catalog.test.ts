@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDb, type Database } from "@afrinext/db";
-import { acceptCurrentVersions } from "../consent";
+import { acceptCurrentVersions, ACCOUNT_CONSENT_KINDS } from "../consent";
 import { PermissionDeniedError } from "../errors";
 import { money } from "../money";
 import { createTestUser, ensureReferenceData, expectRejection, resetData, testDb } from "../test/harness";
@@ -43,6 +43,11 @@ async function makeSeller(): Promise<Actor> {
   const userId = await createTestUser(db, { locale: "fr" });
   await grantGlobal(userId, "member");
   await grantGlobal(userId, "seller");
+  // Both gates: the general terms bind every account, the seller terms bind
+  // this action. Opening a store genuinely requires both.
+  await acceptCurrentVersions(db, userId, ACCOUNT_CONSENT_KINDS, { locale: "fr" }, {
+    method: "signup",
+  });
   await acceptCurrentVersions(db, userId, ["seller_terms"], { locale: "fr" }, {
     method: "seller_onboarding",
   });

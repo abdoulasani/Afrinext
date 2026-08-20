@@ -5,21 +5,35 @@ import {
 } from "drizzle-orm/pg-core";
 import { countries } from "./reference";
 
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey(),
-  displayName: text("display_name"),
-  countryCode: char("country_code", { length: 2 }).references(() => countries.code),
-  locale: text("locale").notNull().default("fr"),
-  status: text("status").notNull().default("active"), // active | suspended | closed
-  /**
-   * Link to Better Auth's credential record. `users` stays the domain identity
-   * — what role_assignments, consent_records, audit_logs and ledger accounts
-   * reference — while Better Auth owns credentials and sessions.
-   */
-  authUserId: text("auth_user_id").unique(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey(),
+    displayName: text("display_name"),
+    countryCode: char("country_code", { length: 2 }).references(() => countries.code),
+    locale: text("locale").notNull().default("fr"),
+    /**
+     * pending_consent — created, holds credentials, and resolves to NO ACTOR
+     * until the general terms are accepted. Everything other than 'active'
+     * behaves that way already; suspension has always worked like this.
+     */
+    status: text("status").notNull().default("active"),
+    /**
+     * Link to Better Auth's credential record. `users` stays the domain identity
+     * — what role_assignments, consent_records, audit_logs and ledger accounts
+     * reference — while Better Auth owns credentials and sessions.
+     */
+    authUserId: text("auth_user_id").unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check(
+      "users_status_valid",
+      sql`${t.status} in ('pending_consent','active','suspended','closed')`,
+    ),
+  ],
+);
 
 /**
  * Step-up re-verification challenges.
