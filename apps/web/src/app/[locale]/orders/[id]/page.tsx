@@ -30,6 +30,13 @@ export default async function OrderPage({
   const order = await ordersDomain.findOwnOrder(getDb(), actor, id).catch(() => undefined);
   if (order === undefined) notFound();
 
+  // The charge attempt, if one has been started. Shown so the buyer can tell
+  // "I have not paid yet" from "the provider has not answered yet" — two very
+  // different things that looked identical before.
+  const payment = await ordersDomain
+    .findOrderPayment(getDb(), actor, order.id)
+    .catch(() => undefined);
+
   const registry = await currencyRegistry();
   const statusLabel = translate(locale, `order.status.${order.status}`);
 
@@ -59,6 +66,12 @@ export default async function OrderPage({
             </li>
           ))}
         </ul>
+
+        {payment !== undefined && (
+          <p data-testid="payment-status" className="font-mono text-xs text-muted">
+            {payment.status}
+          </p>
+        )}
 
         {order.status === "pending_payment" && (
           <section className="flex flex-col gap-2 border-t border-border pt-5">

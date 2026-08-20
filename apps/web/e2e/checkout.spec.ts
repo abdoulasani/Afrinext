@@ -182,7 +182,16 @@ test.describe("a buyer pays for a digital product", () => {
 
     // 3. Pay. The charge is created; nothing is confirmed.
     await page.getByTestId("pay").click();
-    await expect(page.getByTestId("pay-waiting")).toBeVisible();
+    /*
+     * Wait for the payment STATE, not for the button's caption.
+     *
+     * `pay-waiting` is static text inside the form: it is on screen before the
+     * server action has done anything, so asserting it proved only that the
+     * page had rendered. The page now shows the charge's real status, which
+     * appears when the action has actually completed — a signal rather than a
+     * hope. CI caught this by racing where local runs happened not to.
+     */
+    await expect(page.getByTestId("payment-status")).toHaveText("pending");
     expect(sqlOne(`select status from payments where order_id = '${orderId}'::uuid`)).toBe("pending");
     expect(orderStatus(orderId)).toBe("pending_payment");
 
