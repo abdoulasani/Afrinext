@@ -22,6 +22,9 @@ export const PERMISSIONS = {
   "course.publish": "Publish a course",
   "lesson.view": "View a paid lesson's content",
 
+  "order.create": "Create an order and pay for it",
+  "order.read_own": "Read one's own orders and entitlements",
+  "order.read_store": "Read the orders placed with a store",
   "order.refund": "Refund an order",
 
   "wallet.read_own": "View one's own wallet and transactions",
@@ -58,7 +61,13 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     key: "member",
     scopeType: "global",
     description: "Every signed-in user. Buying requires nothing more than this.",
-    permissions: ["profile.read", "profile.update", "session.revoke_own", "wallet.read_own", "withdrawal.request"],
+    permissions: [
+      "profile.read", "profile.update", "session.revoke_own",
+      // Buying is what a member is for. Reading one's own orders is the same
+      // capability seen from the other side, so it travels with it.
+      "order.create", "order.read_own",
+      "wallet.read_own", "withdrawal.request",
+    ],
   },
   {
     key: "seller",
@@ -72,7 +81,10 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     key: "store_owner",
     scopeType: "store",
     description: "Owns a store and everything published under it.",
-    permissions: ["store.update", "store.read_analytics", "product.create", "product.publish", "course.create", "course.publish"],
+    permissions: [
+      "store.update", "store.read_analytics", "order.read_store",
+      "product.create", "product.publish", "course.create", "course.publish",
+    ],
   },
   {
     key: "instructor",
@@ -84,7 +96,7 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     key: "support",
     scopeType: "global",
     description: "Reads users and orders to help them. Cannot touch money.",
-    permissions: ["admin.user.read", "ledger.read"],
+    permissions: ["admin.user.read", "ledger.read", "order.read_store"],
   },
   {
     key: "ops",

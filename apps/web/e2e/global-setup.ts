@@ -59,5 +59,15 @@ export default function globalSetup(): void {
    * `users.status` is what gates an account, and it is untouched.
    */
   psql("truncate table consent_records");
+
+  /*
+   * Clear the checkout tables between local runs.
+   *
+   * In CI the database is built from zero, so this changes nothing there. It
+   * matters locally, where a persistent database accumulates orders and
+   * payments from previous runs and a `count(*)` assertion would be counting
+   * history rather than what the test just did.
+   */
+  psql("truncate table payment_events, payments, entitlements, order_items, orders cascade");
   psql("delete from legal_document_versions where version <> '0.0.0-placeholder'");
 }

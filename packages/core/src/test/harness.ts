@@ -5,6 +5,14 @@ import { OTP_POLICY, OTP_POLICY_SETTING_KEY } from "../ratelimit";
 
 /** Tables truncated between tests, in an order that respects foreign keys. */
 const MUTABLE_TABLES = [
+  // Checkout. Listed before the catalogue they reference, and before the
+  // ledger: an order is evidence about a product and a buyer, so it cannot
+  // outlive either.
+  "payment_events",
+  "payments",
+  "entitlements",
+  "order_items",
+  "orders",
   // Catalogue. Products cascade from stores, but both are listed so the
   // truncation is explicit rather than relying on a cascade to be right.
   "products",

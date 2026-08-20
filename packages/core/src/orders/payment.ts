@@ -1,0 +1,594 @@
+import { sql } from "drizzle-orm";
+import type { Database } from "@afrinext/db";
+import { audit } from "../audit";
+import { authorize, type Actor } from "../authz";
+import { freezeSchedule } from "../commissions";
+import { DomainError } from "../errors";
+import { uuidv7 } from "../ids";
+import { money, type Money } from "../money";
+import { logger } from "../observability";
+import type {
+  HeadersLike, PaymentProvider, VerifiedEvent,
+} from "../payments";
+import { OrderNotFoundError } from "./checkout";
+import {
+  assertPaymentTransition, orderStateForPayment,
+  type OrderState, type PaymentState,
+} from "./state";
+
+/**
+ * The payment boundary.
+ *
+ * Two things happen in this file and it is worth being explicit about which is
+ * which, because the milestone brief asks for exactly this distinction:
+ *
+ *   PAYMENT CONFIRMED — a provider event, verified against the raw bytes we
+ *   received and then cross-checked against our own order, says a charge
+ *   succeeded. That moves the payment and the order, freezes the commission
+ *   split, and grants the buyer's entitlement.
+ *
+ *   FINANCIAL SETTLEMENT — ledger postings that turn a captured payment into a
+ *   seller's claim on money. NOT performed here, and deliberately not by a mock.
+ *   The ledger is append-only, so a posting made on a simulated capture can
+ *   never be removed; and a seller entitlement created before Afrinext actually
+ *   holds the funds is a promise the balance cannot keep.
+ *
+ * What confirmation does write is the FROZEN FEE SCHEDULE, which is the sale's
+ * economics — gross, platform commission, seller share — resolved from the
+ * rules in force at that moment and made permanent. It moves no money. When
+ * settlement is built it reads that schedule rather than re-resolving rules
+ * that may have changed in the meantime.
+ */
+
+const log = logger.child({ component: "orders.payment" });
+
+export class PaymentNotFoundError extends DomainError {
+  override readonly name = "PaymentNotFoundError";
+  constructor(ref: string) {
+    super("order.payment_not_found", `No payment matches "${ref}".`);
+  }
+}
+
+export class OrderNotPayableError extends DomainError {
+  override readonly name = "OrderNotPayableError";
+  constructor(why: string) {
+    super("order.not_payable", why);
+  }
+}
+
+export class WebhookRejectedError extends DomainError {
+  override readonly name = "WebhookRejectedError";
+  constructor(why: string) {
+    super("payment.webhook_rejected", why);
+  }
+}
+
+export interface PaymentRecord {
+  readonly id: string;
+  readonly orderId: string;
+  readonly provider: string;
+  readonly providerRef: string | null;
+  readonly status: PaymentState;
+  readonly amount: Money;
+  readonly redirectUrl?: string | undefined;
+}
+
+interface PaymentRow {
+  [key: string]: unknown;
+  id: string;
+  order_id: string;
+  provider: string;
+  provider_ref: string | null;
+  status: string;
+  amount_minor: string | bigint;
+  currency: string;
+}
+
+function toPayment(row: PaymentRow): PaymentRecord {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    provider: row.provider,
+    providerRef: row.provider_ref,
+    status: row.status as PaymentState,
+    amount: money(BigInt(row.amount_minor), row.currency),
+  };
+}
+
+export interface InitiatePaymentInput {
+  readonly orderId: string;
+  /** Where the provider should send the buyer back to, when it hosts the flow. */
+  readonly returnUrl?: string | undefined;
+  readonly channel?: string | undefined;
+}
+
+/**
+ * Starts a charge for an order.
+ *
+ * The amount handed to the provider is read from the order row inside this
+ * function. There is no amount parameter, so no caller — route handler, server
+ * action, test — is in a position to send a different one.
+ */
+export async function initiatePayment(
+  db: Database,
+  actor: Actor,
+  provider: PaymentProvider,
+  input: InitiatePaymentInput,
+): Promise<PaymentRecord> {
+  await authorize(db, actor, "order.create");
+
+  // Scoped to the buyer in SQL. Someone else's order id resolves to nothing.
+  const orders = await db.execute<{
+    [key: string]: unknown;
+    id: string;
+    status: string;
+    total_minor: string | bigint;
+    currency: string;
+    expired: boolean;
+  }>(sql`
+    select id, status, total_minor, currency, (expires_at <= now()) as expired
+      from orders
+     where id = ${input.orderId}::uuid and buyer_user_id = ${actor.userId}::uuid
+  `);
+  const order = orders.rows[0];
+  if (order === undefined) throw new OrderNotFoundError(input.orderId);
+  if (order.status !== "pending_payment") {
+    throw new OrderNotPayableError(`This order is ${order.status} and cannot be paid.`);
+  }
+  if (order.expired) {
+    // Mark it, then refuse. An order past its expiry is not payable even if a
+    // sweeper has not run yet — the clock decides, not the sweeper.
+    await expireOrder(db, order.id);
+    throw new OrderNotPayableError("This checkout has expired. Start a new one.");
+  }
+
+  /*
+   * One live attempt per order.
+   *
+   * A partial unique index refuses a second `initiated`/`pending` row, so this
+   * read-then-return is not the guarantee — it is the courteous path. Two
+   * concurrent initiations resolve to one charge because the database says so.
+   */
+  const existing = await db.execute<PaymentRow>(sql`
+    select id, order_id, provider, provider_ref, status, amount_minor, currency
+      from payments where order_id = ${order.id}::uuid and status in ('initiated','pending')
+  `);
+  const live = existing.rows[0];
+  if (live !== undefined) return toPayment(live);
+
+  const amount = money(BigInt(order.total_minor), order.currency);
+  const paymentId = uuidv7();
+  /*
+   * The idempotency key is derived, not supplied.
+   *
+   * It identifies "the charge for this order", so a retried initiation reaches
+   * the provider as the same request rather than a second charge against the
+   * same buyer.
+   */
+  const idempotencyKey = `order:${order.id}:charge`;
+
+  await db.execute(sql`
+    insert into payments (id, order_id, provider, status, amount_minor, currency, idempotency_key)
+    values (${paymentId}, ${order.id}, ${provider.id}, 'initiated',
+            ${order.total_minor.toString()}, ${order.currency}, ${idempotencyKey})
+    on conflict (idempotency_key) do nothing
+  `);
+
+  const stored = await db.execute<PaymentRow>(sql`
+    select id, order_id, provider, provider_ref, status, amount_minor, currency
+      from payments where idempotency_key = ${idempotencyKey}
+  `);
+  const row = stored.rows[0];
+  if (row === undefined) throw new PaymentNotFoundError(idempotencyKey);
+  if (row.status !== "initiated") return toPayment(row);
+
+  const charge = await provider.createCharge({
+    reference: `order-${order.id}`,
+    amount,
+    customer: { userId: actor.userId },
+    idempotencyKey,
+    ...(input.returnUrl !== undefined ? { returnUrl: input.returnUrl } : {}),
+    ...(input.channel !== undefined ? { channel: input.channel } : {}),
+  });
+
+  /*
+   * The provider's first answer is recorded, but it does not confirm anything.
+   *
+   * Even when a provider replies "succeeded" synchronously, that is a claim
+   * arriving on the same connection the caller controls in a hosted-redirect
+   * flow. Confirmation goes through `applyProviderEvent`, which verifies a
+   * signature over raw bytes. Here the status is clamped to `pending` for
+   * anything that is not a definite refusal.
+   */
+  const recordedStatus: PaymentState =
+    charge.status === "failed" ? "failed"
+    : charge.status === "cancelled" ? "cancelled"
+    : charge.status === "expired" ? "expired"
+    : "pending";
+
+  assertPaymentTransition("initiated", recordedStatus);
+
+  await db.execute(sql`
+    update payments
+       set provider_ref = ${charge.providerRef}, status = ${recordedStatus}, updated_at = now()
+     where id = ${row.id}::uuid and status = 'initiated'
+  `);
+
+  // A refusal at initiation closes the order immediately: there is nothing in
+  // flight to wait for.
+  const orderState = orderStateForPayment(recordedStatus);
+  if (orderState !== undefined) await closeOrder(db, order.id, orderState);
+
+  await audit(db, {
+    actorKind: "user",
+    actorUserId: actor.userId,
+    action: "order.payment.initiated",
+    targetType: "payment",
+    targetId: row.id,
+    context: {
+      orderId: order.id, provider: provider.id,
+      providerRef: charge.providerRef, status: recordedStatus,
+    },
+  });
+
+  return {
+    ...toPayment(row),
+    providerRef: charge.providerRef,
+    status: recordedStatus,
+    ...(charge.redirectUrl !== undefined ? { redirectUrl: charge.redirectUrl } : {}),
+  };
+}
+
+async function closeOrder(db: Database, orderId: string, to: OrderState): Promise<boolean> {
+  const paid = to === "paid";
+  const result = await db.execute(sql`
+    update orders
+       set status = ${to},
+           paid_at = case when ${paid} then now() else paid_at end,
+           closed_at = now(),
+           updated_at = now()
+     where id = ${orderId}::uuid and status = 'pending_payment'
+  `);
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** Marks a lapsed checkout expired. Idempotent, and never touches a paid one. */
+export async function expireOrder(db: Database, orderId: string): Promise<boolean> {
+  const result = await db.execute(sql`
+    update orders set status = 'expired', closed_at = now(), updated_at = now()
+     where id = ${orderId}::uuid and status = 'pending_payment' and expires_at <= now()
+  `);
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** Sweeps every lapsed checkout. Safe to run repeatedly and concurrently. */
+export async function expireLapsedOrders(db: Database): Promise<number> {
+  const result = await db.execute(sql`
+    update orders set status = 'expired', closed_at = now(), updated_at = now()
+     where status = 'pending_payment' and expires_at <= now()
+  `);
+  return result.rowCount ?? 0;
+}
+
+export type EventOutcome = "applied" | "ignored" | "rejected";
+
+export interface AppliedEvent {
+  readonly outcome: EventOutcome;
+  readonly reason?: string | undefined;
+  readonly paymentId?: string | undefined;
+  readonly orderId?: string | undefined;
+  readonly orderStatus?: OrderState | undefined;
+}
+
+/**
+ * The server-side verification boundary. Everything a real provider must do.
+ *
+ * The browser is never believed. A buyer returning from a hosted checkout page
+ * with "success" in the URL proves only that they can type a URL. What is
+ * believed is a signed event, and only after five separate checks:
+ *
+ *   1. the signature verifies over the RAW bytes, before any parsing;
+ *   2. the provider's event id has not been seen before (unique index);
+ *   3. the provider reference resolves to a payment we created;
+ *   4. the amount matches the payment exactly — minor units and currency;
+ *   5. the transition is legal from the state the payment is actually in.
+ *
+ * A failure at 3, 4 or 5 is recorded as a REJECTED event and changes nothing.
+ * The record matters: a forged amount arriving at this endpoint leaves a row.
+ */
+export async function applyProviderEvent(
+  db: Database,
+  provider: PaymentProvider,
+  rawBody: Buffer,
+  headers: HeadersLike,
+): Promise<AppliedEvent> {
+  let event: VerifiedEvent;
+  try {
+    // Step 1. Parsing before verifying is how signature checks get bypassed,
+    // so the raw bytes go in and nothing is trusted until this returns.
+    event = await provider.verifyWebhook(rawBody, headers);
+  } catch (error: unknown) {
+    log.warn("webhook signature refused", { provider: provider.id, cause: String(error) });
+    throw new WebhookRejectedError("The event signature does not verify.");
+  }
+
+  const payments = await db.execute<PaymentRow & { order_status: string; buyer_user_id: string; store_id: string }>(sql`
+    select p.id, p.order_id, p.provider, p.provider_ref, p.status, p.amount_minor, p.currency,
+           o.status as order_status, o.buyer_user_id, o.store_id
+      from payments p join orders o on o.id = p.order_id
+     where p.provider = ${provider.id} and p.provider_ref = ${event.providerRef}
+  `);
+  const payment = payments.rows[0];
+
+  const record = async (
+    outcome: EventOutcome,
+    reason: string | undefined,
+  ): Promise<boolean> => {
+    // Step 2. `on conflict do nothing` on (provider, provider_event_id): a
+    // replayed event writes nothing and, because this returns false, applies
+    // nothing either.
+    const inserted = await db.execute(sql`
+      insert into payment_events (id, payment_id, provider, provider_event_id, provider_ref,
+                                  type, reported_status, outcome, reason, payload)
+      values (${uuidv7()}, ${payment?.id ?? null}, ${provider.id}, ${event.providerEventId},
+              ${event.providerRef}, ${event.type}, ${event.status}, ${outcome},
+              ${reason ?? null}, ${rawBody.toString("utf8").slice(0, 8000)})
+      on conflict (provider, provider_event_id) do nothing
+    `);
+    return (inserted.rowCount ?? 0) > 0;
+  };
+
+  // Step 3.
+  if (payment === undefined) {
+    await record("rejected", "no payment matches the provider reference");
+    log.warn("webhook for an unknown charge", { providerRef: event.providerRef });
+    throw new WebhookRejectedError("That charge is not known here.");
+  }
+
+  // Step 4. Exact equality on both fields. A near-miss is a mismatch.
+  if (event.amount !== undefined) {
+    const sameAmount = event.amount.amountMinor === BigInt(payment.amount_minor);
+    const sameCurrency = event.amount.currency === payment.currency;
+    if (!sameAmount || !sameCurrency) {
+      const fresh = await record(
+        "rejected",
+        `amount mismatch: event ${event.amount.amountMinor}${event.amount.currency}, ` +
+          `payment ${String(payment.amount_minor)}${payment.currency}`,
+      );
+      log.warn("webhook amount does not match the order", {
+        paymentId: payment.id, providerRef: event.providerRef, replay: !fresh,
+      });
+      await audit(db, {
+        actorKind: "system",
+        action: "order.payment.event_rejected",
+        targetType: "payment",
+        targetId: payment.id,
+        context: { reason: "amount_mismatch", providerEventId: event.providerEventId },
+      });
+      throw new WebhookRejectedError("The event does not match this charge.");
+    }
+  }
+
+  const from = payment.status as PaymentState;
+  const to = event.status as PaymentState;
+
+  // An event that repeats the state we are already in, or that arrives after a
+  // terminal one, is old news rather than an attack: recorded, then ignored.
+  if (from === to || (orderStateForPayment(from) !== undefined && from !== "pending")) {
+    await record("ignored", `stale event: payment is already ${from}`);
+    return {
+      outcome: "ignored",
+      reason: "stale",
+      paymentId: payment.id,
+      orderId: payment.order_id,
+      orderStatus: payment.order_status as OrderState,
+    };
+  }
+
+  // Step 5.
+  try {
+    assertPaymentTransition(from, to);
+  } catch {
+    await record("rejected", `illegal transition ${from} → ${to}`);
+    throw new WebhookRejectedError("That transition is not possible for this charge.");
+  }
+
+  const applied = await confirm(db, rawBody, {
+    providerId: provider.id,
+    event,
+    paymentId: payment.id,
+    orderId: payment.order_id,
+    orderStatus: payment.order_status as OrderState,
+    from,
+    to,
+  });
+
+  if (applied.outcome === "applied") {
+    await audit(db, {
+      actorKind: "system",
+      action: "order.payment.confirmed",
+      targetType: "order",
+      targetId: payment.order_id,
+      context: {
+        paymentId: payment.id,
+        providerEventId: event.providerEventId,
+        paymentStatus: to,
+        orderStatus: applied.orderStatus,
+      },
+    });
+  }
+
+  return applied;
+}
+
+/**
+ * Everything a confirmation changes, in ONE transaction.
+ *
+ * The order inside matters. The guarded UPDATE comes first and is what makes
+ * this idempotent: it names the state it expects, so a second delivery — a
+ * replay, a concurrent one, a provider retrying after our 500 — matches no rows
+ * and applies nothing. The event row is written LAST, carrying what actually
+ * happened rather than what we hoped would happen when we started.
+ *
+ * Everything being in one transaction is also what stops a half-confirmed sale.
+ * If freezing the economics fails — no commission rule in force, say — the
+ * whole thing rolls back: the order stays payable, no event is recorded as
+ * applied, and the provider's retry finds a clean slate to work with. The
+ * alternative, committing the status and repairing the rest afterwards, leaves
+ * a paid order with no record of what it charged, and a retry that refuses to
+ * touch it because the event id has been seen.
+ */
+async function confirm(
+  db: Database,
+  rawBody: Buffer,
+  input: {
+    providerId: string;
+    event: VerifiedEvent;
+    paymentId: string;
+    orderId: string;
+    orderStatus: OrderState;
+    from: PaymentState;
+    to: PaymentState;
+  },
+): Promise<AppliedEvent> {
+  return db.transaction(async (tx) => {
+    const recordIn = async (outcome: EventOutcome, reason: string | undefined): Promise<void> => {
+      await tx.execute(sql`
+        insert into payment_events (id, payment_id, provider, provider_event_id, provider_ref,
+                                    type, reported_status, outcome, reason, payload)
+        values (${uuidv7()}, ${input.paymentId}, ${input.providerId}, ${input.event.providerEventId},
+                ${input.event.providerRef}, ${input.event.type}, ${input.event.status},
+                ${outcome}, ${reason ?? null}, ${rawBody.toString("utf8").slice(0, 8000)})
+        on conflict (provider, provider_event_id) do nothing
+      `);
+    };
+
+    const paymentMoved = await tx.execute(sql`
+      update payments
+         set status = ${input.to},
+             confirmed_at = case when ${input.to === "succeeded"} then now() else confirmed_at end,
+             updated_at = now()
+       where id = ${input.paymentId}::uuid and status = ${input.from}
+    `);
+    if ((paymentMoved.rowCount ?? 0) === 0) {
+      await recordIn("ignored", `the payment was no longer ${input.from}`);
+      return {
+        outcome: "ignored" as const,
+        reason: "replay",
+        paymentId: input.paymentId,
+        orderId: input.orderId,
+        orderStatus: input.orderStatus,
+      };
+    }
+
+    const orderState = orderStateForPayment(input.to);
+    let reached = input.orderStatus;
+
+    if (orderState !== undefined) {
+      const orderMoved = await tx.execute(sql`
+        update orders
+           set status = ${orderState},
+               paid_at = case when ${orderState === "paid"} then now() else paid_at end,
+               closed_at = now(),
+               updated_at = now()
+         where id = ${input.orderId}::uuid and status = 'pending_payment'
+      `);
+
+      /*
+       * The order may legitimately refuse to move — it expired while the buyer
+       * was on the provider's page, for instance. The payment still moved,
+       * because it did: money may genuinely have left an account. That
+       * divergence is a real operational event, and it is visible precisely
+       * because the two are separate rows with separate states.
+       */
+      if ((orderMoved.rowCount ?? 0) > 0) {
+        reached = orderState;
+
+        if (orderState === "paid") {
+          await tx.execute(sql`
+            insert into entitlements (id, user_id, product_id, order_id, source)
+            select ${uuidv7()}, o.buyer_user_id, i.product_id, o.id, 'purchase'
+              from orders o join order_items i on i.order_id = o.id
+             where o.id = ${input.orderId}::uuid
+            on conflict (user_id, product_id) do nothing
+          `);
+          await freezeOrderEconomics(tx, input.orderId);
+        }
+      }
+    }
+
+    await recordIn("applied", undefined);
+    return {
+      outcome: "applied" as const,
+      paymentId: input.paymentId,
+      orderId: input.orderId,
+      orderStatus: reached,
+    };
+  });
+}
+
+/**
+ * Freezes what this sale charged. NOT a settlement.
+ *
+ * `fee_schedules` and `fee_lines` are append-only and must total the gross, so
+ * this is the sale's economics made permanent: change the commission rule
+ * tomorrow and this order still says what it said today.
+ *
+ * No ledger account moves. The seller has no claim on money until settlement,
+ * which is a different operation, needs a real provider settlement event and
+ * payout rails, and is not built. What this writes is the answer to "what did
+ * this sale charge?", so that settlement — whenever it arrives — reads a frozen
+ * decision rather than re-resolving rules that may have changed since.
+ *
+ * Runs inside the confirming transaction, so a sale can never exist without it.
+ */
+export async function freezeOrderEconomics(db: Database, orderId: string): Promise<void> {
+  const existing = await db.execute<{ id: string }>(sql`
+    select id from fee_schedules where subject_type = 'order' and subject_id = ${orderId}::uuid
+  `);
+  if (existing.rows.length > 0) return;
+
+  const rows = await db.execute<{
+    [key: string]: unknown;
+    total_minor: string | bigint;
+    currency: string;
+    store_id: string;
+    country_code: string | null;
+    kind: string;
+  }>(sql`
+    select o.total_minor, o.currency, o.store_id, s.country_code,
+           (select kind from products p join order_items i on i.product_id = p.id
+             where i.order_id = o.id limit 1) as kind
+      from orders o join stores s on s.id = o.store_id
+     where o.id = ${orderId}::uuid and o.status = 'paid'
+  `);
+  const row = rows.rows[0];
+  if (row === undefined) return;
+
+  await freezeSchedule(db, {
+    subjectType: "order",
+    subjectId: orderId,
+    gross: money(BigInt(row.total_minor), row.currency),
+    // The product's own kind picks the commission rule. Never a client value.
+    transactionType: row.kind,
+    storeId: row.store_id,
+    ...(row.country_code !== null ? { countryCode: row.country_code } : {}),
+  });
+}
+
+/** The payment attempts for one order, for the buyer who owns it. */
+export async function findOrderPayment(
+  db: Database,
+  actor: Actor,
+  orderId: string,
+): Promise<PaymentRecord | undefined> {
+  await authorize(db, actor, "order.read_own");
+  const rows = await db.execute<PaymentRow>(sql`
+    select p.id, p.order_id, p.provider, p.provider_ref, p.status, p.amount_minor, p.currency
+      from payments p join orders o on o.id = p.order_id
+     where p.order_id = ${orderId}::uuid and o.buyer_user_id = ${actor.userId}::uuid
+     order by p.created_at desc limit 1
+  `);
+  const row = rows.rows[0];
+  return row === undefined ? undefined : toPayment(row);
+}

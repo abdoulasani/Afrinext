@@ -29,6 +29,16 @@ export const BASE_URL = `http://127.0.0.1:${PORT}`;
  */
 export const SERVER_LOG = ".e2e/server.log";
 
+/**
+ * The secret the mock provider signs its webhooks with.
+ *
+ * Shared with the checkout spec so a test can produce a genuinely signed event
+ * — and, just as importantly, an unsigned or wrongly signed one. Not a
+ * credential: the mock provider is refused in production unless someone also
+ * sets ALLOW_MOCK_PAYMENTS.
+ */
+export const MOCK_WEBHOOK_SECRET = "e2e-mock-webhook-secret";
+
 export default defineConfig({
   testDir: "./e2e",
   // Raises only the per-IP OTP ceiling for the test database, because every
@@ -64,7 +74,14 @@ export default defineConfig({
      */
     command:
       `mkdir -p .e2e && rm -f ${SERVER_LOG} && ` +
-      `NODE_ENV=production ALLOW_CONSOLE_SENDER=yes pnpm exec next start -p ${PORT} > ${SERVER_LOG} 2>&1`,
+      `NODE_ENV=production ALLOW_CONSOLE_SENDER=yes ` +
+      // The mock payment provider needs a SECOND deliberate variable to run
+      // under a production build, exactly as ConsoleSender does. Saying
+      // PAYMENT_PROVIDER=mock is not enough, because that is the variable a
+      // misconfigured deployment gets wrong.
+      `PAYMENT_PROVIDER=mock ALLOW_MOCK_PAYMENTS=yes ` +
+      `MOCK_WEBHOOK_SECRET=${MOCK_WEBHOOK_SECRET} ` +
+      `pnpm exec next start -p ${PORT} > ${SERVER_LOG} 2>&1`,
     url: BASE_URL,
     // Never silently reuse a server someone left running: it could be a
     // different build, which would make a green run meaningless.

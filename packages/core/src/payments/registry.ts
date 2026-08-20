@@ -19,10 +19,12 @@ export function createPaymentProvider(
 
   switch (id) {
     case "mock":
-      if (isProduction) {
+      if (isProduction && process.env["ALLOW_MOCK_PAYMENTS"] !== "yes") {
         throw new ProviderNotConfiguredError(
           "mock",
-          "the mock provider is never available in production.",
+          "the mock provider is not available in production unless " +
+            "ALLOW_MOCK_PAYMENTS=yes says this environment is deliberately not " +
+            "taking real money.",
         );
       }
       return new MockPaymentProvider();

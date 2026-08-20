@@ -1,11 +1,14 @@
+import { randomUUID } from "node:crypto";
 import type { Metadata } from "next";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
-import { catalog, money as m } from "@afrinext/core";
+import { catalog, money as m, orders } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate } from "@afrinext/i18n";
 import AppHeader from "@/components/AppHeader";
+import BuyButton from "@/components/BuyButton";
 import { currencyRegistry } from "@/lib/catalog";
+import { currentActor } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +20,9 @@ export const dynamic = "force-dynamic";
  * accident. A draft product, or one under an unpublished store, is not hidden
  * on this page: it is never fetched.
  *
- * There is no checkout. The price is shown and the purchase button says so —
- * inventing a payment flow before the milestone that builds it would be a
- * screen that lies about what the system can do.
+ * The buy button posts slugs and an idempotency key — never a price. What the
+ * order costs is read from the catalogue on the server, so the number on this
+ * page is a rendering of the price rather than the source of it.
  */
 export default async function PublicProductPage({
   params,
@@ -32,7 +35,14 @@ export default async function PublicProductPage({
   const product = await catalog.findPublicProduct(getDb(), storeSlug, productSlug);
   if (product === undefined) notFound();
 
-  const registry = await currencyRegistry();
+  const [registry, actor] = await Promise.all([currencyRegistry(), currentActor()]);
+  // What someone already owns is read from `entitlements`, never inferred from
+  // an order's status at read time.
+  const owned =
+    actor !== undefined &&
+    (await orders.listOwnEntitlements(getDb(), actor)).some(
+      (e) => e.storeSlug === storeSlug && e.productSlug === productSlug,
+    );
 
   return (
     <>
@@ -53,16 +63,39 @@ export default async function PublicProductPage({
         )}
 
         <section className="flex flex-col gap-2 border-t border-border pt-5">
-          <button
-            type="button"
-            disabled
-            className="w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-contrast opacity-60"
-          >
-            {translate(locale, "product.buy")}
-          </button>
-          <p className="text-center text-xs text-muted">
-            {translate(locale, "product.buySoon")}
-          </p>
+          {actor === undefined ? (
+            <a
+              href={`/${locale}/sign-in`}
+              data-testid="sign-in-to-buy"
+              className="w-full rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-contrast"
+            >
+              {translate(locale, "order.signInToBuy")}
+            </a>
+          ) : owned ? (
+            <>
+              <p data-testid="already-owned" className="text-sm font-medium">
+                {translate(locale, "order.owned")}
+              </p>
+              <a
+                href={`/${locale}/orders`}
+                className="w-full rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-contrast"
+              >
+                {translate(locale, "order.openLibrary")}
+              </a>
+            </>
+          ) : (
+            <BuyButton
+              locale={locale}
+              storeSlug={storeSlug}
+              productSlug={productSlug}
+              /*
+               * Minted per render, so two taps on this page resolve to one
+               * order while a later visit may start a new one.
+               */
+              checkoutKey={randomUUID()}
+              label={translate(locale, "product.buy")}
+            />
+          )}
         </section>
       </div>
     </>
