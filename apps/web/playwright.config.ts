@@ -51,9 +51,20 @@ export default defineConfig({
   },
 
   webServer: {
+    /*
+     * NODE_ENV is set explicitly, and that is not a formality.
+     *
+     * `next start` only defaults NODE_ENV to production when it is not already
+     * set — and `.env` sets it to development for the dev server. So a local
+     * run served the app in development mode while CI served it in production
+     * mode, and the two differ in ways that decide whether tests pass: Better
+     * Auth enables its rate limiter only in production, and the session cookie
+     * is only marked Secure in production. A suite that green-lights a build CI
+     * then rejects is worse than no suite, so this pins the mode CI uses.
+     */
     command:
       `mkdir -p .e2e && rm -f ${SERVER_LOG} && ` +
-      `ALLOW_CONSOLE_SENDER=yes pnpm exec next start -p ${PORT} > ${SERVER_LOG} 2>&1`,
+      `NODE_ENV=production ALLOW_CONSOLE_SENDER=yes pnpm exec next start -p ${PORT} > ${SERVER_LOG} 2>&1`,
     url: BASE_URL,
     // Never silently reuse a server someone left running: it could be a
     // different build, which would make a green run meaningless.

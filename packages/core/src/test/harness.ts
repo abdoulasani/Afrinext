@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { getDb, type Database } from "@afrinext/db";
 import { uuidv7 } from "../ids";
+import { OTP_POLICY, OTP_POLICY_SETTING_KEY } from "../ratelimit";
 
 /** Tables truncated between tests, in an order that respects foreign keys. */
 const MUTABLE_TABLES = [
@@ -77,6 +78,19 @@ export async function resetData(db: Database): Promise<void> {
     update legal_document_versions
        set effective_from = now() - interval '1 day'
      where version = '0.0.0-placeholder' and effective_from > now()
+  `);
+  /*
+   * Restore the OTP policy row.
+   *
+   * The limits are configuration, and the only honest way to test that is to
+   * change them — so several tests do. Without this, the next test inherits a
+   * ceiling of one send an hour and fails for a reason that has nothing to do
+   * with what it was written to check. The seeded row is the reviewed default,
+   * which is exactly what OTP_POLICY holds.
+   */
+  await db.execute(sql`
+    update platform_settings set value = ${JSON.stringify(OTP_POLICY)}::jsonb
+     where key = ${OTP_POLICY_SETTING_KEY}
   `);
 }
 

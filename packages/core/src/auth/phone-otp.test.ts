@@ -379,6 +379,84 @@ describe("the limits are configuration", () => {
     // A bad row must fail closed, back to the reviewed defaults.
     expect(await loadOtpPolicy(db)).toEqual(OTP_POLICY);
   });
+
+  /**
+   * The gap CI found.
+   *
+   * `loadOtpPolicy` was correct and nothing called it: apps/web built the auth
+   * instance without a policy, so the running application used the compiled-in
+   * defaults and an operator's UPDATE changed nothing. These three tests are
+   * about the WIRING — that a policy resolver is honoured, that it is consulted
+   * on the request rather than at construction, and that the code's lifetime and
+   * attempt bound come from the same place as the limits.
+   */
+  function configuredAuth(): ReturnType<typeof createAuth> {
+    return createAuth({
+      pool: getPool(), db, sender,
+      baseUrl: "http://localhost:3000",
+      secret: SECRET,
+      otpPolicy: () => loadOtpPolicy(db),
+    });
+  }
+
+  async function setPolicy(value: string): Promise<void> {
+    await db.execute(sql`
+      update platform_settings set value = ${value}::jsonb where key = ${OTP_POLICY_SETTING_KEY}
+    `);
+  }
+
+  it("refuses a send once the STORED limit is spent", async () => {
+    // Built before the setting is written, and cached the way the app caches
+    // it — so a construction-time snapshot would miss this entirely.
+    const configured = configuredAuth();
+    await setPolicy('{"perPhonePerHour":2,"cooldownMs":1}');
+
+    const phone = "+22790000260";
+    await configured.api.sendPhoneOtp({ body: { phoneNumber: phone } });
+
+    // The SECOND send has to succeed. The compiled-in cooldown is a minute, so
+    // an instance that ignored the stored policy would refuse here — and a test
+    // that only checked "eventually refused" would pass on that refusal and
+    // prove nothing. Mutation testing found exactly that; this line is the fix.
+    await expect(
+      configured.api.sendPhoneOtp({ body: { phoneNumber: phone } }),
+    ).resolves.toBeDefined();
+
+    // The third exceeds the stored allowance of two.
+    const refused = await reject(configured.api.sendPhoneOtp({ body: { phoneNumber: phone } }));
+    expect((refused as { status?: string }).status).toBe("TOO_MANY_REQUESTS");
+    expect((refused as { body?: { code?: string } }).body?.code).toBe("ratelimit.exceeded");
+  });
+
+  it("honours a limit changed after the instance was built", async () => {
+    const configured = configuredAuth();
+    await setPolicy('{"perPhonePerHour":1,"cooldownMs":1}');
+
+    const phone = "+22790000261";
+    await configured.api.sendPhoneOtp({ body: { phoneNumber: phone } });
+    expect(await reject(configured.api.sendPhoneOtp({ body: { phoneNumber: phone } }))).toBeInstanceOf(Error);
+
+    // The operator raises the ceiling. No deploy, no restart, same instance.
+    await setPolicy('{"perPhonePerHour":5,"cooldownMs":1}');
+    await expect(configured.api.sendPhoneOtp({ body: { phoneNumber: phone } })).resolves.toBeDefined();
+  });
+
+  it("takes the code lifetime and attempt bound from the same setting", async () => {
+    const configured = configuredAuth();
+    await setPolicy('{"ttlMs":60000,"verificationAttempts":2,"cooldownMs":1}');
+
+    const phone = "+22790000262";
+    await configured.api.sendPhoneOtp({ body: { phoneNumber: phone } });
+
+    const rows = await db.execute<{ life_ms: number | string; max_attempts: number }>(sql`
+      select extract(epoch from (expires_at - created_at)) * 1000 as life_ms, max_attempts
+        from otp_challenges where identifier = ${phone}
+    `);
+    // A minute, not the compiled-in five.
+    expect(Number(rows.rows[0]?.life_ms)).toBeGreaterThan(55_000);
+    expect(Number(rows.rows[0]?.life_ms)).toBeLessThan(65_000);
+    expect(rows.rows[0]?.max_attempts).toBe(2);
+  });
 });
 
 describe("the store rejects what the endpoint would never send", () => {

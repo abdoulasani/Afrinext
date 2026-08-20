@@ -1,4 +1,4 @@
-import { auth as core } from "@afrinext/core";
+import { auth as core, ratelimit } from "@afrinext/core";
 import { getDb, getPool } from "@afrinext/db";
 
 /**
@@ -29,6 +29,20 @@ export function getAuth(): core.AfrinextAuth {
     sender: new core.ConsoleSender(),
     baseUrl: process.env["APP_URL"] ?? "http://localhost:3000",
     secret: requiredEnv("SESSION_SECRET"),
+    /**
+     * The limits come from `platform_settings`, not from literals.
+     *
+     * A function, not a value: this instance is built once and cached for the
+     * life of the process, so resolving the policy here would pin whatever the
+     * table held at boot and turn "change a limit" back into "deploy". The
+     * resolver runs on the request that issues a code — one small read next to
+     * the counter writes that request already makes.
+     *
+     * Until this was wired, `loadOtpPolicy` existed and nothing called it: the
+     * running app used the compiled-in defaults, so review decision 7 was
+     * satisfied in packages/core and not in production. See the milestone note.
+     */
+    otpPolicy: () => ratelimit.loadOtpPolicy(getDb()),
   });
   return globalForAuth.afrinextAuth;
 }

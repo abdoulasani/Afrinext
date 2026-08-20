@@ -6,12 +6,11 @@ import { setSessionCookie } from "better-auth/cookies";
 import type { Database } from "@afrinext/db";
 import { audit } from "../audit";
 import { logger } from "../observability";
-import { consumeAll, otpSendRules, type OtpPolicy } from "../ratelimit";
+import { consumeAll, otpSendRules, resolveOtpPolicy, type OtpPolicySource } from "../ratelimit";
 import { RateLimitedError } from "./errors";
 import type { MessageSender } from "./messaging";
 import { accountConsentStatus } from "../consent";
 import { issueChallenge, consumeChallenge } from "./otp-store";
-import type { OtpTiming } from "./otp";
 
 /** The row Better Auth owns: the credential, not the Afrinext identity. */
 type AuthUser = User & { readonly phoneNumber?: string | null };
@@ -36,8 +35,12 @@ export interface PhoneOtpOptions {
   readonly sender: MessageSender;
   /** Derived from the application secret; see `deriveOtpKey`. */
   readonly key: Buffer;
-  readonly policy: OtpPolicy;
-  readonly timing: OtpTiming;
+  /**
+   * Read once per send, so the stored limits AND the code lifetime and attempt
+   * bound all come from `platform_settings` rather than from whatever was in
+   * the table when the process started.
+   */
+  readonly policy: OtpPolicySource;
   /** Synthesised for phone-first accounts; never used for delivery. */
   readonly tempEmail: (phone: string) => string;
 }
@@ -82,9 +85,20 @@ export function phoneOtp(opts: PhoneOtpOptions) {
       },
     },
 
-    // Better Auth's own limiter, as a coarse backstop in front of ours. Ours is
-    // the one that counts in PostgreSQL and survives more than one instance.
-    rateLimit: [{ pathMatcher: (p: string) => p.startsWith("/phone-otp"), window: 60, max: 10 }],
+    /*
+     * No plugin-level rate rule here. Deliberately.
+     *
+     * There was one — 10 requests a minute — and it was a literal that silently
+     * overrode the reviewed, stored policy: an operator who raised
+     * `perIpPerHour` would still have been capped at ten a minute by a number
+     * nobody could see. Better Auth also enables its limiter only when
+     * NODE_ENV is production, so the rule was invisible in development and
+     * decisive in CI, which is exactly how it was found.
+     *
+     * The transport backstop now lives in `createAuth`, as a customRule derived
+     * from the same policy, so the two limiters cannot disagree. See the
+     * comment there.
+     */
 
     endpoints: {
       sendPhoneOtp: createAuthEndpoint(
@@ -95,7 +109,8 @@ export function phoneOtp(opts: PhoneOtpOptions) {
           const source = ctx.request ?? ctx.headers;
           const ip = source === undefined ? undefined : (getIP(source, ctx.context.options) ?? undefined);
 
-          const verdict = await consumeAll(opts.db, otpSendRules(phone, ip, opts.policy));
+          const policy = await resolveOtpPolicy(opts.policy);
+          const verdict = await consumeAll(opts.db, otpSendRules(phone, ip, policy));
           if (!verdict.allowed) {
             log.warn("otp issuance refused", { identifier: phone, used: verdict.used, limit: verdict.limit });
             await audit(opts.db, {
@@ -118,7 +133,7 @@ export function phoneOtp(opts: PhoneOtpOptions) {
             identifier: phone,
             purpose: "sign_in",
             key: opts.key,
-            timing: opts.timing,
+            timing: { ttlMs: policy.ttlMs, maxAttempts: policy.verificationAttempts },
             ...(ip !== undefined ? { ipAddress: ip } : {}),
           });
 

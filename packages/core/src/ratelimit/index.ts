@@ -166,6 +166,22 @@ export async function loadOtpPolicy(db: Database): Promise<OtpPolicy> {
   };
 }
 
+/**
+ * Either the policy itself, or something that fetches it.
+ *
+ * The runtime wants the second form. `createAuth` is synchronous and its result
+ * is cached for the life of the process, so a policy resolved once at
+ * construction would freeze whatever `platform_settings` happened to hold at
+ * boot — which is a deploy, not an UPDATE, and therefore not what review
+ * decision 7 asked for. A resolver is called on the request that needs it.
+ */
+export type OtpPolicySource = OtpPolicy | (() => OtpPolicy | Promise<OtpPolicy>);
+
+export async function resolveOtpPolicy(source: OtpPolicySource | undefined): Promise<OtpPolicy> {
+  if (source === undefined) return OTP_POLICY;
+  return typeof source === "function" ? source() : source;
+}
+
 export function otpSendRules(
   identifier: string,
   ipAddress: string | undefined,

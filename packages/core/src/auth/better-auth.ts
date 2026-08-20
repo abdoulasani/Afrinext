@@ -7,7 +7,9 @@ import type { Database } from "@afrinext/db";
 import { audit } from "../audit";
 import { uuidv7 } from "../ids";
 import { logger } from "../observability";
-import { consumeAll, otpSendRules, OTP_POLICY, type OtpPolicy } from "../ratelimit";
+import {
+  consumeAll, otpSendRules, resolveOtpPolicy, OTP_POLICY, type OtpPolicySource,
+} from "../ratelimit";
 import { RateLimitedError } from "./errors";
 import { hashPassword, verifyPassword } from "./password";
 import type { MessageSender } from "./messaging";
@@ -42,10 +44,12 @@ export interface AuthDeps {
   /** Supplied per request by the HTTP layer, for per-IP limits. */
   readonly ipAddressForRequest?: () => string | undefined;
   /**
-   * OTP limits, normally from `loadOtpPolicy()` so an operator can change them
-   * without a deploy. Omitted means the defaults.
+   * OTP limits. Pass a FUNCTION — normally `() => loadOtpPolicy(db)` — so the
+   * limits are read on the request that needs them and an operator can change
+   * them with an UPDATE instead of a deploy. A plain object is accepted for
+   * tests that want a fixed policy. Omitted means the defaults.
    */
-  readonly otpPolicy?: OtpPolicy | undefined;
+  readonly otpPolicy?: OtpPolicySource | undefined;
 }
 
 export type AfrinextAuth = ReturnType<typeof createAuth>;
@@ -56,9 +60,8 @@ export const SESSION_UPDATE_AGE_SECONDS = 24 * 60 * 60;
 
 export function createAuth(deps: AuthDeps) {
   const log = logger.child({ component: "auth" });
-  const policy = deps.otpPolicy ?? OTP_POLICY;
+  const policy = () => resolveOtpPolicy(deps.otpPolicy);
   const otpKey = deriveOtpKey(deps.secret);
-  const timing = { ttlMs: policy.ttlMs, maxAttempts: policy.verificationAttempts };
 
   /**
    * Guards every code we send. Better Auth's own attempt limits stop guessing;
@@ -71,7 +74,7 @@ export function createAuth(deps: AuthDeps) {
     channel: "sms" | "email",
   ): Promise<void> => {
     const ip = deps.ipAddressForRequest?.();
-    const verdict = await consumeAll(deps.db, otpSendRules(identifier, ip, policy));
+    const verdict = await consumeAll(deps.db, otpSendRules(identifier, ip, await policy()));
     if (!verdict.allowed) {
       log.warn("otp issuance refused", { identifier, channel, used: verdict.used, limit: verdict.limit });
       await audit(deps.db, {
@@ -151,6 +154,37 @@ export function createAuth(deps: AuthDeps) {
       },
     },
 
+    /*
+     * Better Auth's own limiter, in front of ours.
+     *
+     * Two limiters guarding one endpoint must not disagree about the answer.
+     * Ours is the authoritative one: it counts in PostgreSQL, so it holds
+     * across instances and restarts, it reads the stored policy, and every
+     * refusal is audited and answers with `ratelimit.exceeded`. Better Auth's
+     * is in memory, per process, and answers in its own shape.
+     *
+     * So the backstop is derived from the same policy and deliberately set
+     * ABOVE it — twice the hourly allowance, inside a single minute. High
+     * enough that the refusal a caller actually meets is always the audited
+     * one; low enough that a flood from one address is still stopped before it
+     * reaches the database.
+     *
+     * Verify is different: attempt counts are bounded per challenge by
+     * PostgreSQL, but nothing bounds how fast one address may hammer the
+     * endpoint, so that rule is the only control there and stays tight.
+     *
+     * Note that Better Auth enables this whole layer only under
+     * NODE_ENV=production. That is its default, not our choice, and it is why
+     * the browser suite now runs the app in production mode — a control that
+     * is off locally and on in CI is a control nobody has tested.
+     */
+    rateLimit: {
+      customRules: {
+        "/phone-otp/send": async () => ({ window: 60, max: (await policy()).perIpPerHour * 2 }),
+        "/phone-otp/verify": { window: 60, max: 20 },
+      },
+    },
+
     advanced: {
       // Sessions are database rows so revocation is one statement.
       useSecureCookies: process.env["NODE_ENV"] === "production",
@@ -219,7 +253,6 @@ export function createAuth(deps: AuthDeps) {
         sender: deps.sender,
         key: otpKey,
         policy,
-        timing,
         // A phone-first market: most people will never have an email address on
         // file, so one is synthesised and never used for delivery.
         tempEmail: (phone) => `${phone.replace(/[^0-9]/g, "")}@phone.afrinext.local`,
@@ -229,7 +262,11 @@ export function createAuth(deps: AuthDeps) {
           await guardedSend(email, otp, "email");
         },
         otpLength: 6,
-        expiresIn: Math.floor(timing.ttlMs / 1000),
+        // Better Auth's email plugin takes its lifetime as a construction-time
+        // number, so this one value is the compiled-in default rather than the
+        // stored policy. Email is not the launch path; the phone path — the one
+        // that actually issues codes in Niger — reads ttlMs per request.
+        expiresIn: Math.floor(OTP_POLICY.ttlMs / 1000),
         // Email is not the launch path, and this plugin does offer the option
         // the phone one does not. Its default is "plain"; leaving that would be
         // the same defect on a quieter road.
