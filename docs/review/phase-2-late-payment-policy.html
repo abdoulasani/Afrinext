@@ -188,8 +188,8 @@
   <p class="lede">A verified payment can arrive after the checkout expired. The money moved whatever our timer did, so it is never ignored: the order ends as <strong>paid</strong> when fulfilling is still safe, and as <strong>refund_due</strong> when it is not. No confirmed payment is invisible any more.</p>
   <div class="meta">
     <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
-    <span>Head <b>5d92c8e</b></span>
-    <span>1 commit · 18 files</span>
+    <span>Head <b>4342c06</b></span>
+    <span>2 commits · 20 files</span>
     <span>Tests <b class="ok">349 passed · 24 browser</b></span>
     <span>Mutations <b class="ok">8 of 8 caught</b></span>
   </div>
@@ -272,40 +272,51 @@ ledger entries       : 0</code></pre>
 
   <figure>
     <div class="figbox">
-      <svg viewBox="0 0 660 280" role="img" aria-label="Order state machine with the two new transitions out of expired.">
+      <svg viewBox="0 0 660 316" role="img" aria-label="Order state machine with the two new transitions out of expired.">
         <defs>
           <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
           </marker>
         </defs>
+
+        <!-- the ordinary fan out of pending_payment -->
+        <g fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.7">
+          <path d="M346 52 V86 M70 86 H530"/>
+        </g>
         <g fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.7" marker-end="url(#ar3)">
-          <path d="M330 62 V88 H70 V108"/>
-          <path d="M330 62 V88 H230 V108"/>
-          <path d="M330 62 V88 H420 V108"/>
-          <path d="M330 62 V88 H590 V108"/>
+          <path d="M70 86 V108"/>
+          <path d="M214 86 V108"/>
+          <path d="M358 86 V108"/>
+          <path d="M530 86 V108"/>
         </g>
-        <g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar3)">
-          <path d="M556 126 H120 V126"/>
-          <path d="M590 144 V196 H500 V216"/>
+
+        <!-- the two new ones, routed BELOW the row so they cross nothing -->
+        <g fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar3)">
+          <path d="M500 146 V210 H70 V148"/>
+          <path d="M560 146 V248"/>
         </g>
+
         <g stroke="currentColor" fill="none" stroke-width="1.2">
-          <rect x="256" y="26" width="148" height="36" rx="3"/>
-          <rect x="16" y="108" width="108" height="36" rx="3"/>
-          <rect x="176" y="108" width="108" height="36" rx="3"/>
-          <rect x="336" y="108" width="118" height="36" rx="3"/>
-          <rect x="536" y="108" width="108" height="36" rx="3"/>
-          <rect x="440" y="216" width="120" height="36" rx="3"/>
+          <rect x="276" y="16" width="140" height="36" rx="3"/>
+          <rect x="16" y="110" width="108" height="36" rx="3"/>
+          <rect x="160" y="110" width="108" height="36" rx="3"/>
+          <rect x="304" y="110" width="108" height="36" rx="3"/>
+          <rect x="470" y="110" width="120" height="36" rx="3"/>
+          <rect x="452" y="250" width="140" height="36" rx="3"/>
         </g>
-        <text class="svg-t" x="330" y="48" text-anchor="middle">pending_payment</text>
-        <text class="svg-t" x="70" y="130" text-anchor="middle">paid</text>
-        <text class="svg-t" x="230" y="130" text-anchor="middle">failed</text>
-        <text class="svg-t" x="395" y="130" text-anchor="middle">cancelled</text>
-        <text class="svg-t" x="590" y="130" text-anchor="middle">expired</text>
-        <text class="svg-t" x="500" y="238" text-anchor="middle">refund_due</text>
-        <text class="svg-d" x="150" y="118">LATE, INSIDE GRACE, STILL SAFE</text>
-        <text class="svg-u" x="600" y="176">LATE, OUTSIDE</text>
-        <text class="svg-u" x="600" y="190">GRACE OR UNSAFE</text>
-        <text class="svg-s" x="16" y="272">expired is the ONLY state an order can leave — because money can arrive after it. Every other state is terminal.</text>
+
+        <text class="svg-t" x="346" y="39" text-anchor="middle">pending_payment</text>
+        <text class="svg-t" x="70" y="133" text-anchor="middle">paid</text>
+        <text class="svg-t" x="214" y="133" text-anchor="middle">failed</text>
+        <text class="svg-t" x="358" y="133" text-anchor="middle">cancelled</text>
+        <text class="svg-t" x="530" y="133" text-anchor="middle">expired</text>
+        <text class="svg-t" x="522" y="273" text-anchor="middle">refund_due</text>
+
+        <text class="svg-d" x="285" y="226" text-anchor="middle">LATE · INSIDE GRACE · STILL SAFE</text>
+        <text class="svg-u" x="462" y="180" text-anchor="end">LATE · OUTSIDE GRACE</text>
+        <text class="svg-u" x="462" y="194" text-anchor="end">OR NO LONGER SAFE</text>
+
+        <text class="svg-s" x="16" y="308">expired is the ONLY state an order can leave — money can arrive after it. Every other state is terminal.</text>
       </svg>
     </div>
     <figcaption>The two thick arrows are new. <b>Payments are unchanged</b>: <code>initiated → pending → succeeded | failed | cancelled | expired</code>, each terminal.</figcaption>
@@ -383,7 +394,7 @@ mutation testing                 <span class="ok">8 of 8 caught</span></code></p
 
   <div class="note">
     <span class="n-label">CI</span>
-    <p id="ci-line">CI_RESULT_PLACEHOLDER</p>
+    <p><strong>CI:</strong> run&nbsp;<span class="mono">#23</span> (<span class="mono">32414854416</span>) on <span class="mono">4342c06</span> — <span class="chip yes">all three jobs green</span>. The previous run, <span class="mono">#22</span> on <span class="mono">5d92c8e</span>, was <span class="chip no">red</span> on the browser job: a pre-existing race in the checkout test, described below and fixed in the second commit. <code>lint · typecheck · test</code> passed on both.</p>
   </div>
 
   <div class="tbl"><table>
@@ -399,6 +410,12 @@ mutation testing                 <span class="ok">8 of 8 caught</span></code></p
       <tr><td>The entitlement <code>on conflict do nothing</code> guard is removed</td><td><span class="chip yes">caught</span></td></tr>
     </tbody>
   </table></div>
+
+  <div class="note risk">
+    <span class="n-label">A second commit: CI found a race in a test, not in the policy</span>
+    <p>The browser job failed on the checkout journey while every local run passed. The test waited for <code>pay-waiting</code> — static text inside the form, on screen before the server action has done anything — and then read the payment row, which did not exist yet. Local timing won that race; CI lost it.</p>
+    <p>The race predates this gate and has nothing to do with the late-payment policy. The order page now shows the charge's real status, which appears only once the action has completed, and the test waits for <em>that</em>. It is also better for the buyer: “I have not paid yet” and “the provider has not answered yet” looked identical before.</p>
+  </div>
 
   <div class="note block">
     <span class="n-label">The row-lock mutation escaped at first, and the fix is the interesting part</span>
@@ -450,7 +467,7 @@ mutation testing                 <span class="ok">8 of 8 caught</span></code></p
 
   <p><strong>Is Phase 2 ready for approval?</strong> The financial policy gate is closed: the rule is decided, documented, implemented, enforced by guarded transitions and a row lock, and watched by a reconciliation that proves it can still report a fault. What is <em>not</em> closed is the consequence of that rule — <strong>a refund queue with no drain</strong>. My recommendation is to approve the gate and treat refund execution as the first item of the next milestone, before settlement, because it is the only open item that can leave a real buyer out of pocket.</p>
 
-  <p style="color:var(--ink-2)">Phase&nbsp;2 · financial review gate · branch <span class="mono">claude/create-app-repository-1cxsih</span> · head <span class="mono">5d92c8e</span></p>
+  <p style="color:var(--ink-2)">Phase&nbsp;2 · financial review gate · branch <span class="mono">claude/create-app-repository-1cxsih</span> · head <span class="mono">4342c06</span></p>
 </section>
 
 </div>
