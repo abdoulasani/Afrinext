@@ -5,5 +5,6 @@ export * from "./rbac";
 export * from "./legal";
 export * from "./ledger";
 export * from "./commerce";
+export * from "./catalog";
 export * from "./audit";
 export * from "./settings";

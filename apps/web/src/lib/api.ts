@@ -19,6 +19,9 @@ export function apiError(error: unknown): NextResponse {
     const status =
       error.code === "authz.denied" ? 403
       : error.code === "auth.elevation_required" ? 403
+      // A missing store or product is a 404, not a malformed request. The
+      // suffix convention keeps this from needing a new branch per resource.
+      : error.code.endsWith("_not_found") ? 404
       : error.code === "ratelimit.exceeded" ? 429
       : error.code === "consent.required" ? 451
       : 400;

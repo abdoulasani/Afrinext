@@ -3,6 +3,7 @@ export * from "./ids";
 export * as money from "./money";
 export * as ledger from "./ledger";
 export * as commissions from "./commissions";
+export * as catalog from "./catalog";
 export * as authz from "./authz";
 export * as auth from "./auth";
 export * as payments from "./payments";

@@ -4,6 +4,10 @@ import { uuidv7 } from "../ids";
 
 /** Tables truncated between tests, in an order that respects foreign keys. */
 const MUTABLE_TABLES = [
+  // Catalogue. Products cascade from stores, but both are listed so the
+  // truncation is explicit rather than relying on a cascade to be right.
+  "products",
+  "stores",
   "ledger_entries",
   "account_balances",
   "ledger_transactions",

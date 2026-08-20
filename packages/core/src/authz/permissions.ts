@@ -61,6 +61,14 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     permissions: ["profile.read", "profile.update", "session.revoke_own", "wallet.read_own", "withdrawal.request"],
   },
   {
+    key: "seller",
+    scopeType: "global",
+    description:
+      "May open a store. Deliberately not part of `member`: whether signing up " +
+      "should make someone a seller is a policy decision, not a default.",
+    permissions: ["store.create"],
+  },
+  {
     key: "store_owner",
     scopeType: "store",
     description: "Owns a store and everything published under it.",
