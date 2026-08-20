@@ -123,6 +123,24 @@ No SMS provider is chosen either. `MessageSender` is the whole surface, and a
 provider is selected only after a real handset delivery test on Airtel, Orange
 and Moov in Niger — see `docs/providers/sms/README.md`.
 
+## Handoff
+
+**Every milestone ends with a review PDF.** Work is reviewed by a senior
+developer who reads PDFs, not the repository, so a milestone is not delivered
+until its note exists as a file they can open.
+
+- Write the note as `docs/review/<phase>-<milestone>.html`, reusing the visual
+  identity of the existing packets in that directory.
+- Scale it to the change. A six-file CI job gets a 7-page note; a phase gets a
+  packet. A 35-page document about a small diff misrepresents its size.
+- It must state: the commit, files changed and why, tests and their exact
+  results, the CI run and its result, mutation evidence for anything
+  security- or money-critical, open risks, and any decision needed.
+- Render it to PDF and send the file. `docs/review/` holds the generator's
+  output alongside the HTML.
+- Never describe an older note as representing the current state. If the head
+  moves, the note is reissued from the new commit.
+
 ## Conventions
 
 - Server components by default; `"use client"` only for interactivity.

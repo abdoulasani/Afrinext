@@ -68,7 +68,7 @@ the payout rail sits behind an interface so the posture can change without a rew
 Phases are ordered by irreversibility, not visibility. The money spine ships before any product
 feature; P3 closes the economic cycle with a manual rail so nothing is blocked on iPayMoney.
 
-`P0` foundations ✓ → `P1` money spine ✓ → `P2` commerce vertical ← **in progress, milestone 1 of 5 done** → `P1` ledger-backed commerce → `P2` stores & catalog →
+`P0` foundations ✓ → `P1` money spine ✓ → `P2` commerce vertical ← **in progress, milestones 1–2 of 5 done** → `P1` ledger-backed commerce → `P2` stores & catalog →
 `P3` cycle closed, no PSP → `P4` iPayMoney *(gated on docs)* → `P5` Learn → `P6` wallet & payouts
 *(gated on layer G)* → `P7` network → `P8` physical & delivery → `P9` services → `P10` hardening
 
@@ -92,7 +92,8 @@ feature; P3 closes the economic cycle with a manual rail so nothing is blocked o
 | `review/phase-1.html` | architecture | Written when the architecture brief was itself called "Phase 1" |
 | `review/phase-0.html` | Phase 0 — foundations | Corrected: its claim that CI had never run was wrong |
 | `review/phase-1-money-spine.html` | Phase 1 — money spine | Closed and approved at `aee5b4c` |
-| `review/phase-2-milestone-1.html` | Phase 2, milestone 1 — browser CI | Current |
+| `review/phase-2-milestone-1.html` | Phase 2, milestone 1 — browser CI | Accepted |
+| `review/phase-2-milestone-2.html` | Phase 2, milestone 2 — stores and digital products | Current |
 
 Each has a `-Review-Packet.pdf` (the packet alone) and a `-For-Review.pdf` (packet plus the
 blueprint, bookmarked as two parts).
