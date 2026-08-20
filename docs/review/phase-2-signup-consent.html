@@ -1,0 +1,503 @@
+<title>Signup Consent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 2 · signup consent</p>
+  <h1>Signup Consent</h1>
+  <p class="lede">A new account now holds its credentials and grants nothing until the Terms of Use and the Privacy Policy are accepted. The first authorized change to the Phase&nbsp;1 signup flow — and it needed almost none of it. The second commit is not part of that change: CI rejected the first one, and section&nbsp;5 is the account of what it found.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>Head <b>e3ded66</b></span>
+    <span>2 commits · 31 files</span>
+    <span>Tests <b class="ok">234 passed · 18 browser</b></span>
+    <span>OTP suite <b class="ok">26 passed</b></span>
+  </div>
+</header>
+
+<section id="where">
+  <div class="sec-head"><div class="sec-mark">1</div><h2 class="sec-title">Where the gate went, and why it cannot weaken authentication</h2></div>
+
+  <p>You asked for this explained before anything else, so it comes first.</p>
+
+  <div class="note good">
+    <span class="n-label">The enforcement point already existed</span>
+    <p><code>resolveActor</code> has always returned <strong>no actor</strong> for any user whose status is not <code>active</code> — that is how suspension works, and it predates this milestone by two phases. So the entire gate is one word in the provisioning hook: a new account is created as <code>pending_consent</code> instead of <code>active</code>.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 700 260" role="img" aria-label="Diagram: the OTP flow — send code, verify code, create credential, mint session — is unchanged. Only the provisioning hook changes, writing status pending_consent. resolveActor then returns no actor, so every protected route refuses, until the acceptance endpoint records both documents and flips the status to active.">
+        <defs><marker id="d1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="currentColor" fill-opacity="0.5"/></marker></defs>
+
+        <rect x="8" y="10" width="684" height="60" rx="3" fill="none" stroke="currentColor" stroke-opacity="0.3" stroke-dasharray="5 3"/>
+        <text class="svg-s" x="350" y="28" text-anchor="middle">UNCHANGED — not one line</text>
+        <text class="svg-t" x="112" y="52" text-anchor="middle">send code</text>
+        <text class="svg-t" x="270" y="52" text-anchor="middle">keyed hash stored</text>
+        <text class="svg-t" x="430" y="52" text-anchor="middle">verify · single use</text>
+        <text class="svg-t" x="600" y="52" text-anchor="middle">credential · session</text>
+
+        <path d="M350 70 V104" stroke="currentColor" stroke-opacity="0.5" fill="none" marker-end="url(#d1)"/>
+
+        <rect x="196" y="104" width="308" height="48" rx="3" fill="none" stroke="currentColor" stroke-opacity="0.6"/>
+        <text class="svg-u" x="350" y="124" text-anchor="middle">THE ONE CHANGE</text>
+        <text class="svg-s" x="350" y="141" text-anchor="middle">provision status = 'pending_consent'</text>
+
+        <path d="M350 152 V186" stroke="currentColor" stroke-opacity="0.5" fill="none" marker-end="url(#d1)"/>
+
+        <rect x="8" y="186" width="330" height="56" rx="3" fill="none" stroke="currentColor" stroke-opacity="0.35"/>
+        <text class="svg-t" x="173" y="207" text-anchor="middle">resolveActor() → undefined</text>
+        <text class="svg-s" x="173" y="225" text-anchor="middle">every protected route refuses · pre-existing behaviour</text>
+
+        <rect x="362" y="186" width="330" height="56" rx="3" fill="none" stroke="currentColor" stroke-opacity="0.35"/>
+        <text class="svg-d" x="527" y="207" text-anchor="middle">ACCEPT BOTH → status = 'active'</text>
+        <text class="svg-s" x="527" y="225" text-anchor="middle">one transaction · or neither happens</text>
+
+        <path d="M338 214 H358" stroke="currentColor" stroke-opacity="0.5" fill="none" marker-end="url(#d1)"/>
+      </svg>
+    </div>
+    <figcaption>Everything above the dashed line is the Phase 1 flow, untouched. The gate is not <i>inside</i> the OTP path — it is downstream of it, in a door that was already there. That is why the OTP guarantees cannot have been weakened by it: <b>no code that implements them was edited.</b></figcaption>
+  </figure>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Guarantee you named</th><th>State</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>HMAC-SHA256 storage, no plaintext</td><td><span class="chip yes">unchanged</span></td><td>Asserted again after signup: a 64-hex hash in <code>otp_challenges</code>, nothing in <code>verification</code>.</td></tr>
+      <tr><td>Better Auth's phone plugin stays uninstalled</td><td><span class="chip yes">unchanged</span></td><td>The removed endpoint still answers <strong>404</strong>, asserted in a browser test.</td></tr>
+      <tr><td>Rate limits</td><td><span class="chip yes">unchanged</span></td><td>Still 429 with <code>Retry-After</code>. See section&nbsp;5 for a caveat about the test environment.</td></tr>
+      <tr><td>Single use and attempt bounds</td><td><span class="chip yes">unchanged</span></td><td>Challenge reads <code>consumed_at is not null</code> after signup; wrong code still 400 and creates no account.</td></tr>
+      <tr><td>The 23 OTP adversarial tests</td><td><span class="chip yes">unedited, all passing</span></td><td><code>phone-otp.test.ts</code> has no diff in this commit.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="shape">
+  <div class="sec-head"><div class="sec-mark">2</div><h2 class="sec-title">Created, then activated</h2></div>
+
+  <p>One thing has to be said plainly, because it shapes everything else: <strong>consent records reference <code>users.id</code></strong>. A consent cannot be recorded before the account row exists. Any design claiming to collect consent strictly <em>before</em> account creation is either storing it somewhere else — a parallel system, which you forbade — or describing itself inaccurately.</p>
+
+  <p>So the account is created and is <em>not usable</em>. Your own wording allowed for this: "created/activated". What a <code>pending_consent</code> account can do is nothing:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Attempt</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET /api/v1/me</code>, <code>/api/v1/wallet</code></td><td><span class="mono">401</span> — no actor to resolve</td></tr>
+      <tr><td>Navigating to <code>/fr/wallet</code></td><td>Redirected to sign-in</td></tr>
+      <tr><td>Any action behind <code>authorize()</code></td><td>There is no actor to authorize</td></tr>
+      <tr><td>Accepting the general terms</td><td><span class="chip yes">the one thing it may do</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Why the acceptance endpoint does not require an actor</h3>
+  <p>It deliberately does <strong>not</strong> call <code>requireActor</code>. A pending account has no actor <em>by design</em> — that is the gate — so an endpoint demanding one would be unreachable by exactly the people who need it. It resolves <strong>identity</strong> from the session instead: a weaker thing, and all this action needs. It grants no capability and can touch no account but the one the session belongs to.</p>
+
+  <h3>Activation is one transaction, or nothing</h3>
+<pre><code>await db.transaction(async (tx) =&gt; {
+  accepted = await acceptCurrentVersions(tx, userId, ACCOUNT_CONSENT_KINDS, options, context);
+  <span class="cm">// Belt and braces: re-ask the gate rather than trusting the loop above.</span>
+  await requireConsent(tx, userId, ACCOUNT_CONSENT_KINDS, options);
+  <span class="cm">// Conditional: accepting terms cannot revive a SUSPENDED account.</span>
+  update users set status = 'active' where id = … and status = 'pending_consent'
+});</code></pre>
+
+  <p>Recording without activating locks someone out of an account they agreed to. Activating without recording is the failure this milestone exists to prevent. Neither is a state that can exist.</p>
+</section>
+
+<section id="notclient">
+  <div class="sec-head"><div class="sec-mark">3</div><h2 class="sec-title">The client chooses neither the version nor the locale</h2></div>
+
+  <p>Carried forward from milestone 3, and tested again on this path. The acceptance endpoint takes <strong>no body at all</strong>: not a version id, not a locale, not a document list.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Attack</th><th>Test</th></tr></thead>
+    <tbody>
+      <tr><td>Record an acceptance of a superseded version by hand</td><td>Both old versions recorded directly; the gate stays shut and the account stays <code>pending_consent</code>.</td></tr>
+      <tr><td>Accept the English documents for a French account</td><td>A real acceptance of real documents — and not of the ones binding this account. Still refused.</td></tr>
+      <tr><td>Accept only one of the two</td><td>Tested in both directions: terms alone, then privacy alone. Neither activates anything.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>And the re-accept case you specified: publishing a new version of either document closes the gate again on the next protected action, with the earlier acceptance preserved rather than overwritten.</p>
+</section>
+
+<section id="ui">
+  <div class="sec-head"><div class="sec-mark">4</div><h2 class="sec-title">The signup step, and why it is not the boundary</h2></div>
+
+  <p>The screen names both documents, their exact version, and the locale they are in, and the button stays disabled until the person actually ticks the box. That is the interface doing its job — presenting what is being agreed to, rather than a link and an assumption.</p>
+
+  <p>It is not what enforces anything:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Browser test</th><th>Proves</th></tr></thead>
+    <tbody>
+      <tr><td>Verify the OTP, then stop</td><td>Account exists, is <code>pending_consent</code>, and both <code>/api/v1/me</code> and <code>/api/v1/wallet</code> answer <strong>401</strong>. Nothing accepted.</td></tr>
+      <tr><td>Navigate to the wallet anyway</td><td>Redirected to sign-in. Unreachable by navigation, not only by API.</td></tr>
+      <tr><td><strong>Delete the consent step from the DOM</strong></td><td>The account is exactly as unusable. Status unchanged, 401 unchanged, redirect unchanged.</td></tr>
+      <tr><td>Accept through the UI</td><td>Exactly two records — <span class="mono">terms_of_use@0.0.0-placeholder/signup</span> and <span class="mono">privacy_policy@…</span> — status <code>active</code>, and <code>/api/v1/me</code> now 200.</td></tr>
+      <tr><td>Accept through the <strong>API</strong> instead</td><td>Same activation, same two records. One gate, two transports.</td></tr>
+      <tr><td>Inspect the OTP state after all of it</td><td>Keyed hash only, nothing in <code>verification</code>, challenge consumed, old plaintext endpoint still 404.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ratelimit">
+  <div class="sec-head"><div class="sec-mark">5</div><h2 class="sec-title">CI went red, and the reason was not this change</h2></div>
+
+  <div class="note risk">
+    <span class="n-label">Read this section first</span>
+    <p>The first commit of this milestone, <code>ccb2700</code>, passed everything locally and <strong>failed in CI</strong>: four browser tests, all at the moment a verification code is requested. The milestone's own change was not involved. What the failure exposed was two defects that had been sitting in the repository since Phase&nbsp;1 — one of them a control the senior review had explicitly asked for and that was <strong>not actually running in the application</strong>.</p>
+    <p>Both are fixed in <code>e3ded66</code>. Neither would have been found by any test that existed, and neither could have been found locally, for the reason immediately below.</p>
+  </div>
+
+  <h3>Why local was green and CI was red</h3>
+
+  <p><code>next start</code> sets <code>NODE_ENV=production</code> only when it is <em>not already set</em> — and <code>.env</code> sets it to <code>development</code> for the dev server. So every local browser run served the application in <strong>development mode</strong> while CI served it in <strong>production mode</strong>. Two behaviours differ across that line, and both matter here:</p>
+
+  <ul>
+    <li>Better Auth enables its own rate limiter <strong>only</strong> under <code>NODE_ENV=production</code>. Locally it was off. In CI it was on.</li>
+    <li>The session cookie is marked <code>Secure</code> only in production — so the suite was not exercising the cookie behaviour its own configuration file claimed it was.</li>
+  </ul>
+
+  <p>The browser suite now pins <code>NODE_ENV=production</code> in the server command. That is the whole fix for the divergence, and it is load-bearing: with the old limiter restored and the pin removed, the same build passes locally; with the pin in place it fails, in exactly the way CI failed.</p>
+
+  <h3>Defect one — a literal that overrode the reviewed policy</h3>
+
+  <p>The phone-OTP plugin declared a Better Auth rate rule of <strong>ten requests a minute</strong> on <code>/phone-otp</code>. The suite makes fourteen sends from one address, so in CI the eleventh was refused and the remaining tests failed on a 429 that had nothing to do with what they were testing.</p>
+
+  <div class="note block">
+    <span class="n-label">The real problem was not the number</span>
+    <p>It was that a <strong>literal in code silently overrode stored configuration</strong>. An operator who raised <code>perIpPerHour</code> to 200 in <code>platform_settings</code> would still have been capped at ten a minute by a number nobody could see, from a limiter that keeps its counters in one process's memory and answers in its own shape — no audit row, and not the <code>ratelimit.exceeded</code> contract the rest of the API uses.</p>
+    <p>The backstop is now derived from the same policy and deliberately set <strong>above</strong> it — twice the hourly allowance, inside one minute. High enough that the refusal a caller actually meets is always the audited PostgreSQL one; low enough that a flood from a single address is still stopped before it reaches the database. <code>/phone-otp/verify</code> keeps a tight rule of its own: attempt counts are bounded per challenge by PostgreSQL, but nothing else bounds how fast one address may hammer that endpoint.</p>
+  </div>
+
+  <h3>Defect two — decision 7 was satisfied in the package and not in production</h3>
+
+  <p>Chasing the first defect turned up the second. <code>loadOtpPolicy()</code> was written, tested and correct. <strong>Nothing called it.</strong> <code>apps/web</code> built the auth instance without a policy, so every request used the compiled-in defaults and an operator's <code>UPDATE</code> to <code>platform_settings</code> changed nothing at all.</p>
+
+  <div class="note risk">
+    <span class="n-label">How a passing test suite missed it</span>
+    <p>The domain tests called <code>loadOtpPolicy</code> <em>themselves</em> and asserted it returned the stored row — which it did. The one call that was missing was the one nobody tested: the application's. A test that performs the integration it is meant to be checking will pass on any build, wired or not.</p>
+  </div>
+
+  <p>The policy is now a <strong>resolver</strong>, consulted on the request that issues a code rather than once at construction. That distinction is not decoration: the auth instance is built once and cached for the life of the process, so a value resolved at construction would pin whatever the table held at boot and turn "change a limit" back into "deploy". The code's lifetime and attempt bound come from the same read, so <code>ttlMs</code> and <code>verificationAttempts</code> are configuration now too.</p>
+
+  <p>Five tests cover the wiring. Three are domain tests; two are browser tests that change a row in <code>platform_settings</code> and then ask the <em>real</em> server, over HTTP, for real codes — deliberately end to end, because the defect lived precisely in the gap a unit test cannot see. One of them raises a limit and requires the running process to follow it without a restart.</p>
+
+  <div class="note">
+    <span class="n-label">Nothing about the OTP guarantees moved</span>
+    <p>Codes are still stored only as a keyed HMAC in <code>otp_challenges.code_hash</code>; the plaintext path is still absent and still asserted absent; single use, the attempt counter and one-live-challenge are still enforced by PostgreSQL; every verification failure still answers identically. The reviewed limits themselves — 5 per phone per hour, 20 per IP per hour, 60&nbsp;s cooldown, 5 attempts, 5&nbsp;min lifetime — are <strong>unchanged</strong>. What changed is that the application now reads them.</p>
+  </div>
+
+  <p>The browser environment still raises only the per-IP ceiling in <code>platform_settings</code>, the same <code>UPDATE</code> an operator would run — and as of this commit that <code>UPDATE</code> actually does something.</p>
+</section>
+
+<section id="mutations">
+  <div class="sec-head"><div class="sec-mark">6</div><h2 class="sec-title">Mutation evidence — and one that is not caught</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Deliberate defect</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Accounts provisioned <code>active</code> again — the gate never engages</td><td><span class="chip yes">8 domain tests</span> and <span class="chip yes">4 of 6 browser tests</span></td></tr>
+      <tr><td>Activation flips the status unconditionally (a suspended account could be revived)</td><td><span class="chip yes">2 tests</span></td></tr>
+      <tr><td><code>requireAccountConsent</code> becomes a no-op</td><td><span class="chip yes">5 tests</span></td></tr>
+      <tr><td>The belt-and-braces re-check inside the activation transaction is dropped</td><td><span class="chip no">NOT caught</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>And four more for the CI fix</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Deliberate defect</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>The policy resolver is ignored — <code>resolveOtpPolicy</code> always returns the compiled-in defaults</td><td><span class="chip yes">3 domain tests</span></td></tr>
+      <tr><td>The <code>apps/web</code> wiring is removed, i.e. the defect exactly as it shipped</td><td><span class="chip yes">browser, on its first assertion</span></td></tr>
+      <tr><td>The ten-a-minute literal is restored</td><td><span class="chip yes">reproduces the CI failure</span></td></tr>
+      <tr><td>…and the <code>NODE_ENV</code> pin removed as well</td><td><span class="chip no">passes — which is the point</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note block">
+    <span class="n-label">What the last two rows are for</span>
+    <p>The third is the diagnosis, executed rather than argued: restoring the literal produces the same five failures, in the same specs, at the same point in the run, and stretches the run to the same 1.4 minutes CI took. The fourth then removes the <code>NODE_ENV</code> pin and the identical broken build <strong>passes</strong> — which is the local-green / CI-red divergence, demonstrated rather than asserted.</p>
+    <p><strong>The first row also found a weak assertion of my own.</strong> One new test sent a code and expected the next send to be refused; under the mutation it was refused anyway, by the <em>cooldown</em> rather than the limit, so it passed while proving nothing. It now requires the second send to <em>succeed</em> — which only a build that reads the stored one-millisecond cooldown can do — before requiring the third to be refused.</p>
+  </div>
+
+  <div class="note block">
+    <span class="n-label">Two things I want on the record</span>
+    <p><strong>Three mutations first reported as "not caught" had never actually applied.</strong> The edits failed silently against a shell-quoting problem and the suite passed because the code was unchanged. Every mutation above now asserts that the file changed before its result is believed. A mutation that does not apply proves nothing, and reads exactly like a test gap.</p>
+    <p><strong>The fourth is genuinely uncaught, and I have left it in.</strong> The re-check inside the transaction is redundant with the acceptance loop directly above it, so by construction no test can distinguish its presence. It stays as defence against a future change to the acceptance path that silently records less than it should — but nothing proves it works, and this packet is the record of that.</p>
+  </div>
+</section>
+
+<section id="results">
+  <div class="sec-head"><div class="sec-mark">7</div><h2 class="sec-title">Results and files</h2></div>
+
+<pre><code>pnpm install --frozen-lockfile   <span class="cm">exit 0</span>
+db reset → migrate → seed        <span class="cm">from zero</span>
+pnpm lint                        <span class="cm">exit 0</span>
+pnpm typecheck                   <span class="cm">exit 0</span>
+pnpm test                        <span class="ok">234 passed | 3 skipped (19 files)</span>   <span class="cm">was 214 / 18</span>
+pnpm build                       <span class="cm">exit 0</span>
+playwright test                  <span class="ok">18 passed</span>                            <span class="cm">was 10 · production mode, from-zero DB</span>
+OTP adversarial suite            <span class="ok">26 passed</span>  <span class="cm">— 23 unedited, 3 added for the wiring</span>
+ledger concurrency               <span class="ok">6 passed</span>
+reconcile-check                  <span class="ok">clean, zero drift</span>
+pnpm audit --audit-level high    <span class="ok">No known vulnerabilities found</span></code></pre>
+
+  <p>New: <strong>17 domain tests</strong> in <code>consent/signup.test.ts</code>, driven through the <em>real</em> OTP flow rather than constructed fixtures, and <strong>6 browser tests</strong> in <code>signup-consent.spec.ts</code>. The CI fix adds <strong>3 domain tests</strong> and <strong>2 browser tests</strong> for the policy wiring.</p>
+
+  <div class="note">
+    <span class="n-label">Where these numbers come from</span>
+    <p>Everything above was run locally on <code>e3ded66</code>. The browser line was run against a database <strong>built from zero</strong> and a server pinned to <code>NODE_ENV=production</code> — the CI configuration, reproduced deliberately, because a local run that did not match CI is what let <code>ccb2700</code> through.</p>
+    <p><strong>CI, on the same commit:</strong> run&nbsp;<span class="mono">#16</span> (<span class="mono">32344158087</span>) — <span class="chip yes">all three jobs green</span>. <code>dependency scan</code> 18&nbsp;s, <code>lint · typecheck · test</code> 2&nbsp;m&nbsp;09&nbsp;s, <code>browser · authorization assertions</code> 1&nbsp;m&nbsp;41&nbsp;s, including a database rebuilt from zero and the ledger reconciliation check. The previous head, <code>ccb2700</code>, was run&nbsp;<span class="mono">#15</span> and <span class="chip no">failed</span> — section&nbsp;5.</p>
+  </div>
+
+  <h3>31 files</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">core/consent/signup.test.ts</td><td><strong>New.</strong> 17 tests against the real signup path.</td></tr>
+      <tr><td class="mono">core/consent/index.ts</td><td><code>ACCOUNT_CONSENT_KINDS</code>, <code>activateAccountWithConsent</code>, <code>requireAccountConsent</code>, <code>accountConsentStatus</code>.</td></tr>
+      <tr><td class="mono">core/auth/better-auth.ts</td><td><strong>The gate:</strong> provision as <code>pending_consent</code>. One word plus its explanation.</td></tr>
+      <tr><td class="mono">core/auth/phone-otp-plugin.ts</td><td>Verify reports what is outstanding, so the client can show the right step. Reporting only.</td></tr>
+      <tr><td class="mono">db/migrations/0008 + schema/identity.ts</td><td>The new status, and a <code>users_status_valid</code> constraint that did not exist before.</td></tr>
+      <tr><td class="mono">web/api/v1/consent/account/route.ts</td><td><strong>New.</strong> GET state, POST accept-and-activate.</td></tr>
+      <tr><td class="mono">web/components/SignInForm.tsx</td><td>The third step.</td></tr>
+      <tr><td class="mono">web/lib/auth-client.ts</td><td><code>consentRequired</code> from verify; the acceptance call.</td></tr>
+      <tr><td class="mono">web/e2e/signup-consent.spec.ts</td><td><strong>New.</strong> 6 browser tests.</td></tr>
+      <tr><td class="mono">web/e2e/global-setup.ts</td><td><strong>New.</strong> Section 5, plus restoring the legal baseline so local reruns are deterministic.</td></tr>
+      <tr><td class="mono">3 existing e2e specs</td><td>Signing up now includes the consent step.</td></tr>
+      <tr><td class="mono">core/auth/flow.test.ts · catalog.test.ts · gate.test.ts</td><td>Helpers carry the acceptance. See below.</td></tr>
+      <tr><td class="mono">i18n fr.json · en.json</td><td>7 keys per locale.</td></tr>
+      <tr><td colspan="2" style="padding-top:14px"><strong>Second commit — the CI fix</strong></td></tr>
+      <tr><td class="mono">web/lib/auth.ts</td><td><strong>The defect:</strong> the auth instance is finally given a policy resolver, so <code>platform_settings</code> governs at runtime.</td></tr>
+      <tr><td class="mono">core/auth/better-auth.ts</td><td>Policy resolved per request; Better Auth's backstop derived from the same policy instead of a literal.</td></tr>
+      <tr><td class="mono">core/auth/phone-otp-plugin.ts</td><td>The ten-a-minute rule removed; lifetime and attempt bound taken from the resolved policy.</td></tr>
+      <tr><td class="mono">core/ratelimit/index.ts</td><td><code>OtpPolicySource</code> and <code>resolveOtpPolicy</code> — a policy may now be a value or something that fetches one.</td></tr>
+      <tr><td class="mono">core/auth/phone-otp.test.ts</td><td>3 tests for the wiring, including one that changes a limit after the instance exists.</td></tr>
+      <tr><td class="mono">core/test/harness.ts</td><td>Restores the policy row between tests — several tests change it, which is the only honest way to test that it is configuration.</td></tr>
+      <tr><td class="mono">web/e2e/otp-policy.spec.ts</td><td><strong>New.</strong> 2 browser tests that ask the running server, over HTTP, to honour a stored limit.</td></tr>
+      <tr><td class="mono">web/playwright.config.ts</td><td><code>NODE_ENV=production</code>, so a local run and a CI run are the same run.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="n-label">Why three existing test files changed</span>
+    <p>The precondition genuinely moved: a new account is no longer usable on creation. Their helpers now accept the general terms, rather than the gate being softened to suit them. One is worth noting specifically — <code>gate.test.ts</code>'s "unconsented seller" now accepts the <em>account</em> terms deliberately, so its refusals stay attributable to <code>seller_terms</code>. Without that the file would have proved the seller gate exists while actually exercising a different one.</p>
+  </div>
+
+  <p><strong>No new dependency</strong>; <code>pnpm-lock.yaml</code> is untouched. The ledger, money model, scoped RBAC, catalogue visibility rules and the browser-CI foundation have no diff.</p>
+</section>
+
+<section id="risks">
+  <div class="sec-head"><div class="sec-mark">8</div><h2 class="sec-title">Remaining risks</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><strong>The documents still have no text.</strong> Every version is <code>0.0.0-placeholder</code>. People are now required to accept documents that say nothing — the mechanism is real, the content is not.</td><td><span class="chip no">blocks real use</span></td></tr>
+      <tr><td><strong>Consent cannot be withdrawn.</strong> Records are append-only and there is no revocation path. Under data-protection law that is a real gap, and it is now more visible because everyone has records.</td><td><span class="chip hold">unresolved</span></td></tr>
+      <tr><td><strong>Existing accounts were not migrated.</strong> Anyone created before this commit is <code>active</code> with no account consents. The re-accept gate catches them at <code>createStore</code>; nothing else asks.</td><td><span class="chip hold">needs a decision</span></td></tr>
+      <tr><td>The re-accept gate is only on <code>createStore</code>. An active account whose terms changed can still read its wallet.</td><td><span class="chip info">deliberate; widen when there are more actions</span></td></tr>
+      <tr><td><strong>The transport backstop is now twice the hourly allowance per minute.</strong> That ratio is my judgement, not a reviewed number: it is set so the audited PostgreSQL refusal is always the one a caller meets. Section&nbsp;5. <b>A decision I would like confirmed.</b></td><td><span class="chip hold">needs a decision</span></td></tr>
+      <tr><td>The per-IP OTP ceiling is still the number to tune before launch — carrier NAT in Niger puts many subscribers behind one address. It is now genuinely tunable without a deploy, which it was not before this commit.</td><td><span class="chip hold">watch</span></td></tr>
+      <tr><td><strong>Nothing else asserts that a control declared in <code>packages/core</code> is actually reachable from the application.</strong> The policy wiring is covered now; the same class of gap could exist elsewhere, and only an end-to-end test would show it.</td><td><span class="chip hold">open</span></td></tr>
+      <tr><td>No admin screen publishes a document version; it remains an SQL insert.</td><td><span class="chip info">accepted for now</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The third row is the one I would settle next, and it is a one-line decision: leave existing accounts alone, or mark them <code>pending_consent</code> so they are prompted on next use. There are no production accounts yet, so the cost is zero today and rises from here.</p>
+
+  <div class="note block">
+    <span class="n-label">The decision I actually need from you</span>
+    <p>Better Auth's in-memory limiter and our PostgreSQL one both guard the same endpoint. I have made the first strictly looser than the second, so it bounds a flood without ever pre-empting the configured policy, and so the refusal a caller meets is the audited one. The alternative readings are <em>tighter</em> (accept that a burst is refused unaudited, in a shape that does not match the rest of the API) or <em>removed entirely</em> (rely on PostgreSQL alone, which is authoritative and multi-instance but does one round trip per refused request). I chose the middle. It is a rate-limiting parameter on an unauthenticated endpoint, so I would rather you agreed than assumed.</p>
+  </div>
+
+  <hr class="soft">
+
+  <p><strong>Proposed next:</strong> checkout against the mock provider, per your milestone plan. <strong>Not started.</strong></p>
+
+  <p style="color:var(--ink-2)">Phase&nbsp;2 · signup consent · branch <span class="mono">claude/create-app-repository-1cxsih</span> · head <span class="mono">e3ded66</span></p>
+</section>
+
+</div>
