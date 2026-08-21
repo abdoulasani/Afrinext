@@ -124,5 +124,9 @@
   "profile.save": "Save and continue",
   "profile.saved": "Profile saved.",
   "profile.incomplete": "Complete your profile before paying.",
-  "profile.privacy": "This information is sent to the payment provider for this transaction."
+  "profile.privacy": "This information is sent to the payment provider for this transaction.",
+  "checkout.channelHeading": "Payment method",
+  "checkout.channelMobileMoney": "Mobile Money",
+  "checkout.channelMobileMoneyDetail": "Airtel Money, Zamani Cash or Moov Money",
+  "checkout.channelOnlyOne": "This is the only payment method available at launch."
 }

@@ -1,3 +1,4 @@
+import type { PaymentChannel } from "./channel";
 import type { Money } from "../money";
 
 /**
@@ -25,7 +26,15 @@ export interface ChargeInput {
     readonly phone?: string | undefined;
     readonly email?: string | undefined;
   };
-  readonly channel?: string | undefined;
+  /**
+   * How the buyer pays, in AFRINEXT's vocabulary.
+   *
+   * Typed as the domain allowlist rather than `string`, so a provider value —
+   * iPayMoney's `mobile`, say — cannot travel through this field. Translating
+   * to whatever a provider calls it is the adapter's job and happens in exactly
+   * one place per provider.
+   */
+  readonly channel?: PaymentChannel | undefined;
   readonly returnUrl?: string | undefined;
   readonly metadata?: Readonly<Record<string, string>> | undefined;
   readonly idempotencyKey: string;

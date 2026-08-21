@@ -1,3 +1,4 @@
+import { LAUNCH_PAYMENT_CHANNEL, type PaymentChannel } from "./channel";
 import { timingSafeEqual } from "node:crypto";
 import { ProviderNotConfiguredError } from "../errors";
 import { ProviderTransportError, screenDetail, stageOfTransportFailure } from "./refund-outcome";
@@ -86,6 +87,28 @@ const SUPPORTED_CURRENCY = "XOF";
  * an unrecognised status to something plausible would convert that evidence
  * into a silent assumption.
  */
+/**
+ * Afrinext's channel, in iPayMoney's words.
+ *
+ * `Ipay-Payment-Type` is documented as a required header on BOTH endpoints,
+ * and its permitted values are stated verbatim and identically in each:
+ *
+ *   « Ipay-Payment-Type | string | Doit comporter *mobile* ou *card* »
+ *     — extract L165 (POST /api/v1/payments)
+ *     — extract L238 (GET  /api/v1/payments/{reference})
+ *
+ * So `mobile` is quoted, not inferred. This table is the ONLY place in the
+ * codebase that knows it, which is what keeps the provider's vocabulary out of
+ * the domain and out of anything a browser can post.
+ *
+ * `card` is deliberately absent. It is a documented provider value, but
+ * Afrinext does not offer card payments at launch, and a mapping entry for a
+ * channel the business has not adopted is a route to sending one.
+ */
+export const IPAYMONEY_PAYMENT_TYPE: Readonly<Record<PaymentChannel, string>> = Object.freeze({
+  mobile_money: "mobile",
+});
+
 export const IPAYMONEY_STATUS_MAP: Readonly<Record<string, ChargeStatusValue>> = Object.freeze({
   succeeded: "succeeded",
   failed: "failed",
@@ -367,16 +390,40 @@ export class IPayMoneyProvider implements PaymentProvider {
     const msisdn = input.customer.phone ?? metadata["msisdn"];
     const country = metadata["country"];
     const customerName = metadata["customerName"];
-    const paymentType = input.channel ?? metadata["paymentType"];
+    /*
+     * The header value comes from the mapping and from nothing else.
+     *
+     * The previous `?? metadata["paymentType"]` fallback is gone. It was never
+     * reachable — the order domain builds that metadata and never set the key —
+     * but it was a second, undocumented way to set a provider header, which is
+     * exactly the hidden default this integration must not have.
+     */
+    const paymentType =
+      input.channel === undefined ? undefined : IPAYMONEY_PAYMENT_TYPE[input.channel];
 
     const missing = [
       msisdn === undefined || msisdn === "" ? "msisdn (customer.phone or metadata.msisdn)" : null,
       country === undefined || country === "" ? "country (metadata.country)" : null,
       customerName === undefined || customerName === ""
         ? "customer_name (metadata.customerName)" : null,
-      paymentType !== "mobile" && paymentType !== "card"
-        ? 'payment type (channel must be "mobile" or "card")' : null,
+      paymentType === undefined
+        ? "payment type (no channel was chosen, and iPayMoney documents no default)"
+        : null,
     ].filter((m): m is string => m !== null);
+
+    if (paymentType === undefined) {
+      /*
+       * Narrowing for the compiler, and a second refusal in its own right. The
+       * `missing` list below already covers this, but leaving the header's type
+       * as "string | undefined" all the way to the request is how an empty
+       * header eventually gets sent.
+       */
+      throw new ProviderNotConfiguredError(
+        this.id,
+        "no payment channel was chosen. iPayMoney requires Ipay-Payment-Type " +
+          "(L165) and documents no default, so nothing is sent without one.",
+      );
+    }
 
     if (missing.length > 0) {
       throw new ProviderNotConfiguredError(
@@ -398,7 +445,7 @@ export class IPayMoneyProvider implements PaymentProvider {
      * original: a retry after a lost response gets 422 and still learns
      * nothing about what happened the first time. That gap is question K10.
      */
-    const { status, json } = await this.request("POST", "/api/v1/payments", paymentType as string, {
+    const { status, json } = await this.request("POST", "/api/v1/payments", paymentType, {
       customer_name: customerName,
       currency: input.amount.currency,
       country,
@@ -486,10 +533,11 @@ export class IPayMoneyProvider implements PaymentProvider {
     const { status, json } = await this.request(
       "GET",
       `/api/v1/payments/${encodeURIComponent(providerRef)}`,
-      // The documentation requires the header on this endpoint too but the
-      // reference already identifies the payment, so the value cannot change
-      // which payment is returned.
-      "mobile",
+      // The documentation requires the header on this endpoint too (L238) but
+      // the reference already identifies the payment, so the value cannot
+      // change which payment is returned. Taken from the mapping rather than
+      // written again, so the header has one source.
+      IPAYMONEY_PAYMENT_TYPE[LAUNCH_PAYMENT_CHANNEL],
     );
 
     if (status !== 200) {

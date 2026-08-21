@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LAUNCH_PAYMENT_CHANNEL } from "./channel";
 import { money } from "../money";
 import { IPayMoneyProvider } from "./ipaymoney";
 import { ProviderTransportError } from "./refund-outcome";
@@ -85,7 +86,7 @@ function chargeFor(msisdn: string, tag: string) {
     // 100 is the documented minimum ("un montant supérieur à 100").
     amount: money(150n, "XOF"),
     customer: { userId: "sandbox", phone: msisdn },
-    channel: "mobile",
+    channel: LAUNCH_PAYMENT_CHANNEL,
     idempotencyKey: freshTransactionId(tag),
     metadata: { country: "NE", customerName: "Afrinext Sandbox" },
   };

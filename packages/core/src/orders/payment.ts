@@ -11,6 +11,7 @@ import type {
   ChargeResult, HeadersLike, PaymentProvider, VerifiedChargeEvent, VerifiedEvent,
 } from "../payments";
 import { stageOfTransportFailure } from "../payments";
+import { parsePaymentChannel, type PaymentChannel } from "../payments";
 import { loadBuyerProfile, requireCompleteProfile } from "../profile";
 import { applyRefundEvent, recordRefundOwed } from "../refunds";
 import { loadLatePaymentGraceSeconds, OrderNotFoundError } from "./checkout";
@@ -102,7 +103,19 @@ export interface InitiatePaymentInput {
   readonly orderId: string;
   /** Where the provider should send the buyer back to, when it hosts the flow. */
   readonly returnUrl?: string | undefined;
-  readonly channel?: string | undefined;
+  /**
+   * How the buyer pays. REQUIRED, and typed as the allowlist.
+   *
+   * Required rather than optional so a caller that forgets it fails to compile
+   * instead of silently producing a charge with no channel. There is no
+   * default: iPayMoney documents none for `Ipay-Payment-Type`, and picking one
+   * on a buyer's behalf is a decision about their money.
+   *
+   * Typed as `PaymentChannel` so the provider's own vocabulary cannot travel
+   * here. `parsePaymentChannel` is what turns an untrusted string — a form
+   * field, a JSON body — into this type, and it refuses everything else.
+   */
+  readonly channel: PaymentChannel;
 }
 
 /**
@@ -282,6 +295,16 @@ export async function initiatePayment(
    * that is already paid, or expired, says so rather than sending the buyer to
    * fill in a form that would not have helped.
    */
+  /*
+   * The channel, checked again here rather than trusted from the type.
+   *
+   * TypeScript stops a mistake at compile time; this stops one that arrives at
+   * runtime through a JSON body, a form post, or a caller compiled against an
+   * older shape. It runs BEFORE the payment row is written, so an unsupported
+   * channel leaves nothing behind and constructs no provider request.
+   */
+  const channel = parsePaymentChannel(input.channel);
+
   await requireCompleteProfile(db, actor.userId);
 
   const buyer = await loadBuyerPaymentIdentity(db, actor.userId);
@@ -342,7 +365,7 @@ export async function initiatePayment(
       },
       idempotencyKey,
       ...(input.returnUrl !== undefined ? { returnUrl: input.returnUrl } : {}),
-      ...(input.channel !== undefined ? { channel: input.channel } : {}),
+      channel,
       ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     });
   } catch (error: unknown) {

@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { LAUNCH_PAYMENT_CHANNEL } from "../payments";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDb, type Database } from "@afrinext/db";
 import type { Actor } from "../authz";
@@ -127,7 +128,7 @@ async function pendingOrder(overrides: { buyer?: Actor; priceMinor?: bigint; tit
     productSlug: listing.productSlug,
     checkoutKey: `key-${order_counter()}`,
   });
-  const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+  const payment = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
   return { ...listing, buyer, order, payment };
 }
 
@@ -429,7 +430,7 @@ describe("payment initiation", () => {
 
   it("returns the live attempt rather than starting a second charge", async () => {
     const { buyer, order, payment } = await pendingOrder();
-    const again = await initiatePayment(db, buyer, provider, { orderId: order.id });
+    const again = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
     expect(again.id).toBe(payment.id);
 
     const count = await db.execute<{ n: string }>(sql`
@@ -442,7 +443,7 @@ describe("payment initiation", () => {
     const { order } = await pendingOrder();
     const stranger = await makeBuyer();
     await rejectsWith(
-      initiatePayment(db, stranger, provider, { orderId: order.id }),
+      initiatePayment(db, stranger, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL }),
       OrderNotFoundError,
     );
   });
@@ -458,7 +459,7 @@ describe("payment initiation", () => {
     await db.execute(sql`delete from payments where order_id = ${order.id}::uuid`);
 
     await rejectsWith(
-      initiatePayment(db, buyer, provider, { orderId: order.id }),
+      initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL }),
       OrderNotPayableError,
     );
     expect(await statusOfOrder(order.id)).toBe("expired");
@@ -474,7 +475,7 @@ describe("payment initiation", () => {
     });
     const failing = new MockPaymentProvider({ failureMarker: "order-" });
 
-    const payment = await initiatePayment(db, buyer, failing, { orderId: order.id });
+    const payment = await initiatePayment(db, buyer, failing, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
     expect(payment.status).toBe("failed");
     expect(await statusOfOrder(order.id)).toBe("failed");
   });
@@ -487,7 +488,7 @@ describe("payment initiation", () => {
     await applyProviderEvent(db, provider, event.body, event.headers);
 
     await rejectsWith(
-      initiatePayment(db, buyer, provider, { orderId: order.id }),
+      initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL }),
       OrderNotPayableError,
     );
   });
@@ -815,8 +816,8 @@ describe("repeated and concurrent confirmation", () => {
     });
     expect(first.order.id).not.toBe(second.order.id);
 
-    const payOne = await initiatePayment(db, buyer, provider, { orderId: first.order.id });
-    const payTwo = await initiatePayment(db, buyer, provider, { orderId: second.order.id });
+    const payOne = await initiatePayment(db, buyer, provider, { orderId: first.order.id, channel: LAUNCH_PAYMENT_CHANNEL });
+    const payTwo = await initiatePayment(db, buyer, provider, { orderId: second.order.id, channel: LAUNCH_PAYMENT_CHANNEL });
 
     const eventOne = provider.event({
       id: "evt-twice-a", providerRef: payOne.providerRef as string, status: "succeeded",
@@ -853,7 +854,7 @@ describe("repeated and concurrent confirmation", () => {
     const { order } = await createCheckout(db, buyer, {
       storeSlug: listing.storeSlug, productSlug: listing.productSlug, checkoutKey: "own-1",
     });
-    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
     const event = provider.event({
       id: "evt-own", providerRef: payment.providerRef as string, status: "succeeded",
       amountMinor: listing.priceMinor, currency: "XOF",

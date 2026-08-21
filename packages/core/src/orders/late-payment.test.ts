@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { LAUNCH_PAYMENT_CHANNEL } from "../payments";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDb, getPool, type Database } from "@afrinext/db";
 import type { Actor } from "../authz";
@@ -109,7 +110,7 @@ async function pendingSale(): Promise<Sale> {
   const { order } = await createCheckout(db, buyer, {
     storeSlug: store.slug, productSlug: product.slug, checkoutKey: `k-${counter}`,
   });
-  const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+  const payment = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
 
   return {
     buyer,
@@ -429,7 +430,7 @@ describe("9–12 · fulfilment must still be safe", () => {
       storeSlug: first.storeSlug, productSlug: first.productSlug, checkoutKey: "second-go",
     });
     const secondPayment = await initiatePayment(db, first.buyer, provider, {
-      orderId: second.order.id,
+      orderId: second.order.id, channel: LAUNCH_PAYMENT_CHANNEL,
     });
     const paid = provider.event({
       id: "evt-second", providerRef: secondPayment.providerRef as string,

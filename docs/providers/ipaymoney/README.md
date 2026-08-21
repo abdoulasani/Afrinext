@@ -212,6 +212,7 @@ and each is cited from the code that relies on it.
 | A2 | `transaction_id` is **ours** to supply, and the derived idempotency key goes in it | The request body table lists it as a field we send (L170–L177); the dashboard section's "générée de façon automatique" (L126) describes the *external reference*, which is P4 | K10 |
 | A3 | `amount` is **whole francs** for XOF | XOF has zero decimal places, so a minor unit *is* a franc. The field is a string with a floor of 100 and no unit stated | **K13** |
 | A4 | `country` is a two-letter code, and **the caller decides whose** country it is | Documented only as "le code du pays de la transaction" (L174). The adapter refuses rather than choosing | **K17** |
+| A13 | Mobile money is available for Niger and XOF | Not strictly stated as a per-country matrix. The documentation lists Airtel Money, Zamani Cash and Moov Money as the mobile-money operators (L254), documents `XOF` as the currency (L172) and `NE` as a country example (L173), and its sandbox numbers are for « paiements mobile » (L147). A real sandbox call is what would confirm it | A sandbox run |
 | A12 | `customer_name` is the buyer's self-declared name, not a verified one | iPayMoney documents the field as required and states no verification of it. Afrinext asks the person and sends what they typed; nothing claims it matches an identity document, and no KYC is implied | — |
 | A11 | Afrinext's checkout provisionally sends the **buyer's** country in `country` | The order layer must send *something* or send nothing, and of the two countries it holds — the buyer's and the store's — the buyer's is the one the payer is in. It is provisional, not an answer to K17: the same value also travels as `buyerCountry`, which says unambiguously what it is, so answering K17 changes which fact fills `country` rather than requiring anyone to work out what was ever meant | **K17** |
 | A5 | `customer_name` is required | Listed in the body table with no optionality marked, and the documented 400 says "Missing params" | A sandbox run |
@@ -251,7 +252,7 @@ Three of the four fields iPayMoney requires are now available; one is not.
 | `msisdn` | `user."phoneNumber"`, joined through `users.auth_user_id` | **Supplied.** The number that answered an OTP at sign-in |
 | `customer_name` | `users.full_name` | **Supplied.** What the buyer typed into their own profile |
 | `country` | `users.country_code` | **Supplied.** What the buyer chose from the `countries` table |
-| `Ipay-Payment-Type` | the caller's `channel` | **Still pending.** Supplied only when explicitly chosen; never defaulted, because the documentation states no default |
+| `Ipay-Payment-Type` | `IPAYMONEY_PAYMENT_TYPE[channel]` | **Supplied.** `mobile`, mapped from Afrinext's `mobile_money`. Required, never defaulted |
 
 **Three of the four now arrive.** A buyer completes a short profile after
 signing in and before paying — see `docs/architecture/buyer-profile.md`. The
@@ -266,9 +267,41 @@ profile is the only source for the name and the country:
   from the store being bought from.
 - The amount remains derived server-side from the order row, unchanged.
 
-The payment channel is the one field still missing, and it is an **open product
-decision** rather than a wiring gap: whether Afrinext offers mobile money, cards
-or both at launch has not been decided, and nothing defaults it.
+**All four now arrive.** Afrinext launches with **one** channel — mobile money —
+and the value iPayMoney expects is quoted, not inferred:
+
+> « Ipay-Payment-Type | string | Doit comporter **mobile** ou **card** »
+> — extract **L165** (`POST /api/v1/payments`) and **L238** (`GET /api/v1/payments/{reference}`)
+
+Mobile money is documented as Airtel Money, Zamani Cash and Moov Money (L254,
+L256–257) — the three Niger operators — and the sandbox test numbers are
+explicitly « les numeros de test à utiliser pour les paiements **mobile** »
+(L147). `currency` is documented as **XOF** (L172) and `country` gives « **NE**
+pour le Niger » (L173), so the launch market and currency are the documented
+ones rather than an assumption.
+
+### The channel boundary
+
+The domain's word is `mobile_money`; iPayMoney's is `mobile`. They are
+deliberately different.
+
+```
+browser  ──"mobile_money"──▶  parsePaymentChannel()  ──▶  PaymentChannel
+                                   refuses everything else,
+                                   INCLUDING "mobile" and "card"
+                                              │
+                             IPAYMONEY_PAYMENT_TYPE[channel] ──▶ "mobile"
+                                   the only place the header value exists
+```
+
+A browser cannot name a provider header value, because the domain does not
+accept provider header values from anyone — not by filtering them, but by not
+speaking that vocabulary. Posting `mobile` is refused exactly as firmly as
+posting nonsense.
+
+`card` is a documented iPayMoney value and is **deliberately absent from the
+mapping**. Afrinext does not offer card payments at launch, and a mapping entry
+for a channel the business has not adopted is a route to sending one.
 
 ### The webhook is a notification, not evidence
 

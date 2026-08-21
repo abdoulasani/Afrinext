@@ -106,5 +106,5 @@ sent to the payment provider for the transaction.
 - **No signup change.** The OTP flow, its rate limits, its hashing and Better
   Auth's verification are untouched. These fields are not part of the OTP
   request and never travel with it.
-- **No payment channel.** Whether Afrinext offers mobile money, cards or both
-  is an open product decision, and nothing defaults it.
+- **No payment channel.** Settled in a later milestone: Afrinext launches with
+  mobile money only. See `docs/architecture/payment-channel.md`.

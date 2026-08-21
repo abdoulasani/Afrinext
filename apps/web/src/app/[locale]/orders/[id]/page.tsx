@@ -1,8 +1,11 @@
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
-import { money as m, orders as ordersDomain, profile as profileDomain } from "@afrinext/core";
+import {
+  money as m, orders as ordersDomain, payments as paymentsDomain,
+  profile as profileDomain,
+} from "@afrinext/core";
 import { getDb } from "@afrinext/db";
-import { isLocale, translate } from "@afrinext/i18n";
+import { isLocale, translate, type MessageKey } from "@afrinext/i18n";
 import AppHeader from "@/components/AppHeader";
 import PayButton from "@/components/PayButton";
 import ProfileGate from "@/components/ProfileGate";
@@ -11,6 +14,24 @@ import { completeProfileAction } from "@/lib/order-actions";
 import { currentActor } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * What each channel is called on screen.
+ *
+ * A `Record` over the allowlist rather than a dynamically built key, so it is
+ * EXHAUSTIVE: adding a channel to `PAYMENT_CHANNELS` fails to compile until
+ * somebody names it here, in both catalogues. A template-literal key would have
+ * compiled fine and shipped a screen showing a raw identifier.
+ */
+const CHANNEL_LABELS: Record<
+  paymentsDomain.PaymentChannel,
+  { label: MessageKey; detail: MessageKey }
+> = {
+  mobile_money: {
+    label: "checkout.channelMobileMoney",
+    detail: "checkout.channelMobileMoneyDetail",
+  },
+};
 
 /**
  * One order, for the person who placed it.
@@ -98,6 +119,21 @@ export default async function OrderPage({
                 orderId={order.id}
                 label={translate(locale, "order.pay")}
                 waiting={translate(locale, "order.awaiting")}
+                /*
+                 * Built from the domain allowlist, so the screen can only ever
+                 * offer what the server accepts. Adding a channel is one line
+                 * in `PAYMENT_CHANNELS` and its provider mapping; there is no
+                 * second list here to forget to update.
+                 */
+                channels={paymentsDomain.PAYMENT_CHANNELS.map((value) => ({
+                  value,
+                  label: translate(locale, CHANNEL_LABELS[value].label),
+                  detail: translate(locale, CHANNEL_LABELS[value].detail),
+                }))}
+                channelLabels={{
+                  heading: translate(locale, "checkout.channelHeading"),
+                  onlyOne: translate(locale, "checkout.channelOnlyOne"),
+                }}
               />
             ) : (
               <ProfileGate

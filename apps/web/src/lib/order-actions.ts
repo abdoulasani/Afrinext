@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
-import { orders, profile } from "@afrinext/core";
+import { orders, payments, profile } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { getPaymentProvider } from "@/lib/payments";
 import { requireActor } from "@/lib/session";
@@ -62,7 +62,17 @@ export async function payOrderAction(
   const orderId = String(form.get("orderId") ?? "");
   try {
     const actor = await requireActor();
-    await orders.initiatePayment(getDb(), actor, getPaymentProvider(), { orderId });
+    /*
+     * The channel arrives from the form and is validated before it is used.
+     *
+     * What the browser posts is Afrinext's word — `mobile_money` — which means
+     * nothing to iPayMoney. `parsePaymentChannel` refuses everything that is
+     * not exactly a listed value, the provider's own `mobile` and `card`
+     * included, so there is no string a person could post that would reach a
+     * provider header of their choosing.
+     */
+    const channel = payments.parsePaymentChannel(form.get("channel"));
+    await orders.initiatePayment(getDb(), actor, getPaymentProvider(), { orderId, channel });
   } catch (error: unknown) {
     return fail(error);
   }

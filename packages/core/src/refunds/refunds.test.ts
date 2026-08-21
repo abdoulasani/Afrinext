@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { LAUNCH_PAYMENT_CHANNEL } from "../payments";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { getPool, type Database } from "@afrinext/db";
 import type { Actor } from "../authz";
@@ -137,7 +138,7 @@ async function owedRefund(
   const { order } = await createCheckout(db, buyer, {
     storeSlug: store.slug, productSlug: product.slug, checkoutKey: `rk-${counter}`,
   });
-  const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+  const payment = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
   const paymentRef = payment.providerRef as string;
 
   // Age it past expiry AND past the grace window, so the late payment is owed

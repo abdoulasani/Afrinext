@@ -1,4 +1,7 @@
 import { sql } from "drizzle-orm";
+import {
+  LAUNCH_PAYMENT_CHANNEL, UnsupportedPaymentChannelError, type PaymentChannel,
+} from "../payments";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Database } from "@afrinext/db";
 import type { Actor } from "../authz";
@@ -199,7 +202,7 @@ describe("what the buyer's own record contributes to a charge", () => {
     const orderId = await checkoutFor(buyer);
     const provider = new RecordingProvider();
 
-    await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
+    await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL });
 
     expect(provider.seen).toHaveLength(1);
     expect(provider.seen[0]?.customer.phone).toBe("+22790123456");
@@ -215,26 +218,24 @@ describe("what the buyer's own record contributes to a charge", () => {
     const orderId = await checkoutFor(buyer, "CI");
     const provider = new RecordingProvider();
 
-    await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
+    await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL });
 
     expect(provider.seen[0]?.metadata?.["country"]).toBe("NE");
     expect(provider.seen[0]?.metadata?.["buyerCountry"]).toBe("NE");
   });
 
-  it("passes the channel the caller chose, and never invents one", async () => {
+  it("passes the launch channel through in Afrinext's vocabulary", async () => {
     const buyer = await makeBuyer({ phone: "+22790123458" });
     const provider = new RecordingProvider();
 
-    const withCard = await checkoutFor(buyer);
-    await initiatePayment(db, buyer, provider, { orderId: withCard, channel: "card" });
-    expect(provider.seen[0]?.channel).toBe("card");
+    const orderId = await checkoutFor(buyer);
+    await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL });
 
-    const withNothing = await checkoutFor(buyer);
-    await initiatePayment(db, buyer, provider, { orderId: withNothing });
+    expect(provider.seen[0]?.channel).toBe("mobile_money");
     expect(
-      provider.seen[1]?.channel,
-      "no channel was chosen, so none is sent — iPayMoney documents no default",
-    ).toBeUndefined();
+      provider.seen[0]?.channel,
+      "the provider's own header value never travels through the domain",
+    ).not.toBe("mobile");
   });
 
   it("sends the name from the buyer's OWN profile, and never a placeholder", async () => {
@@ -248,7 +249,7 @@ describe("what the buyer's own record contributes to a charge", () => {
     const orderId = await checkoutFor(buyer);
     const provider = new RecordingProvider();
 
-    await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
+    await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL });
 
     const metadata = provider.seen[0]?.metadata ?? {};
     expect(metadata["customerName"]).toBe("Fatoumata Abdou");
@@ -275,7 +276,7 @@ describe("what the buyer's own record contributes to a charge", () => {
 
     await initiatePayment(db, buyer, provider, {
       orderId,
-      channel: "mobile",
+      channel: LAUNCH_PAYMENT_CHANNEL,
       ...({
         customerName: "Attacker", country: "FR",
         metadata: { customerName: "Attacker", country: "FR" },
@@ -301,7 +302,7 @@ describe("what the buyer's own record contributes to a charge", () => {
     const orderId = await checkoutFor(buyer, "CI");
     const provider = new RecordingProvider();
 
-    const error = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
+    const error = await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL })
       .catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ProfileIncompleteError);
@@ -318,7 +319,7 @@ describe("what the buyer's own record contributes to a charge", () => {
     const orderId = await checkoutFor(buyer);
     const provider = new RecordingProvider();
 
-    await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
+    await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL });
 
     expect(provider.seen[0]?.customer.phone).toBeUndefined();
     expect(provider.seen[0]?.customer.userId).toBe(buyer.userId);
@@ -345,7 +346,7 @@ describe("the real adapter, reached through the real checkout path", () => {
     const orderId = await checkoutFor(buyer, "CI");
     const { provider, calls, bodies } = ipaymoney();
 
-    const payment = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
+    const payment = await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL });
 
     expect(calls(), "exactly one charge request").toBe(1);
     const body = bodies()[0] ?? {};
@@ -365,15 +366,62 @@ describe("the real adapter, reached through the real checkout path", () => {
     expect(payment.status).toBe("pending");
   });
 
-  it("refuses without a channel, and constructs no request", async () => {
+  it("refuses a MISSING channel before anything is written or sent", async () => {
+    /*
+     * `channel` is required by the type, so this is the runtime hole a JSON
+     * body or an older compiled caller could still come through. The cast is
+     * the test's whole point: it reproduces an untyped caller.
+     */
     const buyer = await makeBuyer({ phone: "+22790123462", countryCode: "NE" });
     const orderId = await checkoutFor(buyer);
     const { provider, calls } = ipaymoney();
 
-    const error = await initiatePayment(db, buyer, provider, { orderId })
-      .catch((e: unknown) => e);
+    const error = await initiatePayment(
+      db, buyer, provider, { orderId } as unknown as { orderId: string; channel: PaymentChannel },
+    ).catch((e: unknown) => e);
 
-    expect((error as Error).message).toMatch(/payment type/);
+    expect(error).toBeInstanceOf(UnsupportedPaymentChannelError);
+    expect(calls(), "no request is constructed without a channel").toBe(0);
+    expect(await paymentRow(orderId), "and no payment row is written").toHaveLength(0);
+  });
+
+  it("refuses an UNSUPPORTED channel, including the provider's own word", async () => {
+    const buyer = await makeBuyer({ phone: "+22790123471", countryCode: "NE" });
+    const { provider, calls } = ipaymoney();
+
+    for (const attempt of ["mobile", "card", "ussd", "bank_transfer", "", "MOBILE_MONEY"]) {
+      const orderId = await checkoutFor(buyer);
+      const error = await initiatePayment(
+        db, buyer, provider,
+        { orderId, channel: attempt } as unknown as { orderId: string; channel: PaymentChannel },
+      ).catch((e: unknown) => e);
+
+      expect(error, attempt).toBeInstanceOf(UnsupportedPaymentChannelError);
+      expect(await paymentRow(orderId), attempt).toHaveLength(0);
+    }
+
+    /*
+     * `mobile` and `card` are iPayMoney's OWN documented values, readable
+     * straight out of this repository. They are refused exactly as firmly as
+     * nonsense, because the provider's vocabulary is not a choice the domain
+     * accepts — which is what stops a browser from naming a provider header
+     * value.
+     */
+    expect(calls(), "not one provider request across six attempts").toBe(0);
+  });
+
+  it("refuses a non-string channel from an untyped caller", async () => {
+    const buyer = await makeBuyer({ phone: "+22790123472", countryCode: "NE" });
+    const { provider, calls } = ipaymoney();
+
+    for (const attempt of [null, undefined, 1, {}, ["mobile_money"], true]) {
+      const orderId = await checkoutFor(buyer);
+      const error = await initiatePayment(
+        db, buyer, provider,
+        { orderId, channel: attempt } as unknown as { orderId: string; channel: PaymentChannel },
+      ).catch((e: unknown) => e);
+      expect(error, String(attempt)).toBeInstanceOf(UnsupportedPaymentChannelError);
+    }
     expect(calls()).toBe(0);
   });
 
@@ -382,7 +430,7 @@ describe("the real adapter, reached through the real checkout path", () => {
     const orderId = await checkoutFor(buyer);
     const { provider, calls } = ipaymoney();
 
-    const error = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
+    const error = await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL })
       .catch((e: unknown) => e);
 
     expect((error as Error).message).toMatch(/msisdn/);
@@ -396,7 +444,7 @@ describe("the real adapter, reached through the real checkout path", () => {
     const orderId = await checkoutFor(buyer);
     const { provider, calls } = ipaymoney();
 
-    const error = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
+    const error = await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL })
       .catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ProfileIncompleteError);
@@ -412,7 +460,7 @@ describe("the real adapter, reached through the real checkout path", () => {
     const orderId = await checkoutFor(buyer);
     const { provider, calls } = ipaymoney();
 
-    const error = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
+    const error = await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL })
       .catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ProfileIncompleteError);
@@ -439,13 +487,18 @@ describe("a refusal is safe, and an unknown is not a refusal", () => {
     const { provider } = ipaymoney();
 
     /*
-     * No channel, so the adapter declines to build a request: iPayMoney
-     * documents no default for `Ipay-Payment-Type` and this codebase does not
-     * invent one. The profile is complete, so the gate lets this through and
-     * the refusal happens where it is supposed to — at the provider boundary,
-     * after the payment row exists.
+     * A currency iPayMoney does not support, so the adapter declines to build a
+     * request. The profile and channel are both fine, so the domain gates let
+     * this through and the refusal happens where it is supposed to — at the
+     * provider boundary, after the payment row exists.
      */
-    await initiatePayment(db, buyer, provider, { orderId })
+    await db.execute(sql`
+      update orders set currency = 'EUR' where id = ${orderId}::uuid
+    `);
+    await db.execute(sql`
+      update order_items set currency = 'EUR' where order_id = ${orderId}::uuid
+    `);
+    await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL })
       .catch(() => undefined);
 
     const rows = await paymentRow(orderId);
@@ -495,7 +548,7 @@ describe("a refusal is safe, and an unknown is not a refusal", () => {
       refund: (i: RefundInput) => provider.refund(i),
     };
 
-    await initiatePayment(db, buyer, named, { orderId, channel: "mobile" })
+    await initiatePayment(db, buyer, named, { orderId, channel: LAUNCH_PAYMENT_CHANNEL })
       .catch(() => undefined);
 
     expect(attempted, "the request did reach the transport").toBe(1);
@@ -510,8 +563,8 @@ describe("a refusal is safe, and an unknown is not a refusal", () => {
     const orderId = await checkoutFor(buyer);
     const provider = new RecordingProvider();
 
-    const first = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
-    const second = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
+    const first = await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL });
+    const second = await initiatePayment(db, buyer, provider, { orderId, channel: LAUNCH_PAYMENT_CHANNEL });
 
     expect(second.id, "the same charge, not a second one").toBe(first.id);
     expect(provider.seen, "the provider was called exactly once").toHaveLength(1);

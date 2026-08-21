@@ -47,3 +47,18 @@ export async function completeBuyerProfileForOrder(
   await page.goto(`/${locale}/orders/${orderId}`);
   await completeBuyerProfile(page, options);
 }
+
+/**
+ * Chooses the payment channel, explicitly.
+ *
+ * Afrinext offers exactly one at launch and the radio is pre-checked, so this
+ * asserts the choice is VISIBLE and selected rather than hidden — a payment
+ * method the buyer never saw is not a method they chose. Clicking it anyway
+ * exercises the control a second channel would use.
+ */
+export async function chooseMobileMoney(page: Page): Promise<void> {
+  const radio = page.getByTestId("channel-mobile_money");
+  await expect(radio, "the launch channel is on screen, not hidden").toBeVisible();
+  await expect(radio, "and pre-selected, because there is only one").toBeChecked();
+  await radio.check();
+}

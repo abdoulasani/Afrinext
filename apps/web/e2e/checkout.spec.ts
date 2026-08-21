@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { completeBuyerProfile, completeBuyerProfileForOrder } from "./buyer-profile";
+import { completeBuyerProfile, completeBuyerProfileForOrder, chooseMobileMoney } from "./buyer-profile";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page, type APIRequestContext } from "@playwright/test";
@@ -198,6 +198,7 @@ test.describe("a buyer pays for a digital product", () => {
 
     // 3. Pay. The charge is created; nothing is confirmed.
     await completeBuyerProfile(page);
+    await chooseMobileMoney(page);
     await page.getByTestId("pay").click();
     /*
      * Wait for the payment STATE, not for the button's caption.
@@ -264,7 +265,7 @@ test.describe("a buyer pays for a digital product", () => {
     expect(created.status).toBe(201);
     const orderId = (created.body as { data: { id: string } }).data.id;
     await completeBuyerProfileForOrder(page, "fr", orderId);
-    await api(page, "POST", `/api/v1/orders/${orderId}/pay`);
+    await api(page, "POST", `/api/v1/orders/${orderId}/pay`, { channel: "mobile_money" });
     const providerRef = providerRefFor(orderId);
 
     // The signed-in buyer posts a perfectly formed success event to the webhook
@@ -333,7 +334,7 @@ test.describe("a buyer pays for a digital product", () => {
     expect((again.body as { data: { id: string } }).data.id).toBe(order.id);
 
     await completeBuyerProfileForOrder(page, "fr", order.id);
-    await api(page, "POST", `/api/v1/orders/${order.id}/pay`);
+    await api(page, "POST", `/api/v1/orders/${order.id}/pay`, { channel: "mobile_money" });
     const providerRef = providerRefFor(order.id);
     const eventId = unique("evt");
     const payload = {
@@ -383,7 +384,9 @@ test.describe("a buyer pays for a digital product", () => {
     const other = await browser.newContext();
     const stranger = await other.newPage();
     await signIn(stranger, freshPhone());
-    const stolen = await api(stranger, "POST", `/api/v1/orders/${orderId}/pay`);
+    const stolen = await api(stranger, "POST", `/api/v1/orders/${orderId}/pay`, {
+      channel: "mobile_money",
+    });
     expect(stolen.status).toBe(404);
     const page404 = await stranger.goto(`/fr/orders/${orderId}`);
     expect(page404?.status()).toBe(404);
@@ -399,5 +402,74 @@ test.describe("a buyer pays for a digital product", () => {
       }),
     ).toBe(400);
     expect(orderStatus(orderId)).toBe("pending_payment");
+  });
+});
+
+test.describe("the payment channel is a visible, validated choice", () => {
+  test("is shown, pre-selected, and refused when tampered with", async ({ page }) => {
+    const product = publishedProduct(7000);
+    await signIn(page, freshPhone());
+
+    await page.goto(`/fr/s/${product.storeSlug}/${product.productSlug}`);
+    await page.getByTestId("buy").click();
+    await page.waitForURL(/\/fr\/orders\/[0-9a-f-]{36}$/);
+    const orderId = (/orders\/([0-9a-f-]{36})/.exec(page.url()) ?? [])[1] as string;
+    await completeBuyerProfile(page);
+
+    // 1. The single launch channel is ON SCREEN and already chosen. A payment
+    //    method the buyer never saw is not a method they chose.
+    await expect(page.getByTestId("channel-choice")).toBeVisible();
+    await expect(page.getByTestId("channel-mobile_money")).toBeChecked();
+    await expect(page.getByTestId("channel-choice")).toContainText("Mobile Money");
+    await expect(page.getByTestId("channel-choice")).toContainText("Airtel Money");
+
+    // 2. No card option exists anywhere, because Afrinext does not offer one.
+    expect(await page.locator('input[name="channel"]').count()).toBe(1);
+    await expect(page.getByTestId("channel-choice")).not.toContainText("Visa");
+
+    // 3. Editing the radio's value in the DOM — the whole point of validating
+    //    server-side — does not reach the provider. `mobile` is iPayMoney's own
+    //    documented header value, so it is the value an attacker would pick.
+    await page.evaluate(() => {
+      const input = document.querySelector('input[name="channel"]');
+      if (input instanceof HTMLInputElement) input.value = "mobile";
+    });
+    await page.getByTestId("pay").click();
+    await expect(page.getByTestId("pay-error")).toBeVisible();
+    await expect(page.getByTestId("pay-error")).toContainText("mobile_money");
+
+    // Nothing was charged and no payment row was created.
+    expect(sqlOne(`select count(*) from payments where order_id = '${orderId}'::uuid`)).toBe("0");
+    expect(orderStatus(orderId)).toBe("pending_payment");
+
+    // 4. The honest path still works, from the same page.
+    await page.reload();
+    await chooseMobileMoney(page);
+    await page.getByTestId("pay").click();
+    await expect(page.getByTestId("payment-status")).toHaveText("pending");
+    expect(sqlOne(`select count(*) from payments where order_id = '${orderId}'::uuid`)).toBe("1");
+  });
+
+  test("the API refuses a channel the domain does not offer", async ({ page }) => {
+    const product = publishedProduct(7000);
+    await signIn(page, freshPhone());
+    const created = await api(page, "POST", "/api/v1/checkout", {
+      storeSlug: product.storeSlug, productSlug: product.productSlug,
+      idempotencyKey: unique("k"),
+    });
+    const orderId = (created.body as { data: { id: string } }).data.id;
+    await completeBuyerProfileForOrder(page, "fr", orderId);
+
+    for (const channel of ["mobile", "card", "ussd", "", null]) {
+      const refused = await api(page, "POST", `/api/v1/orders/${orderId}/pay`, { channel });
+      expect(refused.status, String(channel)).toBe(400);
+      expect((refused.body as { error: { code: string } }).error.code)
+        .toBe("payments.channel_unsupported");
+    }
+    // An empty body is a missing channel, and is refused the same way.
+    const empty = await api(page, "POST", `/api/v1/orders/${orderId}/pay`);
+    expect(empty.status).toBe(400);
+
+    expect(sqlOne(`select count(*) from payments where order_id = '${orderId}'::uuid`)).toBe("0");
   });
 });

@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { LAUNCH_PAYMENT_CHANNEL } from "../payments";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDb, type Database } from "@afrinext/db";
 import type { Actor } from "../authz";
@@ -148,7 +149,7 @@ async function buy(buyer: Actor, listing: Listing): Promise<void> {
     productSlug: listing.productSlug,
     checkoutKey: `buy-${counter}`,
   });
-  const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+  const payment = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
   const event = provider.event({
     id: `evt-${counter}`,
     providerRef: payment.providerRef as string,
@@ -535,7 +536,7 @@ describe("entitlement creation is still payment's job", () => {
     const { order } = await createCheckout(db, buyer, {
       storeSlug: listing.storeSlug, productSlug: listing.productSlug, checkoutKey: "pending",
     });
-    await initiatePayment(db, buyer, provider, { orderId: order.id });
+    await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
 
     expect(await listEntitledProducts(db, buyer)).toEqual([]);
     await rejectsWith(read(buyer, listing.assetId), ContentForbiddenError);
@@ -557,7 +558,7 @@ describe("entitlement creation is still payment's job", () => {
     const { order } = await createCheckout(db, buyer, {
       storeSlug: listing.storeSlug, productSlug: listing.productSlug, checkoutKey: "expiring",
     });
-    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
 
     // Aged past the checkout window, then swept, exactly as time would do it.
     await db.execute(sql`
@@ -595,7 +596,7 @@ describe("entitlement creation is still payment's job", () => {
     const { order } = await createCheckout(db, buyer, {
       storeSlug: listing.storeSlug, productSlug: listing.productSlug, checkoutKey: "just-late",
     });
-    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
 
     await db.execute(sql`
       update orders set expires_at = now() - interval '1 second' where id = ${order.id}::uuid
@@ -618,7 +619,7 @@ describe("entitlement creation is still payment's job", () => {
     const { order } = await createCheckout(db, buyer, {
       storeSlug: listing.storeSlug, productSlug: listing.productSlug, checkoutKey: "concurrent",
     });
-    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id });
+    const payment = await initiatePayment(db, buyer, provider, { orderId: order.id, channel: LAUNCH_PAYMENT_CHANNEL });
     const event = provider.event({
       id: "evt-concurrent-delivery", providerRef: payment.providerRef as string,
       status: "succeeded", amountMinor: listing.priceMinor, currency: "XOF",

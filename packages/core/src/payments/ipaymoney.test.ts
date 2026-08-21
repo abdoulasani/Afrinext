@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LAUNCH_PAYMENT_CHANNEL } from "./channel";
 import { ProviderNotConfiguredError } from "../errors";
 import { money } from "../money";
 import {
@@ -27,7 +28,7 @@ const CHARGE: ChargeInput = {
   reference: "order-abc",
   amount: money(15_000n, "XOF"),
   customer: { userId: "u1", phone: "40410000000" },
-  channel: "mobile",
+  channel: LAUNCH_PAYMENT_CHANNEL,
   idempotencyKey: "order:abc:charge",
   metadata: { country: "NE", customerName: "Aïcha Issoufou" },
 };
@@ -214,9 +215,14 @@ describe("createCharge — what we send", () => {
       }),
     ).rejects.toThrow(/msisdn/);
 
+    /*
+     * A channel the domain does not offer cannot even be expressed here any
+     * more — `ChargeInput.channel` is the allowlist type — so the reachable
+     * case is the absent one, which is what iPayMoney documents no default for.
+     */
     await expect(
-      provider.createCharge({ ...CHARGE, channel: "ussd" }),
-    ).rejects.toThrow(/payment type/);
+      provider.createCharge({ ...CHARGE, channel: undefined }),
+    ).rejects.toThrow(/payment type|no payment channel/);
 
     // Nothing was sent in any of those cases.
     expect(calls).toHaveLength(0);
