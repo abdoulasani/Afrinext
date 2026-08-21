@@ -166,7 +166,22 @@ function orderStatus(orderId: string): string {
 test.describe("a buyer pays for a digital product", () => {
   test("the whole journey, and the confirmation comes from the provider", async ({ page, request }) => {
     const product = publishedProduct(15000);
-    await signIn(page, freshPhone());
+    const buyerPhone = freshPhone();
+    const buyerId = await signIn(page, buyerPhone);
+
+    /*
+     * The link a charge depends on, after a REAL phone-OTP signup.
+     *
+     * `initiatePayment` sources the payer's number by joining `users` to Better
+     * Auth's `user` through `auth_user_id`, and the core tests fabricate that
+     * pair. This asserts the real signup actually produces it, and that the
+     * number is the verified one — which is the half no unit test can prove.
+     */
+    expect(
+      sqlOne(`select au."phoneNumber" from users u join "user" au on au.id = u.auth_user_id
+                where u.id = '${buyerId}'::uuid and au."phoneNumberVerified"`),
+      "the buyer's verified sign-in number is reachable from their identity",
+    ).toBe(buyerPhone);
 
     // 1. The public product page now offers a real purchase.
     await page.goto(`/fr/s/${product.storeSlug}/${product.productSlug}`);

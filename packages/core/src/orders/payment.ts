@@ -3,13 +3,14 @@ import type { Database } from "@afrinext/db";
 import { audit } from "../audit";
 import { authorize, type Actor } from "../authz";
 import { freezeSchedule } from "../commissions";
-import { DomainError } from "../errors";
+import { DomainError, ProviderNotConfiguredError } from "../errors";
 import { uuidv7 } from "../ids";
 import { money, type Money } from "../money";
 import { logger } from "../observability";
 import type {
-  HeadersLike, PaymentProvider, VerifiedChargeEvent, VerifiedEvent,
+  ChargeResult, HeadersLike, PaymentProvider, VerifiedChargeEvent, VerifiedEvent,
 } from "../payments";
+import { stageOfTransportFailure } from "../payments";
 import { applyRefundEvent, recordRefundOwed } from "../refunds";
 import { loadLatePaymentGraceSeconds, OrderNotFoundError } from "./checkout";
 import {
@@ -104,6 +105,81 @@ export interface InitiatePaymentInput {
 }
 
 /**
+ * Whether a throw from `createCharge` proves that no charge exists.
+ *
+ * Only two shapes qualify, and the distinction is the Phase 3 rule one layer
+ * up: UNKNOWN MUST NEVER BECOME FAILED.
+ *
+ *   ProviderNotConfiguredError  the adapter refused. Either it declined to
+ *                               build a request at all — a missing buyer
+ *                               field, missing credentials, an unsupported
+ *                               currency — or the provider answered with a
+ *                               documented refusal that states no payment was
+ *                               created. The adapter owns that classification
+ *                               and this layer honours it rather than
+ *                               re-deciding it from an HTTP status.
+ *
+ *   stage "not_transmitted"     the bytes provably never left this process:
+ *                               DNS, connection refused, an unreachable host.
+ *
+ * Everything else — a timeout, a reset, an HTTP 5xx, an unparseable answer — is
+ * a charge that MAY exist under our idempotency key, and saying otherwise would
+ * be an assertion about money that nobody can support.
+ */
+function chargeProvablyNotCreated(error: unknown): boolean {
+  if (error instanceof ProviderNotConfiguredError) return true;
+  return stageOfTransportFailure(error) === "not_transmitted";
+}
+
+/**
+ * The buyer details a provider may need, read from OUR records.
+ *
+ * Every field here is sourced server-side from the buyer's own account. None of
+ * it is accepted from the client, for the same reason the amount is not: a
+ * field a caller can set is a field a caller can change. A buyer must not be
+ * able to tell the provider that somebody else's number is paying.
+ *
+ * The phone lives in Better Auth's `user` table because that is where sign-in
+ * verified it, and `users.auth_user_id` is the link. Using the VERIFIED number
+ * matters — it is the one that answered an OTP, not one somebody typed into a
+ * form.
+ *
+ * What this deliberately does NOT return is a customer name. `users.display_name`
+ * holds a synthetic address (`22790123456@phone.afrinext.local`) and the Better
+ * Auth `name` column holds the phone string; both are placeholders written at
+ * signup to satisfy a NOT NULL, and neither is a name the buyer ever gave.
+ * Sending either to a payment provider would be inventing a value for a
+ * provider-required field. See the milestone report.
+ */
+interface BuyerPaymentIdentity {
+  /** The verified sign-in number, absent for an account created another way. */
+  readonly phone: string | undefined;
+  /** `users.country_code`. Never populated by any current signup path. */
+  readonly countryCode: string | undefined;
+}
+
+async function loadBuyerPaymentIdentity(
+  db: Database,
+  userId: string,
+): Promise<BuyerPaymentIdentity> {
+  const rows = await db.execute<{
+    [key: string]: unknown;
+    country_code: string | null;
+    phone: string | null;
+  }>(sql`
+    select u.country_code, a."phoneNumber" as phone
+      from users u
+      left join "user" a on a.id = u.auth_user_id
+     where u.id = ${userId}::uuid
+  `);
+  const row = rows.rows[0];
+  return {
+    phone: row?.phone ?? undefined,
+    countryCode: row?.country_code ?? undefined,
+  };
+}
+
+/**
  * Starts a charge for an order.
  *
  * The amount handed to the provider is read from the order row inside this
@@ -157,6 +233,7 @@ export async function initiatePayment(
   const live = existing.rows[0];
   if (live !== undefined) return toPayment(live);
 
+  const buyer = await loadBuyerPaymentIdentity(db, actor.userId);
   const amount = money(BigInt(order.total_minor), order.currency);
   const paymentId = uuidv7();
   /*
@@ -183,14 +260,93 @@ export async function initiatePayment(
   if (row === undefined) throw new PaymentNotFoundError(idempotencyKey);
   if (row.status !== "initiated") return toPayment(row);
 
-  const charge = await provider.createCharge({
-    reference: `order-${order.id}`,
-    amount,
-    customer: { userId: actor.userId },
-    idempotencyKey,
-    ...(input.returnUrl !== undefined ? { returnUrl: input.returnUrl } : {}),
-    ...(input.channel !== undefined ? { channel: input.channel } : {}),
-  });
+  /*
+   * The buyer's own details, read from our records rather than taken from the
+   * caller. See `loadBuyerPaymentIdentity`.
+   *
+   * `country` carries the BUYER's country, and that choice is provisional.
+   * iPayMoney documents the field only as "le code du pays de la transaction"
+   * and does not say whose country that is — question K17. `buyerCountry` says
+   * unambiguously what the value actually is, so when K17 is answered the fix
+   * is to change which of our facts fills `country`, not to work out what the
+   * value ever meant. Both are absent when we hold no country.
+   *
+   * No customer name is sent. We do not have one — only placeholders written at
+   * signup — and inventing a value for a provider-required field is the thing
+   * this milestone is not allowed to do.
+   */
+  const metadata: Record<string, string> = {};
+  if (buyer.countryCode !== undefined) {
+    metadata["buyerCountry"] = buyer.countryCode;
+    metadata["country"] = buyer.countryCode;
+  }
+
+  let charge: ChargeResult;
+  try {
+    charge = await provider.createCharge({
+      reference: `order-${order.id}`,
+      amount,
+      customer: {
+        userId: actor.userId,
+        ...(buyer.phone !== undefined ? { phone: buyer.phone } : {}),
+      },
+      idempotencyKey,
+      ...(input.returnUrl !== undefined ? { returnUrl: input.returnUrl } : {}),
+      ...(input.channel !== undefined ? { channel: input.channel } : {}),
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+    });
+  } catch (error: unknown) {
+    /*
+     * A throw is not a failed charge, and only one kind of throw may be treated
+     * as one.
+     *
+     * This is the Phase 3 rule — UNKNOWN MUST NEVER BECOME FAILED — applied to
+     * charges. `stageOfTransportFailure` owns the table: a provider that
+     * refused to build a request at all (a missing buyer field, missing
+     * credentials, an unsupported currency), or a failure that provably never
+     * left this process (DNS, connection refused), is `not_transmitted`. Only
+     * those close the payment.
+     *
+     * Anything else — a timeout, a reset, an HTTP 5xx — means the charge may
+     * exist at the provider under our idempotency key. Closing it would be us
+     * asserting that no money moved, which we cannot know. Those leave the row
+     * `initiated` and the truth undecided, and the error is rethrown either
+     * way.
+     *
+     * Closing the not-transmitted case is what keeps a refusal from bricking
+     * the order: `payments_one_live_per_order` means a row stuck at `initiated`
+     * makes every later attempt return that row instead of calling the
+     * provider, so the buyer would click pay forever and nothing would happen.
+     */
+    if (chargeProvablyNotCreated(error)) {
+      assertPaymentTransition("initiated", "failed");
+      await db.execute(sql`
+        update payments set status = 'failed', updated_at = now()
+         where id = ${row.id}::uuid and status = 'initiated'
+      `);
+      await closeOrder(db, order.id, "failed");
+      await audit(db, {
+        actorKind: "user",
+        actorUserId: actor.userId,
+        action: "order.payment.refused",
+        targetType: "payment",
+        targetId: row.id,
+        context: {
+          orderId: order.id,
+          provider: provider.id,
+          reason: error instanceof Error ? error.message : String(error),
+        },
+      });
+      log.warn("charge refused before transmission", {
+        orderId: order.id, provider: provider.id,
+      });
+    } else {
+      log.warn("charge outcome unknown, payment left open", {
+        orderId: order.id, provider: provider.id,
+      });
+    }
+    throw error;
+  }
 
   /*
    * The provider's first answer is recorded, but it does not confirm anything.

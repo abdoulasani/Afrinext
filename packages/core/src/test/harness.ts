@@ -131,12 +131,43 @@ export async function resetData(db: Database): Promise<void> {
 
 export async function createTestUser(
   db: Database,
-  options: { countryCode?: string; locale?: string } = {},
+  options: {
+    countryCode?: string | null;
+    locale?: string;
+    /**
+     * Give the account a VERIFIED sign-in number, the way phone-OTP signup
+     * does: a Better Auth `user` row linked through `users.auth_user_id`.
+     *
+     * Without this the account has no phone at all, which is also a real state
+     * — an identity created by some other path — and the tests that assert a
+     * refusal rely on it.
+     */
+    phone?: string;
+  } = {},
 ): Promise<string> {
   const id = uuidv7();
+  let authUserId: string | null = null;
+
+  if (options.phone !== undefined) {
+    authUserId = `auth-${id}`;
+    const digits = options.phone.replace(/[^0-9]/g, "");
+    await db.execute(sql`
+      insert into "user" (id, name, email, "emailVerified", "phoneNumber", "phoneNumberVerified")
+      values (${authUserId}, ${options.phone}, ${digits + "@phone.afrinext.local"},
+              false, ${options.phone}, true)
+    `);
+  }
+
+  /*
+   * `country_code` defaults to "NE" so existing tests keep the buyer they had.
+   * Passing `null` asks for the state a real signup actually produces today —
+   * no country recorded anywhere — which is what the refusal tests need.
+   */
+  const country = options.countryCode === undefined ? "NE" : options.countryCode;
   await db.execute(sql`
-    insert into users (id, display_name, country_code, locale)
-    values (${id}, ${"Test " + id.slice(0, 8)}, ${options.countryCode ?? "NE"}, ${options.locale ?? "fr"})
+    insert into users (id, display_name, country_code, locale, auth_user_id)
+    values (${id}, ${"Test " + id.slice(0, 8)}, ${country}, ${options.locale ?? "fr"},
+            ${authUserId})
   `);
   return id;
 }
