@@ -256,6 +256,13 @@ raw bytes, and that property is why a forged amount cannot confirm a payment.*
 | K17 | Which country | Every charge | *awaiting* |
 | K18 | Live activation for an EI | Go-live | *awaiting* |
 
+**None of these has been answered.** K1–K18 remain outstanding, and no
+milestone has modified an answer or inferred one. In particular K17 — whose
+country `country` means — is still open: Afrinext now sends the buyer's
+self-declared country (assumption A11) and labels it `buyerCountry` alongside,
+so answering K17 changes which fact fills the field rather than requiring anyone
+to reconstruct what was meant.
+
 K17 and K18 were added during the sandbox-integration milestone: K17 because
 `createCharge` cannot be written without knowing whose country to send, and K18
 because it was folded in from the gate report's K16.

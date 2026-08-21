@@ -212,6 +212,7 @@ and each is cited from the code that relies on it.
 | A2 | `transaction_id` is **ours** to supply, and the derived idempotency key goes in it | The request body table lists it as a field we send (L170–L177); the dashboard section's "générée de façon automatique" (L126) describes the *external reference*, which is P4 | K10 |
 | A3 | `amount` is **whole francs** for XOF | XOF has zero decimal places, so a minor unit *is* a franc. The field is a string with a floor of 100 and no unit stated | **K13** |
 | A4 | `country` is a two-letter code, and **the caller decides whose** country it is | Documented only as "le code du pays de la transaction" (L174). The adapter refuses rather than choosing | **K17** |
+| A12 | `customer_name` is the buyer's self-declared name, not a verified one | iPayMoney documents the field as required and states no verification of it. Afrinext asks the person and sends what they typed; nothing claims it matches an identity document, and no KYC is implied | — |
 | A11 | Afrinext's checkout provisionally sends the **buyer's** country in `country` | The order layer must send *something* or send nothing, and of the two countries it holds — the buyer's and the store's — the buyer's is the one the payer is in. It is provisional, not an answer to K17: the same value also travels as `buyerCountry`, which says unambiguously what it is, so answering K17 changes which fact fills `country` rather than requiring anyone to work out what was ever meant | **K17** |
 | A5 | `customer_name` is required | Listed in the body table with no optionality marked, and the documented 400 says "Missing params" | A sandbox run |
 | A6 | A **4xx** from `POST` means no payment was created; a **5xx** means the outcome is unknown | 4xx cases are documented refusals with named causes (L206–L226). Nothing documents 5xx at all | **K14** |
@@ -248,14 +249,26 @@ Three of the four fields iPayMoney requires are now available; one is not.
 | Field | Source | State |
 |---|---|---|
 | `msisdn` | `user."phoneNumber"`, joined through `users.auth_user_id` | **Supplied.** The number that answered an OTP at sign-in |
-| `country` | `users.country_code` | **Supplied when present.** No signup path writes it today, so in practice it is absent |
-| `Ipay-Payment-Type` | the caller's `channel` | **Supplied when chosen.** Never defaulted — the documentation states no default |
-| `customer_name` | — | **NOT AVAILABLE.** `users.display_name` holds the synthetic signup address and Better Auth's `name` holds the phone string. Both are placeholders; neither is a name the buyer gave |
+| `customer_name` | `users.full_name` | **Supplied.** What the buyer typed into their own profile |
+| `country` | `users.country_code` | **Supplied.** What the buyer chose from the `countries` table |
+| `Ipay-Payment-Type` | the caller's `channel` | **Still pending.** Supplied only when explicitly chosen; never defaulted, because the documentation states no default |
 
-So an iPayMoney charge through the real checkout **still refuses today**, and now
-refuses naming `customer_name` rather than naming the payer's number. Closing
-that last gap needs somewhere for a buyer to give a name, which is a product
-decision rather than a wiring one.
+**Three of the four now arrive.** A buyer completes a short profile after
+signing in and before paying — see `docs/architecture/buyer-profile.md`. The
+profile is the only source for the name and the country:
+
+- `users.display_name` is **never** read for this. It holds the synthetic
+  address signup mints (`22790123456@phone.afrinext.local`), which must never
+  reach a payment provider.
+- Better Auth's `user.name` is **never** read for this. It holds the phone
+  string.
+- The country is **never inferred** — not from the phone's calling code, not
+  from the store being bought from.
+- The amount remains derived server-side from the order row, unchanged.
+
+The payment channel is the one field still missing, and it is an **open product
+decision** rather than a wiring gap: whether Afrinext offers mobile money, cards
+or both at launch has not been decided, and nothing defaults it.
 
 ### The webhook is a notification, not evidence
 
