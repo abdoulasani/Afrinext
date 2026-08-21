@@ -1,0 +1,723 @@
+<title>Phase 3 Gate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 3 · final gate report</p>
+  <h1>The Refund That iPayMoney Does Not Document</h1>
+  <p class="lede">The official documentation is now in the repository. It defines two payment endpoints, a webhook, and a sandbox. It defines <strong>no customer refund of any kind</strong> — and the word that looks like one means something else entirely.</p>
+  <div class="meta">
+    <span>Code state <b>3fe233d</b></span>
+    <span>CI <b class="ok">green</b></span>
+    <span>Unit tests <b class="ok">429</b></span>
+    <span>Browser tests <b class="ok">31</b></span>
+    <span>Refund questions answered <b>15 / 15</b></span>
+    <span>Documented refund operations <b>0</b></span>
+  </div>
+</header>
+
+<div class="note block" style="margin-top:34px">
+  <span class="n-label">The single most important finding</span>
+  <p>The documentation uses <b>« remboursement »</b> — the ordinary French word for a refund — for an operation that is <b>not a refund</b>:</p>
+  <p style="margin-left:18px;border-left:2px solid var(--crimson);padding-left:14px"><i>« Vous pouvez à tout moment demander depuis votre tableau de bord le <b>remboursement de vos avoirs</b>. Cela s'appelle un <b>reversement</b>. »</i> — extract L97</p>
+  <p><b>Your</b> holdings, to <b>your</b> account. That is the merchant withdrawing their own balance to their own mobile-money or bank account, with a 50 000 FCFA floor and a three-day holding rule. Every one of the <b>30</b> occurrences of <i>remboursement</i> and <i>reversement</i> in the document carries that sense. There is no other.</p>
+  <p style="margin-bottom:0">Reading it as a customer refund would have produced an integration that pays the merchant when a buyer is owed money. That is the trap this gate was called to check, and it is a real one.</p>
+</div>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#a">A · CI status</a>
+  <a href="#b">B · Phase 3 code</a>
+  <a href="#c">C · Payment API facts</a>
+  <a href="#d">D · Webhook facts</a>
+  <a href="#e">E · Refund facts</a>
+  <a href="#f">F · Unknowns</a>
+  <a href="#g">G · Sandbox</a>
+  <a href="#h">H · Live activation</a>
+  <a href="#i">I · Refund consequences</a>
+  <a href="#j">J · Settlement blockers</a>
+  <a href="#k">K · Questions for iPayMoney</a>
+  <a href="#l">L · Next milestone</a>
+</nav>
+
+<section id="a">
+  <div class="sec-head"><div class="sec-mark">A</div><h2 class="sec-title">CI status — the packet's caveat is now resolved</h2></div>
+
+  <p>The implementation packet said CI had not run these commits and refused to claim a green badge it did not have. <b>It has now run, and it is green.</b></p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Run</th><th>Commit</th><th>Job</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">#31 · 32452577045</td><td class="mono">3fe233d</td><td>lint · typecheck · test</td><td><span class="chip yes">success</span></td></tr>
+      <tr><td class="mono">#31</td><td class="mono">3fe233d</td><td>dependency scan</td><td><span class="chip yes">success</span></td></tr>
+      <tr><td class="mono">#31</td><td class="mono">3fe233d</td><td>browser · authorization assertions</td><td><span class="chip yes">success</span></td></tr>
+      <tr><td class="mono">#33 · 32456055226</td><td class="mono">4f47887</td><td>all three (docs-only commit)</td><td><span class="chip yes">success</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Every step inside run #31 concluded <code>success</code>, including the ones that matter most for this phase:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>Why it matters here</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">Rebuild the schema from scratch</td><td>Migration 0012 — two tables, three triggers, twelve CHECKs — applies to an empty database, not just to mine</td></tr>
+      <tr><td class="mono">Seed reference data</td><td>The three refund permissions and four clamped settings seed cleanly</td></tr>
+      <tr><td class="mono">pnpm test</td><td>429 tests on GitHub's PostgreSQL 16, not only on this container</td></tr>
+      <tr><td class="mono">Assert the ledger reconciles after the suite</td><td>Both detector probes proved they can still report a fault</td></tr>
+      <tr><td class="mono">Authorization assertions in a real browser</td><td>31 browser tests against a production build</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note good">
+    <span class="n-label">What this changes in the earlier packet</span>
+    <p style="margin-bottom:0">Section 13 and section 16 of the implementation packet both say CI has not run. <b>That statement was true when written and is now superseded by this report.</b> The packet is not being quietly edited: it is the record of what was known at the time, and this is the record of what is known now.</p>
+  </div>
+</section>
+
+<section id="b">
+  <div class="sec-head"><div class="sec-mark">B</div><h2 class="sec-title">Phase 3 code status — unchanged, and re-verified</h2></div>
+
+  <p><b>No implementation code was modified during this gate.</b> The tree at <code>3fe233d</code> is exactly what CI ran and what the implementation packet describes. Re-run locally after the documentation arrived:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Command</th><th>Output</th><th></th></tr></thead>
+    <tbody>
+      <tr><td class="mono">pnpm lint</td><td class="mono">5 packages · Done, 0 warnings</td><td><span class="chip yes">clean</span></td></tr>
+      <tr><td class="mono">pnpm typecheck</td><td class="mono">5 packages · Done</td><td><span class="chip yes">clean</span></td></tr>
+      <tr><td class="mono">pnpm test</td><td class="mono">23 files · 429 passed | 3 skipped (432)</td><td><span class="chip yes">green</span></td></tr>
+      <tr><td class="mono">tsx scripts/reconcile-check.ts</td><td class="mono">both detector probes behaved; ledger clean</td><td><span class="chip yes">green</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The 3 skipped tests are the iPayMoney sandbox integration tests. They remain skipped for the reason they have always been skipped — <b>no sandbox credentials exist in this repository</b> — and the arrival of documentation does not change that. <b>No sandbox call has been made.</b></p>
+
+  <h3>The provider abstraction, checked against the confirmed payment API</h3>
+  <p>Requested mapping, and how the current contract answers it:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Afrinext</th><th>iPayMoney</th><th>Fits the current contract?</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ChargeInput.idempotencyKey<br>= order:{id}:charge</td><td class="mono">transaction_id</td><td><span class="chip yes">yes</span> — derived, never caller-supplied. iPayMoney rejects a reuse with 422, which is safe: it cannot double-charge</td></tr>
+      <tr><td class="mono">payments.provider_ref</td><td class="mono">reference</td><td><span class="chip yes">yes</span> — already UNIQUE (provider, provider_ref), and already the key an inbound event is matched on</td></tr>
+      <tr><td class="mono">ChargeStatusValue</td><td class="mono">status</td><td><span class="chip hold">partly</span> — only <code>succeeded</code> and <code>failed</code> appear in examples; the full enumeration is undocumented (F5)</td></tr>
+      <tr><td class="mono">webhook → order</td><td class="mono">external_reference</td><td><span class="chip yes">yes</span> — <code>external_reference</code> is our <code>transaction_id</code> echoed back, so it resolves to the order; the event is matched on <code>reference</code> and this corroborates it</td></tr>
+      <tr><td class="mono">ChargeStatus.amount<br><i>(required)</i></td><td class="mono">— absent —</td><td><span class="chip no">NO</span> — see below</td></tr>
+      <tr><td class="mono">VerifiedEvent.providerEventId</td><td class="mono">— absent —</td><td><span class="chip no">NO</span> — see below</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">Two contract mismatches found — reported, not fixed</span>
+    <p><b>1. <code>ChargeStatus.amount</code> is required and iPayMoney never sends an amount.</b> Neither the webhook payload nor the payment-status response carries one. A faithful <code>getCharge()</code> cannot be written: the adapter would have to fill the amount in from our own database, which is us telling ourselves what we already believe rather than the provider corroborating it.</p>
+    <p><b>2. <code>VerifiedEvent.providerEventId</code> has no counterpart.</b> Our replay defence is <code>UNIQUE (provider, provider_event_id)</code>. iPayMoney sends no event id and <b>retries five times</b> on non-2xx, so duplicate deliveries are certain rather than hypothetical. The adapter would have to derive an id from the fields the event does carry.</p>
+    <p style="margin-bottom:0"><b>Neither is a defect in the Phase 3 refund implementation, and neither has been changed.</b> They are properties of the charge contract that the new documentation exposes, and they belong to the iPayMoney integration milestone. Deriving an event id is sound — a repeat of the same <code>(reference, status)</code> fact is exactly what deduplication should collapse — but it is a decision to take deliberately, not silently.</p>
+  </div>
+
+  <div class="note">
+    <span class="n-label">One thing this gate deliberately did not tidy</span>
+    <p style="margin-bottom:0">The header comment in <code>packages/core/src/payments/ipaymoney.ts</code> still says the documentation "is not available in this repository". <b>That sentence is now false.</b> It is a comment, not behaviour, and correcting it means touching an implementation file during a gate that was told not to. It is listed here so it is a visible decision rather than an oversight, and it is the first item of the next milestone.</p>
+  </div>
+</section>
+
+<section id="c">
+  <div class="sec-head"><div class="sec-mark">C</div><h2 class="sec-title">iPayMoney payment API — the documented facts</h2></div>
+
+  <p>Two endpoints exist in the entire document. There are no others, and no other HTTP method appears anywhere.</p>
+
+  <h3>Create a payment · <span class="mono">POST https://i-pay.money/api/v1/payments</span> <span class="chip yes">documented</span></h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Header</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">Ipay-Payment-Type</td><td class="mono">mobile · card</td></tr>
+      <tr><td class="mono">Ipay-Target-Environment</td><td class="mono">sandbox · live</td></tr>
+      <tr><td class="mono">Authorization</td><td class="mono">Bearer &lt;secret key&gt;</td></tr>
+      <tr><td class="mono">Content-Type</td><td class="mono">application/json</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Body field</th><th>Type</th><th>Documented as</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">customer_name</td><td class="mono">string</td><td>the customer's name</td></tr>
+      <tr><td class="mono">currency</td><td class="mono">string</td><td><b>XOF</b></td></tr>
+      <tr><td class="mono">country</td><td class="mono">string</td><td>country code — <b>NE</b> for Niger, BJ for Benin</td></tr>
+      <tr><td class="mono">amount</td><td class="mono"><b>string</b></td><td>"must be greater than 100"</td></tr>
+      <tr><td class="mono">transaction_id</td><td class="mono">string</td><td>a reference for the transaction we want performed</td></tr>
+      <tr><td class="mono">msisdn</td><td class="mono">string</td><td>the payer's number</td></tr>
+    </tbody>
+  </table></div>
+
+<pre><code><span class="cm">200 — success (L179–L185)</span>
+{ "status": "succeeded", "reference": "vslfxgawkpkm" }</code></pre>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Status</th><th>Documented message</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">400</td><td>Incorrect MSISDN · Missing params · Not Allowed Environment · Not Allowed Payment Type · Missing Authentication Key</td></tr>
+      <tr><td class="mono">401</td><td><code>Unauthorized: No Valid Key</code></td></tr>
+      <tr><td class="mono">403</td><td><code>Forbidden: Environment Not Available</code></td></tr>
+      <tr><td class="mono">406</td><td><code>Not Acceptable: Invalid Content Type</code></td></tr>
+      <tr><td class="mono">422</td><td><code>External Reference Not Valid</code> — <b>reference invalid, or already exists</b></td></tr>
+    </tbody>
+  </table></div>
+
+  <p><b>No 5xx is documented anywhere</b>, and no meaning is given for one. That matters directly: our classifier only produces <code>failed</code> from a documented provider statement that nothing was executed, and no such statement exists for a server error.</p>
+
+  <h3>Query a payment · <span class="mono">GET https://i-pay.money/api/v1/payments/{reference}</span> <span class="chip yes">documented</span></h3>
+
+  <p>The path parameter is <i>"la référence que vous avez reçu en réponse lors du Post"</i> — <b>iPayMoney's reference, not ours.</b></p>
+
+<pre><code><span class="cm">200 (L241–L249)</span>
+{
+  "external_reference": "Reference-13409",
+  "reference": "vslfxgawkpkm",
+  "status": "failed",
+  "msisdn": "22787505050"
+}</code></pre>
+
+  <div class="note key">
+    <span class="n-label">A design decision this documentation validates</span>
+    <p style="margin-bottom:0">The <code>POST</code> returns <code>"status": "succeeded"</code> <b>synchronously</b>, and iPayMoney <em>also</em> sends a webhook for the same fact. Phase 2 deliberately clamps a provider's synchronous answer to <code>pending</code> and confirms nothing until a verified event arrives. That was written against a mock, on the argument that a synchronous answer travels on a connection the caller may control. The real provider turns out to behave exactly the way that argument assumed — the boundary was built for the right shape.</p>
+  </div>
+
+  <h3>Fees <span class="chip yes">documented</span></h3>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><th style="width:290px">Mobile-money collection</th><td><b>3 %</b> of the amount, taken at collection</td></tr>
+      <tr><th>Visa / Mastercard</th><td><b>3 %</b> of the purchase</td></tr>
+      <tr><th>Reversement to mobile money, inside Niger</th><td>no fee</td></tr>
+      <tr><th>Reversement to a bank account</th><td><b>7 000 FCFA flat</b>, whatever the amount</td></tr>
+      <tr><th>Reversement threshold</th><td>≥ <b>50 000 FCFA</b>, and the funds must have sat on the merchant account more than <b>3 days</b></td></tr>
+    </tbody>
+  </table></div>
+  <p>The 3 % is charged on the way in. <b>It is not stated anywhere whether it is returned if a payment is refunded</b> — which is question K11, and it decides whether a full refund costs Afrinext 3 % of the order.</p>
+</section>
+
+<section id="d">
+  <div class="sec-head"><div class="sec-mark">D</div><h2 class="sec-title">Webhook facts — including one that is a security finding</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Fact</th><th>Documented</th></tr></thead>
+    <tbody>
+      <tr><td>Configured per-URL in the dashboard, under Développeurs → Webhooks</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td><b>Exactly two event types exist: success and failure</b></td><td><span class="chip yes">yes</span> — stated positively, L321</td></tr>
+      <tr><td>Our endpoint must answer <code>2xx</code>; anything else, 3xx included, counts as not received</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td><b>Retries 5 times</b> on non-receipt, 500 ms apart and increasing</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>Payload fields: <code>external_reference</code>, <code>reference</code>, <code>status</code>, <code>msisdn</code></td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>Amount in the payload</td><td><span class="chip no">absent</span></td></tr>
+      <tr><td>Event id in the payload</td><td><span class="chip no">absent</span></td></tr>
+      <tr><td>Timestamp / tolerance window</td><td><span class="chip no">absent</span></td></tr>
+    </tbody>
+  </table></div>
+
+<pre><code><span class="cm">success payload (L359–L368)</span>
+{ "data": { "external_reference": "random-38",
+            "reference": "yeweyk6rd7cm",
+            "status": "succeeded",
+            "msisdn": "40410000001" } }</code></pre>
+
+  <h3>The signature, and why it is a finding</h3>
+
+  <p>The prose and the example <b>disagree</b>, and both readings are worse than what our boundary is built to verify.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Source</th><th>Says</th></tr></thead>
+    <tbody>
+      <tr><td>Prose (L332)</td><td>"Il est introduit dans l'en-tête de chaque requête <code>x-iPayMoney-secret</code> une signature"</td></tr>
+      <tr><td>Example (L338)</td><td><code>"secret-hash": "sk_58951rhguiq859905dfn5903gh"</code></td></tr>
+      <tr><td>Setup instructions</td><td>"Remplissez votre <i>Secret Hash</i>. <b>C'est votre clé API secrète</b>" — copy it from the API Keys page</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note block">
+    <span class="n-label">What this appears to mean, and why it must be asked</span>
+    <p>The header name differs between prose and example. More seriously, the example's value is the <b>secret key itself</b> (<code>sk_…</code>), and the setup text says the Secret Hash <em>is</em> the API secret. If that is what it means, then this is a <b>static shared secret echoed in a header — not a signature over the request body.</b></p>
+    <p>Two consequences follow, and neither is theoretical:</p>
+    <ul>
+      <li><b>The check does not cover the payload.</b> Anyone holding the secret can forge any event body. A signature over the raw bytes cannot be forged without also producing a matching digest; a constant header can.</li>
+      <li><b>The secret is transmitted on every single webhook</b>, to our endpoint, five times over on retry — so it appears in any proxy log, any error report, any request dump.</li>
+    </ul>
+    <p style="margin-bottom:0">Afrinext's webhook boundary verifies a signature over the raw bytes before parsing, and that property is load-bearing: it is why a forged amount cannot confirm a payment. <b>Combined with finding F1 — no amount anywhere — a forged event would face no amount check either.</b> This is question K1, and it should be asked before any webhook is trusted with money.</p>
+  </div>
+</section>
+
+<section id="e">
+  <div class="sec-head"><div class="sec-mark">E</div><h2 class="sec-title">Refund facts — fifteen questions, answered from the document only</h2></div>
+
+  <p>Every answer below was read out of the supplied documentation. <b>None is inferred</b>, and none is filled in from another provider's conventions.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Question</th><th>Answer</th><th>Basis</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">R1</td><td>Endpoint to refund a customer payment</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">Two endpoints exist in the whole document; both are <code>/api/v1/payments</code></td></tr>
+      <tr><td class="mono">R2</td><td>HTTP method for creating a refund</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">Only <code>POST</code> and <code>GET</code> appear anywhere, both on payments</td></tr>
+      <tr><td class="mono">R3</td><td>Required refund request body</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">—</td></tr>
+      <tr><td class="mono">R4</td><td>Which identifier a refund uses</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">No refund operation exists to take one</td></tr>
+      <tr><td class="mono">R5</td><td>Refund response and refund reference</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">—</td></tr>
+      <tr><td class="mono">R6</td><td>Refund status endpoint</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">The documented <code>GET</code> is a <b>payment</b> status endpoint and is not one</td></tr>
+      <tr><td class="mono">R7</td><td>Refund webhook</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">Stronger than silence: the document states that <b>only two event types exist</b>, success and failure on a transaction</td></tr>
+      <tr><td class="mono">R8</td><td>Refund idempotency mechanism</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">—</td></tr>
+      <tr><td class="mono">R9</td><td>Querying a refund by refund ref · payment ref · external_reference · our key</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">—</td></tr>
+      <tr><td class="mono">R10</td><td>Behaviour on refund success · rejection · timeout · network failure · 5xx · duplicate</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">For <i>payments</i> only 400/401/403/406/422 are documented. <b>No timeout, connection-failure, 5xx or duplicate semantics are documented anywhere in the document</b>, for any operation</td></tr>
+      <tr><td class="mono">R11</td><td>Sandbox refund support</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">The sandbox table lists payment scenarios only</td></tr>
+      <tr><td class="mono">R12</td><td>Mobile Money refund support</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">Mobile money is documented as a <i>collection</i> channel</td></tr>
+      <tr><td class="mono">R13</td><td>Visa / Mastercard refund support</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">Cards are documented as a <i>collection</i> channel</td></tr>
+      <tr><td class="mono">R14</td><td>Refund processing time</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">—</td></tr>
+      <tr><td class="mono">R15</td><td>Refund fees</td><td><span class="chip no">NOT DOCUMENTED</span></td><td class="q">The fees section covers purchase fees and reversement fees only</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The one adjacent thing in the document, which is not a refund</h3>
+  <p style="margin-left:18px;border-left:2px solid var(--rule-strong);padding-left:14px"><i>« le marchand peut être amené à mettre fin à <b>une opération en cours</b>. Cela peut se faire à travers le menu Paiements. »</i> — L304</p>
+  <p>A merchant may end an operation <b>in progress</b>, from the <b>dashboard menu</b>. It has no API, no method, no request or response schema, no identifier, and no stated financial effect. What it actually does is <span class="chip hold">UNCLEAR</span>, and it is <b>not</b> a refund of a completed payment. It is recorded here so nobody later mistakes it for one.</p>
+
+  <div class="note block">
+    <span class="n-label">Conclusion of the refund investigation</span>
+    <p style="margin-bottom:0"><b>The supplied documentation contains no customer-refund operation of any kind.</b> Not an endpoint, not a method, not a payload, not a status, not a webhook, not a sandbox scenario, not a fee, not a processing time.</p>
+  </div>
+
+  <div class="note good">
+    <span class="n-label">Two things this report refuses to do</span>
+    <p style="margin-bottom:0">The documented <code>GET /api/v1/payments/{reference}</code> is <b>not</b> presented anywhere in this report as a refund-status endpoint, and the documented <b>reversement</b> is <b>not</b> presented anywhere as customer-refund functionality. Both would have been easy and both would have been false.</p>
+  </div>
+</section>
+
+<section id="f">
+  <div class="sec-head"><div class="sec-mark">F</div><h2 class="sec-title">Unknowns — what must be confirmed by iPayMoney support</h2></div>
+
+  <p>These are gaps in the <em>payment</em> documentation, found by checking it against our provider contract rather than by reading it on its own.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Unknown</th><th>Consequence</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">F1</td><td><b>No amount in the webhook, and none in the payment-status response</b></td><td>Our webhook boundary cross-checks the amount exactly when the event carries one. iPayMoney carries none in <b>either</b> channel, so the check can never run and <b>the charged amount is not independently verifiable from the provider at all</b></td></tr>
+      <tr><td class="mono">F2</td><td><b>No event id in the webhook</b></td><td>Our replay defence is <code>UNIQUE (provider, provider_event_id)</code>. With no id and five guaranteed retries, duplicates are certain; the adapter must derive an id</td></tr>
+      <tr><td class="mono">F3</td><td><b>No lookup by our own identifier</b></td><td><code>GET</code> takes iPayMoney's <code>reference</code>. If the <code>POST</code> response is lost we hold no reference and there is no documented way to ask "what became of my <code>transaction_id</code>?" — the payment equivalent of the refund problem below</td></tr>
+      <tr><td class="mono">F4</td><td><code>transaction_id</code> vs <code>external_reference</code></td><td>We send one name and receive another. The dashboard section additionally says the external reference is "générée de façon automatique", which contradicts us supplying it</td></tr>
+      <tr><td class="mono">F5</td><td><b>The complete status enumeration</b></td><td>Only <code>succeeded</code> and <code>failed</code> appear in examples. The sandbox names five <i>scenarios</i>, which are not status values. Reconciliation cannot be written against a partial enum</td></tr>
+      <tr><td class="mono">F6</td><td><b>Webhook header name and signature scheme</b></td><td>Prose says <code>x-iPayMoney-secret</code>; the example shows <code>secret-hash</code> carrying the secret itself. See §D — this is the security finding</td></tr>
+      <tr><td class="mono">F7</td><td>Amount units</td><td><code>amount</code> is a string that must exceed 100. XOF has zero decimals so whole francs is the only sensible reading, but the document does not say it. A wrong assumption here is a 100× error</td></tr>
+      <tr><td class="mono">F8</td><td><b>No 5xx semantics</b></td><td>Nothing says what a 5xx means for the transaction — which is exactly the case our classifier is built to treat as unknown, and which the documentation therefore cannot resolve</td></tr>
+      <tr><td class="mono">F9</td><td>Rate limits</td><td>Not documented for either endpoint</td></tr>
+      <tr><td class="mono">F10</td><td>Settlement timing to the merchant account</td><td>Reversement frequency is configurable, but the T+N at which a collected payment becomes part of the available balance is not stated. This is a <b>Settlement</b> input</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="g">
+  <div class="sec-head"><div class="sec-mark">G</div><h2 class="sec-title">Sandbox — what could be tested in a future milestone</h2></div>
+
+  <div class="note">
+    <span class="n-label">Stated before anything else</span>
+    <p style="margin-bottom:0"><b>No sandbox call has been made from this repository, ever.</b> Everything below is what the documentation says is available, not what has been observed. The three skipped integration tests remain skipped because no credentials exist here.</p>
+  </div>
+
+  <p>The documented test MSISDNs, verbatim:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>MSISDN</th><th>Scenario</th><th>What it would exercise in our boundary</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">40410000000 · 40410000001</td><td class="mono">success</td><td>The whole confirmation path: charge → webhook → <code>paid</code> → entitlement → frozen fee schedule</td></tr>
+      <tr><td class="mono">40410000002 · 40410000003</td><td class="mono">error</td><td>A provider-side error, and how it is classified</td></tr>
+      <tr><td class="mono">40410000004 · 40410000005</td><td class="mono">insufficient_fund</td><td>A definite business rejection — the shape that <i>could</i> carry not-executed evidence</td></tr>
+      <tr><td class="mono">40410000006 · 40410000007</td><td class="mono">declined</td><td>A second definite rejection, distinct from the first</td></tr>
+      <tr><td class="mono">40410000008 · 40410000009</td><td class="mono">pending (180 s)</td><td><b>The most valuable one.</b> Three minutes of genuine in-flight state — the late-payment grace window, the expiry race, and the webhook arriving after our timer, against a real provider rather than a mock</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>What a sandbox milestone could establish, and what it could not</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Could be established by sandbox testing</th><th>Could NOT be</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>
+          <ul style="margin:0">
+            <li>The real status enumeration (F5) — by observing all five scenarios</li>
+            <li>The actual webhook header name and whether the value varies with the body (F6)</li>
+            <li>Whether the amount is echoed anywhere after all (F1)</li>
+            <li>Whether a duplicate <code>transaction_id</code> really 422s (F3, F4)</li>
+            <li>Whether whole francs is right (F7) — by charging 100 and reading the dashboard</li>
+            <li>Retry behaviour: return 500 deliberately and count the deliveries</li>
+          </ul>
+        </td>
+        <td>
+          <ul style="margin:0">
+            <li><b>Anything about refunds.</b> There is no refund operation to call, so no sandbox scenario can exercise one</li>
+            <li>5xx semantics (F8) — a sandbox will not produce a server error on demand</li>
+            <li>Settlement timing (F10) — sandbox money does not settle</li>
+            <li>Live-mode behaviour of any kind</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="h">
+  <div class="sec-head"><div class="sec-mark">H</div><h2 class="sec-title">Live activation — the documented requirements</h2></div>
+
+  <p>Recorded because they are a lead time, not a task. <b>Nothing has been implemented or prepared against them.</b> Until the submission is approved, the account is <b>sandbox only</b>.</p>
+
+  <p>Enable Live in the dashboard, then submit under <b>Paramètres → Information Légale</b>:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Information to enter</th><th>Documents to upload</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>
+          <ul style="margin:0">
+            <li>Nom de l'entreprise</li>
+            <li>Numéro de téléphone</li>
+            <li>Adresse du siège social</li>
+            <li>Secteur d'activité</li>
+            <li>Site web / Application</li>
+            <li>Numéro : ID card / passeport</li>
+            <li>N° du registre de commerce</li>
+            <li>Numéro IFU/NIF (numéro fiscal)</li>
+          </ul>
+        </td>
+        <td>
+          <ul style="margin:0">
+            <li><b>RCCM</b></li>
+            <li><b>IFU/NIF</b> (numéro fiscal)</li>
+            <li><b>Pièce d'identité</b></li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <p>Save, then submit. The answer arrives <b>by email after examination</b> — the document gives no service-level for that review, so the wait is an unknown that should be started early rather than discovered late.</p>
+
+  <div class="note key">
+    <span class="n-label">Two of these are worth noticing now</span>
+    <p style="margin-bottom:0"><b>"Site web / Application"</b> is required, which means iPayMoney will look at Afrinext before approving. And <b>AFRI NEXT TECHNOLOGIE is an Entreprise Individuelle</b> — whether that changes which documents are wanted, and whose <i>pièce d'identité</i>, is worth confirming before the submission rather than after a rejection.</p>
+  </div>
+</section>
+
+<section id="i">
+  <div class="sec-head"><div class="sec-mark">I</div><h2 class="sec-title">What this means operationally — and whether the design still holds</h2></div>
+
+  <p>You asked specifically whether the existing Phase 3 design <b>safely handles unknown refund capabilities</b>. It does, and the reason is structural rather than lucky.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Design decision</th><th>Made when refunds were an unknown</th><th>Against the real documentation</th></tr></thead>
+    <tbody>
+      <tr><td><code>getRefund()</code> is <b>optional</b> on the interface, and callers branch on <code>supportsRefundQuery()</code></td><td>To avoid asserting a capability we could not confirm</td><td><span class="chip yes">correct</span> — there is no refund query, so the false branch is the real one</td></tr>
+      <tr><td>An <code>in_doubt</code> refund is <b>never retried</b>, only resolved</td><td>Because a timeout is not evidence</td><td><span class="chip yes">correct</span> — and now load-bearing, because no mechanical resolution exists at all</td></tr>
+      <tr><td><b>Manual reconciliation</b> exists as a first-class path, with dual control and an external reference</td><td>As the fallback for a provider that cannot be asked</td><td><span class="chip yes">correct</span> — it is not the fallback. <b>It is the only path.</b></td></tr>
+      <tr><td>The refund's <code>provider</code>, amount and currency are frozen by a trigger</td><td>To keep a snapshot honest</td><td><span class="chip yes">correct</span> — and more valuable now, since the provider corroborates no amount anywhere</td></tr>
+      <tr><td>Refunds post <b>nothing to the ledger</b></td><td>Because Phase 2 posts no capture</td><td><span class="chip yes">correct</span> — and now also avoids booking a reversal for an operation that has no provider mechanism</td></tr>
+      <tr><td><code>refund()</code> and <code>getRefund()</code> on the iPayMoney adapter <b>throw</b></td><td>Because nothing was known</td><td><span class="chip yes">correct</span> — and must keep throwing, because nothing is known <i>still</i></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note block">
+    <span class="n-label">The operational consequence, stated plainly</span>
+    <p>The Phase 3 design named a scenario as its worst case: <i>"if both R3 and R4 are no, every timed-out refund becomes a human reading a statement."</i></p>
+    <p><b>The documentation is worse than that scenario.</b> It is not that ambiguous refunds need a person — it is that <b>every refund needs a person, from the very first one</b>, because there is no API to attempt one through. Afrinext currently has <b>no automated way to return money to a buyer</b> through iPayMoney.</p>
+    <p style="margin-bottom:0">The machinery built in Phase 3 is not wasted by this — the debt is still recorded automatically and inside the confirming transaction, the queue is still age-sorted, the evidence requirements and dual control still apply, and reconciliation still reports a debt nobody paid. What changes is which path carries the volume: <b>manual reconciliation is not the exception, it is the process.</b></p>
+  </div>
+
+  <h3>What that costs, concretely</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Question</th><th>Answer today</th></tr></thead>
+    <tbody>
+      <tr><td>How does a buyer's money actually get back to them?</td><td><b>Unknown.</b> Not through any documented API. Possibly a merchant-initiated mobile-money transfer outside iPayMoney, possibly an iPayMoney operation that exists but is undocumented — question K5</td></tr>
+      <tr><td>How many people does it take?</td><td>Two, wherever two hold <code>refund.reconcile_manual</code>. Afrinext has one finance user today, so the system records <code>single_operator</code> and reconciliation flags it every run</td></tr>
+      <tr><td>How does it scale?</td><td>It does not. It is linear in refunds, and refunds are linear in late payments — which are linear in how unreliable mobile-money confirmation is in Niger</td></tr>
+      <tr><td>Is the 3 % collection fee returned on a refund?</td><td><b>Not documented</b> — question K11. If not, a full refund costs Afrinext 3 % of the order out of its own funds</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="j">
+  <div class="sec-head"><div class="sec-mark">J</div><h2 class="sec-title">Settlement blockers</h2></div>
+
+  <div class="note key">
+    <span class="n-label">Settlement is not started, and this report does not start it</span>
+    <p style="margin-bottom:0">Nothing in this gate touched <code>ledger/flows.ts</code>, <code>ledger/post.ts</code>, settlement holds or payout logic. What follows is a list of what would block Settlement if it were authorised, so that the list exists before the work does.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Blocker</th><th>Why Settlement cannot proceed past it</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">S1</td><td><b>Phase 3 has not been approved</b></td><td>The standing rule: Settlement waits on this gate</td></tr>
+      <tr><td class="mono">S2</td><td><b>Settlement timing (T+N) is undocumented</b> — F10</td><td>Settlement decides when a collected payment becomes a seller's claim. Posting that before Afrinext actually holds the funds is a promise the balance cannot keep, which is the exact thing Phase 2 refused to do</td></tr>
+      <tr><td class="mono">S3</td><td><b>The amount is not verifiable from the provider</b> — F1</td><td>The ledger's first commandment is that the books are the truth. Booking a capture against an amount no provider will confirm makes the ledger authoritative about a number only we assert</td></tr>
+      <tr><td class="mono">S4</td><td><b>The 3 % fee's treatment on refund is unknown</b> — K11</td><td>Settlement must post the provider's fee somewhere. If a refund does not return it, the reversal is not the mirror of the capture and the accounts must say so</td></tr>
+      <tr><td class="mono">S5</td><td><b>There is no refund execution to reverse</b></td><td>Settlement was to post a capture and its reversal. The reversal half has no provider mechanism, so a refunded sale's ledger treatment depends on how money actually leaves — which is K5</td></tr>
+      <tr><td class="mono">S6</td><td><b>No real payment has ever been made</b></td><td>Every capture in every test came from the mock. Settlement posting real money against a path never exercised against the real provider is the largest untested step the platform would have taken</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><b>S2, S3, S4 and S5 are all answered by iPayMoney, not by us.</b> That is the case for asking before building.</p>
+</section>
+
+<section id="k">
+  <div class="sec-head"><div class="sec-mark">K</div><h2 class="sec-title">The exact questions to send iPayMoney</h2></div>
+
+  <p>Ordered by what they block. The first five decide whether Afrinext can refund a buyer at all; the rest decide whether the payment integration is safe and what Settlement can assume.</p>
+
+  <h3>Refunds — these block a buyer getting their money back</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Question</th><th>Blocks</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">K1</td><td><b>Is there any API to refund a customer payment</b>, in whole or in part? If yes: endpoint, method, request body, response, and which identifier it takes. If no, please say so explicitly.</td><td>Everything below</td></tr>
+      <tr><td class="mono">K2</td><td>If a refund API exists, <b>can its status be queried afterwards</b>, and by which identifier — the refund's reference, the original payment's <code>reference</code>, our <code>transaction_id</code>, or an idempotency key we supply?</td><td>Whether an ambiguous refund can ever be resolved mechanically</td></tr>
+      <tr><td class="mono">K3</td><td>If a refund API exists, <b>does it accept an idempotency key</b> from us, and does a repeat of the same key return the original outcome rather than creating a second refund?</td><td>Whether a lost response can be retried safely</td></tr>
+      <tr><td class="mono">K4</td><td>If a refund API exists, <b>which error codes mean, in your words, that no refund was created?</b> We treat any failure we cannot prove as unknown, and never retry an unknown.</td><td>Whether a rejection is retryable or becomes manual</td></tr>
+      <tr><td class="mono">K5</td><td><b>If there is no refund API: what is the correct way for a merchant to return money to a buyer?</b> A dashboard operation, a support request, or a transfer outside iPayMoney? And is it visible in the API or reports afterwards, so we can reconcile it?</td><td><b>Whether Afrinext can refund at all</b></td></tr>
+      <tr><td class="mono">K6</td><td>Are refunds possible on <b>both</b> mobile money and Visa/Mastercard, and is there a <b>time limit</b> after the original payment?</td><td>Whether an old <code>refund_due</code> is refundable</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Security and correctness of the payment integration</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Question</th><th>Blocks</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">K7</td><td><b>Exactly how is a webhook authenticated?</b> The documentation names the header <code>x-iPayMoney-secret</code> in prose but shows <code>secret-hash</code> in the example, carrying what appears to be the secret key itself. Is it (a) the static secret echoed in a header, or (b) an HMAC computed over the request body? <b>If (a), is a body signature available?</b> A constant header does not protect the payload.</td><td>Whether a webhook can be trusted with money</td></tr>
+      <tr><td class="mono">K8</td><td><b>Is the amount available anywhere</b> — in the webhook payload or the payment-status response? Neither carries one today, so we cannot verify that the amount charged is the amount we requested.</td><td>The amount cross-check</td></tr>
+      <tr><td class="mono">K9</td><td><b>Do webhooks carry a unique event id?</b> You retry five times, so we will receive duplicates; without an id we must derive one to deduplicate safely.</td><td>Replay protection</td></tr>
+      <tr><td class="mono">K10</td><td><b>Can a payment be looked up by our <code>transaction_id</code></b> rather than your <code>reference</code>? If a POST response is lost we hold no reference and cannot ask what happened.</td><td>Recovering a lost charge</td></tr>
+      <tr><td class="mono">K11</td><td><b>Is the 3 % collection fee returned when a payment is refunded or reversed?</b></td><td>Whether a refund costs Afrinext 3 %</td></tr>
+      <tr><td class="mono">K12</td><td><b>What is the complete list of <code>status</code> values</b> a payment can take? We have seen <code>succeeded</code> and <code>failed</code>; the sandbox names scenarios rather than statuses.</td><td>Reconciliation against a full enum</td></tr>
+      <tr><td class="mono">K13</td><td><b>Is <code>amount</code> in whole francs?</b> XOF has no decimal places; we want this confirmed rather than assumed, because the wrong reading is a 100× error.</td><td>Every amount we ever send</td></tr>
+      <tr><td class="mono">K14</td><td><b>What does a 5xx from your API mean</b> for the transaction — that it was not created, or that its outcome is undetermined? And are there rate limits on either endpoint?</td><td>How we classify a server error</td></tr>
+      <tr><td class="mono">K15</td><td><b>After how long (T+N) does a collected payment become part of the available balance</b> eligible for reversement?</td><td>Settlement</td></tr>
+      <tr><td class="mono">K16</td><td>For an <b>Entreprise Individuelle</b>, which Live-mode documents apply, and whose <i>pièce d'identité</i>?</td><td>Live activation</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">K1 and K5 are the two that matter most</span>
+    <p style="margin-bottom:0">Everything else is an integration detail that changes how carefully we write an adapter. <b>K1 and K5 decide whether a buyer whose payment arrived too late can be given their money back by any means at all</b> — and Afrinext already has the machinery to owe that money, record it, and refuse to lose track of it. What it does not have is a way to send it.</p>
+  </div>
+</section>
+
+<section id="l">
+  <div class="sec-head"><div class="sec-mark">L</div><h2 class="sec-title">Recommended next milestone</h2></div>
+
+  <div class="note block">
+    <span class="n-label">Not Settlement</span>
+    <p style="margin-bottom:0">Settlement is blocked by six things (§J), four of which only iPayMoney can answer. Starting it now would mean writing ledger postings against assumptions about settlement timing, fee treatment and amount verification that the documentation does not support.</p>
+  </div>
+
+  <h3>Recommended: send the questions, then integrate payments against the sandbox</h3>
+
+  <p>In that order, and the first step costs nothing but an email.</p>
+
+  <ol class="steps">
+    <li><b>Send K1–K16 to <span class="mono">support@i-pay.money</span></b>
+      <p>K1 and K5 first. Until they are answered, no amount of code changes the fact that there is no documented way to refund a buyer. This is not a development task and it should not wait for one.</p></li>
+    <li><b>iPayMoney payment integration, sandbox only</b>
+      <p>Implement <code>createCharge</code>, <code>getCharge</code> and <code>verifyWebhook</code> against the two documented endpoints, and drive all five sandbox scenarios — especially the 180-second <code>pending</code>, which exercises the late-payment grace window against a real provider instead of a mock. <code>refund()</code> and <code>getRefund()</code> keep throwing, because nothing has changed about them.</p>
+      <p>Two contract questions must be decided deliberately in that milestone, not silently: how a <code>providerEventId</code> is derived when the provider sends none, and what <code>getCharge()</code> does about an amount the provider will not state. Both are in §B.</p></li>
+    <li><b>Start the Live activation submission in parallel</b>
+      <p>It is a queue with an unknown wait, not a task. Beginning it during the sandbox milestone costs nothing and may save weeks.</p></li>
+    <li><b>Then Settlement</b>
+      <p>With T+N confirmed, fee treatment confirmed, and at least one real payment observed end to end.</p></li>
+  </ol>
+
+  <h3>Two smaller corrections owed</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>Why it was not done in this gate</th></tr></thead>
+    <tbody>
+      <tr><td>The header comment in <code>payments/ipaymoney.ts</code> still says the documentation is unavailable. <b>It is now false.</b></td><td>Correcting it means editing an implementation file during a gate instructed not to. First item of the next milestone</td></tr>
+      <tr><td>The step-up re-verification screen still does not exist</td><td>Elevation is enforced and its refusal is proven in a browser, but a finance user can only obtain elevation through the database. Unchanged since the implementation packet</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr class="soft">
+
+  <div class="note good">
+    <span class="n-label">Gate summary</span>
+    <p><b>CI green at <span class="mono">3fe233d</span>.</b> Phase 3 code unchanged and re-verified. The provider abstraction fits the documented payment API in four of six mappings, with two mismatches reported and not fixed. <b>iPayMoney documents no customer refund of any kind</b>, and the Phase 3 design handles that correctly because it never assumed otherwise.</p>
+    <p style="margin-bottom:0"><b>Nothing merged. Settlement not started. No iPayMoney code written. No sandbox call made.</b></p>
+  </div>
+
+  <p style="color:var(--ink-2)">Phase&nbsp;3 · final gate report · branch <span class="mono">claude/create-app-repository-1cxsih</span> · code state <span class="mono">3fe233d</span> · documentation <span class="mono">docs/providers/ipaymoney/</span></p>
+</section>
+
+</div>

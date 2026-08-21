@@ -1,109 +1,249 @@
-# iPayMoney integration — what is missing
+# iPayMoney — what the documentation says, and what it does not
 
-**Status: NOT IMPLEMENTED.** The adapter at
-`packages/core/src/payments/ipaymoney.ts` is a boundary. Every method throws
-`ProviderNotConfiguredError`. Nothing about the iPayMoney API has been verified.
+**Status: the official documentation is now IN this repository.**
+`Documentation-de-iPayMoney.docx` is authoritative;
+`documentation-extract.md` is a verbatim text extract of it so claims can be
+checked against a line number. Every line reference below (`L161`) points into
+that extract.
 
-## Why it is not implemented
+**The adapter is still non-operational and every method still throws.** That is
+no longer because the documentation is missing — it is because implementing it
+is a milestone that has not been authorised, and because the facts below leave
+questions that must be answered by iPayMoney before money moves.
 
-iPayMoney is the confirmed initial payment provider and Afrinext holds a
-merchant account. However:
+Supplied by the operator of AFRI NEXT TECHNOLOGIE on 2026-08-21.
 
-- the official API documentation is **not in this repository**; and
-- the provider's domain is **not reachable from the build environment** —
-  outbound egress to it is blocked by the network policy.
+---
 
-So no endpoint, authentication scheme, payload, status value or webhook
-signature has been confirmed. A stub returning plausible-looking data would let
-the rest of the system appear to work and then fail in production, on money.
-Throwing is the honest behaviour.
+## The distinction this document exists to protect
 
-Capabilities reported by the business — Mobile Money, credit cards, local and
-international cards, a JavaScript SDK and an Android SDK — are recorded here as
-**stated, pending confirmation**. No code treats them as facts.
+The documentation uses **"remboursement"** for something that is **not a
+customer refund**, and getting that wrong would build the wrong thing:
 
-## What to put in this folder
+> « Vous pouvez à tout moment demander depuis votre tableau de bord le
+> **remboursement de vos avoirs**. Cela s'appelle un **reversement**. » — L97
 
-Any form is fine: PDF, exported HTML, an OpenAPI/Swagger file, or a Postman
-collection. Once the documentation is here, the adapter can be written against
-verified facts.
+*Your* holdings, to *your* account. That is a **merchant withdrawal**. It is
+configured from the dashboard, it pays out to the merchant's own mobile money
+or bank account, it has a 50 000 FCFA floor and a three-day holding rule
+(L297), and it has nothing to do with returning money to a buyer.
 
-## What the adapter needs before it can be written
+Every one of the 30 occurrences of *remboursement* / *reversement* in the
+document is in that sense. There is no other.
 
-| # | Required | Why it blocks |
-| - | -------- | ------------- |
-| 1 | Base URLs, sandbox and production | Nothing can be called |
-| 2 | Authentication scheme (API key / HMAC / OAuth) and where credentials go in a request | Secret storage and rotation design |
-| 3 | Charge initiation request and response schema; supported channels per country | The checkout data model |
-| 4 | Flow type: hosted redirect, inline widget, JS SDK, or USSD push | Changes the checkout interface, not just the backend |
-| 5 | Status query endpoint and the **complete** status enumeration | Reconciliation cannot be written against a partial enum |
-| 6 | Webhooks: registration, payload schema, signature algorithm and header name, timestamp tolerance, retry policy | Money enters the ledger on a verified webhook; with no signature scheme there is no safe way to accept one |
-| 7 | Currency handling — specifically **whether XOF amounts are sent as whole francs** | XOF has zero decimal places; a wrong assumption is a 100× error |
-| 8 | Whether a payout / disbursement API exists, and its settlement timing | Decides whether payouts are automated or an operational process |
-| 9 | Refund API and its constraints (partial refunds, time limits) | The refund reversal path in the ledger |
-| 10 | Idempotency support on charge creation, and rate limits | Retry safety |
-| 11 | Settlement schedule to the merchant account (T+N) and fee structure | Hold windows and platform margin |
-| 12 | Sandbox credentials and test numbers or accounts per channel | Nothing can be tested without them |
-| 13 | JavaScript and Android SDK documentation, if the SDK route is used | Changes the client integration entirely |
+Three things that must never be conflated:
 
-Items **6, 7 and 8** most often invalidate an assumed design. If only part is
-available now, send 1–6 and the adapter can begin.
+| | What it is | In the documentation |
+|---|---|---|
+| **Payment status** | Did the buyer's charge succeed? | `GET /api/v1/payments/{reference}` (L228) |
+| **Reversement** | The merchant withdrawing their own balance | Dashboard only, no API (L96–L119, L281–L301) |
+| **Customer refund** | Returning a buyer's money | **Absent** |
 
-## Refunds — what Phase 3 still needs, and which answers change the design
+---
 
-Phase 3 built refund execution against the provider interface, not against
-iPayMoney. The adapter still throws. These are the facts that would let it stop
-throwing, and two of them are **design-changing** rather than parametric.
+## Payment API — DOCUMENTED
 
-| # | Required for refunds | Why it blocks | Design-changing? |
-| - | -------------------- | ------------- | ---------------- |
-| R1 | The refund endpoint: request schema, response schema, and the **complete** status enumeration | Nothing can be sent | No |
-| R2 | Which error codes mean, in the provider's own words, **"no refund was created"** | A `failed` without that evidence is treated as `in_doubt` and never retried. With no documented list, every provider rejection becomes a manual reconciliation | No — but expensive if absent |
-| R3 | **Whether a refund status query exists**, and what it can be queried by | This is the only mechanical way an unknown outcome is ever resolved. Without it, every timed-out refund waits for a person reading a statement | **YES** |
-| R4 | **Whether refunds accept a caller idempotency key**, and whether a refund can be looked up by that key afterwards | After a timeout we hold no provider refund reference — our key is the only handle we have. Without lookup-by-key, R3 cannot resolve the exact case that most needs resolving | **YES** |
-| R5 | Whether refund webhooks exist; payload, signature algorithm, header name | Decides whether an unknown can resolve itself without polling | No |
-| R6 | Whether a refund webhook names the charge it reverses | Our webhook matcher uses the charge as the thread back when no refund reference is held | No |
-| R7 | Time limits on refunding a charge, and what happens past them | Decides whether an old `refund_due` is refundable at all or is a manual credit | No |
-| R8 | Whether partial refunds are supported | Phase 3 is full-amount only by decision; this decides whether that stays a decision or becomes a constraint | No |
-| R9 | Whether a refund can fail *after* being accepted, and how that is signalled | Decides whether a `pending` refund needs its own resolution path | No |
-| R10 | Sandbox behaviour for refunds: how to force a rejection, a timeout, and a duplicate | Nothing about refunds can be tested against the real provider without these | No |
+### Create a payment
 
-**R3 and R4 are the ones to ask about first.** If both answers are "no", the
-operational consequence is concrete and must be told to whoever staffs finance
-before launch, not discovered on the first timeout: **every refund whose request
-does not come back becomes a human reading an iPayMoney statement and
-reconciling it under dual control.** The code already supports that path — it is
-not a gap — but it is a staffing cost, and it scales with transaction volume.
+`POST https://i-pay.money/api/v1/payments` (L161)
 
-### What the adapter does today
+Headers (L162–L168):
 
-`refund()` throws, as every other method does. `getRefund()` is **declared and
-throws**, unlike `createPayout`, and the difference is deliberate: omitting a
-method asserts that the provider may not have the capability, and
-`supportsRefundQuery(provider)` returning `false` makes callers treat every
-ambiguity as manual by design. Declaring `getRefund` keeps the adapter
-non-operational without deciding R3 on iPayMoney's behalf.
+| Header | Value |
+|---|---|
+| `Ipay-Payment-Type` | `mobile` or `card` |
+| `Ipay-Target-Environment` | `sandbox` or `live` |
+| `Authorization` | `Bearer <secret key>` |
+| `Content-Type` | `application/json` |
 
-Nothing about the refund endpoint, its payloads, its error codes or its
-signature scheme has been invented anywhere in the codebase.
+Body (L169–L177):
 
-## How it will be implemented
+| Field | Type | Notes |
+|---|---|---|
+| `customer_name` | string | |
+| `currency` | string | **XOF** |
+| `country` | string | country code — **NE** for Niger, BJ for Benin |
+| `amount` | **string** | "must be greater than 100" |
+| `transaction_id` | string | our reference for the transaction |
+| `msisdn` | string | the payer's number |
 
-The `PaymentProvider` interface in `packages/core/src/payments/provider.ts` is
-provider-agnostic and does not change. `IPayMoneyProvider` gains real method
-bodies; nothing else in the system is touched.
+Success `200` (L179–L185):
 
-`createPayout` and `getPayout` are **deliberately absent** from the adapter
-rather than declared and stubbed — declaring them would assert an answer to
-item 8 that we do not have. `supportsPayouts(provider)` is how callers check.
+```json
+{ "status": "succeeded", "reference": "vslfxgawkpkm" }
+```
 
-`getRefund` is the opposite case and is declared-and-throwing; see the refund
-section above for why the two absences mean different things.
+Documented errors: `400` malformed / bad MSISDN / missing key, `401`
+`Unauthorized: No Valid Key`, `403` `Forbidden: Environment Not Available`,
+`406` `Not Acceptable: Invalid Content Type`, `422`
+`External Reference Not Valid` — **reference invalid or already exists**
+(L187–L226).
+
+### Query a payment
+
+`GET https://i-pay.money/api/v1/payments/{reference}` (L228)
+
+The path parameter is *"la référence que vous avez reçu en réponse lors du
+Post"* (L232) — **iPayMoney's reference, not ours.**
+
+Response `200` (L241–L249):
+
+```json
+{
+  "external_reference": "Reference-13409",
+  "reference": "vslfxgawkpkm",
+  "status": "failed",
+  "msisdn": "22787505050"
+}
+```
+
+### Webhooks — DOCUMENTED
+
+- Configured in the dashboard under Développeurs → Webhooks (L308–L320).
+- **Exactly two event types: success and failure** (L321). There are no others.
+- Must answer `2xx`; anything else, 3xx included, counts as not received (L327).
+- On non-receipt iPayMoney **retries 5 times**, 500 ms apart and increasing
+  (L329).
+- Payload (L359–L368):
+
+```json
+{ "data": { "external_reference": "random-38",
+            "reference": "yeweyk6rd7cm",
+            "status": "succeeded",
+            "msisdn": "40410000001" } }
+```
+
+### Sandbox — DOCUMENTED
+
+Test MSISDNs and their scenarios (L148–L159):
+
+| MSISDN | Scenario |
+|---|---|
+| 40410000000, 40410000001 | success |
+| 40410000002, 40410000003 | error |
+| 40410000004, 40410000005 | insufficient_fund |
+| 40410000006, 40410000007 | declined |
+| 40410000008, 40410000009 | pending (180 seconds) |
+
+### Fees — DOCUMENTED
+
+- **3 %** of the amount on every mobile-money collection (L271).
+- **3 %** on Visa / Mastercard (L272).
+- Reversement to mobile money inside Niger: **no fee** (L276).
+- Reversement to a bank account: **7 000 FCFA flat**, whatever the amount
+  (L119).
+
+---
+
+## Refunds — the investigation, and its result
+
+Every question below was answered by reading the document, not by inference.
+**Nothing here may be filled in from another provider's conventions.**
+
+| # | Question | Answer |
+|---|---|---|
+| R1 | Endpoint to refund a customer payment | **NOT DOCUMENTED** |
+| R2 | HTTP method for creating a refund | **NOT DOCUMENTED** |
+| R3 | Required refund request body | **NOT DOCUMENTED** |
+| R4 | Which identifier a refund uses | **NOT DOCUMENTED** |
+| R5 | Refund response and refund reference | **NOT DOCUMENTED** |
+| R6 | Refund status endpoint | **NOT DOCUMENTED** |
+| R7 | Refund webhook | **NOT DOCUMENTED** — and the document states positively that only two event types exist, success and failure on a transaction (L321) |
+| R8 | Refund idempotency mechanism | **NOT DOCUMENTED** |
+| R9 | Querying a refund by any identifier | **NOT DOCUMENTED** |
+| R10 | Behaviour on refund success / rejection / timeout / network failure / 5xx / duplicate | **NOT DOCUMENTED**. For *payments* only 400, 401, 403, 406 and 422 are documented; no timeout, connection-failure, 5xx or duplicate-delivery semantics are documented anywhere |
+| R11 | Sandbox refund support | **NOT DOCUMENTED** — the sandbox table is payment scenarios only |
+| R12 | Mobile Money refund support | **NOT DOCUMENTED** |
+| R13 | Visa / Mastercard refund support | **NOT DOCUMENTED** |
+| R14 | Refund processing time | **NOT DOCUMENTED** |
+| R15 | Refund fees | **NOT DOCUMENTED** — the fees section covers purchase fees and reversement fees only |
+
+### The one adjacent thing, which is not a refund
+
+> « le marchand peut être amené à mettre fin à **une opération en cours**. Cela
+> peut se faire à travers le menu Paiements. » — L304
+
+A merchant may end an operation **in progress**, from the **dashboard menu**.
+That is a cancellation of something not yet complete, it has no API, no request
+or response schema, no identifier and no stated financial effect. It is
+**UNCLEAR** what it does and it is **not** a refund of a completed payment.
+
+### Conclusion
+
+**The supplied documentation contains no customer-refund operation of any kind.**
+
+---
+
+## Unknowns that are not about refunds
+
+These are gaps in the *payment* documentation, found while checking it against
+our provider contract. Each one has a consequence for the integration.
+
+| # | Unknown | Consequence |
+|---|---|---|
+| P1 | **No amount in the webhook payload, and none in the payment-status response** | Our webhook boundary cross-checks the amount exactly when the event carries one. iPayMoney carries none in *either* channel, so that check can never run and the charged amount is not independently verifiable from the provider at all |
+| P2 | **No event id in the webhook payload** | Our replay defence is `UNIQUE (provider, provider_event_id)`. iPayMoney sends no id and retries five times, so duplicates are certain and the adapter must derive an id from what the event does carry |
+| P3 | **No lookup by our own identifier** | `GET` takes iPayMoney's `reference`. If a response is lost we hold no reference, and there is no documented way to ask "what happened to my `transaction_id`?" |
+| P4 | **`transaction_id` vs `external_reference`** | We send `transaction_id`; responses return `external_reference`. The dashboard section says the external reference is "générée de façon automatique" (L126), which contradicts us supplying it |
+| P5 | **The complete status enumeration** | Only `succeeded` and `failed` appear in examples. The sandbox names five *scenarios*, which are not the same thing as status values |
+| P6 | **Webhook header name contradicts the example** | The prose names `x-iPayMoney-secret` (L332); the example shows `secret-hash` (L338) whose value is the secret key itself, `sk_...` — a shared secret echoed in a header, not a signature over the body |
+| P7 | **Amount units** | `amount` is a string and must exceed 100. XOF has zero decimals, so whole francs is the only sensible reading, but the document does not say so |
+| P8 | **No 5xx semantics** | Nothing documents what a 5xx from iPayMoney means for the transaction, which is precisely the case our classifier must treat as unknown |
+
+**P6 is a security finding, not a detail.** If the header carries the static
+secret rather than an HMAC over the request body, then the "signature" does not
+cover the payload: anyone who obtains the secret — from a log, a proxy, a
+mis-scoped error report — can forge any event, and the secret is transmitted on
+every single webhook. Our boundary is built to verify a signature over the raw
+bytes. Whether iPayMoney can provide one must be asked before a webhook is
+trusted with money.
+
+---
+
+## What the adapter does today
+
+`refund()` throws. `getRefund()` is **declared and throws**, unlike
+`createPayout`, and the difference is deliberate: omitting a method asserts the
+provider may lack the capability, and `supportsRefundQuery(provider)` returning
+`false` makes callers treat every ambiguity as manual *by design*. Declaring it
+keeps the adapter non-operational without deciding on iPayMoney's behalf.
+
+Nothing about a refund endpoint, payload, error code or signature scheme has
+been invented anywhere in the codebase, and the payment endpoints above are
+**documented here, not implemented**.
+
+---
+
+## Live activation — DOCUMENTED
+
+Switch to Live in the dashboard, then submit under Paramètres → Information
+Légale (L48–L61). Required:
+
+- Nom de l'entreprise
+- Numéro de téléphone
+- Adresse du siège social
+- Secteur d'activité
+- Site web / Application
+- Numéro : ID card / passeport
+- N° du registre de commerce
+- Numéro IFU/NIF (numéro fiscal)
+
+Documents to upload:
+
+- RCCM
+- IFU/NIF
+- Pièce d'identité
+
+Save, then submit. The answer arrives by email after examination. Until then the
+account is **sandbox only** (L45).
+
+---
 
 ## Integration tests
 
 `packages/core/src/payments/ipaymoney.integration.test.ts` is the intended home
-for tests against the real sandbox. They are skipped unless
-`IPAYMONEY_BASE_URL` and `IPAYMONEY_API_KEY` are present in the environment, so
-CI stays green without credentials and turns red the moment a sandbox run
-regresses.
+for tests against the real sandbox. They are skipped unless `IPAYMONEY_BASE_URL`
+and `IPAYMONEY_API_KEY` are present, so CI stays green without credentials and
+turns red the moment a sandbox run regresses.
+
+**No sandbox call has ever been made from this repository.**
