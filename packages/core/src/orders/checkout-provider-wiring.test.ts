@@ -12,6 +12,7 @@ import type {
   RefundResult, VerifiedEvent,
 } from "../payments";
 import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
+import { chargeMetadataFor, loadBuyerPaymentIdentity } from "./payment";
 import { createCheckout, initiatePayment } from "./index";
 
 /**
@@ -515,5 +516,96 @@ describe("a refusal is safe, and an unknown is not a refusal", () => {
     expect(second.id, "the same charge, not a second one").toBe(first.id);
     expect(provider.seen, "the provider was called exactly once").toHaveLength(1);
     expect(await paymentRow(orderId)).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+/**
+ * The provenance rules, asserted where the forbidden cases are REACHABLE.
+ *
+ * The profile gate means `initiatePayment` can never reach the charge with a
+ * missing name or country, so a substitution added downstream would be
+ * unreachable through the front door and invisible to every test that drives
+ * the real path. Mutation testing proved it: mutants that fell back to
+ * `display_name`, to the phone string, and to a phone-prefix country all
+ * survived a fully green suite.
+ *
+ * These call the two functions directly, with exactly the inputs the gate
+ * prevents, so "the name is never derived" is a claim something checks.
+ */
+describe("what may NEVER become the customer name or the country", () => {
+  it("produces no name at all when the profile has none", () => {
+    const metadata = chargeMetadataFor({
+      phone: "+22790123456", fullName: undefined, countryCode: undefined,
+    });
+    expect(metadata["customerName"], "no name is invented").toBeUndefined();
+    expect(Object.keys(metadata), "and nothing else appears either").toEqual([]);
+  });
+
+  it("never substitutes the phone number for a missing name", () => {
+    const metadata = chargeMetadataFor({
+      phone: "+22790123456", fullName: undefined, countryCode: "NE",
+    });
+    expect(JSON.stringify(metadata)).not.toMatch(/22790123456/);
+    expect(metadata["customerName"]).toBeUndefined();
+  });
+
+  it("never infers a country from the phone's calling code", () => {
+    /*
+     * +227 is Niger. A Niamey SIM travels, and its holder may be paying from
+     * Ouagadougou, so the prefix is evidence about a SIM card rather than about
+     * a payer.
+     */
+    const metadata = chargeMetadataFor({
+      phone: "+22790123456", fullName: "Halima Sani", countryCode: undefined,
+    });
+    expect(metadata["country"]).toBeUndefined();
+    expect(metadata["buyerCountry"]).toBeUndefined();
+    expect(metadata["customerName"]).toBe("Halima Sani");
+  });
+
+  it("passes both through untouched when the profile has them", () => {
+    const metadata = chargeMetadataFor({
+      phone: "+22790123456", fullName: "Halima Sani", countryCode: "NE",
+    });
+    expect(metadata).toEqual({
+      customerName: "Halima Sani", country: "NE", buyerCountry: "NE",
+    });
+  });
+
+  it("reads the name ONLY from full_name, never from display_name", async () => {
+    /*
+     * The account below is the shape every real signup produces: a synthetic
+     * address in `display_name`, the phone string in Better Auth's `name`, and
+     * `full_name` still empty. If the loader ever reached for either
+     * placeholder, this is where it would show.
+     */
+    const buyer = await makeBuyer({
+      phone: "+22790199999", fullName: null, countryCode: null,
+    });
+    await db.execute(sql`
+      update users set display_name = '22790199999@phone.afrinext.local'
+       where id = ${buyer.userId}::uuid
+    `);
+
+    const identity = await loadBuyerPaymentIdentity(db, buyer.userId);
+
+    expect(identity.fullName, "an empty profile yields no name").toBeUndefined();
+    expect(identity.countryCode).toBeUndefined();
+    expect(identity.phone, "the verified number is still found").toBe("+22790199999");
+
+    const metadata = chargeMetadataFor(identity);
+    expect(JSON.stringify(metadata)).not.toMatch(/phone\.afrinext\.local/);
+    expect(JSON.stringify(metadata)).not.toMatch(/22790199999/);
+  });
+
+  it("reads the name from full_name once it is set", async () => {
+    const buyer = await makeBuyer({
+      phone: "+22790188888", fullName: "Mariama Boubacar", countryCode: "NE",
+    });
+    const identity = await loadBuyerPaymentIdentity(db, buyer.userId);
+    expect(identity.fullName).toBe("Mariama Boubacar");
+    expect(identity.countryCode).toBe("NE");
   });
 });

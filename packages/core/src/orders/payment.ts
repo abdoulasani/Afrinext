@@ -106,6 +106,39 @@ export interface InitiatePaymentInput {
 }
 
 /**
+ * The buyer facts a charge carries, built from the identity and NOTHING else.
+ *
+ * Pulled out of `initiatePayment` so it can be called directly with an
+ * incomplete identity. That is not a convenience: the profile gate means
+ * `initiatePayment` can never reach this with a missing name, so a fallback
+ * quietly added here would be unreachable through the front door and no test
+ * driving the real path could ever notice it. Mutation testing proved exactly
+ * that — three mutants that substituted `display_name`, the phone string and a
+ * phone-prefix country all survived a green suite.
+ *
+ * So the rules are asserted against this function, where the absent cases are
+ * reachable:
+ *
+ *   - a missing name produces NO `customerName` key. It is never replaced by
+ *     `display_name` (the synthetic signup address), by Better Auth's `name`
+ *     (the phone string), or by anything derived from a number.
+ *   - a missing country produces NO country key. It is never inferred from the
+ *     phone's calling code and never taken from the store.
+ *
+ * `country` carries the buyer's country and `buyerCountry` says so
+ * unambiguously; see the K17 note in the assumptions register.
+ */
+export function chargeMetadataFor(buyer: BuyerPaymentIdentity): Record<string, string> {
+  const metadata: Record<string, string> = {};
+  if (buyer.fullName !== undefined) metadata["customerName"] = buyer.fullName;
+  if (buyer.countryCode !== undefined) {
+    metadata["buyerCountry"] = buyer.countryCode;
+    metadata["country"] = buyer.countryCode;
+  }
+  return metadata;
+}
+
+/**
  * Whether a throw from `createCharge` proves that no charge exists.
  *
  * Only two shapes qualify, and the distinction is the Phase 3 rule one layer
@@ -152,7 +185,7 @@ function chargeProvablyNotCreated(error: unknown): boolean {
  * synthetic address and the phone string, and sending either to a payment
  * provider would be inventing a value for a required field.
  */
-interface BuyerPaymentIdentity {
+export interface BuyerPaymentIdentity {
   /** The verified sign-in number, absent for an account created another way. */
   readonly phone: string | undefined;
   /** `users.full_name` — what the buyer typed, and nothing derived. */
@@ -161,7 +194,7 @@ interface BuyerPaymentIdentity {
   readonly countryCode: string | undefined;
 }
 
-async function loadBuyerPaymentIdentity(
+export async function loadBuyerPaymentIdentity(
   db: Database,
   userId: string,
 ): Promise<BuyerPaymentIdentity> {
@@ -296,12 +329,7 @@ export async function initiatePayment(
    * runs, so the absence branch is a belt on top of that rather than a path
    * anybody reaches.
    */
-  const metadata: Record<string, string> = {};
-  if (buyer.fullName !== undefined) metadata["customerName"] = buyer.fullName;
-  if (buyer.countryCode !== undefined) {
-    metadata["buyerCountry"] = buyer.countryCode;
-    metadata["country"] = buyer.countryCode;
-  }
+  const metadata = chargeMetadataFor(buyer);
 
   let charge: ChargeResult;
   try {
