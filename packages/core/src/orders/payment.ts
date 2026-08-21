@@ -11,6 +11,7 @@ import type {
   ChargeResult, HeadersLike, PaymentProvider, VerifiedChargeEvent, VerifiedEvent,
 } from "../payments";
 import { stageOfTransportFailure } from "../payments";
+import { loadBuyerProfile, requireCompleteProfile } from "../profile";
 import { applyRefundEvent, recordRefundOwed } from "../refunds";
 import { loadLatePaymentGraceSeconds, OrderNotFoundError } from "./checkout";
 import {
@@ -137,24 +138,26 @@ function chargeProvablyNotCreated(error: unknown): boolean {
  * Every field here is sourced server-side from the buyer's own account. None of
  * it is accepted from the client, for the same reason the amount is not: a
  * field a caller can set is a field a caller can change. A buyer must not be
- * able to tell the provider that somebody else's number is paying.
+ * able to tell the provider that somebody else's name, number or country is
+ * paying. `InitiatePaymentInput` carries no such field, so there is nothing to
+ * override — the values below have exactly one source each.
  *
  * The phone lives in Better Auth's `user` table because that is where sign-in
  * verified it, and `users.auth_user_id` is the link. Using the VERIFIED number
  * matters — it is the one that answered an OTP, not one somebody typed into a
  * form.
  *
- * What this deliberately does NOT return is a customer name. `users.display_name`
- * holds a synthetic address (`22790123456@phone.afrinext.local`) and the Better
- * Auth `name` column holds the phone string; both are placeholders written at
- * signup to satisfy a NOT NULL, and neither is a name the buyer ever gave.
- * Sending either to a payment provider would be inventing a value for a
- * provider-required field. See the milestone report.
+ * The name and country come from `users`, where the person put them. Neither
+ * `users.display_name` nor Better Auth's `name` is ever read: those hold a
+ * synthetic address and the phone string, and sending either to a payment
+ * provider would be inventing a value for a required field.
  */
 interface BuyerPaymentIdentity {
   /** The verified sign-in number, absent for an account created another way. */
   readonly phone: string | undefined;
-  /** `users.country_code`. Never populated by any current signup path. */
+  /** `users.full_name` — what the buyer typed, and nothing derived. */
+  readonly fullName: string | undefined;
+  /** `users.country_code` — what the buyer chose, never inferred. */
   readonly countryCode: string | undefined;
 }
 
@@ -164,18 +167,18 @@ async function loadBuyerPaymentIdentity(
 ): Promise<BuyerPaymentIdentity> {
   const rows = await db.execute<{
     [key: string]: unknown;
-    country_code: string | null;
     phone: string | null;
   }>(sql`
-    select u.country_code, a."phoneNumber" as phone
+    select a."phoneNumber" as phone
       from users u
       left join "user" a on a.id = u.auth_user_id
      where u.id = ${userId}::uuid
   `);
-  const row = rows.rows[0];
+  const profile = await loadBuyerProfile(db, userId);
   return {
-    phone: row?.phone ?? undefined,
-    countryCode: row?.country_code ?? undefined,
+    phone: rows.rows[0]?.phone ?? undefined,
+    fullName: profile.fullName,
+    countryCode: profile.countryCode,
   };
 }
 
@@ -233,6 +236,21 @@ export async function initiatePayment(
   const live = existing.rows[0];
   if (live !== undefined) return toPayment(live);
 
+  /*
+   * The profile gate, and its position is the point.
+   *
+   * This runs BEFORE the payment row is written and therefore before any
+   * provider call could be built, so an incomplete profile costs nothing: no
+   * row to clean up, no charge that might exist, nothing for
+   * `payments_one_live_per_order` to wedge. The buyer completes their profile
+   * and pays the same order.
+   *
+   * It runs AFTER the order checks so the more specific truth wins: an order
+   * that is already paid, or expired, says so rather than sending the buyer to
+   * fill in a form that would not have helped.
+   */
+  await requireCompleteProfile(db, actor.userId);
+
   const buyer = await loadBuyerPaymentIdentity(db, actor.userId);
   const amount = money(BigInt(order.total_minor), order.currency);
   const paymentId = uuidv7();
@@ -271,11 +289,15 @@ export async function initiatePayment(
    * is to change which of our facts fills `country`, not to work out what the
    * value ever meant. Both are absent when we hold no country.
    *
-   * No customer name is sent. We do not have one — only placeholders written at
-   * signup — and inventing a value for a provider-required field is the thing
-   * this milestone is not allowed to do.
+   * `customerName` is the name the buyer typed into their own profile. It is
+   * read from `users.full_name` and from nowhere else — never from
+   * `display_name`, never from Better Auth's `name`, and never assembled from a
+   * phone number. The gate above guarantees it is present by the time this
+   * runs, so the absence branch is a belt on top of that rather than a path
+   * anybody reaches.
    */
   const metadata: Record<string, string> = {};
+  if (buyer.fullName !== undefined) metadata["customerName"] = buyer.fullName;
   if (buyer.countryCode !== undefined) {
     metadata["buyerCountry"] = buyer.countryCode;
     metadata["country"] = buyer.countryCode;

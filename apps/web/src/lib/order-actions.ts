@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
-import { orders } from "@afrinext/core";
+import { orders, profile } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { getPaymentProvider } from "@/lib/payments";
 import { requireActor } from "@/lib/session";
@@ -67,5 +67,30 @@ export async function payOrderAction(
     return fail(error);
   }
   revalidatePath(`/${locale}/orders/${orderId}`);
+  return {};
+}
+
+/**
+ * The buyer's own name and country.
+ *
+ * Note what is NOT read from the form: any identifier. The subject is the
+ * session's actor, so a posted `userId` is inert — there is no parameter for it
+ * to reach. `completeBuyerProfile` takes an Actor and no user id at all.
+ */
+export async function completeProfileAction(
+  _previous: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const locale = String(form.get("locale") ?? "fr");
+  try {
+    const actor = await requireActor();
+    await profile.completeBuyerProfile(getDb(), actor, {
+      fullName: String(form.get("fullName") ?? ""),
+      country: String(form.get("country") ?? ""),
+    });
+  } catch (error: unknown) {
+    return fail(error);
+  }
+  revalidatePath(`/${locale}`);
   return {};
 }

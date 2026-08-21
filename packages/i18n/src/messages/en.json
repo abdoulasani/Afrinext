@@ -114,5 +114,15 @@
   "refund.resolvedBy": "Established by",
   "refund.singleOperator": "Reconciled by a single operator",
   "refund.noLedgerYet": "No ledger entry: settlement belongs to a later phase.",
-  "refund.notDelivered": "No SMS is sent: no provider has been chosen yet."
+  "refund.notDelivered": "No SMS is sent: no provider has been chosen yet.",
+  "profile.heading": "Before you pay",
+  "profile.explain": "Your payment provider asks for the name of the person paying. We do not have it: signing in verifies your number and nothing else.",
+  "profile.nameLabel": "Full name",
+  "profile.namePlaceholder": "Your name, as you write it",
+  "profile.countryLabel": "Country",
+  "profile.countryPlaceholder": "Choose your country",
+  "profile.save": "Save and continue",
+  "profile.saved": "Profile saved.",
+  "profile.incomplete": "Complete your profile before paying.",
+  "profile.privacy": "This information is sent to the payment provider for this transaction."
 }

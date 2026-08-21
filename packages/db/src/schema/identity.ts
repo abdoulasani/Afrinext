@@ -10,6 +10,17 @@ export const users = pgTable(
   {
     id: uuid("id").primaryKey(),
     displayName: text("display_name"),
+    /**
+     * The buyer's own name, supplied by them after sign-in. NULL until they do.
+     *
+     * Separate from `displayName` on purpose. `displayName` already holds the
+     * synthetic address signup mints for every existing account, so it cannot
+     * express "we have a real name"; this column can, because it is NULL until
+     * a person types one. It is what a payment provider receives as
+     * `customer_name`.
+     */
+    fullName: text("full_name"),
+    /** Chosen by the person. Never inferred from a phone prefix or a store. */
     countryCode: char("country_code", { length: 2 }).references(() => countries.code),
     locale: text("locale").notNull().default("fr"),
     /**
@@ -31,6 +42,12 @@ export const users = pgTable(
     check(
       "users_status_valid",
       sql`${t.status} in ('pending_consent','active','suspended','closed')`,
+    ),
+    // Shape only. Nothing constrains which characters a name may contain — a
+    // rule that assumed Latin letters would reject legitimate names.
+    check(
+      "users_full_name_shape",
+      sql`${t.fullName} is null or char_length(btrim(${t.fullName})) between 2 and 120`,
     ),
   ],
 );

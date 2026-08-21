@@ -1,11 +1,13 @@
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
-import { money as m, orders as ordersDomain } from "@afrinext/core";
+import { money as m, orders as ordersDomain, profile as profileDomain } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate } from "@afrinext/i18n";
 import AppHeader from "@/components/AppHeader";
 import PayButton from "@/components/PayButton";
+import ProfileGate from "@/components/ProfileGate";
 import { currencyRegistry } from "@/lib/catalog";
+import { completeProfileAction } from "@/lib/order-actions";
 import { currentActor } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +41,21 @@ export default async function OrderPage({
 
   const registry = await currencyRegistry();
   const statusLabel = translate(locale, `order.status.${order.status}`);
+
+  /*
+   * Whether this buyer can pay at all yet.
+   *
+   * A payment provider asks who is paying, and sign-in only ever proved
+   * possession of a phone. When the name or country is missing the pay button
+   * is replaced by the form that collects them — not disabled alongside it,
+   * because an action a person can see but not use explains nothing.
+   *
+   * This read is presentation only. `initiatePayment` runs the same check
+   * server-side and refuses regardless of what this page rendered.
+   */
+  const buyerProfile = await profileDomain.loadBuyerProfile(getDb(), actor.userId);
+  const profileComplete = profileDomain.isProfileComplete(buyerProfile);
+  const countries = profileComplete ? [] : await profileDomain.selectableCountries(getDb());
 
   return (
     <>
@@ -75,12 +92,30 @@ export default async function OrderPage({
 
         {order.status === "pending_payment" && (
           <section className="flex flex-col gap-2 border-t border-border pt-5">
-            <PayButton
-              locale={locale}
-              orderId={order.id}
-              label={translate(locale, "order.pay")}
-              waiting={translate(locale, "order.awaiting")}
-            />
+            {profileComplete ? (
+              <PayButton
+                locale={locale}
+                orderId={order.id}
+                label={translate(locale, "order.pay")}
+                waiting={translate(locale, "order.awaiting")}
+              />
+            ) : (
+              <ProfileGate
+                locale={locale}
+                countries={countries}
+                action={completeProfileAction}
+                labels={{
+                  heading: translate(locale, "profile.heading"),
+                  explain: translate(locale, "profile.explain"),
+                  nameLabel: translate(locale, "profile.nameLabel"),
+                  namePlaceholder: translate(locale, "profile.namePlaceholder"),
+                  countryLabel: translate(locale, "profile.countryLabel"),
+                  countryPlaceholder: translate(locale, "profile.countryPlaceholder"),
+                  save: translate(locale, "profile.save"),
+                  privacy: translate(locale, "profile.privacy"),
+                }}
+              />
+            )}
           </section>
         )}
 

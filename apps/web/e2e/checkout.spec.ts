@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { completeBuyerProfile, completeBuyerProfileForOrder } from "./buyer-profile";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page, type APIRequestContext } from "@playwright/test";
@@ -196,6 +197,7 @@ test.describe("a buyer pays for a digital product", () => {
     expect(sqlOne(`select total_minor from orders where id = '${orderId}'::uuid`)).toBe("15000");
 
     // 3. Pay. The charge is created; nothing is confirmed.
+    await completeBuyerProfile(page);
     await page.getByTestId("pay").click();
     /*
      * Wait for the payment STATE, not for the button's caption.
@@ -261,6 +263,7 @@ test.describe("a buyer pays for a digital product", () => {
     });
     expect(created.status).toBe(201);
     const orderId = (created.body as { data: { id: string } }).data.id;
+    await completeBuyerProfileForOrder(page, "fr", orderId);
     await api(page, "POST", `/api/v1/orders/${orderId}/pay`);
     const providerRef = providerRefFor(orderId);
 
@@ -329,6 +332,7 @@ test.describe("a buyer pays for a digital product", () => {
     expect(again.status).toBe(200);
     expect((again.body as { data: { id: string } }).data.id).toBe(order.id);
 
+    await completeBuyerProfileForOrder(page, "fr", order.id);
     await api(page, "POST", `/api/v1/orders/${order.id}/pay`);
     const providerRef = providerRefFor(order.id);
     const eventId = unique("evt");

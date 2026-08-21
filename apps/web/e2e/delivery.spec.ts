@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { completeBuyerProfile } from "./buyer-profile";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
@@ -169,6 +170,7 @@ async function buy(
   await page.goto(`/fr/s/${storeSlug}/${productSlug}`);
   await page.getByTestId("buy").click();
   await page.waitForURL(/\/fr\/orders\/[0-9a-f-]{36}$/);
+  await completeBuyerProfile(page);
   await page.getByTestId("pay").click();
   /*
    * Wait for the payment STATE, not for the button's caption.

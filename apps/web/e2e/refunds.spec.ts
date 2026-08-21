@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { completeBuyerProfile } from "./buyer-profile";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
@@ -162,6 +163,7 @@ async function refundDueFor(page: Page, priceMinor: number): Promise<string> {
   await page.waitForURL(/\/fr\/orders\/[0-9a-f-]{36}$/);
   const orderId = (/orders\/([0-9a-f-]{36})/.exec(page.url()) ?? [])[1] as string;
 
+  await completeBuyerProfile(page);
   await page.getByTestId("pay").click();
   await expect(page.getByTestId("payment-status")).toHaveText("pending");
   const providerRef = sqlOne(`select provider_ref from payments where order_id = '${orderId}'::uuid`);

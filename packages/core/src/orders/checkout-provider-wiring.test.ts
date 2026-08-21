@@ -4,7 +4,7 @@ import type { Database } from "@afrinext/db";
 import type { Actor } from "../authz";
 import { createProduct, createStore, publishProduct, publishStore } from "../catalog";
 import { acceptCurrentVersions, ACCOUNT_CONSENT_KINDS } from "../consent";
-import { ProviderNotConfiguredError } from "../errors";
+import { ProfileIncompleteError } from "../profile";
 import { money } from "../money";
 import { IPayMoneyProvider } from "../payments";
 import type {
@@ -79,13 +79,27 @@ class RecordingProvider implements PaymentProvider {
   }
 }
 
-/** The real adapter, with a fetch that counts calls and never leaves the process. */
-function ipaymoney(): { provider: IPayMoneyProvider; calls: () => number } {
-  let calls = 0;
-  const impl = ((_url: string, _init: unknown) => {
-    calls += 1;
+/**
+ * The real adapter, with a fetch that records what was sent and never leaves
+ * the process.
+ *
+ * `bodies` is what makes the strong assertion possible: not "the domain handed
+ * the adapter a name" but "the bytes addressed to iPayMoney carry it".
+ */
+function ipaymoney(): {
+  provider: IPayMoneyProvider;
+  calls: () => number;
+  bodies: () => Record<string, unknown>[];
+} {
+  const sent: Record<string, unknown>[] = [];
+  const impl = ((_url: string, init: { body?: string }) => {
+    sent.push(
+      typeof init?.body === "string"
+        ? (JSON.parse(init.body) as Record<string, unknown>)
+        : {},
+    );
     return Promise.resolve(new Response(
-      JSON.stringify({ reference: `ipay-${counter}`, status: "succeeded" }),
+      JSON.stringify({ reference: `ipay-${counter}-${sent.length}`, status: "succeeded" }),
       { status: 200, headers: { "content-type": "application/json" } },
     ));
   }) as unknown as typeof fetch;
@@ -95,7 +109,8 @@ function ipaymoney(): { provider: IPayMoneyProvider; calls: () => number } {
       baseUrl: "https://i-pay.money", apiKey: "sk_test", environment: "sandbox",
       fetchImpl: impl,
     }),
-    calls: () => calls,
+    calls: () => sent.length,
+    bodies: () => sent,
   };
 }
 
@@ -108,12 +123,13 @@ async function grantGlobal(userId: string, roleKey: string): Promise<void> {
 }
 
 async function makeBuyer(
-  options: { phone?: string; countryCode?: string | null } = {},
+  options: { phone?: string; countryCode?: string | null; fullName?: string | null } = {},
 ): Promise<Actor> {
   const userId = await createTestUser(db, {
     locale: "fr",
     ...(options.phone !== undefined ? { phone: options.phone } : {}),
     ...(options.countryCode !== undefined ? { countryCode: options.countryCode } : {}),
+    ...(options.fullName !== undefined ? { fullName: options.fullName } : {}),
   });
   await grantGlobal(userId, "member");
   await acceptCurrentVersions(db, userId, ACCOUNT_CONSENT_KINDS, { locale: "fr" }, {
@@ -220,39 +236,83 @@ describe("what the buyer's own record contributes to a charge", () => {
     ).toBeUndefined();
   });
 
-  it("sends NO customer name, because Afrinext does not have one", async () => {
+  it("sends the name from the buyer's OWN profile, and never a placeholder", async () => {
     /*
-     * `users.display_name` holds a synthetic address and Better Auth's `name`
-     * holds the phone string. Both are placeholders written at signup. Passing
-     * either would be inventing a value for a provider-required field, and
-     * would additionally hand iPayMoney an internal hostname.
+     * The two columns that look like names hold neither. `users.display_name`
+     * holds the synthetic address signup mints and Better Auth's `name` holds
+     * the phone string. `users.full_name` holds what the person typed, and it
+     * is the only one read.
      */
-    const buyer = await makeBuyer({ phone: "+22790123459" });
+    const buyer = await makeBuyer({ phone: "+22790123459", fullName: "Fatoumata Abdou" });
     const orderId = await checkoutFor(buyer);
     const provider = new RecordingProvider();
 
     await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
 
     const metadata = provider.seen[0]?.metadata ?? {};
-    expect(metadata["customerName"]).toBeUndefined();
-    expect(
-      Object.values(metadata).join(" "),
-      "nothing resembling the synthetic signup address is sent",
-    ).not.toMatch(/phone\.afrinext\.local/);
+    expect(metadata["customerName"]).toBe("Fatoumata Abdou");
+
+    const everything = Object.values(metadata).join(" ");
+    expect(everything, "the synthetic signup address never leaves Afrinext")
+      .not.toMatch(/phone\.afrinext\.local/);
+    expect(everything, "nor does the phone string masquerade as a name")
+      .not.toMatch(/\+?22790123459/);
   });
 
-  it("omits the country entirely when the buyer has none, rather than guessing", async () => {
+  it("cannot be told a different name or country by the caller", async () => {
+    /*
+     * The override attempt, written the only way it can be: `InitiatePaymentInput`
+     * has no name, country or customer field, so a caller cannot express one.
+     * Passing them anyway — as a client would, hoping the object is spread into
+     * the charge — changes nothing.
+     */
+    const buyer = await makeBuyer({
+      phone: "+22790123470", fullName: "Ramatou Issa", countryCode: "NE",
+    });
+    const orderId = await checkoutFor(buyer, "CI");
+    const provider = new RecordingProvider();
+
+    await initiatePayment(db, buyer, provider, {
+      orderId,
+      channel: "mobile",
+      ...({
+        customerName: "Attacker", country: "FR",
+        metadata: { customerName: "Attacker", country: "FR" },
+        customer: { userId: "someone-else", phone: "+33600000000" },
+      } as unknown as Record<string, never>),
+    });
+
+    const seen = provider.seen[0];
+    expect(seen?.metadata?.["customerName"]).toBe("Ramatou Issa");
+    expect(seen?.metadata?.["country"]).toBe("NE");
+    expect(seen?.customer.userId).toBe(buyer.userId);
+    expect(seen?.customer.phone).toBe("+22790123470");
+  });
+
+  it("never reaches the provider at all when the country is missing", async () => {
+    /*
+     * A country is half a profile, so the gate refuses before the provider is
+     * consulted. That is stricter than the old behaviour, where an absent
+     * country was simply omitted and the adapter refused later — and it means
+     * no payment row is written for an attempt that could not have worked.
+     */
     const buyer = await makeBuyer({ phone: "+22790123460", countryCode: null });
     const orderId = await checkoutFor(buyer, "CI");
     const provider = new RecordingProvider();
 
-    await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
+    const error = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
+      .catch((e: unknown) => e);
 
-    expect(provider.seen[0]?.metadata?.["country"]).toBeUndefined();
-    expect(provider.seen[0]?.metadata?.["buyerCountry"]).toBeUndefined();
+    expect(error).toBeInstanceOf(ProfileIncompleteError);
+    expect((error as ProfileIncompleteError).missing).toEqual(["country"]);
+    expect(provider.seen, "the provider was never asked").toHaveLength(0);
+    expect(await paymentRow(orderId), "and no payment row was written").toHaveLength(0);
   });
 
   it("omits the phone when the account has no verified number", async () => {
+    // A complete profile, but an identity created without a credential row.
+    // The phone is genuinely unknown, so none is sent; the adapter refuses
+    // later, which is the existing approved behaviour for a missing msisdn.
     const buyer = await makeBuyer();
     const orderId = await checkoutFor(buyer);
     const provider = new RecordingProvider();
@@ -267,27 +327,41 @@ describe("what the buyer's own record contributes to a charge", () => {
 // ---------------------------------------------------------------------------
 
 describe("the real adapter, reached through the real checkout path", () => {
-  it("still refuses, and names customer_name as what is missing", async () => {
+  it("BUILDS A REAL REQUEST, carrying the name and country the buyer supplied", async () => {
     /*
-     * The honest end state of this milestone. Phone and country now arrive;
-     * `customer_name` does not exist anywhere in Afrinext, so iPayMoney's
-     * documented requirement is unmet and the adapter refuses.
+     * What the whole milestone was for, asserted on the bytes rather than on
+     * the call.
      *
-     * This test asserts the CURRENT truth. When a name becomes available it
-     * will fail, and that failure is the signal that the last field landed.
+     * The previous report ended here with a refusal: `customer_name` existed
+     * nowhere in Afrinext, so the adapter would not construct a request. It
+     * constructs one now, and every field in it traces to something the buyer
+     * either proved (the phone, by answering an OTP) or typed (the name and the
+     * country).
      */
-    const buyer = await makeBuyer({ phone: "+22790123461", countryCode: "NE" });
-    const orderId = await checkoutFor(buyer);
-    const { provider, calls } = ipaymoney();
+    const buyer = await makeBuyer({
+      phone: "+22790123461", countryCode: "NE", fullName: "Ibrahim Souley",
+    });
+    const orderId = await checkoutFor(buyer, "CI");
+    const { provider, calls, bodies } = ipaymoney();
 
-    const error = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
-      .catch((e: unknown) => e);
+    const payment = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" });
 
-    expect(error).toBeInstanceOf(ProviderNotConfiguredError);
-    expect((error as Error).message).toMatch(/customer_name/);
-    expect((error as Error).message, "phone and country are no longer missing")
-      .not.toMatch(/msisdn|metadata\.country/);
-    expect(calls(), "no request is constructed when a required field is missing").toBe(0);
+    expect(calls(), "exactly one charge request").toBe(1);
+    const body = bodies()[0] ?? {};
+    expect(body["customer_name"]).toBe("Ibrahim Souley");
+    expect(body["msisdn"]).toBe("+22790123461");
+    expect(body["country"], "the buyer's country, not the seller's CI").toBe("NE");
+    expect(body["currency"]).toBe("XOF");
+    // The amount is the order's, in whole francs — XOF has no decimals.
+    expect(body["amount"]).toBe("5000");
+    expect(body["transaction_id"]).toBe(`order:${orderId}:charge`);
+
+    // Nothing synthetic escaped along the way.
+    expect(JSON.stringify(body)).not.toMatch(/phone\.afrinext\.local/);
+
+    // The provider answered synchronously; the domain still clamps to pending
+    // and confirms nothing without a verified event.
+    expect(payment.status).toBe("pending");
   });
 
   it("refuses without a channel, and constructs no request", async () => {
@@ -314,16 +388,37 @@ describe("the real adapter, reached through the real checkout path", () => {
     expect(calls()).toBe(0);
   });
 
-  it("refuses without a country, and constructs no request", async () => {
-    const buyer = await makeBuyer({ phone: "+22790123463", countryCode: null });
+  it("refuses an EMPTY profile before the provider, naming both fields", async () => {
+    const buyer = await makeBuyer({
+      phone: "+22790123463", countryCode: null, fullName: null,
+    });
     const orderId = await checkoutFor(buyer);
     const { provider, calls } = ipaymoney();
 
     const error = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
       .catch((e: unknown) => e);
 
-    expect((error as Error).message).toMatch(/metadata\.country/);
+    expect(error).toBeInstanceOf(ProfileIncompleteError);
+    expect((error as ProfileIncompleteError).missing).toEqual(["full_name", "country"]);
     expect(calls()).toBe(0);
+    void provider;
+  });
+
+  it("refuses a missing NAME before the provider, even with a country", async () => {
+    const buyer = await makeBuyer({
+      phone: "+22790123469", countryCode: "NE", fullName: null,
+    });
+    const orderId = await checkoutFor(buyer);
+    const { provider, calls } = ipaymoney();
+
+    const error = await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ProfileIncompleteError);
+    expect((error as ProfileIncompleteError).missing).toEqual(["full_name"]);
+    expect(calls(), "zero provider requests").toBe(0);
+    expect(await paymentRow(orderId), "and no payment row").toHaveLength(0);
+    void provider;
   });
 });
 
@@ -336,11 +431,20 @@ describe("a refusal is safe, and an unknown is not a refusal", () => {
      * end: the row stays `initiated`, every later attempt returns that row
      * instead of calling the provider, and the buyer clicks pay forever.
      */
-    const buyer = await makeBuyer({ phone: "+22790123464", countryCode: "NE" });
+    const buyer = await makeBuyer({
+      phone: "+22790123464", countryCode: "NE", fullName: "Salamatou Moussa",
+    });
     const orderId = await checkoutFor(buyer);
     const { provider } = ipaymoney();
 
-    await initiatePayment(db, buyer, provider, { orderId, channel: "mobile" })
+    /*
+     * No channel, so the adapter declines to build a request: iPayMoney
+     * documents no default for `Ipay-Payment-Type` and this codebase does not
+     * invent one. The profile is complete, so the gate lets this through and
+     * the refusal happens where it is supposed to — at the provider boundary,
+     * after the payment row exists.
+     */
+    await initiatePayment(db, buyer, provider, { orderId })
       .catch(() => undefined);
 
     const rows = await paymentRow(orderId);

@@ -114,5 +114,15 @@
   "refund.resolvedBy": "Établi par",
   "refund.singleOperator": "Réconcilié par une seule personne",
   "refund.noLedgerYet": "Aucune écriture comptable : le règlement appartient à une phase ultérieure.",
-  "refund.notDelivered": "Aucun SMS n'est envoyé : aucun prestataire n'a encore été choisi."
+  "refund.notDelivered": "Aucun SMS n'est envoyé : aucun prestataire n'a encore été choisi.",
+  "profile.heading": "Avant de payer",
+  "profile.explain": "Votre prestataire de paiement demande le nom de la personne qui paie. Nous ne l'avons pas : la connexion vérifie votre numéro, rien d'autre.",
+  "profile.nameLabel": "Nom complet",
+  "profile.namePlaceholder": "Votre nom, tel que vous l'écrivez",
+  "profile.countryLabel": "Pays",
+  "profile.countryPlaceholder": "Choisissez votre pays",
+  "profile.save": "Enregistrer et continuer",
+  "profile.saved": "Profil enregistré.",
+  "profile.incomplete": "Complétez votre profil pour pouvoir payer.",
+  "profile.privacy": "Ces informations sont transmises au prestataire de paiement pour cette transaction."
 }

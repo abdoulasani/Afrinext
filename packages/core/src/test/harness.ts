@@ -143,6 +143,13 @@ export async function createTestUser(
      * refusal rely on it.
      */
     phone?: string;
+    /**
+     * The buyer's own name. Defaults to a real-looking one so the many tests
+     * that only need "a buyer who can pay" keep working unchanged; pass `null`
+     * for the state a fresh sign-in actually produces — authenticated, and
+     * nothing else known.
+     */
+    fullName?: string | null;
   } = {},
 ): Promise<string> {
   const id = uuidv7();
@@ -164,10 +171,12 @@ export async function createTestUser(
    * no country recorded anywhere — which is what the refusal tests need.
    */
   const country = options.countryCode === undefined ? "NE" : options.countryCode;
+  const fullName =
+    options.fullName === undefined ? `Aïcha Test ${id.slice(0, 4)}` : options.fullName;
   await db.execute(sql`
-    insert into users (id, display_name, country_code, locale, auth_user_id)
-    values (${id}, ${"Test " + id.slice(0, 8)}, ${country}, ${options.locale ?? "fr"},
-            ${authUserId})
+    insert into users (id, display_name, full_name, country_code, locale, auth_user_id)
+    values (${id}, ${"Test " + id.slice(0, 8)}, ${fullName}, ${country},
+            ${options.locale ?? "fr"}, ${authUserId})
   `);
   return id;
 }
