@@ -169,6 +169,50 @@ COMMENT ON COLUMN refunds.status IS
   'is unknown; it may be resolved but never retried, because retrying an unknown '
   'is how a buyer gets refunded twice.';
 
+-- The frozen snapshot is frozen by the DATABASE, not by convention.
+--
+-- amount_minor, currency, payment_id, order_id and provider are copied from the
+-- payment at creation and answer the question "how much goes back, to whose
+-- charge?". Everything else on the row is a lifecycle that legitimately moves.
+-- Leaving the snapshot merely un-updated-by-our-code would make it exactly as
+-- immutable as the next person's UPDATE, and reconciliation would be the first
+-- thing to notice — after the money had already gone.
+CREATE OR REPLACE FUNCTION refunds_snapshot_is_frozen() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.amount_minor <> OLD.amount_minor
+     OR NEW.currency   <> OLD.currency
+     OR NEW.payment_id <> OLD.payment_id
+     OR NEW.order_id   <> OLD.order_id
+     OR NEW.provider   <> OLD.provider THEN
+    RAISE EXCEPTION
+      'refund % has a frozen money snapshot: amount, currency, payment, order and '
+      'provider may never be changed', OLD.id
+      USING ERRCODE = 'restrict_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER refunds_snapshot_frozen
+  BEFORE UPDATE ON refunds
+  FOR EACH ROW EXECUTE FUNCTION refunds_snapshot_is_frozen();
+
+-- A refund is evidence of a debt. It is resolved, never erased.
+CREATE OR REPLACE FUNCTION refunds_never_deleted() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'refunds are never deleted: a refund is resolved, not erased'
+    USING ERRCODE = 'restrict_violation';
+END;
+$$;
+
+CREATE TRIGGER refunds_no_delete
+  BEFORE DELETE ON refunds
+  FOR EACH ROW EXECUTE FUNCTION refunds_never_deleted();
+
+REVOKE DELETE ON refunds FROM afrinext_app;
+
 -- ---------------------------------------------------------------------------
 -- refund_attempts — append-only evidence, written BEFORE the provider call
 -- ---------------------------------------------------------------------------

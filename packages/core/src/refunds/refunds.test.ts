@@ -1017,17 +1017,66 @@ describe("10 · authorization, elevation and the operator's hands", () => {
     );
   });
 
+  it("freezes the money snapshot against editing, and the refund against deletion", async () => {
+    const owed = await owedRefund();
+    /*
+     * Not "our code does not update these" — the database refuses.
+     *
+     * How much goes back and to whose charge is the one thing on this row that
+     * is a fact rather than a lifecycle. A trigger is what makes it as
+     * immutable as the ledger's entries, rather than as immutable as the next
+     * person's UPDATE.
+     */
+    for (const column of ["amount_minor = 500000", "currency = 'XAF'", "provider = 'other'"]) {
+      await expectRejection(
+        db.execute(sql.raw(
+          `update refunds set ${column} where id = '${owed.refundId}'::uuid`,
+        )),
+        /frozen money snapshot/i,
+      );
+    }
+    await expectRejection(
+      db.execute(sql`delete from refunds where id = ${owed.refundId}::uuid`),
+      /never deleted|resolved, not erased/i,
+    );
+  });
+
   it("refuses to send an amount the payment does not corroborate", async () => {
     const owed = await owedRefund();
     const finance = await makeFinance();
+    // The refund's own snapshot cannot be edited, so the drift is introduced on
+    // the payment side — which is the only side that can drift.
     await db.execute(sql`
-      update refunds set amount_minor = 500000 where id = ${owed.refundId}::uuid
+      update payments set amount_minor = 500000 where id = ${owed.paymentId}::uuid
     `);
     await expectRejection(
       executeRefund(db, finance, provider, owed.refundId),
       /no longer matches its payment/i,
     );
     expect(provider.refundsPerformed()).toBe(0);
+  });
+
+  it("never lets a caller's status filter reach SQL", async () => {
+    const support = await makeSupport();
+    await owedRefund();
+    /*
+     * The status list reaches SQL through `sql.raw` — Drizzle cannot
+     * parameterise an IN list of unknown length — so it must consist of values
+     * this module chose. TypeScript says as much, and a value arriving from
+     * JSON has no type at runtime, so the filter is checked against the state
+     * list rather than trusted.
+     */
+    const hostile = ["owed') or true --", "'; drop table refunds; --"] as unknown as
+      Parameters<typeof listRefundQueue>[2] extends infer O
+        ? O extends { statuses?: infer S } ? S : never : never;
+
+    const result = await listRefundQueue(db, support, { statuses: hostile });
+    expect(result).toEqual([]);
+    // And the table is still there, which is the point.
+    const rows = await db.execute<{ [key: string]: unknown; n: string }>(sql`
+      select count(*) as n from refunds
+    `);
+    expect(Number(rows.rows[0]?.n)).toBe(1);
   });
 
   it("accepts no destination from any caller", () => {
@@ -1299,7 +1348,22 @@ describe("13 · reconciliation reports what the machine says is impossible", () 
 
   it("detects a refund_due order with no refund record", async () => {
     const owed = await owedRefund();
-    await db.execute(sql`delete from refunds where id = ${owed.refundId}::uuid`);
+    /*
+     * The row cannot be deleted — a refund is resolved, never erased — so the
+     * missing-record state is produced the only way it could ever arise: an
+     * order that reached refund_due without one, which is what a broken or
+     * removed creation hook would leave behind.
+     */
+    await db.execute(sql`
+      update orders set status = 'expired' where id = ${owed.orderId}::uuid
+    `);
+    await db.execute(sql`
+      insert into orders (id, buyer_user_id, store_id, checkout_key, status, total_minor,
+                          currency, expires_at, late_payment_at, closed_at)
+      select gen_random_uuid(), buyer_user_id, store_id, checkout_key || '-orphan',
+             'refund_due', total_minor, currency, expires_at, now(), now()
+        from orders where id = ${owed.orderId}::uuid
+    `);
     const report = await reconcileCommerce(db);
     expect(report.anomalies.map((a) => a.kind)).toContain("refund_due_without_refund_record");
   });
@@ -1307,7 +1371,7 @@ describe("13 · reconciliation reports what the machine says is impossible", () 
   it("detects a frozen amount that stopped matching its payment", async () => {
     const owed = await owedRefund();
     await db.execute(sql`
-      update refunds set amount_minor = 4999 where id = ${owed.refundId}::uuid
+      update payments set amount_minor = 4999 where id = ${owed.paymentId}::uuid
     `);
     const report = await reconcileCommerce(db);
     expect(report.anomalies.map((a) => a.kind)).toContain("refund_amount_mismatch");

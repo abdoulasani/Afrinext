@@ -49,6 +49,44 @@ verified facts.
 Items **6, 7 and 8** most often invalidate an assumed design. If only part is
 available now, send 1–6 and the adapter can begin.
 
+## Refunds — what Phase 3 still needs, and which answers change the design
+
+Phase 3 built refund execution against the provider interface, not against
+iPayMoney. The adapter still throws. These are the facts that would let it stop
+throwing, and two of them are **design-changing** rather than parametric.
+
+| # | Required for refunds | Why it blocks | Design-changing? |
+| - | -------------------- | ------------- | ---------------- |
+| R1 | The refund endpoint: request schema, response schema, and the **complete** status enumeration | Nothing can be sent | No |
+| R2 | Which error codes mean, in the provider's own words, **"no refund was created"** | A `failed` without that evidence is treated as `in_doubt` and never retried. With no documented list, every provider rejection becomes a manual reconciliation | No — but expensive if absent |
+| R3 | **Whether a refund status query exists**, and what it can be queried by | This is the only mechanical way an unknown outcome is ever resolved. Without it, every timed-out refund waits for a person reading a statement | **YES** |
+| R4 | **Whether refunds accept a caller idempotency key**, and whether a refund can be looked up by that key afterwards | After a timeout we hold no provider refund reference — our key is the only handle we have. Without lookup-by-key, R3 cannot resolve the exact case that most needs resolving | **YES** |
+| R5 | Whether refund webhooks exist; payload, signature algorithm, header name | Decides whether an unknown can resolve itself without polling | No |
+| R6 | Whether a refund webhook names the charge it reverses | Our webhook matcher uses the charge as the thread back when no refund reference is held | No |
+| R7 | Time limits on refunding a charge, and what happens past them | Decides whether an old `refund_due` is refundable at all or is a manual credit | No |
+| R8 | Whether partial refunds are supported | Phase 3 is full-amount only by decision; this decides whether that stays a decision or becomes a constraint | No |
+| R9 | Whether a refund can fail *after* being accepted, and how that is signalled | Decides whether a `pending` refund needs its own resolution path | No |
+| R10 | Sandbox behaviour for refunds: how to force a rejection, a timeout, and a duplicate | Nothing about refunds can be tested against the real provider without these | No |
+
+**R3 and R4 are the ones to ask about first.** If both answers are "no", the
+operational consequence is concrete and must be told to whoever staffs finance
+before launch, not discovered on the first timeout: **every refund whose request
+does not come back becomes a human reading an iPayMoney statement and
+reconciling it under dual control.** The code already supports that path — it is
+not a gap — but it is a staffing cost, and it scales with transaction volume.
+
+### What the adapter does today
+
+`refund()` throws, as every other method does. `getRefund()` is **declared and
+throws**, unlike `createPayout`, and the difference is deliberate: omitting a
+method asserts that the provider may not have the capability, and
+`supportsRefundQuery(provider)` returning `false` makes callers treat every
+ambiguity as manual by design. Declaring `getRefund` keeps the adapter
+non-operational without deciding R3 on iPayMoney's behalf.
+
+Nothing about the refund endpoint, its payloads, its error codes or its
+signature scheme has been invented anywhere in the codebase.
+
 ## How it will be implemented
 
 The `PaymentProvider` interface in `packages/core/src/payments/provider.ts` is
@@ -58,6 +96,9 @@ bodies; nothing else in the system is touched.
 `createPayout` and `getPayout` are **deliberately absent** from the adapter
 rather than declared and stubbed — declaring them would assert an answer to
 item 8 that we do not have. `supportsPayouts(provider)` is how callers check.
+
+`getRefund` is the opposite case and is declared-and-throwing; see the refund
+section above for why the two absences mean different things.
 
 ## Integration tests
 

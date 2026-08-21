@@ -43,6 +43,12 @@ export const refunds = pgTable(
      * Copied from the payment at creation and never recomputed. Nothing in the
      * refund path performs arithmetic on it, so there is no place for a
      * minor-unit mistake — the XOF divide-by-100 — to enter.
+     *
+     * FROZEN BY A TRIGGER, not by convention: `refunds_snapshot_frozen` refuses
+     * any UPDATE that changes the amount, currency, payment, order or provider.
+     * How much goes back and to whose charge is a fact, not a lifecycle, and
+     * the ledger's entries are immutable for the same reason. See migration
+     * 0012.
      */
     amountMinor: bigint("amount_minor", { mode: "bigint" }).notNull(),
     currency: char("currency", { length: 3 }).notNull().references(() => currencies.code),

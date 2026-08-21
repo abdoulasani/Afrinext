@@ -12,7 +12,8 @@ PostgreSQL, Drizzle.
 ```
 apps/web/          Next.js 16 App Router — UI, route handlers. The only place Next.js exists.
 packages/core/     Domain logic, framework-free: money, ledger, authz, auth,
-                   ratelimit, commissions, consent, audit, payments
+                   ratelimit, commissions, consent, audit, payments, refunds,
+                   notifications
 packages/db/       Drizzle schema, migrations, client
 packages/ui/       Design tokens and shared components
 packages/i18n/     fr/en catalogues (fr is the default)
@@ -65,8 +66,25 @@ otherwise.
   checkout expired, the order ends as `paid` when fulfilling is still safe —
   inside a 24-hour grace window, product and store still published, buyer does
   not already own it — and as `refund_due` otherwise. `refund_due` is a queue
-  meaning "payment confirmed, not fulfilled, refund owed"; **no refund
-  execution exists**. See `docs/architecture/late-payment-policy.md`.
+  meaning "payment confirmed, not fulfilled, refund owed", and it is a terminal
+  order state: the refund's own lifecycle lives in `refunds`. See
+  `docs/architecture/late-payment-policy.md`.
+- **Unknown must never become failed.** A refund request that timed out, lost
+  its connection, or answered HTTP 5xx *after* the bytes left this process is
+  not evidence that no money moved. Those become `in_doubt`, which can be
+  resolved but **never retried** — `in_doubt → in_flight` is forbidden by the
+  state machine. Only a failure provably never transmitted, or a provider
+  statement carrying `notExecutedEvidence`, becomes `failed`. An HTTP status
+  never decides whether the financial operation happened. See
+  `docs/architecture/refund-policy.md`.
+- **A refund's attempt row is committed before the provider is called.** That
+  ordering is what makes a crash mid-flight leave evidence instead of silence.
+  Writing it afterwards makes a crash indistinguishable from a refund that was
+  never attempted, which is the reading that pays a buyer twice.
+- **There is no "mark as refunded".** A `succeeded` refund with no resolution
+  source, no evidence and no provider reference is refused by a CHECK
+  constraint. Resolving an unknown goes through a provider status query, a
+  signed webhook, or a two-person manual reconciliation against a statement.
 - **Fee snapshots are frozen and append-only.** A `fee_schedules` row plus its
   `fee_lines` are written once, must total the gross, and are never edited —
   changing a commission rule later must not restate a past order.
@@ -125,9 +143,18 @@ provider but NOT implemented** — its documentation is not available, so the
 adapter throws rather than pretending. See `docs/providers/ipaymoney/README.md`
 for exactly what is required to build it.
 
+`getRefund()` is optional on the interface and its absence is expensive rather
+than harmless: it is the only mechanical way an `in_doubt` refund is resolved,
+so a provider without it turns every ambiguous refund into a person reading a
+statement. Callers branch on `supportsRefundQuery()`. iPayMoney's answer is
+unknown and is item R3 of the refund gaps.
+
 No SMS provider is chosen either. `MessageSender` is the whole surface, and a
 provider is selected only after a real handset delivery test on Airtel, Orange
-and Moov in Niger — see `docs/providers/sms/README.md`.
+and Moov in Niger — see `docs/providers/sms/README.md`. Refund resolutions
+therefore write to the **notification outbox** (`notification_outbox`) rather
+than sending: the domain stops at "this person should know", and nothing marks
+a row `sent` because nothing delivers.
 
 ## Handoff
 

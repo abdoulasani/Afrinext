@@ -6,7 +6,7 @@ import { DomainError } from "../errors";
 import { uuidv7 } from "../ids";
 import { money, type Money } from "../money";
 import { queueNotification } from "../notifications";
-import type { RefundResolutionSource, RefundState } from "./state";
+import { REFUND_STATES, type RefundResolutionSource, type RefundState } from "./state";
 
 /**
  * Recording that a refund is owed, and reading the queue.
@@ -221,7 +221,18 @@ export async function listRefundQueue(
 ): Promise<readonly RefundQueueEntry[]> {
   await authorize(db, actor, "refund.read");
 
-  const statuses = options.statuses ?? (["owed", "in_flight", "failed", "in_doubt"] as const);
+  /*
+   * The status filter is validated against the state list, not interpolated.
+   *
+   * These values reach SQL through `sql.raw` — Drizzle cannot parameterise an
+   * IN list of unknown length — so they must be values this module chose, never
+   * values a caller supplied. TypeScript says as much, but a value arriving
+   * from JSON has no type at runtime, and "the types said so" is not a defence
+   * against injection. Anything not in REFUND_STATES is dropped.
+   */
+  const requested = options.statuses ?? (["owed", "in_flight", "failed", "in_doubt"] as const);
+  const statuses = REFUND_STATES.filter((s) => requested.includes(s));
+  if (statuses.length === 0) return [];
   const limit = Math.min(Math.max(Math.floor(options.limit ?? 100), 1), 500);
 
   const rows = await db.execute<

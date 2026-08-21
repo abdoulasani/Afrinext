@@ -163,13 +163,48 @@ async function main(): Promise<void> {
 }
 
 /**
- * Builds a consistent order and payment, checks, breaks, checks, restores.
+ * Builds a consistent order and payment, checks, breaks, checks — then the
+ * whole thing is rolled back.
  *
  * Raw SQL on purpose: the point is to exercise the DETECTOR, so going through
  * the domain — which is what makes these states unreachable — would prove
  * nothing about the query.
  */
 async function probeCommerceDetector(
+  db: ReturnType<typeof getDb>,
+): Promise<{ silentWhenConsistent: boolean; detectedWhenBroken: string | null }> {
+  return inRolledBackTransaction(db, probeCommerceInside);
+}
+
+/**
+ * Runs a probe inside a transaction that is always rolled back.
+ *
+ * The probes plant rows that are deliberately wrong, so they must leave nothing
+ * behind — and deleting afterwards is the wrong instrument. Several of these
+ * tables refuse DELETE by design (a refund is resolved, never erased), and a
+ * cleanup that has to disable a trigger is a cleanup that could disable the
+ * wrong one. A rollback removes everything without asking any table's
+ * permission, and it removes the rows even if the probe throws halfway.
+ */
+async function inRolledBackTransaction<T>(
+  db: ReturnType<typeof getDb>,
+  body: (tx: ReturnType<typeof getDb>) => Promise<T>,
+): Promise<T> {
+  class Rollback extends Error {
+    constructor(readonly value: T) { super("probe rollback"); }
+  }
+  try {
+    await db.transaction(async (tx) => {
+      throw new Rollback(await body(tx as unknown as ReturnType<typeof getDb>));
+    });
+  } catch (error: unknown) {
+    if (error instanceof Rollback) return error.value;
+    throw error;
+  }
+  throw new Error("the probe transaction committed, which it must never do");
+}
+
+async function probeCommerceInside(
   db: ReturnType<typeof getDb>,
 ): Promise<{ silentWhenConsistent: boolean; detectedWhenBroken: string | null }> {
   const buyer = uuidv7();
@@ -209,8 +244,17 @@ async function probeCommerceDetector(
             ${"probe-" + tag}, now())
   `);
 
+  /*
+   * Silent about THESE rows, not silent about the whole database.
+   *
+   * Asserting a globally empty report makes the probe a hostage to whatever
+   * the suite left behind: one unrelated anomaly and the probe reports that it
+   * cannot detect, which is the opposite of the truth. What the probe is
+   * entitled to claim is that the rows IT built produce nothing.
+   */
+  const mine = new Set([paymentId, orderId, storeId, productId, buyer, seller]);
   const consistent = await reconcileCommerce(db);
-  const silentWhenConsistent = consistent.anomalies.length === 0;
+  const silentWhenConsistent = !consistent.anomalies.some((a) => mine.has(a.subject));
 
   // Break exactly one invariant: the order stops agreeing with its payment.
   await db.execute(sql`
@@ -219,13 +263,7 @@ async function probeCommerceDetector(
   const broken = await reconcileCommerce(db);
   const detected = broken.anomalies.find((a) => a.subject === paymentId);
 
-  await db.execute(sql`delete from payments where id = ${paymentId}::uuid`);
-  await db.execute(sql`delete from order_items where order_id = ${orderId}::uuid`);
-  await db.execute(sql`delete from orders where id = ${orderId}::uuid`);
-  await db.execute(sql`delete from products where id = ${productId}::uuid`);
-  await db.execute(sql`delete from stores where id = ${storeId}::uuid`);
-  await db.execute(sql`delete from users where id in (${buyer}, ${seller})`);
-
+  // No cleanup: the caller rolls the whole thing back.
   return { silentWhenConsistent, detectedWhenBroken: detected?.kind ?? null };
 }
 
@@ -237,6 +275,12 @@ async function probeCommerceDetector(
  * states unreachable — would prove nothing about the query.
  */
 async function probeRefundDetector(
+  db: ReturnType<typeof getDb>,
+): Promise<{ silentWhenConsistent: boolean; detectedWhenBroken: string | null }> {
+  return inRolledBackTransaction(db, probeRefundInside);
+}
+
+async function probeRefundInside(
   db: ReturnType<typeof getDb>,
 ): Promise<{ silentWhenConsistent: boolean; detectedWhenBroken: string | null }> {
   const buyer = uuidv7();
@@ -285,24 +329,25 @@ async function probeRefundDetector(
             'grace_window_elapsed')
   `);
 
+  const mine = new Set([refundId, paymentId, orderId, storeId, productId, buyer, seller]);
   const consistent = await reconcileCommerce(db);
-  const silentWhenConsistent = consistent.anomalies.length === 0;
+  const silentWhenConsistent = !consistent.anomalies.some((a) => mine.has(a.subject));
 
-  // Break exactly one invariant: the frozen amount stops matching its payment.
-  // Reachable only by a direct row edit, which is precisely the case the
-  // detector exists to catch.
-  await db.execute(sql`update refunds set amount_minor = 999 where id = ${refundId}::uuid`);
+  /*
+   * Break exactly one invariant: the refund's frozen amount stops matching its
+   * payment.
+   *
+   * Edited on the PAYMENT side, because the refund's snapshot is frozen by a
+   * trigger and cannot be edited at all. That is the stronger arrangement and
+   * it makes the probe more honest: the detector's job is to notice the two
+   * disagreeing, from whichever side drifted.
+   */
+  await db.execute(sql`update payments set amount_minor = 999 where id = ${paymentId}::uuid`);
   const broken = await reconcileCommerce(db);
   const detected = broken.anomalies.find((a) => a.subject === refundId);
 
-  await db.execute(sql`delete from refunds where id = ${refundId}::uuid`);
-  await db.execute(sql`delete from payments where id = ${paymentId}::uuid`);
-  await db.execute(sql`delete from order_items where order_id = ${orderId}::uuid`);
-  await db.execute(sql`delete from orders where id = ${orderId}::uuid`);
-  await db.execute(sql`delete from products where id = ${productId}::uuid`);
-  await db.execute(sql`delete from stores where id = ${storeId}::uuid`);
-  await db.execute(sql`delete from users where id in (${buyer}, ${seller})`);
-
+  // No cleanup: the caller rolls the whole thing back. The refund row could
+  // not be deleted anyway — a refund is resolved, never erased.
   return { silentWhenConsistent, detectedWhenBroken: detected?.kind ?? null };
 }
 
