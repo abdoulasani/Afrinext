@@ -265,12 +265,25 @@ export const paymentEvents = pgTable(
     /** Why, when it was not applied. Never shown to the caller. */
     reason: text("reason"),
     payload: text("payload").notNull(),
+    /**
+     * charge | refund. A refund webhook is not a second, weaker door: it goes
+     * through this table and the same UNIQUE (provider, provider_event_id)
+     * replay index that charges do.
+     */
+    subject: text("subject").notNull().default("charge"),
+    /**
+     * The refund a refund event belongs to. Declared without a Drizzle-level
+     * reference because `refunds` imports this file; the foreign key itself is
+     * real and lives in migration 0012.
+     */
+    refundId: uuid("refund_id"),
     receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("payment_events_provider_event_key").on(t.provider, t.providerEventId),
     index("payment_events_payment_idx").on(t.paymentId, t.receivedAt),
     check("payment_events_outcome_valid", sql`${t.outcome} in ('applied','ignored','rejected')`),
+    check("payment_events_subject_valid", sql`${t.subject} in ('charge','refund')`),
   ],
 );
 

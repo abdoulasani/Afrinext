@@ -1,7 +1,7 @@
 import { ProviderNotConfiguredError } from "../errors";
 import type {
   ChargeInput, ChargeResult, ChargeStatus, HeadersLike,
-  PaymentProvider, RefundInput, RefundResult, VerifiedEvent,
+  PaymentProvider, RefundInput, RefundQuery, RefundResult, RefundStatus, VerifiedEvent,
 } from "./provider";
 
 /**
@@ -62,6 +62,24 @@ export class IPayMoneyProvider implements PaymentProvider {
 
   async refund(_input: RefundInput): Promise<RefundResult> {
     this.refuse("refund");
+  }
+
+  /*
+   * getRefund IS declared, and throws — unlike createPayout, which is absent.
+   *
+   * The difference is what each absence would assert. Omitting createPayout
+   * says "this provider may have no disbursement API", which is an honest
+   * unknown. Omitting getRefund would say the same about refund status queries,
+   * and callers branch on that: `supportsRefundQuery()` returning false makes
+   * every ambiguous refund a manual process by design. Declaring it and
+   * throwing keeps the adapter non-operational without quietly deciding, on
+   * iPayMoney's behalf, that it cannot answer questions about refunds.
+   *
+   * Which of the two this becomes is item 3 in the refund section of
+   * docs/providers/ipaymoney/README.md, and it is a design-changing answer.
+   */
+  async getRefund(_query: RefundQuery): Promise<RefundStatus> {
+    this.refuse("getRefund");
   }
 
   // createPayout and getPayout are intentionally absent: whether iPayMoney

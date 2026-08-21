@@ -98,5 +98,21 @@
   "order.status.refund_due": "Refund due",
   "order.refundDueExplain": "Your payment was confirmed, but after the order had expired. Afrinext did not deliver it and owes you a refund.",
   "order.refundNotYetExecuted": "The refund has not been executed yet. It will be processed through the payment provider.",
-  "order.lateAccepted": "Payment received after the window closed, and accepted."
+  "order.lateAccepted": "Payment received after the window closed, and accepted.",
+  "refund.queue": "Refund queue",
+  "refund.queueEmpty": "No refunds waiting.",
+  "refund.status.owed": "Owed",
+  "refund.status.in_flight": "Sent",
+  "refund.status.succeeded": "Refunded",
+  "refund.status.failed": "Proven failure",
+  "refund.status.in_doubt": "Outcome unknown",
+  "refund.inDoubtExplain": "The provider did not answer. While the outcome is unknown no second request is sent: it has to be established first.",
+  "refund.attempts": "Attempts",
+  "refund.owedSince": "Owed since",
+  "refund.reason": "Reason",
+  "refund.providerRef": "Provider reference",
+  "refund.resolvedBy": "Established by",
+  "refund.singleOperator": "Reconciled by a single operator",
+  "refund.noLedgerYet": "No ledger entry: settlement belongs to a later phase.",
+  "refund.notDelivered": "No SMS is sent: no provider has been chosen yet."
 }

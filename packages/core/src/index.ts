@@ -5,6 +5,8 @@ export * as ledger from "./ledger";
 export * as commissions from "./commissions";
 export * as catalog from "./catalog";
 export * as orders from "./orders";
+export * as refunds from "./refunds";
+export * as notifications from "./notifications";
 export * as content from "./content";
 export * as authz from "./authz";
 export * as auth from "./auth";

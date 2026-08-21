@@ -98,5 +98,21 @@
   "order.status.refund_due": "Remboursement dû",
   "order.refundDueExplain": "Votre paiement a bien été confirmé, mais après l'expiration de la commande. Afrinext ne vous a pas livré et vous doit un remboursement.",
   "order.refundNotYetExecuted": "Le remboursement n'a pas encore été effectué. Il sera traité auprès du prestataire de paiement.",
-  "order.lateAccepted": "Paiement reçu après l'expiration du délai, et accepté."
+  "order.lateAccepted": "Paiement reçu après l'expiration du délai, et accepté.",
+  "refund.queue": "File de remboursement",
+  "refund.queueEmpty": "Aucun remboursement en attente.",
+  "refund.status.owed": "Dû",
+  "refund.status.in_flight": "Envoyé",
+  "refund.status.succeeded": "Remboursé",
+  "refund.status.failed": "Échec prouvé",
+  "refund.status.in_doubt": "Issue inconnue",
+  "refund.inDoubtExplain": "Le prestataire n'a pas répondu. Tant que l'issue est inconnue, aucune nouvelle demande n'est envoyée : elle doit d'abord être élucidée.",
+  "refund.attempts": "Tentatives",
+  "refund.owedSince": "Dû depuis",
+  "refund.reason": "Motif",
+  "refund.providerRef": "Référence prestataire",
+  "refund.resolvedBy": "Établi par",
+  "refund.singleOperator": "Réconcilié par une seule personne",
+  "refund.noLedgerYet": "Aucune écriture comptable : le règlement appartient à une phase ultérieure.",
+  "refund.notDelivered": "Aucun SMS n'est envoyé : aucun prestataire n'a encore été choisi."
 }

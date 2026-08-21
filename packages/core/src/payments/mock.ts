@@ -1,8 +1,10 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { money } from "../money";
+import { RefundTransportError } from "./refund-outcome";
 import type {
   ChargeInput, ChargeResult, ChargeStatus, ChargeStatusValue, HeadersLike, PaymentProvider,
-  PayoutInput, PayoutResult, PayoutStatus, RefundInput, RefundResult, VerifiedEvent,
+  PayoutInput, PayoutResult, PayoutStatus, RefundInput, RefundResult, RefundStatus,
+  RefundQuery, RefundStatusValue, VerifiedEvent,
 } from "./provider";
 
 /**
@@ -34,6 +36,21 @@ export interface MockProviderOptions {
    */
   readonly asynchronous?: boolean;
 }
+
+/** How the mock provider will answer a refund. See MockPaymentProvider.refund. */
+export type MockRefundScenario =
+  | "succeeds"
+  | "succeeds_without_ref"
+  | "rejects"
+  | "rejects_without_evidence"
+  | "timeout_executed"
+  | "timeout_not_executed"
+  | "connection_lost"
+  | "http_500"
+  | "malformed"
+  | "dns_failure"
+  | "connection_refused"
+  | "pending";
 
 export class MockPaymentProvider implements PaymentProvider {
   readonly id = "mock";
@@ -147,17 +164,40 @@ export class MockPaymentProvider implements PaymentProvider {
     const parsed = JSON.parse(rawBody.toString("utf8")) as {
       id: string;
       type: string;
+      subject?: "charge" | "refund";
       providerRef: string;
-      status: ChargeStatus["status"];
+      providerRefundRef?: string;
+      status: string;
       amountMinor?: string;
       currency?: string;
+      notExecutedEvidence?: string;
     };
 
+    if (parsed.subject === "refund") {
+      return Promise.resolve({
+        subject: "refund" as const,
+        providerEventId: parsed.id,
+        type: parsed.type,
+        providerRefundRef: parsed.providerRefundRef ?? parsed.providerRef,
+        ...(parsed.providerRef !== undefined ? { providerRef: parsed.providerRef } : {}),
+        status: parsed.status as RefundStatusValue,
+        amount:
+          parsed.amountMinor !== undefined && parsed.currency !== undefined
+            ? money(BigInt(parsed.amountMinor), parsed.currency)
+            : undefined,
+        ...(parsed.notExecutedEvidence !== undefined
+          ? { notExecutedEvidence: parsed.notExecutedEvidence }
+          : {}),
+        raw: parsed,
+      });
+    }
+
     return Promise.resolve({
+      subject: "charge" as const,
       providerEventId: parsed.id,
       type: parsed.type,
       providerRef: parsed.providerRef,
-      status: parsed.status,
+      status: parsed.status as ChargeStatusValue,
       amount:
         parsed.amountMinor !== undefined && parsed.currency !== undefined
           ? money(BigInt(parsed.amountMinor), parsed.currency)
@@ -191,6 +231,7 @@ export class MockPaymentProvider implements PaymentProvider {
   }): { body: Buffer; headers: HeadersLike } {
     const payload = JSON.stringify({
       id: input.id,
+      subject: "charge",
       type: input.type ?? `charge.${input.status}`,
       providerRef: input.providerRef,
       status: input.status,
@@ -223,14 +264,282 @@ export class MockPaymentProvider implements PaymentProvider {
     this.charges.set(providerRef, { ...existing, status });
   }
 
+  /*
+   * -----------------------------------------------------------------------
+   * Refunds
+   * -----------------------------------------------------------------------
+   *
+   * The scenarios below are the whole reason this mock exists for Phase 3.
+   * They are not conveniences: each one is a way a real provider fails that
+   * the refund domain must survive, and several of them are impossible to
+   * produce from a well-behaved provider on demand.
+   *
+   * The scenario is set on the PROVIDER, keyed by charge reference, before the
+   * refund is requested — never passed at the call site. That distinction
+   * matters: a test that chose the outcome when calling `refund()` would be
+   * testing a branch of our own code, whereas a provider configured in advance
+   * is the provider deciding, which is what actually happens.
+   */
+
+  /**
+   * How the provider will behave when asked to refund a particular charge.
+   *
+   *   succeeds                  ordinary success, with a reference.
+   *   succeeds_without_ref      success claimed with nothing to name it. Must
+   *                             be treated as unknown, not success.
+   *   rejects                   a documented business rejection carrying
+   *                             evidence that no money moved. The only shape
+   *                             that may become `failed` from a response.
+   *   rejects_without_evidence  a bare "failed". Indistinguishable from an
+   *                             accepted refund reported badly, so: unknown.
+   *   timeout_executed          the request went out, the provider DID refund,
+   *                             and we never heard. The dangerous one.
+   *   timeout_not_executed      the request went out, nothing happened, and we
+   *                             never heard. Identical from here — which is
+   *                             the point.
+   *   connection_lost           reset after transmission. Unknown.
+   *   http_500                  a 5xx AFTER the request reached the provider.
+   *                             Unknown, and this is the case the approved
+   *                             design was corrected to get right.
+   *   malformed                 an answer that cannot be parsed. Unknown.
+   *   dns_failure               ENOTFOUND. Proven never transmitted.
+   *   connection_refused        ECONNREFUSED. Proven never transmitted.
+   *   pending                   accepted, outcome to arrive by webhook.
+   */
+  static readonly REFUND_SCENARIOS = [
+    "succeeds", "succeeds_without_ref", "rejects", "rejects_without_evidence",
+    "timeout_executed", "timeout_not_executed", "connection_lost", "http_500",
+    "malformed", "dns_failure", "connection_refused", "pending",
+  ] as const;
+
+  private readonly refundPlans = new Map<string, MockRefundScenario>();
+  /** What the provider actually did, keyed by its own reference. */
+  private readonly refundsIssued = new Map<string, RefundStatus>();
+  /**
+   * The same truth keyed by OUR idempotency key.
+   *
+   * This is the map that makes a timed-out refund resolvable: the provider
+   * performed something, we never learned its reference, and the only handle
+   * left is the key we sent. A provider that keeps this index can answer
+   * "what happened to my request?"; one that does not leaves a person to read
+   * a statement, which is why its existence is an open iPayMoney question
+   * rather than an implementation detail.
+   */
+  private readonly refundTruthByKey = new Map<string, RefundStatus>();
+  /** Refunds the provider performed but never successfully reported. */
+  private readonly silentRefunds = new Map<string, RefundStatus>();
+  private readonly refundsByKey = new Map<string, RefundResult>();
+
+  /** Decides, in advance, how this provider will answer a refund of a charge. */
+  planRefund(providerRef: string, scenario: MockRefundScenario): void {
+    this.refundPlans.set(providerRef, scenario);
+  }
+
   refund(input: RefundInput): Promise<RefundResult> {
     const charge = this.charges.get(input.providerRef);
-    if (charge === undefined) return Promise.reject(new Error(`Unknown charge ${input.providerRef}`));
+    if (charge === undefined) {
+      return Promise.reject(new Error(`Unknown charge ${input.providerRef}`));
+    }
+
+    /*
+     * Provider-side idempotency, keyed on OUR key.
+     *
+     * A real provider that supports idempotency keys answers a repeated key
+     * with the original outcome rather than refunding again. Modelling that
+     * here is what lets a test show the difference between a system that
+     * relies on it and one that does not — Afrinext does not rely on it, and
+     * the tests prove the safety holds even when this map is empty.
+     */
+    const seen = this.refundsByKey.get(input.idempotencyKey);
+    if (seen !== undefined) return Promise.resolve(seen);
+
+    const scenario = this.refundPlans.get(input.providerRef) ?? "succeeds";
+    const providerRefundRef = this.nextRef("mockrfd");
+    const raw = {
+      of: input.providerRef,
+      amountMinor: input.amount.amountMinor.toString(),
+      currency: input.amount.currency,
+      scenario,
+    };
+
+    const record = (status: RefundStatusValue, evidence?: string): RefundStatus => {
+      const truth: RefundStatus = {
+        providerRefundRef,
+        status,
+        amount: input.amount,
+        ...(evidence !== undefined ? { notExecutedEvidence: evidence } : {}),
+        raw,
+      };
+      // Indexed both ways, because after a timeout our key is all we have.
+      this.refundTruthByKey.set(input.idempotencyKey, truth);
+      return truth;
+    };
+
+    const answer = (result: RefundResult): Promise<RefundResult> => {
+      this.refundsByKey.set(input.idempotencyKey, result);
+      return Promise.resolve(result);
+    };
+
+    switch (scenario) {
+      case "succeeds":
+        this.refundsIssued.set(providerRefundRef, record("succeeded"));
+        return answer({ providerRefundRef, status: "succeeded", raw });
+
+      case "succeeds_without_ref":
+        this.refundsIssued.set(providerRefundRef, record("succeeded"));
+        return answer({ providerRefundRef: "", status: "succeeded", raw });
+
+      case "pending":
+        this.refundsIssued.set(providerRefundRef, record("pending"));
+        return answer({ providerRefundRef, status: "pending", raw });
+
+      case "rejects":
+        return answer({
+          providerRefundRef,
+          status: "failed",
+          notExecutedEvidence:
+            "provider error REFUND_WINDOW_CLOSED: no refund was created for this charge",
+          raw,
+        });
+
+      case "rejects_without_evidence":
+        // No evidence. Deliberately ambiguous, and must not become `failed`.
+        return answer({ providerRefundRef, status: "failed", raw });
+
+      case "timeout_executed":
+        // The refund HAPPENED. We simply never learned it — which is exactly
+        // why a timeout may never be read as "it did not happen".
+        this.silentRefunds.set(providerRefundRef, record("succeeded"));
+        this.refundsIssued.set(providerRefundRef, record("succeeded"));
+        return Promise.reject(
+          new RefundTransportError("socket timed out awaiting response", "unknown"),
+        );
+
+      case "timeout_not_executed":
+        return Promise.reject(
+          new RefundTransportError("socket timed out awaiting response", "unknown"),
+        );
+
+      case "connection_lost":
+        return Promise.reject(
+          Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }),
+        );
+
+      case "http_500":
+        // Reached the provider. Answered badly. Says nothing about the money.
+        this.silentRefunds.set(providerRefundRef, record("succeeded"));
+        this.refundsIssued.set(providerRefundRef, record("succeeded"));
+        return Promise.reject(
+          new RefundTransportError("provider returned 500", "transmitted", 500),
+        );
+
+      case "malformed":
+        return Promise.reject(
+          new RefundTransportError(
+            "could not parse the provider response: <html>502 Bad Gateway</html>",
+            "transmitted",
+          ),
+        );
+
+      case "dns_failure":
+        return Promise.reject(
+          Object.assign(new Error("getaddrinfo ENOTFOUND api.example"), { code: "ENOTFOUND" }),
+        );
+
+      case "connection_refused":
+        return Promise.reject(
+          Object.assign(new Error("connect ECONNREFUSED"), { code: "ECONNREFUSED" }),
+        );
+    }
+  }
+
+  /**
+   * What became of a refund.
+   *
+   * Answers about refunds this provider actually performed, including the ones
+   * it never managed to report — which is how an `in_doubt` refund is resolved
+   * to the truth rather than to a guess. A reference it has never issued gets a
+   * positive "no such refund", because "I have no record of this" is itself
+   * evidence a provider can give.
+   */
+  getRefund(query: RefundQuery): Promise<RefundStatus> {
+    if (query.providerRefundRef !== undefined && query.providerRefundRef !== "") {
+      const byRef = this.refundsIssued.get(query.providerRefundRef);
+      if (byRef !== undefined) return Promise.resolve(byRef);
+    }
+    if (query.idempotencyKey !== undefined) {
+      const byKey = this.refundTruthByKey.get(query.idempotencyKey);
+      if (byKey !== undefined) return Promise.resolve(byKey);
+    }
+    /*
+     * "I have no record of this."
+     *
+     * A positive statement, not a shrug — which is why it carries evidence and
+     * may therefore resolve an in_doubt refund to `failed`. A provider that
+     * answered "I don't know" instead would leave the refund exactly where it
+     * was, and rightly.
+     */
+    const ref = query.providerRefundRef ?? query.idempotencyKey ?? "";
     return Promise.resolve({
-      providerRefundRef: this.nextRef("mockrfd"),
-      status: "succeeded",
-      raw: { of: input.providerRef, amountMinor: input.amount.amountMinor.toString() },
+      providerRefundRef: ref,
+      status: "failed",
+      notExecutedEvidence: "no refund exists under that reference",
+      raw: { query: { ...query }, known: false },
     });
+  }
+
+  /** Test helper: did the provider actually move money for this reference? */
+  refundHappened(providerRefundRef: string): boolean {
+    return this.refundsIssued.get(providerRefundRef)?.status === "succeeded";
+  }
+
+  /** How many refunds this provider actually performed. The duplicate check. */
+  refundsPerformed(): number {
+    return [...this.refundsIssued.values()].filter((r) => r.status === "succeeded").length;
+  }
+
+  /** Test helper: the reference of a refund the provider never got to report. */
+  silentRefundRefs(): readonly string[] {
+    return [...this.silentRefunds.keys()];
+  }
+
+  /**
+   * A refund webhook, exactly as a provider would send it.
+   *
+   * Like `event()`, a helper and not a back door: what it returns still has to
+   * survive signature verification and every cross-check the refund domain
+   * makes afterwards.
+   */
+  refundEvent(input: {
+    id: string;
+    providerRefundRef: string;
+    status: RefundStatusValue;
+    providerRef?: string;
+    amountMinor?: bigint;
+    currency?: string;
+    notExecutedEvidence?: string;
+    signWith?: string;
+  }): { body: Buffer; headers: HeadersLike } {
+    const payload = JSON.stringify({
+      id: input.id,
+      subject: "refund",
+      type: `refund.${input.status}`,
+      providerRefundRef: input.providerRefundRef,
+      ...(input.providerRef !== undefined ? { providerRef: input.providerRef } : {}),
+      status: input.status,
+      ...(input.amountMinor !== undefined ? { amountMinor: input.amountMinor.toString() } : {}),
+      ...(input.currency !== undefined ? { currency: input.currency } : {}),
+      ...(input.notExecutedEvidence !== undefined
+        ? { notExecutedEvidence: input.notExecutedEvidence }
+        : {}),
+    });
+    const body = Buffer.from(payload, "utf8");
+    const signature =
+      input.signWith ?? createHmac("sha256", this.webhookSecret).update(body).digest("hex");
+    return {
+      body,
+      headers: { get: (name: string) => (name === "x-mock-signature" ? signature : null) },
+    };
   }
 
   createPayout(input: PayoutInput): Promise<PayoutResult> {

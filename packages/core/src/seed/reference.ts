@@ -65,6 +65,10 @@ const SETTINGS = [
   { key: "referral.levels", value: 1, description: "Referral depth. Single level only — A earns from B, never from B's referrals." },
   { key: "hold.digital_hours", value: 24, description: "Refund window for digital goods before seller funds become available." },
   { key: "hold.course_hours", value: 72, description: "Refund window for courses." },
+  { key: "refund.max_attempts", value: 3, description: "How many provider attempts one refund may ever make. Read as a ceiling — the loader clamps to it, so configuration can lower it but never raise it." },
+  { key: "refund.retry_backoff_seconds", value: 300, description: "Minimum wait between refund attempts. Read as a floor — configuration can slow retries down but never speed them up." },
+  { key: "refund.stuck_in_flight_seconds", value: 900, description: "After this long, an unanswered refund request is swept to in_doubt — never retried. Read as a floor." },
+  { key: "refund.queue_batch_size", value: 20, description: "How many refunds one scheduler invocation may work through. Read as a ceiling." },
   { key: "withdrawal.minimum_minor", value: 5000, description: "Minimum withdrawal, in minor units of the wallet currency." },
   { key: "payout.new_account_cooling_hours", value: 24, description: "Delay before a newly added payout account can receive funds." },
 ];

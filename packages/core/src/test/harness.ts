@@ -9,7 +9,13 @@ const MUTABLE_TABLES = [
   // ledger: an order is evidence about a product and a buyer, so it cannot
   // outlive either.
   "digital_assets",
+  // Refunds reference payments and orders, and refund_attempts references
+  // refunds — listed before all of them so the order is explicit rather than
+  // relying on a cascade to be right.
+  "refund_attempts",
+  "notification_outbox",
   "payment_events",
+  "refunds",
   "payments",
   "entitlements",
   "order_items",
@@ -100,6 +106,26 @@ export async function resetData(db: Database): Promise<void> {
   await db.execute(sql`
     update platform_settings set value = ${JSON.stringify(OTP_POLICY)}::jsonb
      where key = ${OTP_POLICY_SETTING_KEY}
+  `);
+  /*
+   * Restore the reviewed refund policy, for the same reason.
+   *
+   * The clamps are only honestly testable by writing values that try to defeat
+   * them, so several tests do exactly that. Without this restoration, the next
+   * test inherits whatever the last one wrote and fails somewhere unrelated to
+   * what it was written to check.
+   */
+  await db.execute(sql`
+    update platform_settings set value = '3'::jsonb where key = 'refund.max_attempts';
+  `);
+  await db.execute(sql`
+    update platform_settings set value = '300'::jsonb where key = 'refund.retry_backoff_seconds';
+  `);
+  await db.execute(sql`
+    update platform_settings set value = '900'::jsonb where key = 'refund.stuck_in_flight_seconds';
+  `);
+  await db.execute(sql`
+    update platform_settings set value = '20'::jsonb where key = 'refund.queue_batch_size';
   `);
 }
 

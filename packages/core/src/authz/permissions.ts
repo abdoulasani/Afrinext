@@ -28,6 +28,18 @@ export const PERMISSIONS = {
   "order.read_store": "Read the orders placed with a store",
   "order.refund": "Refund an order",
 
+  /*
+   * Refunds are three capabilities, not one, because they are three different
+   * kinds of trust. Reading the queue lets support tell a buyer where their
+   * money is. Executing moves money. Reconciling manually asserts a fact about
+   * money that no API confirmed — the only place a human's word becomes
+   * financial truth — so it is separable from execution and, in a staffed
+   * deployment, held by somebody else.
+   */
+  "refund.read": "View the refund queue and refund history",
+  "refund.execute": "Authorise and execute a refund through the provider",
+  "refund.reconcile_manual": "Resolve a refund of unknown outcome from external evidence",
+
   "wallet.read_own": "View one's own wallet and transactions",
   "withdrawal.request": "Request a withdrawal of one's own funds",
   "withdrawal.approve": "Approve someone else's withdrawal",
@@ -98,7 +110,9 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     key: "support",
     scopeType: "global",
     description: "Reads users and orders to help them. Cannot touch money.",
-    permissions: ["admin.user.read", "ledger.read", "order.read_store"],
+    // `refund.read` and not `refund.execute`: answering "where is my refund?"
+    // is support's job; deciding that money leaves is not.
+    permissions: ["admin.user.read", "ledger.read", "order.read_store", "refund.read"],
   },
   {
     key: "ops",
@@ -110,7 +124,10 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     key: "finance",
     scopeType: "global",
     description: "Approves payouts and issues refunds. Cannot change permissions.",
-    permissions: ["ledger.read", "ledger.adjust", "withdrawal.approve", "order.refund", "admin.user.read"],
+    permissions: [
+      "ledger.read", "ledger.adjust", "withdrawal.approve", "order.refund", "admin.user.read",
+      "refund.read", "refund.execute", "refund.reconcile_manual",
+    ],
   },
   {
     key: "superadmin",

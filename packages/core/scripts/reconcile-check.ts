@@ -81,6 +81,17 @@ async function main(): Promise<void> {
    */
   const probe = await probeCommerceDetector(db);
 
+  /*
+   * And the same proof for the refund detectors.
+   *
+   * Phase 3 added ten checks over a table that is empty on most CI runs, so
+   * "no anomalies" from them proves nothing on its own. This builds a
+   * consistent refund, requires silence, breaks the one invariant that would
+   * cost real money — the frozen amount drifting from its payment — requires
+   * the detector to speak, and cleans up.
+   */
+  const refundProbe = await probeRefundDetector(db);
+
   const summary = {
     scenario: {
       gross: gross.amountMinor.toString(),
@@ -97,8 +108,10 @@ async function main(): Promise<void> {
     commerce: {
       ordersChecked: commerce.ordersChecked,
       paymentsChecked: commerce.paymentsChecked,
+      refundsChecked: commerce.refundsChecked,
       anomalies: commerce.anomalies,
       detectorProof: probe,
+      refundDetectorProof: refundProbe,
     },
   };
   console.log(JSON.stringify(summary, null, 2));
@@ -121,6 +134,16 @@ async function main(): Promise<void> {
   if (!probe.silentWhenConsistent || probe.detectedWhenBroken !== "succeeded_payment_orphaned") {
     console.error(
       "The commerce detector did not behave: " + JSON.stringify(probe) +
+        "\nA reconciliation that cannot report a fault is not a gate.",
+    );
+    process.exit(1);
+  }
+  if (
+    !refundProbe.silentWhenConsistent ||
+    refundProbe.detectedWhenBroken !== "refund_amount_mismatch"
+  ) {
+    console.error(
+      "The refund detector did not behave: " + JSON.stringify(refundProbe) +
         "\nA reconciliation that cannot report a fault is not a gate.",
     );
     process.exit(1);
@@ -196,6 +219,83 @@ async function probeCommerceDetector(
   const broken = await reconcileCommerce(db);
   const detected = broken.anomalies.find((a) => a.subject === paymentId);
 
+  await db.execute(sql`delete from payments where id = ${paymentId}::uuid`);
+  await db.execute(sql`delete from order_items where order_id = ${orderId}::uuid`);
+  await db.execute(sql`delete from orders where id = ${orderId}::uuid`);
+  await db.execute(sql`delete from products where id = ${productId}::uuid`);
+  await db.execute(sql`delete from stores where id = ${storeId}::uuid`);
+  await db.execute(sql`delete from users where id in (${buyer}, ${seller})`);
+
+  return { silentWhenConsistent, detectedWhenBroken: detected?.kind ?? null };
+}
+
+/**
+ * Builds a consistent refund, checks, breaks, checks, restores.
+ *
+ * Raw SQL, and for the same reason as the commerce probe: the point is to
+ * exercise the DETECTOR. Going through the domain — which is what makes these
+ * states unreachable — would prove nothing about the query.
+ */
+async function probeRefundDetector(
+  db: ReturnType<typeof getDb>,
+): Promise<{ silentWhenConsistent: boolean; detectedWhenBroken: string | null }> {
+  const buyer = uuidv7();
+  const seller = uuidv7();
+  const storeId = uuidv7();
+  const productId = uuidv7();
+  const orderId = uuidv7();
+  const paymentId = uuidv7();
+  const refundId = uuidv7();
+  const tag = refundId.slice(0, 8);
+
+  await db.execute(sql`
+    insert into users (id, locale, status) values (${buyer}, 'fr', 'active'), (${seller}, 'fr', 'active')
+  `);
+  await db.execute(sql`
+    insert into stores (id, owner_user_id, slug, name, status)
+    values (${storeId}, ${seller}, ${"rprobe-" + tag}, 'Refund probe', 'published')
+  `);
+  await db.execute(sql`
+    insert into products (id, store_id, slug, kind, title, price_minor, currency, status, published_at)
+    values (${productId}, ${storeId}, ${"rprobe-" + tag}, 'digital', 'Refund probe', 1000,
+            'XOF', 'published', now())
+  `);
+  // refund_due, which is where a refund legitimately comes from.
+  await db.execute(sql`
+    insert into orders (id, buyer_user_id, store_id, checkout_key, status, total_minor,
+                        currency, expires_at, late_payment_at, closed_at)
+    values (${orderId}, ${buyer}, ${storeId}, ${"rprobe-" + tag}, 'refund_due', 1000, 'XOF',
+            now() - interval '2 days', now(), now())
+  `);
+  await db.execute(sql`
+    insert into order_items (id, order_id, product_id, store_id, title_snapshot,
+                             unit_price_minor, currency, quantity, line_total_minor)
+    values (${uuidv7()}, ${orderId}, ${productId}, ${storeId}, 'Refund probe', 1000, 'XOF', 1, 1000)
+  `);
+  await db.execute(sql`
+    insert into payments (id, order_id, provider, provider_ref, status, amount_minor,
+                          currency, idempotency_key, confirmed_at)
+    values (${paymentId}, ${orderId}, 'probe', ${"rprobe-" + tag}, 'succeeded', 1000, 'XOF',
+            ${"rprobe-" + tag}, now())
+  `);
+  await db.execute(sql`
+    insert into refunds (id, order_id, payment_id, provider, status, amount_minor,
+                         currency, reason)
+    values (${refundId}, ${orderId}, ${paymentId}, 'probe', 'owed', 1000, 'XOF',
+            'grace_window_elapsed')
+  `);
+
+  const consistent = await reconcileCommerce(db);
+  const silentWhenConsistent = consistent.anomalies.length === 0;
+
+  // Break exactly one invariant: the frozen amount stops matching its payment.
+  // Reachable only by a direct row edit, which is precisely the case the
+  // detector exists to catch.
+  await db.execute(sql`update refunds set amount_minor = 999 where id = ${refundId}::uuid`);
+  const broken = await reconcileCommerce(db);
+  const detected = broken.anomalies.find((a) => a.subject === refundId);
+
+  await db.execute(sql`delete from refunds where id = ${refundId}::uuid`);
   await db.execute(sql`delete from payments where id = ${paymentId}::uuid`);
   await db.execute(sql`delete from order_items where order_id = ${orderId}::uuid`);
   await db.execute(sql`delete from orders where id = ${orderId}::uuid`);

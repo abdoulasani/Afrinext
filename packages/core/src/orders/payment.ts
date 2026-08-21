@@ -8,8 +8,9 @@ import { uuidv7 } from "../ids";
 import { money, type Money } from "../money";
 import { logger } from "../observability";
 import type {
-  HeadersLike, PaymentProvider, VerifiedEvent,
+  HeadersLike, PaymentProvider, VerifiedChargeEvent, VerifiedEvent,
 } from "../payments";
+import { applyRefundEvent, recordRefundOwed } from "../refunds";
 import { loadLatePaymentGraceSeconds, OrderNotFoundError } from "./checkout";
 import {
   assertPaymentTransition, orderStateForPayment,
@@ -319,11 +320,66 @@ export async function applyProviderEvent(
     throw new WebhookRejectedError("The event signature does not verify.");
   }
 
+  /*
+   * A refund event is a different fact about a different object.
+   *
+   * The signature check above is shared — a refund webhook is not a second,
+   * weaker door — but everything after it is not: a refund event names a refund
+   * reference, not a charge, and moves the refund machine rather than the
+   * payment one. Routing here rather than letting the charge path try to make
+   * sense of it is what keeps "which object is this about?" from being a
+   * question answered by whichever field happened to be populated.
+   */
+  if (event.subject === "refund") {
+    const refundOutcome = await applyRefundEvent(
+      db,
+      {
+        providerRefundRef: event.providerRefundRef,
+        ...(event.providerRef !== undefined ? { providerRef: event.providerRef } : {}),
+        status: event.status,
+        ...(event.notExecutedEvidence !== undefined
+          ? { notExecutedEvidence: event.notExecutedEvidence }
+          : {}),
+        raw: event.raw,
+        ...(event.amount !== undefined
+          ? { amount: { amountMinor: event.amount.amountMinor, currency: event.amount.currency } }
+          : {}),
+      },
+      provider.id,
+    );
+
+    // Recorded in the same table and under the same replay index charges use.
+    await db.execute(sql`
+      insert into payment_events (id, payment_id, provider, provider_event_id, provider_ref,
+                                  type, reported_status, outcome, reason, payload,
+                                  subject, refund_id)
+      values (${uuidv7()}, null, ${provider.id}, ${event.providerEventId},
+              ${event.providerRefundRef}, ${event.type}, ${event.status},
+              ${refundOutcome.resolved ? "applied" : refundOutcome.matched ? "ignored" : "rejected"},
+              ${refundOutcome.reason}, ${rawBody.toString("utf8").slice(0, 8000)},
+              'refund', ${refundOutcome.matched ? refundOutcome.refundId : null})
+      on conflict (provider, provider_event_id) do nothing
+    `);
+
+    if (!refundOutcome.matched) {
+      log.warn("refund webhook for an unknown refund", {
+        providerRefundRef: event.providerRefundRef,
+      });
+      throw new WebhookRejectedError("That refund is not known here.");
+    }
+    return {
+      outcome: refundOutcome.resolved ? "applied" : "ignored",
+      reason: refundOutcome.reason,
+    };
+  }
+
+  const chargeEvent: VerifiedChargeEvent = event;
+
   const payments = await db.execute<PaymentRow & { order_status: string; buyer_user_id: string; store_id: string }>(sql`
     select p.id, p.order_id, p.provider, p.provider_ref, p.status, p.amount_minor, p.currency,
            o.status as order_status, o.buyer_user_id, o.store_id
       from payments p join orders o on o.id = p.order_id
-     where p.provider = ${provider.id} and p.provider_ref = ${event.providerRef}
+     where p.provider = ${provider.id} and p.provider_ref = ${chargeEvent.providerRef}
   `);
   const payment = payments.rows[0];
 
@@ -337,8 +393,8 @@ export async function applyProviderEvent(
     const inserted = await db.execute(sql`
       insert into payment_events (id, payment_id, provider, provider_event_id, provider_ref,
                                   type, reported_status, outcome, reason, payload)
-      values (${uuidv7()}, ${payment?.id ?? null}, ${provider.id}, ${event.providerEventId},
-              ${event.providerRef}, ${event.type}, ${event.status}, ${outcome},
+      values (${uuidv7()}, ${payment?.id ?? null}, ${provider.id}, ${chargeEvent.providerEventId},
+              ${chargeEvent.providerRef}, ${chargeEvent.type}, ${chargeEvent.status}, ${outcome},
               ${reason ?? null}, ${rawBody.toString("utf8").slice(0, 8000)})
       on conflict (provider, provider_event_id) do nothing
     `);
@@ -348,36 +404,36 @@ export async function applyProviderEvent(
   // Step 3.
   if (payment === undefined) {
     await record("rejected", "no payment matches the provider reference");
-    log.warn("webhook for an unknown charge", { providerRef: event.providerRef });
+    log.warn("webhook for an unknown charge", { providerRef: chargeEvent.providerRef });
     throw new WebhookRejectedError("That charge is not known here.");
   }
 
   // Step 4. Exact equality on both fields. A near-miss is a mismatch.
-  if (event.amount !== undefined) {
-    const sameAmount = event.amount.amountMinor === BigInt(payment.amount_minor);
-    const sameCurrency = event.amount.currency === payment.currency;
+  if (chargeEvent.amount !== undefined) {
+    const sameAmount = chargeEvent.amount.amountMinor === BigInt(payment.amount_minor);
+    const sameCurrency = chargeEvent.amount.currency === payment.currency;
     if (!sameAmount || !sameCurrency) {
       const fresh = await record(
         "rejected",
-        `amount mismatch: event ${event.amount.amountMinor}${event.amount.currency}, ` +
+        `amount mismatch: event ${chargeEvent.amount.amountMinor}${chargeEvent.amount.currency}, ` +
           `payment ${String(payment.amount_minor)}${payment.currency}`,
       );
       log.warn("webhook amount does not match the order", {
-        paymentId: payment.id, providerRef: event.providerRef, replay: !fresh,
+        paymentId: payment.id, providerRef: chargeEvent.providerRef, replay: !fresh,
       });
       await audit(db, {
         actorKind: "system",
         action: "order.payment.event_rejected",
         targetType: "payment",
         targetId: payment.id,
-        context: { reason: "amount_mismatch", providerEventId: event.providerEventId },
+        context: { reason: "amount_mismatch", providerEventId: chargeEvent.providerEventId },
       });
       throw new WebhookRejectedError("The event does not match this charge.");
     }
   }
 
   const from = payment.status as PaymentState;
-  const to = event.status as PaymentState;
+  const to = chargeEvent.status as PaymentState;
 
   // An event that repeats the state we are already in, or that arrives after a
   // terminal one, is old news rather than an attack: recorded, then ignored.
@@ -402,7 +458,7 @@ export async function applyProviderEvent(
 
   const applied = await confirm(db, rawBody, {
     providerId: provider.id,
-    event,
+    event: chargeEvent,
     paymentId: payment.id,
     orderId: payment.order_id,
     orderStatus: payment.order_status as OrderState,
@@ -424,7 +480,7 @@ export async function applyProviderEvent(
       targetId: payment.order_id,
       context: {
         paymentId: payment.id,
-        providerEventId: event.providerEventId,
+        providerEventId: chargeEvent.providerEventId,
         paymentStatus: to,
         orderStatus: applied.orderStatus,
         // Why a late payment was or was not fulfilled, in the record that
@@ -459,7 +515,7 @@ async function confirm(
   rawBody: Buffer,
   input: {
     providerId: string;
-    event: VerifiedEvent;
+    event: VerifiedChargeEvent;
     paymentId: string;
     orderId: string;
     orderStatus: OrderState;
@@ -617,6 +673,24 @@ async function confirm(
         if ((moved.rowCount ?? 0) > 0) {
           reached = "refund_due";
           note = reasons.join(",");
+          /*
+           * The debt is recorded HERE, inside the same transaction.
+           *
+           * Phase 2 left `refund_due` as a status somebody would have to
+           * remember to query. That is a debt that exists only as an
+           * inference, and an inference is exactly what gets lost when a
+           * sweeper is not written or a query is filtered wrongly. Creating
+           * the row in the transaction that creates the obligation means the
+           * two cannot disagree: either both happened or neither did.
+           *
+           * It records only. Nothing here contacts a provider, and no money
+           * moves until a finance user says so — see refunds/execute.ts.
+           */
+          await recordRefundOwed(tx, {
+            orderId: input.orderId,
+            paymentId: input.paymentId,
+            reason: note,
+          });
         }
       }
     }
