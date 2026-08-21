@@ -180,9 +180,10 @@ describe.skipIf(!hasSandbox)("iPayMoney sandbox — REAL requests", () => {
        * way to prove it against the thing that actually decides.
        *
        * This test only establishes the PROVIDER's behaviour. Wiring it to a
-       * real order and asserting the grace window end to end belongs to the
-       * milestone that integrates the webhook, because a confirmation cannot
-       * arrive until `verifyWebhook` is implemented — and it is not.
+       * real order and asserting the grace window end to end needs a publicly
+       * reachable URL for iPayMoney to call, which this environment does not
+       * have; `ipaymoney-replay.test.ts` proves the domain side against an
+       * injected transport instead.
        */
       const created = await provider().createCharge(chargeFor("40410000008", "pending"));
       const first = await provider().getCharge(created.providerRef);
@@ -237,10 +238,25 @@ describe.skipIf(!hasSandbox)("iPayMoney sandbox — out of reach", () => {
     ).rejects.toThrow(/documents no customer-refund API/i);
   });
 
-  it("cannot exercise a webhook, because the verification scheme is unresolved", async () => {
+  it("cannot exercise a webhook end to end, because the sandbox cannot deliver one", async () => {
+    /*
+     * `verifyWebhook` IS implemented, and `ipaymoney.test.ts` proves its
+     * behaviour against an injected transport. What no test in this file can do
+     * is make iPayMoney deliver a notification to a machine with no public URL,
+     * so the one property only a real delivery can establish — which header
+     * name arrives, and whether its value is the secret or a signature — stays
+     * open as question K7.
+     *
+     * What IS reachable here is the refusal path, and it is worth exercising
+     * against the real client: a body carrying no reference is rejected before
+     * any lookup, so nothing is confirmed and no request is made.
+     */
     await expect(
-      provider().verifyWebhook(Buffer.from("{}"), { get: () => "secret" }),
-    ).rejects.toThrow(/scheme is not established/i);
+      provider().verifyWebhook(
+        Buffer.from(JSON.stringify({ data: { status: "succeeded" } }), "utf8"),
+        { get: () => apiKey ?? "" },
+      ),
+    ).rejects.toThrow(/names no payment reference/i);
   });
 });
 

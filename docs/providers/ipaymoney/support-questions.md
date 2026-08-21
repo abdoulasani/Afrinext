@@ -63,6 +63,48 @@ mechanism: a refund we cannot see is a refund we cannot prove.*
 
 ---
 
+## Si la réponse à K1 est « oui » — les quatre questions qui suivent
+
+Ces quatre-là ne se posent que s'il existe réellement une API de remboursement
+client. Elles sont ici pour qu'elles partent dans le même message, plutôt que
+dans un aller-retour supplémentaire.
+
+### K2 — Peut-on interroger le statut d'un remboursement ? · **resolving an unknown**
+
+> Le statut d'un remboursement peut-il être **interrogé après coup**, et par
+> quel identifiant : la référence du remboursement, la `reference` du paiement
+> d'origine, notre `transaction_id`, ou une clé d'idempotence que nous
+> fournissons ?
+
+*Why: when a refund request times out or loses its connection, Afrinext records
+it as `in_doubt` and never retries it. A status query is the only mechanical way
+such a refund is ever resolved; without one, every ambiguity becomes a person
+reading a statement.*
+
+### K3 — Clé d'idempotence · **whether a lost response can be retried**
+
+> L'API accepte-t-elle une **clé d'idempotence** de notre part, et une
+> répétition de la même clé renvoie-t-elle le résultat d'origine plutôt que de
+> créer un second remboursement ?
+
+### K4 — Quels codes d'erreur signifient « aucun remboursement créé » ? · **classification**
+
+> Quels codes d'erreur signifient, **dans vos termes**, qu'aucun remboursement
+> n'a été créé ?
+>
+> Nous ne considérons jamais un échec que nous ne pouvons pas prouver comme un
+> échec définitif, et nous ne rejouons jamais une opération dont l'issue est
+> inconnue. Une liste explicite de vos codes « rien ne s'est produit » est donc
+> précieuse.
+
+### K6 — Moyens de paiement et délai · **whether an old debt is refundable**
+
+> Les remboursements sont-ils possibles **à la fois** sur mobile money et sur
+> carte Visa/Mastercard ? Existe-t-il un **délai maximum** après le paiement
+> d'origine au-delà duquel un remboursement n'est plus possible ?
+
+---
+
 ### K7 — Authentification des webhooks · **security**
 
 > Votre documentation décrit l'authentification des webhooks de deux manières
@@ -197,6 +239,10 @@ raw bytes, and that property is why a forged amount cannot confirm a payment.*
 |---|---|---|---|
 | K1 | Refund API exists? | Everything below it | *awaiting* |
 | K5 | Official refund procedure if not | **Refunding a buyer at all** | *awaiting* |
+| K2 | Refund status query (if K1 = yes) | Resolving an `in_doubt` refund mechanically | *awaiting* |
+| K3 | Refund idempotency key (if K1 = yes) | Retrying safely after a lost response | *awaiting* |
+| K4 | Which errors mean no refund was created (if K1 = yes) | Failure classification | *awaiting* |
+| K6 | Card and mobile money, and any time limit (if K1 = yes) | Whether an old `refund_due` is refundable | *awaiting* |
 | K7 | Webhook authentication scheme | Trusting a webhook with money | *awaiting* |
 | K8 | Amount availability | The amount cross-check | *awaiting* |
 | K9 | Webhook event id | Replay protection | *awaiting* |

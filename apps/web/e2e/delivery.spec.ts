@@ -170,12 +170,28 @@ async function buy(
   await page.getByTestId("buy").click();
   await page.waitForURL(/\/fr\/orders\/[0-9a-f-]{36}$/);
   await page.getByTestId("pay").click();
-  await expect(page.getByTestId("pay-waiting")).toBeVisible();
+  /*
+   * Wait for the payment STATE, not for the button's caption.
+   *
+   * `pay-waiting` is static text inside the form — it is on screen before the
+   * server action has done anything, so asserting it proved only that the page
+   * had rendered, and the `provider_ref` read below then raced the charge
+   * being created. When it lost, the webhook was posted with an empty
+   * reference and answered 400. `payment-status` appears only once the action
+   * has actually completed, which is a signal rather than a hope.
+   *
+   * `checkout.spec.ts` was corrected the same way for the same reason; this
+   * copy of the journey kept the old wait, and CI run #36 caught it.
+   */
+  await expect(page.getByTestId("payment-status")).toHaveText("pending");
 
   const orderId = (/orders\/([0-9a-f-]{36})/.exec(page.url()) ?? [])[1] as string;
   const providerRef = fixtureSql(
     `select provider_ref from payments where order_id = '${orderId}'::uuid`,
   );
+  // If this is ever empty again, fail here naming the cause rather than three
+  // lines later as an unexplained 400 from the webhook.
+  expect(providerRef, "the charge must exist before it can be confirmed").not.toBe("");
 
   const payload = JSON.stringify({
     id: unique("evt"), type: "charge.succeeded", providerRef,

@@ -200,6 +200,31 @@ trusted with money.
 
 ---
 
+## Assumptions register
+
+Every place the adapter had to decide something the documentation does not
+state. Each one is a hypothesis until iPayMoney answers the question beside it,
+and each is cited from the code that relies on it.
+
+| # | Assumption | Why it was made | Confirmed by |
+|---|---|---|---|
+| A1 | Base URL is `https://i-pay.money` and both operations live under `/api/v1/payments` | The only host and paths the documentation shows (L161, L228) | A sandbox run |
+| A2 | `transaction_id` is **ours** to supply, and the derived idempotency key goes in it | The request body table lists it as a field we send (L170–L177); the dashboard section's "générée de façon automatique" (L126) describes the *external reference*, which is P4 | K10 |
+| A3 | `amount` is **whole francs** for XOF | XOF has zero decimal places, so a minor unit *is* a franc. The field is a string with a floor of 100 and no unit stated | **K13** |
+| A4 | `country` is a two-letter code, and **the caller decides whose** country it is | Documented only as "le code du pays de la transaction" (L174). The adapter refuses rather than choosing | **K17** |
+| A5 | `customer_name` is required | Listed in the body table with no optionality marked, and the documented 400 says "Missing params" | A sandbox run |
+| A6 | A **4xx** from `POST` means no payment was created; a **5xx** means the outcome is unknown | 4xx cases are documented refusals with named causes (L206–L226). Nothing documents 5xx at all | **K14** |
+| A7 | The webhook header carries the **shared secret itself**, under either `secret-hash` or `x-iPayMoney-secret` | The prose and the example disagree (L332 vs L338), and the setup instructions say to paste the API secret into "Secret Hash" | **K7** |
+| A8 | A `status` outside `succeeded` / `failed` is **refused**, never mapped | Those two are the only values shown anywhere. The five sandbox *scenarios* are not status values | **K12** |
+| A9 | Headers are `Ipay-Payment-Type`, `Ipay-Target-Environment`, `Authorization: Bearer <secret key>` | Exactly as listed at L162–L168 | A sandbox run |
+| A10 | Only **XOF** is supported | The only currency the documentation uses, and no minor-unit convention is documented for any other | iPayMoney's currency list |
+
+Assumptions in bold-question rows are the ones that would cost money if wrong.
+A3 is a factor of 100; A7 is whether a forged notification can move an order;
+A6 is whether an ambiguous charge becomes a definite failure.
+
+---
+
 ## What the adapter does today
 
 | Method | State |
