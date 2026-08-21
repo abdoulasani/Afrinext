@@ -42,7 +42,21 @@ export interface ChargeResult {
 export interface ChargeStatus {
   readonly providerRef: string;
   readonly status: ChargeStatusValue;
-  readonly amount: Money;
+  /**
+   * The amount the PROVIDER says was charged — absent when it does not say.
+   *
+   * Optional, and the optionality is a fact about the world rather than a
+   * convenience. iPayMoney states an amount in neither its payment-status
+   * response nor its webhook, so for that provider the charged amount is not
+   * verifiable from the provider at all.
+   *
+   * The honest options were: leave this required and fill it in from our own
+   * order (us telling ourselves what we already believe, wearing a provider's
+   * clothes), or let it be absent and say so. It is absent, and
+   * `PaymentProvider.statesChargeAmount` makes the absence a property a caller
+   * can branch on rather than a `undefined` somebody forgets to check.
+   */
+  readonly amount?: Money | undefined;
   readonly raw: unknown;
 }
 
@@ -183,6 +197,19 @@ export interface PaymentProvider {
   readonly id: string;
   /** Whether this provider can be selected in the current environment. */
   readonly isConfigured: boolean;
+
+  /**
+   * Whether this provider ever states the charged amount back to us.
+   *
+   * `false` is not a bug in the adapter — it is a bounded, declared capability
+   * gap, and it costs a real safety property: the webhook boundary's exact
+   * amount cross-check cannot run for such a provider, because there is no
+   * provider-stated amount to compare against. Declaring it here makes that
+   * consequence visible to a reader, assertable by a test, and impossible to
+   * lose by accident, instead of leaving it as an `undefined` that reads like
+   * an oversight.
+   */
+  readonly statesChargeAmount: boolean;
 
   createCharge(input: ChargeInput): Promise<ChargeResult>;
   getCharge(providerRef: string): Promise<ChargeStatus>;

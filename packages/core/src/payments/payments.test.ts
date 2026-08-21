@@ -34,7 +34,33 @@ describe("iPayMoney adapter", () => {
       provider.refund({ providerRef: "x", amount: money(1n, "XOF"), reason: "r", idempotencyKey: "k" }),
     ).rejects.toThrow(ProviderNotConfiguredError);
 
-    await expect(provider.createCharge(charge)).rejects.toThrow(/documentation is not available/i);
+    /*
+     * The refusal reason CHANGED, and deliberately.
+     *
+     * It used to say the documentation was not available. It now is — it lives
+     * in docs/providers/ipaymoney/ — so that sentence became false and was
+     * corrected. What the adapter refuses for is different for each operation
+     * now, and each reason is a fact rather than a placeholder:
+     *
+     *   createCharge / getCharge  are implemented, and refuse only because no
+     *                             credentials are configured here;
+     *   verifyWebhook             refuses because the authentication scheme is
+     *                             a shared secret, not a body signature;
+     *   refund / getRefund        refuse because iPayMoney documents no
+     *                             customer refund at all.
+     */
+    // This generic charge carries no msisdn, country, customer_name or payment
+    // type, and iPayMoney requires all four — so it is refused for naming what
+    // is missing rather than for a placeholder reason.
+    await expect(provider.createCharge(charge)).rejects.toThrow(/iPayMoney requires/);
+    // And the old claim, which is now false, is gone from every refusal.
+    await expect(provider.createCharge(charge))
+      .rejects.not.toThrow(/documentation is not available/i);
+    await expect(provider.verifyWebhook(Buffer.from("{}"), { get: () => null }))
+      .rejects.toThrow(/scheme is not established/i);
+    await expect(
+      provider.refund({ providerRef: "x", amount: money(1n, "XOF"), reason: "r", idempotencyKey: "k" }),
+    ).rejects.toThrow(/documents no customer-refund API/i);
   });
 
   it("does not claim payout support it has not verified", () => {
@@ -58,7 +84,11 @@ describe("mock provider", () => {
     const result = await provider.createCharge(charge);
     expect(result.status).toBe("pending");
     const status = await provider.getCharge(result.providerRef);
-    expect(status.amount.amountMinor).toBe(10_000n);
+    // The mock states the amount, which is what keeps the webhook boundary's
+    // exact amount cross-check exercised somewhere in the suite. A provider
+    // that states none — iPayMoney — leaves that check unreachable.
+    expect(provider.statesChargeAmount).toBe(true);
+    expect(status.amount?.amountMinor).toBe(10_000n);
   });
 
   it("can still resolve a charge synchronously when asked to", async () => {

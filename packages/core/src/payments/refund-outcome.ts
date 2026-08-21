@@ -47,16 +47,22 @@ export interface RefundAttemptOutcome {
 }
 
 /**
- * The error a provider adapter throws when a refund request does not come back
- * with a usable answer.
+ * The error a provider adapter throws when a request does not come back with a
+ * usable answer.
  *
  * The `stage` is the adapter's honest statement about how far the request got,
  * and it is the adapter's most important job. An adapter that cannot tell must
  * say `unknown`; saying `not_transmitted` when it does not know is the one lie
  * that costs real money.
+ *
+ * Generic rather than refund-specific, because the question "how far did the
+ * request get?" is the same question for a charge. A lost response to
+ * `createCharge` is exactly as ambiguous as a lost response to `refund()` —
+ * the difference today is only that the charge path has nowhere to record the
+ * ambiguity, which is a gap rather than a reason to classify it differently.
  */
-export class RefundTransportError extends Error {
-  override readonly name = "RefundTransportError";
+export class ProviderTransportError extends Error {
+  override readonly name: string = "ProviderTransportError";
   readonly stage: RefundDeliveryStage;
   /** The provider's HTTP status, when there was a response at all. */
   readonly httpStatus: number | undefined;
@@ -66,6 +72,17 @@ export class RefundTransportError extends Error {
     this.stage = stage;
     this.httpStatus = httpStatus;
   }
+}
+
+/**
+ * The same thing, named for the refund path it was written for.
+ *
+ * Kept as its own class so existing code, tests and mutations that name it
+ * continue to mean what they meant; `stageOfTransportFailure` matches the base,
+ * so a charge-side error is classified by exactly the same rules.
+ */
+export class RefundTransportError extends ProviderTransportError {
+  override readonly name: string = "RefundTransportError";
 }
 
 /**
@@ -122,7 +139,9 @@ function codeOf(error: unknown): string | undefined {
  * every provider someone adds later.
  */
 export function stageOfTransportFailure(error: unknown): RefundDeliveryStage {
-  if (error instanceof RefundTransportError) return error.stage;
+  // The base class, so a charge-side transport error is classified by the same
+  // table as a refund-side one.
+  if (error instanceof ProviderTransportError) return error.stage;
   const code = codeOf(error);
   if (code !== undefined && PROVEN_NOT_TRANSMITTED.has(code)) return "not_transmitted";
   return "unknown";

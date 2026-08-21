@@ -55,6 +55,15 @@ export type MockRefundScenario =
 export class MockPaymentProvider implements PaymentProvider {
   readonly id = "mock";
   readonly isConfigured = true;
+  /**
+   * The mock states the amount, and that is deliberate rather than incidental.
+   *
+   * It is what keeps the webhook boundary's exact amount cross-check exercised
+   * by the whole suite. A real provider that says nothing about the amount —
+   * iPayMoney is one — leaves that check unreachable, so if the mock also went
+   * silent the check would have no test anywhere.
+   */
+  readonly statesChargeAmount = true;
 
   private readonly charges = new Map<string, ChargeStatus>();
   private readonly payouts = new Map<string, PayoutStatus>();

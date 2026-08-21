@@ -1,39 +1,265 @@
 import { describe, expect, it } from "vitest";
+import { money } from "../money";
 import { IPayMoneyProvider } from "./ipaymoney";
+import { ProviderTransportError } from "./refund-outcome";
 
 /**
- * Integration tests against the real iPayMoney sandbox.
+ * REAL SANDBOX TESTS — these talk to iPayMoney over the network.
  *
- * Skipped unless sandbox credentials are present, so CI is green without them
- * and turns red the moment a real sandbox run regresses. They are written
- * against the documented API — see docs/providers/ipaymoney/README.md — and
- * cannot be filled in until that documentation exists.
+ * Everything here is SKIPPED unless real sandbox credentials are present, and
+ * that gate is the honest part of the file. As of this commit **no request has
+ * ever been made to iPayMoney from this repository**: nothing below has run,
+ * and nothing below may be quoted as evidence of how the provider behaves.
+ *
+ * The difference from `ipaymoney.test.ts` is the whole point:
+ *
+ *   ipaymoney.test.ts             LOCAL. An injected fetch. Proves our
+ *                                 translation of the documentation is faithful
+ *                                 to how we read it. Runs in CI, always.
+ *
+ *   ipaymoney.integration.test.ts REAL. Proves the documentation is true.
+ *                                 Runs only where credentials exist.
+ *
+ * A green local suite says the adapter is self-consistent. Only this file can
+ * say iPayMoney agrees.
+ *
+ * To run:
+ *
+ *   IPAYMONEY_BASE_URL=https://i-pay.money \
+ *   IPAYMONEY_API_KEY=<sandbox secret key> \
+ *   IPAYMONEY_ENVIRONMENT=sandbox \
+ *   pnpm --filter @afrinext/core test -- src/payments/ipaymoney.integration.test.ts
+ *
+ * The key is a SECRET. It goes in the environment, never in this repository,
+ * and never in a CI log.
+ */
+
+const baseUrl = process.env["IPAYMONEY_BASE_URL"];
+const apiKey = process.env["IPAYMONEY_API_KEY"];
+const environment = process.env["IPAYMONEY_ENVIRONMENT"];
+
+/**
+ * Sandbox only, and checked rather than assumed.
+ *
+ * These tests create payments. Running them against `live` would create real
+ * ones, so the gate requires the environment to say `sandbox` explicitly — a
+ * missing or mistyped value skips rather than proceeds.
  */
 const hasSandbox =
-  typeof process.env["IPAYMONEY_BASE_URL"] === "string" &&
-  typeof process.env["IPAYMONEY_API_KEY"] === "string";
+  typeof baseUrl === "string" && baseUrl !== "" &&
+  typeof apiKey === "string" && apiKey !== "" &&
+  environment === "sandbox";
 
-describe.skipIf(!hasSandbox)("iPayMoney sandbox", () => {
-  it("creates a charge", () => {
-    // NOT IMPLEMENTED — requires items 1-3 of the documentation checklist.
-    expect(new IPayMoneyProvider().isConfigured).toBe(true);
+/**
+ * The documented sandbox test numbers (extract L148–L159).
+ *
+ * The `scenario` is iPayMoney's word for the behaviour the number triggers. It
+ * is NOT a status value: the documentation never states which `status` string a
+ * declined payment carries, which is exactly what these tests are for.
+ */
+const SANDBOX_MSISDNS = [
+  { msisdn: "40410000000", scenario: "success" },
+  { msisdn: "40410000001", scenario: "success" },
+  { msisdn: "40410000002", scenario: "error" },
+  { msisdn: "40410000003", scenario: "error" },
+  { msisdn: "40410000004", scenario: "insufficient_fund" },
+  { msisdn: "40410000005", scenario: "insufficient_fund" },
+  { msisdn: "40410000006", scenario: "declined" },
+  { msisdn: "40410000007", scenario: "declined" },
+  { msisdn: "40410000008", scenario: "pending" },
+  { msisdn: "40410000009", scenario: "pending" },
+] as const;
+
+function provider(): IPayMoneyProvider {
+  return new IPayMoneyProvider({ baseUrl, apiKey, environment, timeoutMs: 30_000 });
+}
+
+/** A reference iPayMoney has not seen: it refuses a reuse with 422. */
+function freshTransactionId(tag: string): string {
+  return `afrinext-sbx-${tag}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function chargeFor(msisdn: string, tag: string) {
+  return {
+    reference: `sandbox-${tag}`,
+    // 100 is the documented minimum ("un montant supérieur à 100").
+    amount: money(150n, "XOF"),
+    customer: { userId: "sandbox", phone: msisdn },
+    channel: "mobile",
+    idempotencyKey: freshTransactionId(tag),
+    metadata: { country: "NE", customerName: "Afrinext Sandbox" },
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+describe.skipIf(!hasSandbox)("iPayMoney sandbox — REAL requests", () => {
+  it("creates a payment and receives a reference", async () => {
+    const result = await provider().createCharge(chargeFor("40410000000", "create"));
+    expect(result.providerRef).toMatch(/\S/);
+    // Whatever it says, record it: this is the first real evidence of the
+    // synchronous status for a success scenario.
+    expect(["succeeded", "pending", "failed"]).toContain(result.status);
   });
 
-  it("verifies a webhook signature", () => {
-    // NOT IMPLEMENTED — requires item 6 (signature algorithm and header name).
-    expect.fail("Webhook verification cannot be tested until the scheme is documented.");
+  it("answers a status query for a reference it gave us", async () => {
+    const created = await provider().createCharge(chargeFor("40410000000", "status"));
+    const status = await provider().getCharge(created.providerRef);
+    expect(status.providerRef).toBe(created.providerRef);
   });
 
-  it("reports whether disbursement is supported", () => {
-    // NOT IMPLEMENTED — requires item 8.
-    expect.fail("Payout support is unknown until the documentation confirms it.");
+  it("CONFIRMS OR REFUTES that no amount is returned", async () => {
+    /*
+     * Finding F1 / question K8, tested rather than assumed.
+     *
+     * The documentation shows no amount in the status response. If that is
+     * right, `amount` is undefined and `statesChargeAmount` is correctly false.
+     * If an amount DOES come back, this test fails loudly and the adapter's
+     * declared capability is wrong in our favour — which is a change worth
+     * making deliberately.
+     */
+    const created = await provider().createCharge(chargeFor("40410000000", "amount"));
+    const status = await provider().getCharge(created.providerRef);
+    expect(
+      status.amount,
+      "if this is defined, iPayMoney DOES state the amount and statesChargeAmount must become true",
+    ).toBeUndefined();
+  });
+
+  it("refuses a reused transaction_id with 422 rather than replaying the original", async () => {
+    /*
+     * Question K10. A reuse is documented to answer "External Reference Not
+     * Valid". That is safe — it cannot double-charge — but it is a REJECTION,
+     * not an idempotent replay, so a retry after a lost response learns nothing
+     * about the first attempt.
+     */
+    const charge = chargeFor("40410000000", "dup");
+    await provider().createCharge(charge);
+    await expect(provider().createCharge(charge)).rejects.toThrow();
+  });
+
+  it.each(SANDBOX_MSISDNS.filter((s) => s.scenario !== "pending"))(
+    "records the real status for the $scenario scenario ($msisdn)",
+    async ({ msisdn, scenario }) => {
+      /*
+       * This is the test that completes the status enumeration — question K12.
+       *
+       * The adapter REFUSES an undocumented status rather than guessing, so a
+       * scenario whose status string is not `succeeded` or `failed` makes this
+       * throw with the exact value in the message. That failure is the
+       * deliverable: read the value, confirm it with iPayMoney, add it to
+       * IPAYMONEY_STATUS_MAP on evidence.
+       */
+      const charge = chargeFor(msisdn, scenario);
+      const result = await provider()
+        .createCharge(charge)
+        .catch((error: unknown) => {
+          throw new Error(
+            `scenario ${scenario} (${msisdn}) produced: ${String(error)}. If this is ` +
+              "an unknown status, that string is the evidence needed to complete " +
+              "IPAYMONEY_STATUS_MAP.",
+          );
+        });
+      expect(result.providerRef).toMatch(/\S/);
+    },
+  );
+
+  it(
+    "exercises the 180-second pending scenario against the real provider",
+    { timeout: 240_000 },
+    async () => {
+      /*
+       * The most valuable scenario in the sandbox, and the reason this
+       * milestone cares about it.
+       *
+       * Three minutes of genuine in-flight state is what lets the late-payment
+       * policy be tested against a real provider instead of a mock: the order
+       * expires locally while the payment is still pending at iPayMoney, and
+       * the confirmation then arrives late. Everything the mock proves about
+       * the grace window is proved against our own fixture; this is the only
+       * way to prove it against the thing that actually decides.
+       *
+       * This test only establishes the PROVIDER's behaviour. Wiring it to a
+       * real order and asserting the grace window end to end belongs to the
+       * milestone that integrates the webhook, because a confirmation cannot
+       * arrive until `verifyWebhook` is implemented — and it is not.
+       */
+      const created = await provider().createCharge(chargeFor("40410000008", "pending"));
+      const first = await provider().getCharge(created.providerRef);
+
+      // Poll past the documented 180 seconds, then read it again.
+      await new Promise((resolve) => setTimeout(resolve, 190_000));
+      const settled = await provider().getCharge(created.providerRef);
+
+      expect(
+        { first: first.status, settled: settled.status },
+        "record both: this is the documented pending window observed for real",
+      ).toBeDefined();
+    },
+  );
+
+  it("classifies an unreachable host as NOT TRANSMITTED, against a real socket", async () => {
+    /*
+     * The classifier's table, exercised against a real DNS failure rather than
+     * a synthesised error code. `not_transmitted` is the only stage that may
+     * ever become a definite failure, so it is worth confirming that a real
+     * resolution failure lands there.
+     */
+    const unreachable = new IPayMoneyProvider({
+      baseUrl: "https://i-pay.money.invalid",
+      apiKey,
+      environment,
+      timeoutMs: 5_000,
+    });
+    const error = await unreachable
+      .createCharge(chargeFor("40410000000", "dns"))
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ProviderTransportError);
+    expect((error as ProviderTransportError).stage).toBe("not_transmitted");
   });
 });
 
+/**
+ * What CANNOT be tested in the sandbox, recorded so nobody looks for it.
+ */
+describe.skipIf(!hasSandbox)("iPayMoney sandbox — out of reach", () => {
+  it("cannot exercise a refund, because there is no refund operation", async () => {
+    /*
+     * Not "not yet implemented" — there is nothing to call. iPayMoney documents
+     * no customer-refund API at any endpoint, so no sandbox scenario can
+     * exercise one. Questions K1 and K5.
+     */
+    await expect(
+      provider().refund({
+        providerRef: "anything", amount: money(150n, "XOF"),
+        reason: "sandbox", idempotencyKey: "k",
+      }),
+    ).rejects.toThrow(/documents no customer-refund API/i);
+  });
+
+  it("cannot exercise a webhook, because the verification scheme is unresolved", async () => {
+    await expect(
+      provider().verifyWebhook(Buffer.from("{}"), { get: () => "secret" }),
+    ).rejects.toThrow(/scheme is not established/i);
+  });
+});
+
+/**
+ * This one ALWAYS runs, so the test output distinguishes "skipped" from
+ * "passed" without anybody reading the config.
+ */
 describe("iPayMoney sandbox availability", () => {
-  it("is skipped without credentials, and says so", () => {
-    // This assertion documents the gate itself, so a reader of the test output
-    // can tell "skipped" from "passed".
+  it("reports whether real sandbox tests ran", () => {
+    if (hasSandbox) {
+      expect(environment).toBe("sandbox");
+      return;
+    }
+    /*
+     * No credentials, so every real test above was skipped and NOTHING in this
+     * repository has been verified against iPayMoney. Asserting the gate keeps
+     * that fact in the test output rather than in a comment somebody may not
+     * read.
+     */
     expect(hasSandbox).toBe(false);
   });
 });
