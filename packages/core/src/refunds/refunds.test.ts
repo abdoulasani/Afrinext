@@ -651,11 +651,51 @@ describe("6 · idempotency and the crash window", () => {
     expect(attempts).toHaveLength(1);
     expect(attempts[0]?.finishedAt, "an open attempt is the crash's fingerprint").toBeNull();
 
-    // And nothing may start a second request while that one is open.
+    /*
+     * And nothing may start a second request. Here the refusal comes from the
+     * STATE MACHINE — the refund is in_flight, and in_flight is not a state a
+     * request may leave from. The open-attempt guard is a separate layer and
+     * is isolated in the next test, because a mutation showed that this
+     * assertion alone could not tell the two apart.
+     */
     await expectRejection(
       executeRefund(db, finance, provider, owed.refundId),
-      /still open|not possible|cannot go/i,
+      /cannot go from in_flight to in_flight/i,
     );
+    expect(provider.refundsPerformed()).toBe(0);
+  });
+
+  it("refuses to dispatch while an attempt is open, even from a retryable state", async () => {
+    /*
+     * The open-attempt guard, on its own.
+     *
+     * The previous test cannot exercise it: an in_flight refund is already
+     * refused by the state machine, so removing the guard changes nothing
+     * there — a mutation proved exactly that, and this test exists because of
+     * it. Here the refund is `failed`, which IS a state a retry may leave
+     * from, so the state machine permits the dispatch and only the open
+     * attempt stands in the way.
+     */
+    const owed = await owedRefund({ scenario: "dns_failure" });
+    const finance = await makeFinance();
+    await executeRefund(db, finance, provider, owed.refundId);
+    expect((await refundRow(owed.refundId)).status).toBe("failed");
+
+    // A crashed retry: an attempt that was started and never closed. Numbered
+    // out of the way so the unique index is not what refuses the dispatch.
+    await db.execute(sql`
+      insert into refund_attempts (id, refund_id, attempt_no, idempotency_key)
+      values (gen_random_uuid(), ${owed.refundId}, 99, ${refundIdempotencyKey(owed.refundId, 99)})
+    `);
+    await db.execute(sql`update refunds set not_before = null where id = ${owed.refundId}::uuid`);
+    provider.planRefund(owed.paymentRef, "succeeds");
+
+    await expectRejection(
+      executeRefund(db, finance, provider, owed.refundId),
+      /attempt for this refund is still open/i,
+    );
+    // The assertion that actually matters: no second request went out.
+    expect(provider.refundsPerformed()).toBe(0);
   });
 
   it("sweeps a crashed request to in_doubt, never to failed", async () => {
@@ -879,11 +919,25 @@ describe("8 · retries, bounded and clamped", () => {
   });
 
   it("falls back to the reviewed policy on a malformed setting", async () => {
-    for (const bad of ["null", '"3"', '"lots"', "-1"]) {
+    /*
+     * `"1"` is the value that matters, and it is here because a mutation
+     * showed the others were not enough.
+     *
+     * Coercing with `Number()` turns every one of "null", "3" and "lots" into
+     * something that lands back on the reviewed default anyway — 0, 3 and NaN
+     * respectively — so a coercing loader passed this test while quietly
+     * accepting a string as configuration. The string "1" is the one that
+     * separates them: coerced it narrows the ceiling to a value nobody wrote
+     * as a number, and rejected it falls back to the reviewed 3.
+     */
+    for (const bad of ["null", '"3"', '"1"', '"lots"', "-1", '"9"', "true", '{}']) {
       await db.execute(sql.raw(
         `update platform_settings set value = '${bad}'::jsonb where key = 'refund.max_attempts'`,
       ));
-      expect((await loadRefundPolicy(db)).maxAttempts).toBe(DEFAULT_REFUND_MAX_ATTEMPTS);
+      expect(
+        (await loadRefundPolicy(db)).maxAttempts,
+        `${bad} is not a number and must not be read as configuration`,
+      ).toBe(DEFAULT_REFUND_MAX_ATTEMPTS);
     }
     // A missing row is not permission either.
     await db.execute(sql`delete from platform_settings where key = 'refund.retry_backoff_seconds'`);
