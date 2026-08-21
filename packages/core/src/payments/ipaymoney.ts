@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { ProviderNotConfiguredError } from "../errors";
 import { ProviderTransportError, screenDetail, stageOfTransportFailure } from "./refund-outcome";
 import type {
@@ -18,14 +19,19 @@ import type {
  *   POST /api/v1/payments             createCharge()   — L161
  *   GET  /api/v1/payments/{reference} getCharge()      — L228
  *
- * What it does NOT establish, and what therefore still throws:
+ *   webhook                           verifyWebhook()  — L308–L368
  *
- *   verifyWebhook()  the authentication scheme is ambiguous and, on the most
- *                    likely reading, is a static shared secret echoed in a
- *                    header rather than a signature over the body. See the
- *                    method for the full argument. Implementing it as
- *                    documented would mean a check that does not cover the
- *                    payload, which is not a webhook boundary at all.
+ * The webhook is implemented as a NOTIFICATION, not as evidence, and that is
+ * the load-bearing decision in this adapter. iPayMoney's documented
+ * authentication is the API secret echoed back in a header, which does not
+ * cover the request body — so a party holding the secret could otherwise forge
+ * any confirmation, for any payment, with no amount check to stop it. Instead
+ * the header is checked, and then the payment status is re-read from
+ * `GET /api/v1/payments/{reference}` over our own authenticated connection.
+ * Forging a notification therefore buys nothing: it can make us ask a question,
+ * never answer one. See `verifyWebhook` for the full argument.
+ *
+ * What the documentation does NOT establish, and what therefore still throws:
  *
  *   refund()         there is NO customer-refund operation anywhere in the
  *   getRefund()      documentation. Not an endpoint, not a method, not a
@@ -85,6 +91,41 @@ export const IPAYMONEY_STATUS_MAP: Readonly<Record<string, ChargeStatusValue>> =
   failed: "failed",
 });
 
+/**
+ * The event id iPayMoney does not send, derived so a replay is still a no-op.
+ *
+ * Afrinext's replay defence is `UNIQUE (provider, provider_event_id)` on
+ * `payment_events`. iPayMoney supplies no event id (question K9) and retries a
+ * delivery five times on any non-2xx (L329), so duplicates are not a
+ * possibility to guard against — they are the documented behaviour.
+ *
+ * The derivation is `{reference}:{status}`, and both halves earn their place:
+ *
+ *   reference   iPayMoney's own identifier for the payment. Two different
+ *               payments therefore cannot collide, whatever else is equal.
+ *
+ *   status      so a success and a failure for the SAME payment do not collapse
+ *               into one another. Keying on the reference alone would mean a
+ *               later, truthful event was silently discarded as a duplicate of
+ *               an earlier, different one.
+ *
+ * The status used is the CONFIRMED one — read back from the provider — never
+ * the one the notification claimed. That matters: keying on a claimed value
+ * would let anyone who can reach the endpoint mint fresh ids at will, and each
+ * fresh id is a row and a lookup. Keying on the confirmed value means the id
+ * is a function of the provider's own truth, so five deliveries of one real
+ * event produce one id and one row.
+ *
+ * What it deliberately does NOT include is any hash of the request body.
+ * Byte-level differences between retries — a re-serialised field order, a
+ * changed User-Agent echoed into the payload — would produce different ids and
+ * defeat the deduplication this exists for. The id names the FACT, not the
+ * delivery.
+ */
+export function ipaymoneyEventId(providerRef: string, confirmedStatus: string): string {
+  return `${providerRef}:${confirmedStatus}`;
+}
+
 export class IPayMoneyUnknownStatusError extends Error {
   override readonly name = "IPayMoneyUnknownStatusError";
   constructor(readonly reported: string) {
@@ -102,6 +143,15 @@ export interface IPayMoneyOptions {
   readonly apiKey?: string | undefined;
   /** `sandbox` or `live`, sent as `Ipay-Target-Environment`. */
   readonly environment?: string | undefined;
+  /**
+   * The value iPayMoney echoes in the webhook header.
+   *
+   * The documentation says this IS the API secret — the dashboard's
+   * "Secret Hash" field is where you paste your secret key. It is separate here
+   * anyway, so that if the two ever diverge the webhook secret can be rotated
+   * without rotating the key that authorises charges.
+   */
+  readonly webhookSecret?: string | undefined;
   readonly timeoutMs?: number | undefined;
   /** Injectable for tests. Defaults to the global fetch. */
   readonly fetchImpl?: typeof fetch | undefined;
@@ -138,6 +188,7 @@ export class IPayMoneyProvider implements PaymentProvider {
   private readonly baseUrl: string;
   private readonly apiKey: string | undefined;
   private readonly environment: string | undefined;
+  private readonly webhookSecret: string | undefined;
   private readonly timeoutMs: number;
   private readonly fetchImpl: typeof fetch;
 
@@ -146,6 +197,10 @@ export class IPayMoneyProvider implements PaymentProvider {
       .replace(/\/+$/, "");
     this.apiKey = options.apiKey ?? process.env["IPAYMONEY_API_KEY"];
     this.environment = options.environment ?? process.env["IPAYMONEY_ENVIRONMENT"];
+    // Defaults to the API key, because the documentation says the dashboard's
+    // "Secret Hash" field is where the API secret is pasted.
+    this.webhookSecret =
+      options.webhookSecret ?? process.env["IPAYMONEY_WEBHOOK_SECRET"] ?? this.apiKey;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
   }
@@ -458,59 +513,146 @@ export class IPayMoneyProvider implements PaymentProvider {
   }
 
   /**
-   * NOT IMPLEMENTED, and the reason is a security decision rather than effort.
+   * The webhook, treated as a NOTIFICATION and never as evidence.
    *
-   * The documentation describes webhook authentication three times and the
-   * three do not agree:
+   * WHY, because this is the most important decision in the adapter.
    *
-   *   L332  "Il est introduit dans l'en-tête de chaque requête
-   *          x-iPayMoney-secret une signature"          → a header named
-   *                                                       x-iPayMoney-secret,
-   *                                                       carrying "a signature"
-   *   L338  "secret-hash": "sk_58951rhguiq859905dfn5903gh"
-   *                                                     → a DIFFERENT header
-   *                                                       name, carrying what
-   *                                                       looks like the secret
-   *                                                       key itself
-   *   setup "Remplissez votre Secret Hash. C'est votre clé API secrète"
-   *                                                     → the merchant pastes
-   *                                                       their API secret into
-   *                                                       the dashboard field
+   * iPayMoney's documented authentication is not a signature. The prose names
+   * an `x-iPayMoney-secret` header carrying "une signature" (L332); the example
+   * shows a `secret-hash` header whose value is `sk_58951...` (L338); and the
+   * setup instructions say to paste your API secret into the dashboard's
+   * "Secret Hash" field. Read together that is a STATIC SHARED SECRET echoed
+   * back to us, and a constant header does not cover the request body. Anyone
+   * holding it could forge any event, for any payment, with any status — and
+   * because iPayMoney sends no amount either, nothing downstream would catch
+   * it. The secret also travels on every one of the up-to-five retry
+   * deliveries (L329), so a single appearance in a proxy log or an error report
+   * is a permanent forgery capability.
    *
-   * Read together, the most likely meaning is that iPayMoney echoes a STATIC
-   * SHARED SECRET back in a header. If that is what it is, then:
+   * So the notification is not believed. It is checked, and then IGNORED as a
+   * source of truth:
    *
-   *   - the check does not cover the request body at all, so anyone who holds
-   *     the secret can forge any event, with any status, for any payment;
-   *   - the secret is transmitted on every delivery — and iPayMoney retries
-   *     five times (L329) — so one observation in a proxy log, an error report
-   *     or a request dump is a permanent forgery capability;
-   *   - combined with there being no amount in the payload, a forged event
-   *     would face no amount cross-check either.
+   *   1. the secret header is compared in constant time — cheap, and it stops
+   *      an unauthenticated party from making us issue arbitrary lookups;
+   *   2. the body is parsed only to learn WHICH payment is being talked about;
+   *   3. the status is then re-read from `GET /api/v1/payments/{reference}`,
+   *      over our own TLS connection, authenticated with our Bearer key;
+   *   4. the returned event carries the CONFIRMED status, never the claimed one.
    *
-   * An HMAC over the raw bytes gives an attacker holding the secret the same
-   * forging power, so the difference is not the algorithm's strength — it is
-   * that an HMAC never transmits the key and binds the header to the body.
+   * Forging a notification therefore buys nothing. It can make Afrinext ask
+   * iPayMoney a question; it cannot make iPayMoney give the wrong answer. That
+   * is strictly stronger than the scheme the documentation describes, and it
+   * holds even if the secret leaks.
    *
-   * Afrinext's webhook boundary verifies a signature over the raw bytes before
-   * parsing, and that property is load-bearing: it is why a forged amount
-   * cannot confirm a payment. Implementing a constant-header check here would
-   * satisfy the type signature while removing the property, and a verification
-   * function that does not verify is worse than one that refuses.
+   * WHAT IT COSTS. Verification now depends on iPayMoney's API being
+   * reachable. When the lookup fails this throws, the route answers non-2xx,
+   * and iPayMoney retries — which is the correct outcome: an unconfirmable
+   * notification must not be treated as a confirmation, and the event is not
+   * lost. It also does not fix the missing amount (question K8): the status
+   * endpoint states no amount either, so the boundary's amount cross-check
+   * still cannot run for this provider.
    *
-   * So it refuses, and iPayMoney is asked (question K7) whether a body
-   * signature is available. See docs/providers/ipaymoney/support-questions.md.
+   * Question K7 remains open. If iPayMoney confirms a real body signature, the
+   * lookup becomes an optimisation rather than the safety property, and this
+   * method can be simplified on evidence.
    */
-  async verifyWebhook(_rawBody: Buffer, _headers: HeadersLike): Promise<VerifiedEvent> {
-    throw new ProviderNotConfiguredError(
-      this.id,
-      "the webhook authentication scheme is not established. The documentation " +
-        "names the header x-iPayMoney-secret in prose and secret-hash in its " +
-        "example, whose value is the API secret itself — a static shared secret " +
-        "echoed in a header does not cover the request body, so it is not a " +
-        "signature. Confirm with iPayMoney (question K7) before any webhook is " +
-        "trusted to confirm money.",
+  async verifyWebhook(rawBody: Buffer, headers: HeadersLike): Promise<VerifiedEvent> {
+    const secret = this.webhookSecret;
+    if (secret === undefined || secret === "") {
+      throw new ProviderNotConfiguredError(
+        this.id,
+        "no webhook secret is configured. Set IPAYMONEY_WEBHOOK_SECRET (or the " +
+          "API key, which the documentation says is the same value). Accepting " +
+          "an unauthenticated notification is not an option.",
+      );
+    }
+
+    /*
+     * Both documented header names are accepted, because the documentation
+     * contradicts itself about which one is sent and guessing wrong would
+     * reject every real webhook. Accepting either is not a weakening: the
+     * VALUE still has to match, and the value is the whole check.
+     */
+    const presented =
+      headers.get("secret-hash") ??
+      headers.get("x-ipaymoney-secret") ??
+      headers.get("x-iPayMoney-secret");
+
+    if (presented === null || presented === undefined) {
+      throw new ProviderNotConfiguredError(
+        this.id,
+        "the webhook carried neither secret-hash nor x-iPayMoney-secret.",
+      );
+    }
+
+    // Constant time, with the length compared first because timingSafeEqual
+    // throws on a mismatch and the length of a secret is not the secret.
+    const a = Buffer.from(presented, "utf8");
+    const b = Buffer.from(secret, "utf8");
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      throw new ProviderNotConfiguredError(
+        this.id,
+        "the webhook secret does not match.",
+      );
+    }
+
+    /*
+     * Parsed ONLY to learn which payment this is about.
+     *
+     * Nothing else in the body is trusted — not the status, not the msisdn, not
+     * the external_reference. They are kept in `raw` so the record shows what
+     * was claimed alongside what was confirmed, which is what makes a forgery
+     * attempt visible after the fact.
+     */
+    let notification: { data?: Record<string, unknown> } | Record<string, unknown>;
+    try {
+      notification = JSON.parse(rawBody.toString("utf8")) as Record<string, unknown>;
+    } catch {
+      throw new ProviderNotConfiguredError(
+        this.id,
+        "the webhook body is not JSON.",
+      );
+    }
+
+    const data = (
+      (notification as { data?: Record<string, unknown> }).data ??
+      (notification as Record<string, unknown>)
     );
+    const claimedReference = data["reference"];
+    if (typeof claimedReference !== "string" || claimedReference === "") {
+      throw new ProviderNotConfiguredError(
+        this.id,
+        "the webhook names no payment reference, so there is nothing to confirm.",
+      );
+    }
+
+    /*
+     * The authoritative step. If this throws — unreachable, 5xx, unknown status
+     * — nothing is confirmed and the caller answers non-2xx so iPayMoney
+     * retries. An unconfirmable notification is not a confirmation.
+     */
+    const confirmed = await this.getCharge(claimedReference);
+
+    return {
+      subject: "charge",
+      /*
+       * Derived, because iPayMoney sends no event id and retries five times, so
+       * duplicates are certain. See `ipaymoneyEventId` for why this exact shape
+       * is safe.
+       */
+      providerEventId: ipaymoneyEventId(confirmed.providerRef, confirmed.status),
+      type: `payment.${confirmed.status}`,
+      providerRef: confirmed.providerRef,
+      // The CONFIRMED status. The notification's claim never reaches here.
+      status: confirmed.status,
+      // Absent: iPayMoney states no amount in either channel. See K8.
+      raw: {
+        confirmed: confirmed.raw,
+        // Screened, because a notification is attacker-influenced input and
+        // this is stored.
+        claimed: screenDetail(data).slice(0, 500),
+      },
+    };
   }
 
   /**

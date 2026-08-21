@@ -56,8 +56,15 @@ describe("iPayMoney adapter", () => {
     // And the old claim, which is now false, is gone from every refusal.
     await expect(provider.createCharge(charge))
       .rejects.not.toThrow(/documentation is not available/i);
+    /*
+     * verifyWebhook is now IMPLEMENTED, so what it refuses here is different
+     * and more specific: this provider has no credentials, and an
+     * unauthenticated notification is never accepted. The webhook is treated as
+     * a notification whose claims are re-read from the provider — see
+     * ipaymoney.test.ts, which covers that behaviour properly.
+     */
     await expect(provider.verifyWebhook(Buffer.from("{}"), { get: () => null }))
-      .rejects.toThrow(/scheme is not established/i);
+      .rejects.toThrow(/webhook secret|secret-hash/i);
     await expect(
       provider.refund({ providerRef: "x", amount: money(1n, "XOF"), reason: "r", idempotencyKey: "k" }),
     ).rejects.toThrow(/documents no customer-refund API/i);

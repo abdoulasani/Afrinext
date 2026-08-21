@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { ProviderNotConfiguredError } from "../errors";
 import { money } from "../money";
 import {
-  IPAYMONEY_STATUS_MAP, IPayMoneyProvider, IPayMoneyUnknownStatusError,
+  IPAYMONEY_STATUS_MAP, ipaymoneyEventId, IPayMoneyProvider, IPayMoneyUnknownStatusError,
 } from "./ipaymoney";
 import { ProviderTransportError, stageOfTransportFailure } from "./refund-outcome";
-import type { ChargeInput } from "./provider";
+import type { ChargeInput, HeadersLike } from "./provider";
 
 /**
  * LOCAL TESTS — no network, no credentials, no iPayMoney.
@@ -371,21 +371,215 @@ describe("getCharge", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// The webhook, as a notification rather than as evidence
+// ---------------------------------------------------------------------------
+
+const SECRET = "sk_test_webhook_secret";
+
+/** A provider whose lookups answer with whatever the test decides is true. */
+function withLookup(
+  truth: (ref: string) => Response,
+  onCall?: (ref: string) => void,
+): IPayMoneyProvider {
+  const impl = ((url: string | URL | Request) => {
+    const ref = String(url).split("/").pop() as string;
+    onCall?.(ref);
+    return Promise.resolve(truth(ref));
+  }) as unknown as typeof fetch;
+  return new IPayMoneyProvider({
+    baseUrl: "https://i-pay.money",
+    apiKey: "sk_x",
+    environment: "sandbox",
+    webhookSecret: SECRET,
+    fetchImpl: impl,
+  });
+}
+
+function notification(reference: string, claimedStatus: string): Buffer {
+  return Buffer.from(JSON.stringify({
+    data: {
+      external_reference: "order:x:charge",
+      reference,
+      status: claimedStatus,
+      msisdn: "40410000001",
+    },
+  }), "utf8");
+}
+
+const signed = (secret = SECRET): HeadersLike => ({
+  get: (name: string) => (name.toLowerCase() === "secret-hash" ? secret : null),
+});
+
+describe("webhook — the notification is checked, then ignored as a source of truth", () => {
+  it("refuses a webhook with no secret header", async () => {
+    const provider = withLookup(() => jsonResponse(200, {}));
+    await expect(
+      provider.verifyWebhook(notification("r1", "succeeded"), { get: () => null }),
+    ).rejects.toThrow(/neither secret-hash nor x-iPayMoney-secret/);
+  });
+
+  it("refuses a webhook whose secret does not match", async () => {
+    let looked = false;
+    const provider = withLookup(() => jsonResponse(200, {}), () => { looked = true; });
+    await expect(
+      provider.verifyWebhook(notification("r1", "succeeded"), signed("wrong-secret")),
+    ).rejects.toThrow(/secret does not match/);
+    // And no lookup was issued: a bad secret must not even cost us a request.
+    expect(looked).toBe(false);
+  });
+
+  it("accepts either documented header name, because the documentation contradicts itself", async () => {
+    const provider = withLookup(() =>
+      jsonResponse(200, { reference: "r1", status: "succeeded" }));
+    const viaProse: HeadersLike = {
+      get: (n: string) => (n.toLowerCase() === "x-ipaymoney-secret" ? SECRET : null),
+    };
+    const event = await provider.verifyWebhook(notification("r1", "succeeded"), viaProse);
+    expect(event.subject).toBe("charge");
+  });
+
+  it("TAKES THE STATUS FROM THE LOOKUP, not from what the notification claimed", async () => {
+    /*
+     * The whole point of the design, in one assertion.
+     *
+     * The notification claims the payment succeeded. The provider, asked
+     * directly, says it failed. A forged or mistaken notification must not be
+     * able to confirm money, so the confirmed answer wins.
+     */
+    const provider = withLookup(() =>
+      jsonResponse(200, { reference: "r1", status: "failed", external_reference: "order:x" }));
+
+    const event = await provider.verifyWebhook(notification("r1", "succeeded"), signed());
+
+    expect(event.status).toBe("failed");
+    expect(event.type).toBe("payment.failed");
+  });
+
+  it("a forged notification cannot confirm a payment that did not succeed", async () => {
+    /*
+     * The attack the shared-secret scheme would otherwise permit, run end to
+     * end: somebody with the secret invents a success for a real payment. The
+     * lookup is what refuses it.
+     */
+    const provider = withLookup(() => jsonResponse(200, { reference: "real-1", status: "failed" }));
+    const event = await provider.verifyWebhook(notification("real-1", "succeeded"), signed());
+    expect(event.status).not.toBe("succeeded");
+  });
+
+  it("confirms nothing when the lookup cannot be made", async () => {
+    /*
+     * A 5xx on the lookup means we could not establish the truth. Throwing
+     * makes the route answer non-2xx, and iPayMoney retries — the event is not
+     * lost, and an unconfirmable notification is not treated as a confirmation.
+     */
+    const provider = withLookup(() => jsonResponse(503, {}));
+    await expect(provider.verifyWebhook(notification("r1", "succeeded"), signed()))
+      .rejects.toThrow(ProviderTransportError);
+  });
+
+  it("states no amount, because iPayMoney states none in either channel", async () => {
+    const provider = withLookup(() => jsonResponse(200, { reference: "r1", status: "succeeded" }));
+    const event = await provider.verifyWebhook(notification("r1", "succeeded"), signed());
+    expect("amount" in event ? event.amount : undefined).toBeUndefined();
+  });
+
+  it("keeps what was claimed alongside what was confirmed, screened", async () => {
+    const provider = withLookup(() => jsonResponse(200, { reference: "r1", status: "failed" }));
+    const event = await provider.verifyWebhook(notification("r1", "succeeded"), signed());
+    const raw = event.raw as { claimed: string; confirmed: unknown };
+    // A forgery attempt stays visible after the fact.
+    expect(raw.claimed).toContain("succeeded");
+    expect(raw.confirmed).toBeDefined();
+  });
+
+  it("refuses a notification that names no payment", async () => {
+    const provider = withLookup(() => jsonResponse(200, {}));
+    await expect(
+      provider.verifyWebhook(Buffer.from(JSON.stringify({ data: {} })), signed()),
+    ).rejects.toThrow(/names no payment reference/);
+  });
+
+  it("refuses a body that is not JSON, without asking anybody", async () => {
+    let looked = false;
+    const provider = withLookup(() => jsonResponse(200, {}), () => { looked = true; });
+    await expect(provider.verifyWebhook(Buffer.from("<html>"), signed()))
+      .rejects.toThrow(/not JSON/);
+    expect(looked).toBe(false);
+  });
+});
+
+describe("webhook — the derived event id", () => {
+  it("is the same for five deliveries of one real event", async () => {
+    /*
+     * iPayMoney retries five times on any non-2xx, so duplicates are the
+     * documented behaviour rather than a hazard to guard against.
+     */
+    const provider = withLookup(() =>
+      jsonResponse(200, { reference: "r1", status: "succeeded" }));
+
+    const ids = new Set<string>();
+    for (let i = 0; i < 5; i += 1) {
+      const event = await provider.verifyWebhook(notification("r1", "succeeded"), signed());
+      ids.add(event.providerEventId);
+    }
+    expect(ids.size, "five deliveries must deduplicate to one id").toBe(1);
+  });
+
+  it("cannot collide across different payments", () => {
+    expect(ipaymoneyEventId("ref-a", "succeeded"))
+      .not.toBe(ipaymoneyEventId("ref-b", "succeeded"));
+  });
+
+  it("does NOT collapse a success and a failure for the same payment", () => {
+    /*
+     * Keying on the reference alone would make a later, truthful event look
+     * like a duplicate of an earlier, different one — and it would be silently
+     * discarded by the replay index.
+     */
+    expect(ipaymoneyEventId("ref-a", "succeeded"))
+      .not.toBe(ipaymoneyEventId("ref-a", "failed"));
+  });
+
+  it("is a function of the CONFIRMED status, so a forger cannot mint fresh ids", async () => {
+    /*
+     * If the id were keyed on the claimed status, anyone reaching the endpoint
+     * could produce unlimited distinct ids — each one a row and a lookup. Keyed
+     * on the confirmed status, every forgery about one payment collapses to the
+     * one id the truth deserves.
+     */
+    const provider = withLookup(() => jsonResponse(200, { reference: "r1", status: "failed" }));
+    const ids = new Set<string>();
+    for (const claimed of ["succeeded", "failed", "pending", "whatever"]) {
+      const event = await provider.verifyWebhook(notification("r1", claimed), signed());
+      ids.add(event.providerEventId);
+    }
+    expect(ids.size, "the claim must not influence the id").toBe(1);
+    expect([...ids][0]).toBe(ipaymoneyEventId("r1", "failed"));
+  });
+
+  it("does not depend on the delivery's bytes", async () => {
+    /*
+     * A retry that re-serialises the payload differently is the same fact. If
+     * the id hashed the body, such a retry would look new and the deduplication
+     * would not happen at all.
+     */
+    const provider = withLookup(() =>
+      jsonResponse(200, { reference: "r1", status: "succeeded" }));
+
+    const a = await provider.verifyWebhook(notification("r1", "succeeded"), signed());
+    const reordered = Buffer.from(JSON.stringify({
+      data: { status: "succeeded", reference: "r1", msisdn: "40410000001",
+              external_reference: "order:x:charge", extra: "added by a proxy" },
+    }), "utf8");
+    const b = await provider.verifyWebhook(reordered, signed());
+
+    expect(a.providerEventId).toBe(b.providerEventId);
+  });
+});
+
 describe("what stays unsupported, and why", () => {
   const provider = new IPayMoneyProvider({ apiKey: "sk_x", environment: "sandbox" });
-
-  it("refuses to verify a webhook while the scheme is a shared secret, not a signature", async () => {
-    /*
-     * The documentation names the header `x-iPayMoney-secret` in prose and
-     * `secret-hash` in its example, whose value is the API secret itself. A
-     * constant header does not cover the request body, so it cannot be a
-     * signature — and a verification function that does not verify is worse
-     * than one that refuses. Question K7.
-     */
-    await expect(
-      provider.verifyWebhook(Buffer.from("{}"), { get: () => "sk_x" }),
-    ).rejects.toThrow(/not a signature|does not cover|scheme is not established/i);
-  });
 
   it("refuses to refund, because iPayMoney documents no customer refund", async () => {
     await expect(

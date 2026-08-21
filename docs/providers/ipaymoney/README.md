@@ -6,10 +6,10 @@
 checked against a line number. Every line reference below (`L161`) points into
 that extract.
 
-**The adapter is still non-operational and every method still throws.** That is
-no longer because the documentation is missing — it is because implementing it
-is a milestone that has not been authorised, and because the facts below leave
-questions that must be answered by iPayMoney before money moves.
+**The payment endpoints are implemented; refunds are not, because there are
+none.** See *What the adapter does today* below for exactly what each method
+does. Several questions must still be answered by iPayMoney before real money
+moves — they are tracked in `support-questions.md`.
 
 Supplied by the operator of AFRI NEXT TECHNOLOGIE on 2026-08-21.
 
@@ -202,6 +202,57 @@ trusted with money.
 
 ## What the adapter does today
 
+| Method | State |
+|---|---|
+| `createCharge()` | **Implemented** against `POST /api/v1/payments` |
+| `getCharge()` | **Implemented** against `GET /api/v1/payments/{reference}` |
+| `verifyWebhook()` | **Implemented as a notification**, see below |
+| `refund()` · `getRefund()` | **Throw.** There is no customer-refund operation to implement |
+| `createPayout()` · `getPayout()` | **Absent.** The reversement is a dashboard withdrawal, not a payout API |
+
+**No request has ever been made to iPayMoney from this repository.** The adapter
+is written against the documentation and is a hypothesis until a real sandbox
+run confirms it.
+
+### The webhook is a notification, not evidence
+
+Because iPayMoney's documented authentication is the API secret echoed in a
+header (P6), it does not cover the request body — so the adapter does not
+believe what a notification says. It checks the header in constant time, reads
+only the payment reference out of the body, and then **re-reads the status from
+`GET /api/v1/payments/{reference}`** over our own authenticated connection. The
+returned event carries the confirmed status, never the claimed one.
+
+Forging a notification therefore buys nothing: it can make Afrinext ask a
+question, not answer one. This holds even if the secret leaks, which the
+documented scheme does not.
+
+It costs one thing, stated plainly: verification now depends on iPayMoney's API
+being reachable. When the lookup fails, nothing is confirmed, the route answers
+non-2xx and iPayMoney retries — the event is not lost, and an unconfirmable
+notification is never treated as a confirmation.
+
+It does **not** fix the amount (K8): the status endpoint states no amount
+either, so the boundary's amount cross-check still cannot run for this provider.
+
+### The event id is derived
+
+iPayMoney sends no event id (P2) and retries five times, so duplicates are the
+documented behaviour. The adapter derives `{reference}:{confirmedStatus}`:
+
+- **reference** so two payments cannot collide;
+- **status** so a success and a failure for the same payment do not collapse
+  into one another;
+- **the confirmed status, never the claimed one**, so nobody reaching the
+  endpoint can mint fresh ids at will;
+- **no hash of the body**, because a retry that re-serialises the payload is the
+  same fact and must deduplicate.
+
+Proved against a real database in `ipaymoney-replay.test.ts`: five deliveries of
+one event grant one entitlement.
+
+### Refunds
+
 `refund()` throws. `getRefund()` is **declared and throws**, unlike
 `createPayout`, and the difference is deliberate: omitting a method asserts the
 provider may lack the capability, and `supportsRefundQuery(provider)` returning
@@ -209,8 +260,7 @@ provider may lack the capability, and `supportsRefundQuery(provider)` returning
 keeps the adapter non-operational without deciding on iPayMoney's behalf.
 
 Nothing about a refund endpoint, payload, error code or signature scheme has
-been invented anywhere in the codebase, and the payment endpoints above are
-**documented here, not implemented**.
+been invented anywhere in the codebase.
 
 ---
 
