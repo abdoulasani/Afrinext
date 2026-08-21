@@ -1,0 +1,1128 @@
+<title>Refund Execution</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 3 · implementation review</p>
+  <h1>Refund Execution</h1>
+  <p class="lede">A buyer whose verified payment ended as <code>refund_due</code> now gets their money back <strong>exactly once</strong>, with evidence. This is what was built, what was run, and what the runs actually said.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>Approved base <b>4342c06</b></span>
+    <span>Code state <b>3fe233d</b></span>
+    <span>Files changed <b>36</b></span>
+    <span>Unit tests <b class="ok">429 passed</b></span>
+    <span>Browser tests <b class="ok">31 passed</b></span>
+    <span>Mutations <b class="ok">24 / 26 caught</b></span>
+  </div>
+</header>
+
+<div class="note block" style="margin-top:34px">
+  <span class="n-label">The correction you required, and where it lives</span>
+  <p>The approved design classified an HTTP 5xx as a definite failure. You corrected that before implementation, and the corrected rule is now the axis the whole phase turns on: <strong>an HTTP status never decides whether the financial operation happened.</strong> The classifier asks only how far the request got. A 5xx received <em>after</em> transmission is <code>in_doubt</code>, and <code>in_doubt</code> is never retried.</p>
+  <p style="margin-bottom:0">It is enforced in one place — <code>payments/refund-outcome.ts</code> — proven by six adversarial tests and by mutations <b>R1</b>, <b>R2</b> and <b>R3</b>, each of which makes a test fail. Section 10 shows the output.</p>
+</div>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#s1">1 · Commit</a>
+  <a href="#s2">2 · Files</a>
+  <a href="#s3">3 · Migration</a>
+  <a href="#s4">4 · State machine</a>
+  <a href="#s5">5 · Provider boundary</a>
+  <a href="#s6">6 · Idempotency</a>
+  <a href="#s7">7 · Concurrency</a>
+  <a href="#s8">8 · Crash window</a>
+  <a href="#s9">9 · Reconciliation</a>
+  <a href="#s10">10 · Mutations</a>
+  <a href="#s11">11 · Security</a>
+  <a href="#s12">12 · Browser</a>
+  <a href="#s13">13 · CI</a>
+  <a href="#s14">14 · Manual reconciliation</a>
+  <a href="#s15">15 · Outbox</a>
+  <a href="#s16">16 · Unverified</a>
+  <a href="#s17">17 · Financial risks</a>
+  <a href="#s18">18 · iPayMoney</a>
+  <a href="#s19">19 · Next milestone</a>
+</nav>
+
+<section id="s1">
+  <div class="sec-head"><div class="sec-mark">1</div><h2 class="sec-title">The code state this describes</h2></div>
+
+  <div class="tbl"><table>
+    <tbody>
+      <tr><th style="width:200px">Branch</th><td class="mono">claude/create-app-repository-1cxsih</td></tr>
+      <tr><th>Approved base</th><td class="mono">4342c06 — the Phase 2 financial gate you approved</td></tr>
+      <tr><th>Implementation commits</th><td class="mono">cab8845 — Phase 3: refund execution<br>2f25fa5 — Freeze the refund money snapshot in the database, not by convention<br>3fe233d — Close two weak refund assertions that mutation testing exposed</td></tr>
+      <tr><th>Merged to main</th><td><span class="chip no">no</span> and will not be without your word</td></tr>
+      <tr><th>Settlement started</th><td><span class="chip no">no</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="n-label">On the commit named above</span>
+    <p style="margin-bottom:0">Every test result and mutation result in this packet was produced against the tree at <span class="mono">3fe233d</span>. This document and its PDF are committed <em>above</em> that commit, so the branch tip is newer — but every commit between them touches <span class="mono">docs/</span> only. Verify with <span class="mono">git diff --stat 3fe233d HEAD -- . ':!docs'</span>: it is empty.</p>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="sec-head"><div class="sec-mark">2</div><h2 class="sec-title">Files changed, and why each one moved</h2></div>
+
+  <p>Thirty-six files: <b>6&nbsp;365</b> lines added, <b>45</b> removed. The forty-five removed lines are the only pre-existing code that changed at all, and every one of them is listed below.</p>
+
+  <h3>New — the refund domain</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th class="num">Lines</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">core/payments/refund-outcome.ts</td><td class="num">252</td><td><strong>The correction.</strong> Classifies an attempt by how far the request got, never by what the response said. Holds the closed not-transmitted set and the secret screen</td></tr>
+      <tr><td class="mono">core/refunds/state.ts</td><td class="num">110</td><td>Five states as data. <code>in_doubt → in_flight</code> is absent from the table</td></tr>
+      <tr><td class="mono">core/refunds/record.ts</td><td class="num">305</td><td>Recording a debt inside the confirming transaction; reading the queue</td></tr>
+      <tr><td class="mono">core/refunds/execute.ts</td><td class="num">969</td><td>Claim → send → settle, in that order. Resolution by status query and by webhook. The queue processor</td></tr>
+      <tr><td class="mono">core/refunds/reconcile-manual.ts</td><td class="num">342</td><td>Propose and confirm, under dual control where dual control is possible</td></tr>
+      <tr><td class="mono">core/refunds/policy.ts</td><td class="num">99</td><td>Retry policy, clamped so configuration can only ever be gentler</td></tr>
+      <tr><td class="mono">core/notifications/index.ts</td><td class="num">125</td><td>The outbox. Writes rows; sends nothing, and has no function that could claim to</td></tr>
+      <tr><td class="mono">core/refunds/refunds.test.ts</td><td class="num">1&nbsp;503</td><td>80 tests across 14 sections</td></tr>
+      <tr><td class="mono">db/migrations/0012_refund_execution.sql</td><td class="num">445</td><td>Three tables, <b>three triggers</b>, twelve CHECKs, three permissions, four settings</td></tr>
+      <tr><td class="mono">db/schema/refunds.ts</td><td class="num">243</td><td>The same in Drizzle</td></tr>
+      <tr><td class="mono">web: 1 page + 1 client component + 5 routes</td><td class="num">639</td><td>The operator queue and its endpoints</td></tr>
+      <tr><td class="mono">web/e2e/refunds.spec.ts</td><td class="num">425</td><td>7 browser tests against a production build</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Changed — every one of the 45 removed lines</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th class="num">+ / −</th><th>The change</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">core/orders/payment.ts</td><td class="num">+89 / −15</td><td>Two things. A refund event is routed to the refund domain after the shared signature check; and reaching <code>refund_due</code> calls <code>recordRefundOwed</code> <strong>in the same transaction</strong>. The 15 removed lines are the rename of <code>event</code> to <code>chargeEvent</code> on the charge path, forced by the verified-event union</td></tr>
+      <tr><td class="mono">core/payments/provider.ts</td><td class="num">+119 / −2</td><td><code>VerifiedEvent</code> becomes a discriminated union; <code>RefundResult</code> gains <code>notExecutedEvidence</code>; <code>getRefund</code> and <code>supportsRefundQuery</code> added</td></tr>
+      <tr><td class="mono">core/payments/mock.ts</td><td class="num">+316 / −7</td><td>Twelve deterministic refund scenarios, a refund-shaped event builder, and truth indexed by our idempotency key</td></tr>
+      <tr><td class="mono">core/payments/ipaymoney.ts</td><td class="num">+19 / −1</td><td><code>getRefund</code> declared and throwing. Still non-operational</td></tr>
+      <tr><td class="mono">core/ledger/commerce-reconcile.ts</td><td class="num">+115 / −3</td><td>Ten refund detectors; a <code>refundsChecked</code> count</td></tr>
+      <tr><td class="mono">core/authz/permissions.ts</td><td class="num">+19 / −2</td><td>Three permissions; finance gains all three, support gains read only</td></tr>
+      <tr><td class="mono">core/scripts/reconcile-check.ts</td><td class="num">+153 / −8</td><td>A second detector probe, for refunds; both probes moved into a transaction that is always rolled back</td></tr>
+      <tr><td class="mono">core/test/harness.ts</td><td class="num">+26 / −0</td><td>Three tables truncated; the refund policy restored between tests</td></tr>
+      <tr><td class="mono">AGENTS.md</td><td class="num">+31 / −4</td><td>The four Phase 3 rules that are not negotiable, written where the next person reads them</td></tr>
+      <tr><td class="mono">db/schema/commerce.ts</td><td class="num">+13 / −0</td><td><code>payment_events.subject</code> and <code>.refund_id</code></td></tr>
+      <tr><td class="mono">i18n fr / en</td><td class="num">+34 / −2</td><td>16 keys each, both catalogues in step</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note good">
+    <span class="n-label">What was NOT touched</span>
+    <p style="margin-bottom:0">No file under <code>auth/</code>, <code>consent/</code>, <code>content/</code>, <code>ratelimit/</code>, <code>ledger/flows.ts</code>, <code>ledger/post.ts</code>, <code>money/</code> or <code>commissions/</code> changed. Checkout and the late-payment rules are unchanged except for the one approved insertion. No existing test was weakened, deleted or skipped: the suite went from 349 to 429 passing with none removed.</p>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="sec-head"><div class="sec-mark">3</div><h2 class="sec-title">Migration 0012, and what the database refuses on its own</h2></div>
+
+  <p>The point of this section is that most of the safety is <em>not</em> in application code. Twelve CHECK constraints, five unique indexes and one trigger enforce it, so a future code path — or a direct <code>UPDATE</code> — fails loudly rather than quietly.</p>
+
+  <h3>Tables</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Table</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">refunds</td><td>One row per owed refund. Frozen amount and currency, status, attempt count, the provider reference, how the outcome was established, the evidence, who authorised it, and any standing manual proposal</td></tr>
+      <tr><td class="mono">refund_attempts</td><td>Append-only. One row per request, written <strong>before</strong> the request goes out, closed once</td></tr>
+      <tr><td class="mono">notification_outbox</td><td>Things a person should be told. Nothing sends from it</td></tr>
+      <tr><td class="mono">payment_events</td><td>Gains <code>subject</code> and <code>refund_id</code>. Refund webhooks reuse the existing <code>UNIQUE (provider, provider_event_id)</code> replay index rather than getting a second, weaker door</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The twelve CHECK constraints on <code>refunds</code></h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Constraint</th><th>Refuses</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">refunds_succeeded_has_evidence</td><td><strong>A refund claiming money went back with no resolution source, no evidence, no provider reference and no timestamp.</strong> This is why there is no "mark as refunded" button — one could not work</td></tr>
+      <tr><td class="mono">refunds_failed_has_evidence</td><td><strong>A refund claiming money definitely did NOT go back, with nothing behind the claim.</strong> The other half of the rule, and the one that keeps an unknown from wearing a failure's clothes</td></tr>
+      <tr><td class="mono">refunds_two_person_is_two_people</td><td>A <code>two_person</code> reconciliation where the two ids are equal — a self-confirmation recorded as dual control</td></tr>
+      <tr><td class="mono">refunds_proposed_success_has_ref</td><td>Proposing a success without naming the provider's reference</td></tr>
+      <tr><td class="mono">refunds_proposal_is_complete</td><td>A proposal missing its evidence, its timestamp or its proposer</td></tr>
+      <tr><td class="mono">refunds_confirmer_needs_a_proposer</td><td>A confirmation of a proposal that does not exist</td></tr>
+      <tr><td class="mono">refunds_status_valid · refunds_resolved_by_valid · refunds_reconciliation_mode_valid · refunds_proposed_outcome_valid</td><td>Any value outside the enumerations</td></tr>
+      <tr><td class="mono">refunds_amount_positive</td><td>A zero or negative refund</td></tr>
+      <tr><td class="mono">refunds_reconcilers_only_when_manual</td><td>Reconcilers named on a refund nobody reconciled</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Indexes and the trigger</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Object</th><th>Guarantee</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">refunds_payment_key</td><td><strong>UNIQUE (payment_id).</strong> One payment, one refund, for all time — the outermost layer of the double-refund defence</td></tr>
+      <tr><td class="mono">refunds_order_key</td><td>UNIQUE (order_id)</td></tr>
+      <tr><td class="mono">refunds_provider_ref_key</td><td>Partial UNIQUE — one refund per provider reference</td></tr>
+      <tr><td class="mono">refund_attempts_no_key</td><td>UNIQUE (refund_id, attempt_no)</td></tr>
+      <tr><td class="mono">refund_attempts_idempotency_key</td><td>UNIQUE. The derived key cannot repeat</td></tr>
+      <tr><td class="mono">notification_outbox_event_key</td><td>UNIQUE (kind, subject_type, subject_id) — one message per event per subject</td></tr>
+      <tr><td class="mono">refund_attempts_append_only</td><td>Trigger. DELETE is refused outright; UPDATE is refused once <code>finished_at</code> is set, and refused always for <code>refund_id</code>, <code>attempt_no</code>, <code>idempotency_key</code> and <code>started_at</code>. An attempt may be <em>closed</em>, never rewritten</td></tr>
+      <tr><td class="mono">refunds_snapshot_frozen</td><td><b>Trigger.</b> Refuses any UPDATE that changes <code>amount_minor</code>, <code>currency</code>, <code>payment_id</code>, <code>order_id</code> or <code>provider</code>. How much goes back and to whose charge is a <em>fact</em>, not a lifecycle — the same reason ledger entries and fee snapshots are immutable</td></tr>
+      <tr><td class="mono">refunds_no_delete</td><td><b>Trigger.</b> A refund is resolved, never erased</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note key">
+    <span class="n-label">The trigger caught its first test</span>
+    <p style="margin-bottom:0">A test tried to back-date <code>started_at</code> to simulate a stuck request. The trigger refused it — correctly, because a re-identifiable attempt row is not evidence. The test now asserts that refusal and moves the <em>threshold</em> instead. That is the trigger doing its job before any production code existed.</p>
+  </div>
+
+  <h3>Reference data the migration writes</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Key</th><th>Value</th><th>Clamp direction</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">refund.max_attempts</td><td class="num">3</td><td><strong>Down.</strong> Configuration may permit fewer, never more</td></tr>
+      <tr><td class="mono">refund.retry_backoff_seconds</td><td class="num">300</td><td><strong>Up.</strong> May wait longer, never less</td></tr>
+      <tr><td class="mono">refund.stuck_in_flight_seconds</td><td class="num">900</td><td><strong>Up.</strong> May be more patient before declaring unknown</td></tr>
+      <tr><td class="mono">refund.queue_batch_size</td><td class="num">20</td><td><strong>Down</strong></td></tr>
+      <tr><td class="mono">refund.read · refund.execute · refund.reconcile_manual</td><td colspan="2">Three permissions. <code>finance</code> holds all three; <code>support</code> holds <code>refund.read</code> only</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+
+<section id="s4">
+  <div class="sec-head"><div class="sec-mark">4</div><h2 class="sec-title">The state machine, and the one transition that is absent</h2></div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 860 404" role="img" aria-labelledby="fsm-t">
+        <title id="fsm-t">Refund states: owed, in flight, succeeded, failed and in doubt</title>
+        <defs>
+          <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <text class="svg-u" x="20" y="22">THE ORDINARY LIFE OF A REFUND</text>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M120 96 H226" marker-end="url(#a)"/>
+          <path d="M340 96 H440"/>
+          <path d="M440 96 V40 H516" marker-end="url(#a)"/>
+          <path d="M440 96 H516" marker-end="url(#a)"/>
+          <path d="M440 96 V152 H516" marker-end="url(#a)"/>
+        </g>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="20"  y="76"  width="100" height="40" rx="3"/>
+          <rect x="230" y="76"  width="110" height="40" rx="3"/>
+          <rect x="520" y="20"  width="120" height="40" rx="3" stroke-width="2.2"/>
+          <rect x="520" y="76"  width="120" height="40" rx="3"/>
+          <rect x="520" y="132" width="120" height="40" rx="3"/>
+        </g>
+        <g text-anchor="middle">
+          <text class="svg-t" x="70"  y="101">owed</text>
+          <text class="svg-t" x="285" y="101">in_flight</text>
+          <text class="svg-t" x="580" y="45">succeeded</text>
+          <text class="svg-t" x="580" y="101">failed</text>
+          <text class="svg-t" x="580" y="157">in_doubt</text>
+        </g>
+
+        <g>
+          <text class="svg-s" x="173" y="88" text-anchor="middle">authorised</text>
+          <text class="svg-d" x="656" y="34">TERMINAL</text>
+          <text class="svg-s" x="656" y="50">the provider named the refund</text>
+          <text class="svg-s" x="656" y="94">provably never transmitted, or</text>
+          <text class="svg-s" x="656" y="108">rejected with its own evidence</text>
+          <text class="svg-s" x="656" y="150">timeout · 5xx after transmission ·</text>
+          <text class="svg-s" x="656" y="164">lost · unparseable · a crash</text>
+        </g>
+
+        <line x1="20" y1="204" x2="840" y2="204" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+        <text class="svg-u" x="20" y="232">AND WHAT AN UNKNOWN OUTCOME MAY DO</text>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M140 300 H200"/>
+          <path d="M200 300 V266 H296" marker-end="url(#a)"/>
+          <path d="M200 300 V334 H296" marker-end="url(#a)"/>
+        </g>
+        <path d="M200 300 V372 H296" fill="none" stroke="currentColor" stroke-width="1.4"
+              stroke-dasharray="5 4" opacity="0.55"/>
+        <g stroke="currentColor" stroke-width="2.2" opacity="0.85">
+          <line x1="238" y1="364" x2="254" y2="380"/>
+          <line x1="254" y1="364" x2="238" y2="380"/>
+        </g>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="30"  y="280" width="110" height="40" rx="3"/>
+          <rect x="300" y="248" width="110" height="36" rx="3"/>
+          <rect x="300" y="316" width="110" height="36" rx="3"/>
+          <rect x="300" y="354" width="110" height="36" rx="3" stroke-dasharray="5 4" opacity="0.55"/>
+        </g>
+        <g text-anchor="middle">
+          <text class="svg-t" x="85"  y="305">in_doubt</text>
+          <text class="svg-t" x="355" y="271">succeeded</text>
+          <text class="svg-t" x="355" y="339">failed</text>
+          <text class="svg-t" x="355" y="377" opacity="0.55">in_flight</text>
+        </g>
+        <g>
+          <text class="svg-s" x="428" y="270">evidence says the money went back</text>
+          <text class="svg-s" x="428" y="332">evidence says it did not —</text>
+          <text class="svg-s" x="428" y="346">and only now is a retry legal</text>
+          <text class="svg-u" x="428" y="372">NO SUCH TRANSITION</text>
+          <text class="svg-s" x="428" y="388">not a flag, not an override, not a button</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Seven transitions, and the eighth is deliberately missing.</b> An unknown outcome can be <em>resolved</em> — to <code>succeeded</code> when evidence says the money went back, to <code>failed</code> when evidence says it did not — and only a resolution to <code>failed</code> makes a retry legal, one state later. There is no path out of <code>in_doubt</code> that sends a second request without first learning something.</figcaption>
+  </figure>
+
+  <p>The table is asserted directly, so a widened machine fails a test rather than a review:</p>
+
+<pre><code>it("permits exactly the transitions the design approved", () =&gt; {
+  <span class="cm">// every from × to pair, enumerated</span>
+  expect([...legal].sort()).toEqual([
+    "failed-&gt;in_flight",  "in_doubt-&gt;failed",   "in_doubt-&gt;succeeded",
+    "in_flight-&gt;failed",  "in_flight-&gt;in_doubt", "in_flight-&gt;succeeded",
+    "owed-&gt;in_flight",
+  ]);
+});</code></pre>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Transition</th><th>What causes it</th><th>Enforced by</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">owed → in_flight</td><td>A finance user with <code>refund.execute</code> and step-up elevation</td><td>State table, guarded UPDATE, row lock</td></tr>
+      <tr><td class="mono">in_flight → succeeded</td><td>The provider answered, and named the refund</td><td>Guarded UPDATE + <code>refunds_succeeded_has_evidence</code></td></tr>
+      <tr><td class="mono">in_flight → failed</td><td><code>not_transmitted</code>, or a rejection carrying <code>notExecutedEvidence</code></td><td>Guarded UPDATE + <code>refunds_failed_has_evidence</code></td></tr>
+      <tr><td class="mono">in_flight → in_doubt</td><td>Everything else, plus the sweeper recovering a crash</td><td>Guarded UPDATE</td></tr>
+      <tr><td class="mono">failed → in_flight</td><td>A retry, inside the attempt ceiling and past the backoff</td><td>State table + policy clamps</td></tr>
+      <tr><td class="mono">in_doubt → succeeded</td><td>Status query, signed webhook, or two-person reconciliation</td><td>State table + CHECK</td></tr>
+      <tr><td class="mono">in_doubt → failed</td><td>The same three, saying no refund exists</td><td>State table + CHECK</td></tr>
+      <tr><td class="mono"><b>in_doubt → in_flight</b></td><td colspan="2"><span class="chip no">does not exist</span> Attempting it throws with the reason spelled out, and the guarded UPDATE would refuse it a second time even if the check were deleted</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><code>refund_due</code> remains a <strong>terminal order state</strong>, as decided. A browser test asserts the order is still <code>refund_due</code> after the refund succeeds: the order records the debt, the refund records what happened, and the two cannot disagree because only one of them is tracking a lifecycle.</p>
+</section>
+
+<section id="s5">
+  <div class="sec-head"><div class="sec-mark">5</div><h2 class="sec-title">The provider boundary — where the correction is enforced</h2></div>
+
+  <p>One file decides <code>failed</code> versus <code>in_doubt</code>, and it never reads an HTTP status to do it. Three stages, and only the first can produce a plain failure:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Stage</th><th>Means</th><th>Becomes</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">not_transmitted</td><td>We can <strong>prove</strong> the request never reached the provider</td><td><span class="chip info">failed</span> retryable</td></tr>
+      <tr><td class="mono">transmitted</td><td>The bytes left. What the provider did with them is a separate question</td><td><span class="chip hold">in_doubt</span> unless the answer carries evidence</td></tr>
+      <tr><td class="mono">unknown</td><td>We cannot establish whether they left</td><td><span class="chip hold">in_doubt</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The not-transmitted set is short, closed, and asserted</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>On the list</th><th>Why it is proof</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ENOTFOUND · EAI_AGAIN</td><td>DNS never resolved a host to connect to</td></tr>
+      <tr><td class="mono">ECONNREFUSED · EHOSTUNREACH · ENETUNREACH · EADDRNOTAVAIL</td><td>The transport refused, or could not reach the host</td></tr>
+      <tr><td class="mono">TLS handshake failures (5 codes)</td><td>Failed before any application bytes</td></tr>
+      <tr><td class="mono">ERR_INVALID_URL</td><td>We never built a request</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Deliberately absent</th><th>Why it is not proof</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ECONNRESET</td><td>The peer reset — which can happen after the request was fully sent, and even after it was processed</td></tr>
+      <tr><td class="mono">ETIMEDOUT</td><td>A timeout says only that no answer came back</td></tr>
+      <tr><td class="mono">EPIPE</td><td>The socket closed mid-write; some bytes may have gone</td></tr>
+      <tr><td class="mono">ABORT_ERR</td><td>We gave up. The provider did not necessarily</td></tr>
+      <tr><td class="mono">UND_ERR_*</td><td>undici's own timeouts, all post-connection</td></tr>
+      <tr><td class="mono"><b>every HTTP status</b></td><td>A response existing at all proves the request arrived. <b>A 500 says the provider's web tier had a problem, and nothing about the refund it may already have accepted</b></td></tr>
+    </tbody>
+  </table></div>
+
+<pre><code>it("holds the classification rules directly, without a database", () =&gt; {
+  expect(stageOfTransportFailure({ code: "ENOTFOUND" })).toBe("not_transmitted");
+
+  <span class="cm">// each of these could have happened AFTER the bytes went out</span>
+  for (const code of ["ECONNRESET","ETIMEDOUT","EPIPE","ABORT_ERR","UND_ERR_HEADERS_TIMEOUT"]) {
+    expect(stageOfTransportFailure({ code })).toBe("unknown");
+  }
+  expect(classifyRefundFailure(new RefundTransportError("500","transmitted",500)).kind)
+    .toBe("in_doubt");
+});</code></pre>
+
+  <h3>An answer must also be credible, not merely present</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Provider says</th><th>Result</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>succeeded</code> with a reference</td><td><span class="chip yes">succeeded</span></td><td>There is something reconciliation can check later</td></tr>
+      <tr><td><code>succeeded</code> with no reference</td><td><span class="chip hold">in_doubt</span></td><td>"It worked" with no name for what worked is not checkable</td></tr>
+      <tr><td><code>failed</code> with <code>notExecutedEvidence</code></td><td><span class="chip info">failed</span></td><td>The provider's own statement that no money moved</td></tr>
+      <tr><td><code>failed</code> with nothing behind it</td><td><span class="chip hold">in_doubt</span></td><td><strong>Indistinguishable from an accepted refund reported badly.</strong> This is all an HTTP status could ever justify, and it is not enough</td></tr>
+      <tr><td><code>pending</code></td><td>stays <code>in_flight</code></td><td>Not a resolution. A webhook or a query ends it</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The interface changes</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Addition</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">RefundResult.notExecutedEvidence</td><td>What makes <code>failed</code> mean failed</td></tr>
+      <tr><td class="mono">getRefund?(query)</td><td>Optional. Queryable by the provider's reference <em>or</em> by our idempotency key — after a timeout the key is the only handle we hold</td></tr>
+      <tr><td class="mono">supportsRefundQuery(provider)</td><td>Callers branch rather than assume. A provider without it makes every ambiguity a manual process, reported by name</td></tr>
+      <tr><td class="mono">VerifiedEvent as a union</td><td><code>subject: "charge" | "refund"</code>, required on both. A refund event cannot be read as a charge event by code that forgot to check</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note good">
+    <span class="n-label">No destination, anywhere</span>
+    <p style="margin-bottom:0"><code>RefundInput</code> is <code>{ providerRef, amount, reason, idempotencyKey }</code>. There is no beneficiary field, no account field and no destination field on the interface, so no API request, server action or test is in a position to redirect a refund. The money goes back the way it came because that is the only thing the interface can express.</p>
+  </div>
+</section>
+
+
+<section id="s6">
+  <div class="sec-head"><div class="sec-mark">6</div><h2 class="sec-title">Idempotency — four layers, none of which trusts the others</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Layer</th><th>Covers the case the others do not</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td class="mono">UNIQUE (payment_id)</td><td>Whatever races and whatever crashes, a second <code>refunds</code> row for one payment cannot exist. Not a read-then-write — the index is the guarantee</td></tr>
+      <tr><td class="num">2</td><td class="mono">SELECT … FOR UPDATE</td><td>Two operators pressing at the same instant serialise instead of both reading <code>owed</code></td></tr>
+      <tr><td class="num">3</td><td>Guarded transition</td><td>Every UPDATE names the state it expects, so a caller that got past the lock with a stale read matches no rows and changes nothing</td></tr>
+      <tr><td class="num">4</td><td><b>Attempt row committed BEFORE the call</b></td><td>A crash between the commit and the response leaves an open attempt — evidence a request may be out there, rather than silence</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>On top of all four, the absolute rule: <strong><code>in_doubt</code> is never re-sent, only resolved.</strong></p>
+
+  <h3>The derived key</h3>
+<pre><code><span class="cm">/** Derived, never supplied. A caller has no say in what the provider is told. */</span>
+export function refundIdempotencyKey(refundId: string, attemptNo: number): string {
+  return `refund:${refundId}:${attemptNo}`;
+}</code></pre>
+  <p>No route, action or test supplies a key. Two attempts on one refund get distinct keys — which is correct, because a retry only happens after the previous attempt was <em>proven</em> not to have reached the provider, and reusing a key there would make a provider that cached the failure return it forever.</p>
+
+  <h3>What was actually run</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Test</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>A second refund row for the same payment is refused by the index</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Two attempts get keys <code>…:1</code> and <code>…:2</code>; a duplicate key is refused</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>A finished attempt cannot be rewritten, and no attempt can be deleted</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>A replayed refund webhook applies once; one <code>payment_events</code> row exists</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Four racing executions perform exactly one refund at the provider</td><td><span class="chip yes">pass</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s7">
+  <div class="sec-head"><div class="sec-mark">7</div><h2 class="sec-title">Concurrency — against a lock actually held on a second connection</h2></div>
+
+  <div class="note key">
+    <span class="n-label">Why not Promise.all</span>
+    <p style="margin-bottom:0"><code>Promise.all</code> cannot reliably interleave two database transactions, so a test built on it passes whether or not the lock exists. This test <em>holds the row</em>: a separate pooled connection takes <code>for update</code>, an execution arrives and must block, the holder changes the refund underneath it and commits, and only then does the waiter get to look. What it must find is the state the holder left — and refuse to act on the state it read before waiting.</p>
+  </div>
+
+<pre><code>const holder = await getPool().connect();
+await holder.query("begin");
+await holder.query("select id from refunds where id = $1 for update", [refundId]);
+
+const attempt = executeRefund(db, finance, provider, refundId);   <span class="cm">// blocks</span>
+await new Promise((r) =&gt; setTimeout(r, 250));                      <span class="cm">// reach the lock</span>
+
+<span class="cm">// underneath the waiting execution, the refund is claimed and sent</span>
+await holder.query("update refunds set status = 'in_flight', attempt_count = 1 where id = $1", [refundId]);
+await holder.query("insert into refund_attempts (…) values (…, 1, $2)", [refundId, key]);
+await holder.query("commit");
+
+expect((await Promise.allSettled([attempt]))[0].status).toBe("rejected");
+expect(provider.refundsPerformed()).toBe(0);        <span class="cm">// nothing was sent</span>
+expect(attemptCount).toBe(1);                       <span class="cm">// exactly one attempt exists</span></code></pre>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Scenario</th><th>Assertion</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Held lock, refund claimed underneath</td><td>The waiter refuses; <b>zero</b> refunds performed; one attempt row</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Four simultaneous executions</td><td><b>Exactly one</b> refund performed; refund ends <code>succeeded</code>; reconciliation clean</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>An operator and the scheduler colliding on a retryable refund</td><td><b>Exactly one</b> refund performed; reconciliation clean</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Mutation <b>R7</b> removes <code>for update of r</code></td><td>Tests fail</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>Mutation <b>R8</b> removes the guarded <code>where status = …</code></td><td>Tests fail</td><td><span class="chip yes">caught</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s8">
+  <div class="sec-head"><div class="sec-mark">8</div><h2 class="sec-title">The crash window — observed from inside the provider call</h2></div>
+
+  <p>The claim is an ordering: the attempt row is <strong>committed before the provider is called</strong>. A test that asserted this after the fact would prove nothing, so the test observes it from <em>inside</em> the call, on a separate connection, at the exact instant a crash would occur.</p>
+
+<pre><code>const crashing = new MockPaymentProvider();
+Object.assign(crashing, {
+  refund: async () =&gt; {
+    <span class="cm">// A SEPARATE connection: only committed data is visible here, which is</span>
+    <span class="cm">// exactly what would survive if the process died on the next line.</span>
+    const client = await getPool().connect();
+    attemptsVisibleDuringCall = (await client.query(
+      "select count(*)::int as n from refund_attempts where refund_id = $1", [refundId])).rows[0].n;
+    refundStatusDuringCall = (await client.query(
+      "select status from refunds where id = $1", [refundId])).rows[0].status;
+    client.release();
+    throw new RefundTransportError("process died here", "unknown");
+  },
+});
+
+await executeRefund(db, finance, crashing, refundId);
+
+expect(attemptsVisibleDuringCall).toBe(1);        <span class="cm">// durable before the call</span>
+expect(refundStatusDuringCall).toBe("in_flight");</code></pre>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Scenario</th><th>Assertion</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Observed from inside the provider call</td><td>One attempt row committed; refund already <code>in_flight</code></td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Provider never returns (the process is killed mid-flight)</td><td>Refund stays <code>in_flight</code>; the attempt has no <code>finished_at</code>; a second execution is <b>refused</b></td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>The sweeper reaches a crashed request</td><td>It becomes <code>in_doubt</code> — <b>never</b> <code>failed</code></td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Mutation <b>R5</b> writes the attempt row 400 ms <em>after</em> the call</td><td>Tests fail</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>Mutation <b>R15</b> makes the sweeper write <code>failed</code></td><td>Tests fail</td><td><span class="chip yes">caught</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="n-label">Why the sweep lands where it does</span>
+    <p style="margin-bottom:0">Sweeping to <code>in_doubt</code> says "we stopped waiting", not "it failed". It unlocks nothing and permits no retry — it only removes the claim that a response is still coming. A sweep to <code>failed</code> would turn every crashed process into a duplicate refund, which is what mutation R15 demonstrates.</p>
+  </div>
+</section>
+
+<section id="s9">
+  <div class="sec-head"><div class="sec-mark">9</div><h2 class="sec-title">Reconciliation — ten detectors, and a gate that proves it still detects</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Detector</th><th>Catches</th><th>Tested</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">refund_due_without_refund_record</td><td>A debt nothing is tracking — the queue starving silently</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td class="mono">refund_without_refund_due_order</td><td>A refund whose order is not <code>refund_due</code></td><td>—</td></tr>
+      <tr><td class="mono">refund_of_unsucceeded_payment</td><td>Money going back out that never came in</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td class="mono">refund_amount_mismatch</td><td>The refund and its payment disagreeing about the money. The refund's side is now frozen by a trigger, so only the payment can drift — and the detector notices from whichever side it came</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td class="mono">multiple_refunds_for_payment</td><td>The buyer refunded twice. Unreachable today; the detector notices if the index is dropped</td><td>—</td></tr>
+      <tr><td class="mono">refund_succeeded_without_evidence</td><td>A success claim with no source, evidence or reference</td><td>—</td></tr>
+      <tr><td class="mono">refund_failed_without_evidence</td><td><b>An unknown wearing a failure's clothes</b> — and therefore retryable</td><td>—</td></tr>
+      <tr><td class="mono">stuck_in_flight</td><td>A request out for over an hour that the sweeper should have handled</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td class="mono">refund_attempt_never_finished</td><td>Evidence and state disagreeing, which makes the evidence useless</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td class="mono">manual_reconciliation_single_operator</td><td>The weakest control in the system, counted rather than invisible</td><td><span class="chip yes">yes</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Six are asserted by name in the suite. The four marked "—" describe states a CHECK constraint or a unique index already makes unreachable; they exist so that dropping the constraint is noticed rather than silent, which is exactly the change that looks harmless in a diff.</p>
+
+  <h3>The CI gate proves the detector, not just the data</h3>
+  <p>Ten checks over a table that is empty on most CI runs would report "clean" and mean nothing. So the gate builds a consistent refund, requires silence, breaks the frozen amount, requires the detector to speak, and rolls the whole thing back. Actual output:</p>
+
+<pre><code>"commerce": {
+  "ordersChecked": 0,
+  "paymentsChecked": 0,
+  "refundsChecked": 0,
+  "anomalies": [],
+  "detectorProof":       { "silentWhenConsistent": true, "detectedWhenBroken": "succeeded_payment_orphaned" },
+  "refundDetectorProof": { "silentWhenConsistent": true, "detectedWhenBroken": "refund_amount_mismatch" }
+}
+<span class="ok">Ledger reconciliation clean over a real capture → settlement → payout cycle.</span></code></pre>
+
+  <p>The counts read zero because <b>the probes run inside a transaction that is always rolled back</b>. They plant rows that are deliberately wrong, so they must leave nothing behind — and deleting afterwards turned out to be the wrong instrument: the refund probe could not delete its own refund, correctly, because a refund is resolved and never erased. A cleanup that has to disable a trigger is a cleanup that could disable the wrong one. A rollback removes everything without asking any table's permission, and removes it even if the probe throws halfway.</p>
+
+  <p>Each probe also asserts silence about <em>its own rows</em> rather than about the whole database. Asserting a globally empty report made the probe a hostage to whatever the suite left behind — one unrelated anomaly and a working detector would report that it cannot detect, which is the opposite of the truth.</p>
+
+  <p>The gate exits non-zero if either probe stops behaving — a reconciliation that cannot report a fault is not a gate. Mutations <b>R22</b>, <b>R23</b> and <b>R24</b> each break one detector and are each caught.</p>
+</section>
+
+
+<section id="s10">
+  <div class="sec-head"><div class="sec-mark">10</div><h2 class="sec-title">Tests, and the mutations that prove they are load-bearing</h2></div>
+
+  <p><b>80</b> new unit tests across 14 sections, plus 7 browser tests. The suite went from 349 to 429 passing with nothing removed, weakened or skipped.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Section</th><th class="num">Tests</th><th>Establishes</th></tr></thead>
+    <tbody>
+      <tr><td>1 · the state machine is the safety argument</td><td class="num">4</td><td>Seven transitions, enumerated; <code>in_doubt → in_flight</code> absent; <code>succeeded</code> the only terminal state</td></tr>
+      <tr><td>2 · a refund_due order records a debt</td><td class="num">5</td><td>Created in the confirming transaction; amount frozen from the payment; a second row refused; the order stays terminal</td></tr>
+      <tr><td>3 · the ordinary success path</td><td class="num">4</td><td>Executes with evidence; one attempt with a derived key; <b>zero ledger entries</b>; one notification</td></tr>
+      <tr><td><b>4 · UNKNOWN MUST NEVER BECOME FAILED</b></td><td class="num">12</td><td>Timeout, 5xx, lost connection, unparseable, DNS, refused, documented rejection, bare failure, success with no reference — plus the classifier held directly, and the secret screen</td></tr>
+      <tr><td>5 · an in_doubt refund is never retried</td><td class="num">5</td><td>Direct retry refused; the queue does not retry it either; resolution to the truth in both directions; a provider with no query leaves it alone</td></tr>
+      <tr><td>6 · idempotency and the crash window</td><td class="num">6</td><td>The attempt row observed from inside the call; an abandoned request; <b>the open-attempt guard, isolated</b>; the sweep; distinct keys; the append-only trigger</td></tr>
+      <tr><td>7 · concurrency, against a real held row lock</td><td class="num">3</td><td>A held lock on a second connection; four racing executions; operator versus scheduler</td></tr>
+      <tr><td>8 · retries, bounded and clamped</td><td class="num">5</td><td>The ceiling; the backoff; configuration that tries to be <em>more</em> aggressive; configuration that is gentler; four malformed values and a missing row</td></tr>
+      <tr><td>9 · the scheduler continues authority</td><td class="num">4</td><td>Never starts an unauthorised refund; retries an authorised one; refuses a planted <code>failed</code> with no requester; sweeps and resolves in one pass</td></tr>
+      <tr><td>10 · authorization and the operator's hands</td><td class="num">9</td><td>Member refused; support reads and cannot execute; elevation required; the raw <code>UPDATE</code> to <code>succeeded</code> refused by PostgreSQL; <b>the frozen snapshot and the no-delete triggers</b>; <b>a hostile status filter</b>; unsucceeded payment; drifted amount</td></tr>
+      <tr><td>11 · manual reconciliation, under dual control</td><td class="num">8</td><td>Two people; one person and the flag; missing reference; missing evidence; no proposal; a superseded proposal; an already-resolved refund; the audit trail</td></tr>
+      <tr><td>12 · refund webhooks go through the same door</td><td class="num">6</td><td>Forged signature; resolution from a signed event; replay applied once; amount mismatch; bare failure ignored; <b>a refund event cannot move a charge</b></td></tr>
+      <tr><td>13 · reconciliation reports the impossible</td><td class="num">7</td><td>Silent when healthy; six detectors asserted by name</td></tr>
+      <tr><td>14 · the audit trail, and none of it leaks</td><td class="num">2</td><td>The whole life of a refund, in order; an unknown audited as an unknown</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The mutation matrix</h3>
+  <p>Each mutation is applied to the source, the suite is run, and the source is restored. A mutation that no test notices is a guarantee nobody is actually checking. The harness asserts the pattern was found before applying, refuses to run against an already-mutated tree, and restores from a pristine snapshot rather than from whatever it happened to read.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Mutation</th><th>Result</th><th>First test to fail</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>Classify every transport failure as <code>failed</code>, whatever its stage</td><td><span class="chip yes">caught</span> <span class="mono">23 failing</span></td><td class="q">UNKNOWN MUST NEVER BECOME FAILED &gt; classifies a timeout after transmission as in_doubt, never failed</td></tr>
+      <tr><td class="num">2</td><td>Add ECONNRESET, ETIMEDOUT, EPIPE, ABORT_ERR and UND_ERR_* to the proven-not-transmitted set</td><td><span class="chip yes">caught</span> <span class="mono">2 failing</span></td><td class="q">UNKNOWN MUST NEVER BECOME FAILED &gt; classifies a connection lost after transmission as in_doubt</td></tr>
+      <tr><td class="num">3</td><td>Believe a provider's <code>failed</code> that carries no evidence</td><td><span class="chip yes">caught</span> <span class="mono">2 failing</span></td><td class="q">UNKNOWN MUST NEVER BECOME FAILED &gt; REFUSES a bare failure with no evidence, and calls it unknown</td></tr>
+      <tr><td class="num">4</td><td>Permit <code>in_doubt → in_flight</code> in the state table</td><td><span class="chip yes">caught</span> <span class="mono">4 failing</span></td><td class="q">the state machine is the safety argument &gt; forbids in_doubt → in_flight, and says why</td></tr>
+      <tr><td class="num">5</td><td>Write the attempt row 400&nbsp;ms <em>after</em> the provider call instead of before</td><td><span class="chip yes">caught</span> <span class="mono">42 failing</span></td><td class="q">the ordinary success path &gt; executes, resolves and records evidence</td></tr>
+      <tr><td class="num">6</td><td>Drop the refusal to dispatch while an attempt is still open</td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">idempotency and the crash window &gt; refuses to dispatch while an attempt is open, even from a retryable state</td></tr>
+      <tr><td class="num">7</td><td>Remove <code>for update of r</code> from the claim</td><td><span class="chip hold">not alone</span></td><td class="q">—</td></tr>
+      <tr><td class="num">8</td><td>Drop <code>where status = …</code> from the claim's UPDATE</td><td><span class="chip hold">not alone</span></td><td class="q">—</td></tr>
+      <tr><td class="num">9</td><td>Make the idempotency key ignore the attempt number, so two attempts collide</td><td><span class="chip yes">caught</span> <span class="mono">5 failing</span></td><td class="q">idempotency and the crash window &gt; refuses to dispatch while an attempt is open, even from a retryable state</td></tr>
+      <tr><td class="num">10</td><td>Stop comparing the frozen amount to the payment before dispatch</td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">authorization, elevation and the operator&#x27;s hands &gt; refuses to send an amount the payment does not corroborate 24</td></tr>
+      <tr><td class="num">11</td><td>Stop requiring the payment to have succeeded</td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">authorization, elevation and the operator&#x27;s hands &gt; refuses to refund a payment that did not succeed</td></tr>
+      <tr><td class="num">12</td><td>Remove <code>authorize()</code> and <code>requireElevation()</code> from execution</td><td><span class="chip yes">caught</span> <span class="mono">3 failing</span></td><td class="q">authorization, elevation and the operator&#x27;s hands &gt; refuses an ordinary member</td></tr>
+      <tr><td class="num">13</td><td>Keep the permission check, drop the step-up elevation</td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">authorization, elevation and the operator&#x27;s hands &gt; requires step-up elevation even from finance</td></tr>
+      <tr><td class="num">14</td><td>Let the scheduler pick up <code>owed</code> refunds nobody authorised</td><td><span class="chip yes">caught</span> <span class="mono">2 failing</span></td><td class="q">the scheduler continues authority, it never creates it &gt; never starts a refund nobody authorised</td></tr>
+      <tr><td class="num">15</td><td>Make the stuck sweeper write <code>failed</code> instead of <code>in_doubt</code></td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">idempotency and the crash window &gt; sweeps a crashed request to in_doubt, never to failed</td></tr>
+      <tr><td class="num">16</td><td>Remove the downward clamp on <code>refund.max_attempts</code></td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">retries, bounded and clamped &gt; clamps configuration that tries to make retries MORE aggressive</td></tr>
+      <tr><td class="num">17</td><td>Remove the upward clamp on <code>refund.retry_backoff_seconds</code></td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">retries, bounded and clamped &gt; clamps configuration that tries to make retries MORE aggressive</td></tr>
+      <tr><td class="num">18</td><td>Coerce a malformed setting with <code>Number()</code> instead of rejecting it</td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">retries, bounded and clamped &gt; falls back to the reviewed policy on a malformed setting</td></tr>
+      <tr><td class="num">19</td><td>Let the proposer confirm their own manual reconciliation</td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">manual reconciliation, under dual control &gt; requires a second person when a second person exists</td></tr>
+      <tr><td class="num">20</td><td>Allow a manual success with no provider reference</td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">manual reconciliation, under dual control &gt; refuses to claim a success without an external reference</td></tr>
+      <tr><td class="num">21</td><td>Stop screening secrets out of stored provider detail</td><td><span class="chip yes">caught</span> <span class="mono">2 failing</span></td><td class="q">UNKNOWN MUST NEVER BECOME FAILED &gt; screens secrets out of anything it stores</td></tr>
+      <tr><td class="num">22</td><td>Break <code>refund_due_without_refund_record</code></td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">reconciliation reports what the machine says is impossible &gt; detects a refund_due order with no refund record 225</td></tr>
+      <tr><td class="num">23</td><td>Break <code>refund_amount_mismatch</code></td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">reconciliation reports what the machine says is impossible &gt; detects a frozen amount that stopped matching its pa</td></tr>
+      <tr><td class="num">24</td><td>Break <code>manual_reconciliation_single_operator</code></td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">manual reconciliation, under dual control &gt; permits one operator when the deployment genuinely has one, and says</td></tr>
+      <tr><td class="num">25</td><td>Pass the caller's status filter straight to <code>sql.raw</code></td><td><span class="chip yes">caught</span> <span class="mono">1 failing</span></td><td class="q">authorization, elevation and the operator&#x27;s hands &gt; never lets a caller&#x27;s status filter reach SQL</td></tr>
+      <tr><td class="num">26</td><td>Remove the state assertion, the row lock <em>and</em> the guarded UPDATE together</td><td><span class="chip yes">caught</span> <span class="mono">3 failing</span></td><td class="q">an in_doubt refund is never retried &gt; refuses a direct retry, with an explanation</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note good">
+    <span class="n-label">No mutation survives that should not</span>
+    <p style="margin-bottom:0"><b>24</b> of <b>26</b> mutations fail at least one test. The remaining <b>2</b> are the redundant serialisers explained below: each is invisible alone because two other layers cover it, and the combined mutation that removes all three is caught. Nothing in the list is a guarantee the suite merely asserts in prose.</p>
+  </div>
+
+  <h3>What the first run found, and why that matters more than the second</h3>
+
+  <p>The matrix was run twice. <b>The first run had four survivors</b>, and reporting only the second would hide the most useful thing this discipline produced.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Survivor</th><th>What it exposed</th><th>Now</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">R6</td>
+        <td><b>A real gap.</b> The open-attempt guard was never exercised. The test that claimed to cover it drove the refund to <code>in_flight</code> and asserted a rejection matching <code>/still open|not possible|cannot go/</code> — and <code>in_flight</code> is already refused by the state machine, whose message reads "cannot go from in_flight to in_flight". The regex matched <em>that</em>, so deleting the guard entirely changed nothing and the test still passed</td>
+        <td>The old assertion now names the state machine's message specifically, and a new test isolates the guard from a <code>failed</code> refund — a state a retry may legitimately leave from, so only an open attempt can stand in the way. <span class="chip yes">caught</span></td>
+      </tr>
+      <tr>
+        <td class="mono">R18</td>
+        <td><b>A real gap.</b> The malformed-setting test passed against a coercing loader by accident: <code>Number()</code> turns <code>"null"</code>, <code>"3"</code> and <code>"lots"</code> into 0, 3 and NaN, and every one of those lands back on the reviewed default of 3. A loader that accepted strings as configuration looked identical to one that rejected them</td>
+        <td>The list now includes the string <code>"1"</code>, which is the value that separates them, plus <code>"9"</code>, <code>true</code> and <code>{}</code>. <span class="chip yes">caught</span></td>
+      </tr>
+      <tr>
+        <td class="mono">R7 · R8</td>
+        <td><b>Not a gap — the design.</b> The row lock, the guarded UPDATE and the in-code state assertion each cover what the others cover, so removing any one alone is invisible. No single-mutation test can distinguish three redundant layers, and a test written to force one would be testing the test</td>
+        <td>A combined mutation <b>R26</b> removes all three together and <span class="chip yes">is caught</span> — the honest evidence that the set is load-bearing while no single member is individually necessary. R7 and R8 stay in the matrix, marked <span class="chip hold">not alone</span>, rather than being quietly deleted</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note key">
+    <span class="n-label">The point of the exercise</span>
+    <p style="margin-bottom:0">Two of the four survivors were assertions that <em>passed for the wrong reason</em> — the most expensive kind of test, because it reads as coverage and provides none. Neither would have been found by reading the suite, and both were found by deleting a line and watching nothing happen. The second run's clean sweep is the weaker result; this table is the stronger one.</p>
+  </div>
+
+  <div class="note">
+    <span class="n-label">A bug the harness itself found</span>
+    <p style="margin-bottom:0">An early mutation run was killed by a timeout before it could restore the source, and the <em>next</em> run then captured the mutated file as its own backup and restored that — quietly making a mutation into the code. Two mutations survived that way for several minutes and were caught because a test that had been passing started failing consistently. The harness now snapshots every touched file into a pristine directory once, verifies the tree is clean before applying anything, and restores from the snapshot. The whole matrix above was run after that fix, from a verified-clean tree.</p>
+  </div>
+</section>
+
+
+<section id="s11">
+  <div class="sec-head"><div class="sec-mark">11</div><h2 class="sec-title">Authorization and security</h2></div>
+
+  <h3>Three capabilities, not one</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Permission</th><th>Allows</th><th>Held by</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">refund.read</td><td>See the queue and the attempt history</td><td><code>finance</code>, <code>support</code></td></tr>
+      <tr><td class="mono">refund.execute</td><td>Send a refund; ask the provider about one</td><td><code>finance</code></td></tr>
+      <tr><td class="mono">refund.reconcile_manual</td><td>Assert a fact about money that no API confirmed</td><td><code>finance</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Support can answer "where is my refund?" and can do nothing else. Reading is not touching, and the split is why that is a property rather than a promise.</p>
+
+  <h3>Two gates on execution, answering different questions</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Gate</th><th>Asks</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">authorize(db, actor, "refund.execute")</td><td>May this actor <em>ever</em> execute refunds?</td></tr>
+      <tr><td class="mono">requireElevation(actor, "refund.execute")</td><td>Did they re-verify recently — are they present right now, rather than a stolen cookie from last Tuesday?</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Both live in the <strong>domain function</strong>, not in the route handler. A check in a route protects one route; a check in the domain protects every caller, including the queue processor and anything added later.</p>
+
+  <h3>Direct API manipulation, proved in a browser</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Attempt</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>An ordinary buyer <code>GET /api/v1/admin/refunds</code></td><td><span class="chip no">403</span></td></tr>
+      <tr><td>An ordinary buyer <code>POST …/execute</code></td><td><span class="chip no">403</span> — refund stays <code>owed</code></td></tr>
+      <tr><td>An ordinary buyer <code>POST …/process</code> (the scheduler door)</td><td><span class="chip no">403</span></td></tr>
+      <tr><td>Support, who <em>can</em> read the queue, <code>POST …/execute</code></td><td><span class="chip no">403</span> — refund stays <code>owed</code></td></tr>
+      <tr><td>Finance <b>without</b> a fresh verification, <code>POST …/execute</code></td><td><span class="chip no">403 auth.elevation_required</span> — refund stays <code>owed</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The support case is the important one: the page renders no send button for that operator, and the route refuses them anyway. UI absence is a courtesy; the domain is the control.</p>
+
+  <h3>The security risks named in the design, and what answers each now</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>What answers it</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>An operator fabricates a success</td><td>No "mark as refunded" exists; the CHECK refuses a succeeded refund with no source, evidence or reference</td><td>Test asserts the raw <code>UPDATE</code> is refused by PostgreSQL</td></tr>
+      <tr><td>Refund redirected to an attacker</td><td>No destination field exists on the interface</td><td>Structural — <code>RefundInput</code> has four fields, none of them a destination</td></tr>
+      <tr><td>Amount or currency tampering</td><td>Re-read from <code>payments</code> under the lock and compared before the call; a detector re-checks it</td><td>Test edits the row and the send is refused; mutation R10 caught</td></tr>
+      <tr><td>Forged or replayed refund webhook</td><td>Same signature-over-raw-bytes boundary and the same replay index as charges</td><td>Forged signature refused; replay applies once</td></tr>
+      <tr><td>Authorization bypass by direct API call</td><td><code>authorize()</code> in the domain, actor scoped in SQL</td><td>Five browser assertions above; mutations R12 and R13 caught</td></tr>
+      <tr><td>Provider credentials leaking into records</td><td>Responses truncated to 500 chars and screened for bearer tokens, key/secret pairs and JWTs before storage</td><td>A test drives a provider that leaks <code>Bearer sk_live_TOPSECRET99</code> and asserts it appears in <b>no</b> attempt detail, <b>no</b> resolution evidence and <b>no</b> audit context; mutation R21 caught</td></tr>
+      <tr><td>SQL injection through the queue's status filter</td><td>The filter is intersected with <code>REFUND_STATES</code> before it reaches <code>sql.raw</code>. TypeScript said the values were safe, but a value arriving from JSON has no type at runtime</td><td>A test passes <code>"'; drop table refunds; --"</code> and asserts an empty result and an intact table; mutation R25 caught</td></tr>
+      <tr><td>An edited refund row sending the wrong amount</td><td><b>The money snapshot is frozen by a trigger</b>, not by convention — amount, currency, payment, order and provider cannot be UPDATEd at all, and the row cannot be DELETEd</td><td>A test asserts three UPDATEs and one DELETE are each refused by PostgreSQL</td></tr>
+      <tr><td>The scheduler endpoint reachable by anyone</td><td>A machine token compared in <b>constant time</b>, or a session actor with <code>refund.execute</code>. An unset token is not a token that matches an empty header</td><td>Browser: an ordinary buyer gets 403</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Ten audit actions, and what is deliberately not in them</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Action</th><th>Recorded when</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">refund.owed_recorded</td><td>A debt is created, inside the confirming transaction</td></tr>
+      <tr><td class="mono">refund.execution_requested</td><td>Somebody asks — logged <b>before</b> the claim, so refusals are on the record too</td></tr>
+      <tr><td class="mono">refund.attempt_started</td><td>An attempt is claimed, with its derived key</td></tr>
+      <tr><td class="mono">refund.succeeded · refund.failed · refund.in_doubt</td><td>An attempt settles, with its stage and source</td></tr>
+      <tr><td class="mono">refund.manual_reconciliation_proposed</td><td>A person states what a statement says</td></tr>
+      <tr><td class="mono">refund.manual_reconciliation_confirmed</td><td>A second person agrees — recording both ids, the mode, and how many people could have confirmed</td></tr>
+      <tr><td class="mono">refund.queue_processed</td><td>A scheduler pass, with its counts</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The audit log holds the <em>screened</em> detail, never a raw provider body, and never a credential. It does hold the idempotency key — a derived, non-secret identifier, and the thread that ties an audit line to a provider request during an investigation.</p>
+</section>
+
+<section id="s12">
+  <div class="sec-head"><div class="sec-mark">12</div><h2 class="sec-title">Browser tests — seven, against a production build</h2></div>
+
+  <p>Driven by a real browser over a real session cookie against <code>next start</code>, with the refund created the way production creates one: a real purchase, a real charge, a real HMAC-signed webhook arriving after the grace window, and the late-payment policy deciding <code>refund_due</code>. Nothing in the file inserts a refund.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Test</th><th>What it proves</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>The queue, and finance sending a refund</td><td>The refund appears as <code>owed</code> at 15 000 XOF; sending it reaches <code>succeeded</code> with <code>resolved_by = response</code> and a provider reference; exactly one attempt; <b>zero ledger entries</b>; and <code>page.getByText(/mark as refunded/i)</code> has <b>count 0</b></td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>An ordinary buyer</td><td>No queue renders; three API routes answer 403; the refund stays <code>owed</code></td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Support</td><td>Reads the queue, has no send button rendered, and is refused 403 when calling the route directly</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Finance without elevation</td><td>403 <code>auth.elevation_required</code>; the refund stays <code>owed</code></td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>An unknown outcome</td><td>The explainer is visible; <b>no send button exists</b>; calling the route anyway returns 400 with "never retried / resolve it first"; what <em>is</em> offered is "ask the provider"</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Manual reconciliation</td><td>Success without a reference → 400; proposing moves nothing; the proposer confirming their own proposal → 400; a <b>second browser context with its own session</b> confirms and the refund moves; both ids differ on the row</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>The outbox</td><td>One <code>refund.succeeded</code> row for the subject; <b>zero</b> rows with a status other than <code>pending</code></td><td><span class="chip yes">pass</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <pre><code>  31 passed (54.9s)   <span class="cm">— the whole browser suite: 24 pre-existing + 7 new</span></code></pre>
+</section>
+
+<section id="s13">
+  <div class="sec-head"><div class="sec-mark">13</div><h2 class="sec-title">What was run, and exactly what it said</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Command</th><th>Output</th><th></th></tr></thead>
+    <tbody>
+      <tr><td class="mono">pnpm lint</td><td class="mono">5 packages · Done, 0 warnings</td><td><span class="chip yes">clean</span></td></tr>
+      <tr><td class="mono">pnpm typecheck</td><td class="mono">5 packages · Done</td><td><span class="chip yes">clean</span></td></tr>
+      <tr><td class="mono">pnpm test</td><td class="mono">Test Files 23 passed · Tests 429 passed | 3 skipped (432)</td><td><span class="chip yes">green</span></td></tr>
+      <tr><td class="mono">pnpm build</td><td class="mono">Production build, all routes compiled</td><td><span class="chip yes">green</span></td></tr>
+      <tr><td class="mono">playwright test</td><td class="mono">31 passed (1.1m)</td><td><span class="chip yes">green</span></td></tr>
+      <tr><td class="mono">tsx scripts/reconcile-check.ts</td><td class="mono">Both detector probes behaved; ledger clean</td><td><span class="chip yes">green</span></td></tr>
+      <tr><td class="mono">26 mutations</td><td class="mono">24 caught, 2 redundant, 0 escaped</td><td><span class="chip yes">green</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The 3 skipped tests are the iPayMoney sandbox integration tests, skipped for the reason they have always been skipped: no sandbox credentials exist. They turn red the moment a real sandbox run regresses.</p>
+
+  <div class="note risk">
+    <span class="n-label">On the CI badge</span>
+    <p style="margin-bottom:0">Everything above was run <strong>locally</strong> against PostgreSQL 16, at <span class="mono">3fe233d</span>, and the outputs are quoted verbatim. GitHub Actions has not yet run this commit — <b>CI is not verified for Phase 3</b>, and this packet does not claim it is. The workflow is unchanged and already runs lint, typecheck, the full suite, the reconciliation gate, the production build and the browser suite; if the run comes back red, this note becomes the finding and the packet is reissued.</p>
+  </div>
+</section>
+
+
+<section id="s14">
+  <div class="sec-head"><div class="sec-mark">14</div><h2 class="sec-title">Manual reconciliation — dual control that adapts without becoming a fiction</h2></div>
+
+  <p>This is the only place a human's word becomes financial truth, so it is the most dangerous operation in the phase. Four things stand between an operator and a fabricated success:</p>
+
+  <ol class="steps">
+    <li><b>An external reference is required for a success</b>
+      <p>Claiming money went back means naming what the provider calls the refund — a claim somebody else can check against the provider's own records later. The route refuses without it, and so does a CHECK constraint.</p></li>
+    <li><b>Step-up elevation</b>
+      <p>Holding <code>refund.reconcile_manual</code> says allowed in principle. Elevation says present right now.</p></li>
+    <li><b>Two people, where the deployment has two people</b>
+      <p>One proposes what a statement says; a <em>different</em> one confirms. Proposing changes nothing about the refund. Neither half moves money alone.</p></li>
+    <li><b>A distinct resolution source</b>
+      <p><code>resolved_by = 'manual_reconciliation'</code> is its own value, so every refund resolved this way can be listed, counted and re-audited by somebody who was not involved.</p></li>
+  </ol>
+
+  <h3>Your decision 4, implemented as stated</h3>
+  <p>You asked for <b>B</b> — two-person where operationally possible — with <b>A</b> as a temporary fallback, and said explicitly: <em>do not invent a second-user requirement that cannot actually be enforced.</em></p>
+
+  <p>So the requirement <strong>counts the actual holders in SQL at the moment of confirmation</strong>:</p>
+
+<pre><code>const eligible   = await countManualReconcilers(db);   <span class="cm">// distinct live global holders</span>
+const samePerson = proposer === actor.userId;
+
+if (samePerson &amp;&amp; eligible &gt; 1) {
+  throw new ManualReconciliationError("refund.second_person_required",
+    "Another person who can reconcile refunds must confirm this. You proposed it, "
+    + "so you may not also confirm it.");
+}
+const mode = samePerson ? "single_operator" : "two_person";</code></pre>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Deployment</th><th>Behaviour</th><th>Recorded as</th></tr></thead>
+    <tbody>
+      <tr><td>Two or more holders</td><td>The proposer <b>cannot</b> confirm. No flag, no override, no force parameter</td><td class="mono">two_person</td></tr>
+      <tr><td>Exactly one holder — Afrinext today</td><td>The same person may confirm, with elevation and the full evidence trail</td><td class="mono">single_operator</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>A <code>single_operator</code> resolution is <strong>not silently identical to dual control</strong>. It is a distinct stored value, and a reconciliation detector reports it by name on every run — so the weakest control in the system is countable rather than invisible.</p>
+
+  <div class="note good">
+    <span class="n-label">The adaptation is not a hole an operator can open</span>
+    <p style="margin-bottom:0">A finance user cannot revoke the second holder to gain self-confirmation: changing role assignments needs <code>admin.role.grant</code>, which the <code>finance</code> role deliberately does not hold. The separation of duty that already existed for withdrawals is what makes this rule enforceable.</p>
+  </div>
+
+  <h3>What was run</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Test</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Two holders: the proposer is refused, a second person succeeds, <code>mode = two_person</code>, the reference lands on the row</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>One holder (all other finance assignments revoked): the same person may confirm, <code>mode = single_operator</code>, <b>and reconciliation reports it</b></td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Claiming a success with no provider reference</td><td><span class="chip no">refused</span></td></tr>
+      <tr><td>A reconciliation with blank evidence</td><td><span class="chip no">refused</span></td></tr>
+      <tr><td>Confirming a proposal that does not exist</td><td><span class="chip no">refused</span></td></tr>
+      <tr><td>A new proposal clears a prior confirmation — the second person confirmed the <em>old</em> statement</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Reconciling a refund the machinery already resolved</td><td><span class="chip no">refused</span></td></tr>
+      <tr><td>Both ids and the eligible count appear in the audit context</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Browser: a genuinely separate session confirms; the ids differ on the row</td><td><span class="chip yes">pass</span></td></tr>
+      <tr><td>Mutations <b>R19</b> (self-confirmation) and <b>R20</b> (no reference) </td><td><span class="chip yes">caught</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s15">
+  <div class="sec-head"><div class="sec-mark">15</div><h2 class="sec-title">The notification outbox — a queue with no sender, on purpose</h2></div>
+
+  <p>Your decision 6 was to add the outbox now and connect no SMS provider. That is exactly what exists.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Property</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td>Written in the same transaction as the fact it announces</td><td>A send inside the transaction blocks it on a third party; a send after it is a message lost to a crash. A row commits with the fact — either both happened or neither did</td></tr>
+      <tr><td>One message per event per subject</td><td><code>UNIQUE (kind, subject_type, subject_id)</code> with <code>on conflict do nothing</code>. A retried resolution tells the buyer once</td></tr>
+      <tr><td>Facts, never a rendered message</td><td>The payload holds the outcome and the ids. Translation and formatting belong to whichever sender is eventually chosen, which knows the recipient's locale</td></tr>
+      <tr><td><b>Nothing can claim delivery</b></td><td>There is deliberately <b>no <code>markSent</code> function</b>. A function that moved rows to <code>sent</code> with no provider behind it would put a lie in the database, and "the buyer was notified" is exactly the lie that surfaces during a dispute</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Four kinds are queued: <code>refund.owed</code> when the debt is recorded — deliberately at the moment the buyer starts wondering where their money went, not when it arrives — and <code>refund.succeeded</code>, <code>refund.failed</code>, <code>refund.in_doubt</code> on resolution.</p>
+
+  <p>The browser test asserts one <code>refund.succeeded</code> row for the subject and <b>zero</b> rows in any status other than <code>pending</code>. No SMS provider has been chosen for Niger and none was invented.</p>
+</section>
+
+<section id="s16">
+  <div class="sec-head"><div class="sec-mark">16</div><h2 class="sec-title">What remains unverified</h2></div>
+
+  <p>Everything in this section is a claim this packet does <strong>not</strong> make.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Not verified</th><th>What that means</th></tr></thead>
+    <tbody>
+      <tr><td><b>CI has not run this commit</b></td><td>Every result here is from a local run against PostgreSQL 16. The workflow is unchanged and covers all of it, but the GitHub Actions run for <span class="mono">3fe233d</span> has not happened</td></tr>
+      <tr><td><b>No real payment provider has ever been called</b></td><td>Every refund in every test went to the mock. The mock proves the domain survives twelve ways a provider can fail; it proves <em>nothing</em> about iPayMoney</td></tr>
+      <tr><td><b>Nothing about iPayMoney's refund API</b></td><td>Not an endpoint, not an error code, not a payload, not a signature scheme. The adapter throws</td></tr>
+      <tr><td>No SMS was ever delivered</td><td>No provider is chosen. Rows accumulate; nothing sends</td></tr>
+      <tr><td>The step-up re-verification screen</td><td>Elevation is enforced and its refusal is proved in a browser, but the browser tests set <code>session.elevatedAt</code> directly — there is no re-verification UI yet to drive</td></tr>
+      <tr><td>Long-horizon queue behaviour</td><td>The stuck sweeper is tested by moving the threshold, not by waiting fifteen minutes. Behaviour over days, with a real backlog, is unobserved</td></tr>
+      <tr><td>Load and volume</td><td>The queue has never held more than a handful of rows</td></tr>
+      <tr><td>The secret screen against real provider output</td><td>It catches bearer tokens, key/secret pairs and JWTs. It is a net, not a proof — no screen catches every shape a credential takes</td></tr>
+      <tr><td>Refund of anything but a full amount</td><td>Partial refunds are not implemented, by decision 2</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s17">
+  <div class="sec-head"><div class="sec-mark">17</div><h2 class="sec-title">Remaining financial risks</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>Status</th><th>Where it stands</th></tr></thead>
+    <tbody>
+      <tr><td><b>Double refund</b></td><td><span class="chip yes">four layers + mutations</span></td><td>Unique index, row lock, guarded transition, attempt-before-call, and <code>in_doubt</code> never re-sent. Every layer has a mutation that breaks it and a test that catches the break. Residual risk: a provider that ignores idempotency <em>and</em> a path we have not modelled</td></tr>
+      <tr><td><b>An unknown misread as a failure</b></td><td><span class="chip yes">enforced in one place</span></td><td>The classifier, plus <code>refunds_failed_has_evidence</code> at the database. R1–R3 caught</td></tr>
+      <tr><td><b>A refund owed and never paid</b></td><td><span class="chip hold">detected, not prevented</span></td><td><code>refund_due_without_refund_record</code> and <code>stuck_in_flight</code> run in CI; the queue is age-sorted. But <b>nothing forces anyone to look at the queue.</b> This is an operational risk, not a code one, and it does not have a code fix</td></tr>
+      <tr><td><b>The ledger does not know refunds exist</b></td><td><span class="chip hold">accepted, decision 3</span></td><td>Phase 2 posts no capture, so a reversal would have nothing to reverse. The <code>refunds</code> table is the only financial record until Settlement records both</td></tr>
+      <tr><td><b>Provider cannot answer status queries</b></td><td><span class="chip no">unmitigable in code</span></td><td>If iPayMoney has no refund status query (R3) or no lookup by our idempotency key (R4), <b>every timed-out refund becomes a person reading a statement.</b> The code supports that path; it is a staffing cost that scales with volume, and finance must be told before launch</td></tr>
+      <tr><td>Minor-unit or currency error</td><td><span class="chip yes">structurally impossible</span></td><td><code>bigint</code> minor units copied wholesale. Nothing in the refund path performs arithmetic on the amount, so there is nowhere for an exponent mistake to enter — and a trigger now refuses to let the copied value change at all</td></tr>
+      <tr><td>Refunding a payment that never succeeded</td><td><span class="chip yes">two checks</span></td><td>Creation requires <code>status = 'succeeded'</code> in the same statement; dispatch re-checks under the lock; a detector re-checks after</td></tr>
+      <tr><td>A single operator fabricating a reconciliation</td><td><span class="chip hold">reduced, and counted</span></td><td>With one finance user, dual control cannot bind. External reference, elevation, full audit and a reconciliation detector are what remain. <b>The mitigation that actually closes it is hiring a second finance user</b>, and the detector is what makes the gap visible until then</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s18">
+  <div class="sec-head"><div class="sec-mark">18</div><h2 class="sec-title">iPayMoney — the blockers, and the two that change the design</h2></div>
+
+  <div class="note block">
+    <span class="n-label">Stated plainly</span>
+    <p style="margin-bottom:0"><strong>No iPayMoney integration exists and none was attempted.</strong> Nothing about their refund endpoint, payloads, error codes or signature scheme has been invented anywhere in the codebase. <code>refund()</code> throws. <code>getRefund()</code> is declared and throws. The adapter is non-operational and will remain so until the official contract and sandbox credentials are verified.</p>
+  </div>
+
+  <p>Ten refund facts are now documented in <code>docs/providers/ipaymoney/README.md</code>. Two are <strong>design-changing</strong> rather than parametric:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Required</th><th>Why it changes the design</th></tr></thead>
+    <tbody>
+      <tr><td class="num">R3</td><td><b>Does a refund status query exist, and what can it be queried by?</b></td><td>The only mechanical way an unknown is ever resolved. Without it, every ambiguous refund waits for a person</td></tr>
+      <tr><td class="num">R4</td><td><b>Do refunds accept a caller idempotency key, and can a refund be looked up by that key afterwards?</b></td><td>After a timeout we hold no provider refund reference — our key is the only handle. Without lookup-by-key, R3 cannot resolve the exact case that most needs resolving</td></tr>
+      <tr><td class="num">R2</td><td>Which error codes mean, in their own words, "no refund was created"</td><td>Not design-changing, but expensive if absent: with no documented list, every provider rejection becomes a manual reconciliation instead of a safe retry</td></tr>
+      <tr><td class="num">R1 · R5–R10</td><td>Endpoint and enumeration; refund webhooks and their signature; whether the webhook names the charge; time limits; partial support; post-acceptance failure; sandbox controls for rejection, timeout and duplicate</td><td>Parametric — they fill in an adapter that already has a shape</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">The answer that costs money is "no" to both R3 and R4</span>
+    <p style="margin-bottom:0">If iPayMoney can neither be asked about a refund nor be asked about our own key, then <b>every refund whose request does not come back becomes a human reading an iPayMoney statement and reconciling it under dual control.</b> That path exists and works — it is not a gap. But it is a staffing cost that scales with transaction volume, and whoever staffs finance should learn it before launch rather than on the first timeout.</p>
+  </div>
+
+  <p>Why <code>getRefund</code> is declared-and-throwing while <code>createPayout</code> is absent: omitting a method asserts the provider may lack the capability, and <code>supportsRefundQuery()</code> returning <code>false</code> makes callers treat every ambiguity as manual <em>by design</em>. Declaring it keeps the adapter non-operational without deciding R3 on iPayMoney's behalf.</p>
+</section>
+
+<section id="s19">
+  <div class="sec-head"><div class="sec-mark">19</div><h2 class="sec-title">The exact next milestone</h2></div>
+
+  <div class="note key">
+    <span class="n-label">Not started, and not startable</span>
+    <p style="margin-bottom:0"><b>Settlement remains blocked</b> until this implementation passes its review gate. Nothing in this commit touches <code>ledger/flows.ts</code>, <code>ledger/post.ts</code>, settlement holds or payout logic. Nothing is merged to <code>main</code>.</p>
+  </div>
+
+  <h3>If you approve, the next milestone is Settlement</h3>
+  <p>It is the phase that makes the ledger true about commerce, and it has to record <em>both</em> directions at once:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Scope</th><th>Why it belongs to Settlement and not here</th></tr></thead>
+    <tbody>
+      <tr><td>Posting a capture when a payment is confirmed</td><td>Phase 2 deliberately posts nothing. Until a capture exists there is nothing for a refund to reverse — the reason decision 3 was <b>A</b></td></tr>
+      <tr><td>Posting a refund reversal</td><td>Reads the <code>refunds</code> table this phase built. The evidence is already there and frozen</td></tr>
+      <tr><td>Seller entitlement and hold windows</td><td>Reads the frozen fee schedules Phase 2 already writes</td></tr>
+      <tr><td>Reconciling the ledger against commerce</td><td>Both halves exist separately today; Settlement is where they must agree</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>What I would ask you before starting it</h3>
+  <ol>
+    <li>Whether a capture posts on confirmation, or on the provider's own settlement report — they are different instants, and the gap is real money sitting somewhere.</li>
+    <li>Whether a refunded sale reverses the seller's entitlement, and what happens if it was already withdrawn.</li>
+    <li>Whether the provider's fees are posted, and against which account.</li>
+  </ol>
+
+  <h3>Two smaller things, if you would rather do them first</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Candidate</th><th>Case for doing it now</th></tr></thead>
+    <tbody>
+      <tr><td>The step-up re-verification screen</td><td>Elevation is enforced and refused correctly, but there is no UI to obtain it. A finance user cannot currently elevate through the product — only through the database. That is a real gap in an otherwise complete control</td></tr>
+      <tr><td>Getting the iPayMoney refund answers</td><td>R3 and R4 are design-changing. Learning them before Settlement is cheaper than learning them after</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr class="soft">
+
+  <p><strong>Nothing is merged.</strong> Settlement is not started. This branch is <span class="mono">claude/create-app-repository-1cxsih</span> at <span class="mono">3fe233d</span>, and it waits for your review.</p>
+
+  <p style="color:var(--ink-2)">Phase&nbsp;3 · refund execution · implementation review · branch <span class="mono">claude/create-app-repository-1cxsih</span> · code state <span class="mono">3fe233d</span></p>
+</section>
+
+</div>
