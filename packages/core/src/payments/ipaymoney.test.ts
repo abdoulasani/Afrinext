@@ -224,6 +224,26 @@ describe("createCharge — what we send", () => {
       provider.createCharge({ ...CHARGE, channel: undefined }),
     ).rejects.toThrow(/payment type|no payment channel/);
 
+    /*
+     * And metadata is NOT a back door to the header.
+     *
+     * `Ipay-Payment-Type` once fell back to `metadata["paymentType"]` when no
+     * channel was given. Nothing in the order domain ever set that key, so the
+     * path was unreachable from a checkout — and therefore invisible to every
+     * test that starts from one. Mutation testing restored the fallback and
+     * survived a green suite; this is the assertion that now kills it.
+     *
+     * The channel is the only thing that decides the header. A caller who knows
+     * the key name gains nothing by using it.
+     */
+    await expect(
+      provider.createCharge({
+        ...CHARGE,
+        channel: undefined,
+        metadata: { ...CHARGE.metadata, paymentType: "mobile" },
+      }),
+    ).rejects.toThrow(/payment type|no payment channel/);
+
     // Nothing was sent in any of those cases.
     expect(calls).toHaveLength(0);
   });
