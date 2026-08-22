@@ -46,10 +46,21 @@ const environment = process.env["IPAYMONEY_ENVIRONMENT"];
  * ones, so the gate requires the environment to say `sandbox` explicitly — a
  * missing or mistyped value skips rather than proceeds.
  */
-const hasSandbox =
-  typeof baseUrl === "string" && baseUrl !== "" &&
-  typeof apiKey === "string" && apiKey !== "" &&
-  environment === "sandbox";
+export function sandboxIsExplicitlyEnabled(env: {
+  baseUrl?: string | undefined;
+  apiKey?: string | undefined;
+  environment?: string | undefined;
+}): boolean {
+  return (
+    typeof env.baseUrl === "string" && env.baseUrl !== "" &&
+    typeof env.apiKey === "string" && env.apiKey !== "" &&
+    // Exact match. Not `!== "live"`, not a case-insensitive compare, not a
+    // prefix: anything other than the literal word skips.
+    env.environment === "sandbox"
+  );
+}
+
+const hasSandbox = sandboxIsExplicitlyEnabled({ baseUrl, apiKey, environment });
 
 /**
  * The documented sandbox test numbers (extract L148–L159).
@@ -278,5 +289,58 @@ describe("iPayMoney sandbox availability", () => {
      * read.
      */
     expect(hasSandbox).toBe(false);
+  });
+});
+
+/**
+ * The gate itself, exhaustively — and this ALWAYS runs.
+ *
+ * "Fails closed" is a claim about what happens when something is wrong, so it
+ * cannot be demonstrated by a suite that only ever runs when everything is
+ * right. These cases are the ones that would cost real money if the gate were
+ * generous, and none of them needs a credential to check.
+ */
+describe("the sandbox gate fails closed", () => {
+  const creds = { baseUrl: "https://i-pay.money", apiKey: "sk_whatever" };
+
+  it("opens ONLY for the exact word sandbox", () => {
+    expect(sandboxIsExplicitlyEnabled({ ...creds, environment: "sandbox" })).toBe(true);
+  });
+
+  it("refuses live, and every way of nearly writing sandbox", () => {
+    for (const environment of [
+      "live", "LIVE", "Live", "production", "prod",
+      "Sandbox", "SANDBOX", " sandbox", "sandbox ", "sandbox2", "sand", "",
+    ]) {
+      expect(
+        sandboxIsExplicitlyEnabled({ ...creds, environment }),
+        `environment=${JSON.stringify(environment)} must not enable real requests`,
+      ).toBe(false);
+    }
+  });
+
+  it("refuses a missing environment", () => {
+    expect(sandboxIsExplicitlyEnabled({ ...creds })).toBe(false);
+    expect(sandboxIsExplicitlyEnabled({ ...creds, environment: undefined })).toBe(false);
+  });
+
+  it("refuses when either credential is absent or empty", () => {
+    expect(sandboxIsExplicitlyEnabled({ apiKey: "sk_x", environment: "sandbox" })).toBe(false);
+    expect(sandboxIsExplicitlyEnabled({ baseUrl: "https://i-pay.money", environment: "sandbox" }))
+      .toBe(false);
+    expect(sandboxIsExplicitlyEnabled({ baseUrl: "", apiKey: "sk_x", environment: "sandbox" }))
+      .toBe(false);
+    expect(sandboxIsExplicitlyEnabled({ baseUrl: "https://i-pay.money", apiKey: "", environment: "sandbox" }))
+      .toBe(false);
+  });
+
+  it("cannot be opened by an unrelated variable", () => {
+    expect(
+      sandboxIsExplicitlyEnabled({
+        ...creds,
+        ...({ IS_SANDBOX: "true", NODE_ENV: "test" } as unknown as { environment?: string }),
+      }),
+      "only IPAYMONEY_ENVIRONMENT decides",
+    ).toBe(false);
   });
 });
