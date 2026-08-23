@@ -207,10 +207,33 @@ test.describe("the marketplace, anonymously", () => {
       expect(body, `nothing on this page may claim "${invented}"`).not.toContain(invented);
     }
 
-    // The store has no offerings, and says exactly that rather than showing a
-    // fabricated catalogue.
+    /*
+     * This store is published and has NOTHING in it, which review decision 1
+     * makes a legitimate state rather than a bug: a store is a commercial
+     * identity, and a seller may claim their address while still preparing
+     * what they will sell.
+     *
+     * So the page must be honest twice over — it says there is nothing yet,
+     * and it shows nothing. A single fabricated row here, or a price with no
+     * product behind it, is the failure this whole test exists to catch.
+     */
     expect(sql(`select count(*) from products p join stores s on s.id = p.store_id
                  where s.slug = '${RUN}-newest'`)).toBe("0");
+    await expect(page.getByText("Aucune offre pour l'instant")).toBeVisible();
+    await expect(page.getByText("prépare actuellement ses offres")).toBeVisible();
+    expect(body, "an empty storefront shows no price at all").not.toMatch(/XOF/);
+    // No link anywhere on the page points at an offering under this store —
+    // `/fr/s/<slug>/<something>` — because there is no such thing to link to.
+    const offeringLinks = await page
+      .locator("a")
+      .evaluateAll((nodes, slug: string) =>
+        nodes
+          .map((n) => (n as HTMLAnchorElement).getAttribute("href") ?? "")
+          .filter((href) => new RegExp(`/s/${slug}/.+`).test(href)),
+      `${RUN}-newest`);
+    expect(offeringLinks, "links to no offering, because it has none").toEqual([]);
+
+    // The card in the listing says the same thing, and not "1".
     await page.goto(`/fr/explorer?q=${RUN}`);
     const card = page.getByTestId("store-card").filter({ hasText: `Studio ${RUN}` });
     await expect(card).toContainText("Aucune offre");

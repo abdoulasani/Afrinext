@@ -205,25 +205,47 @@ test.describe("a seller publishes a digital product, and the public can see it",
     ).toBe("digital_product indigo");
 
     /*
-     * 3. The dashboard asks for an offering BEFORE it offers to publish, and
-     *    that is the whole point of the guided flow: a seller is never invited
-     *    to publish an empty shop that a buyer would then land on. So the
-     *    publish control is not on screen yet.
+     * 3. The storefront comes first, and it may be published EMPTY.
+     *
+     *    A store is a commercial identity, so a seller can claim their public
+     *    address and share it while they are still preparing what they will
+     *    sell. The dashboard says so — "publish the store" is the next step on
+     *    a store with nothing in it.
      */
-    await expect(page.getByText("Ajoutez votre première offre")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Publier la boutique" })).toHaveCount(0);
+    await expect(page.getByText("Publiez votre boutique")).toBeVisible();
+    await page.getByRole("button", { name: "Publier la boutique" }).click();
+    await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
+    expect(
+      sqlOne(`select status from stores where slug = '${storeSlug}'`),
+      "published with zero offerings",
+    ).toBe("published");
+    expect(
+      sqlOne(`select count(*) from products p join stores s on s.id = p.store_id
+               where s.slug = '${storeSlug}'`),
+      "and publishing invented no product",
+    ).toBe("0");
 
-    // 4. Create a paid digital product. 15 000 XOF, typed the way a person types it.
+    /*
+     * 4. An anonymous visitor can already reach it, and is told the truth:
+     *    the store exists, and it has nothing for sale yet. No placeholder
+     *    product, no fabricated price, no "coming soon" item in the list.
+     */
+    const emptyContext = await browser.newContext();
+    const emptyVisitor = await emptyContext.newPage();
+    const emptyResponse = await emptyVisitor.goto(`/fr/s/${storeSlug}`);
+    expect(emptyResponse?.status(), "an empty published store is public").toBe(200);
+    await expect(emptyVisitor.getByText("Aucune offre pour l'instant")).toBeVisible();
+    await expect(emptyVisitor.getByText("prépare actuellement ses offres")).toBeVisible();
+    const emptyBody = await emptyVisitor.locator("body").innerText();
+    expect(emptyBody, "no invented price on an empty storefront").not.toMatch(/XOF/);
+    await emptyContext.close();
+
+    // 5. Now add a paid digital product. 15 000 XOF, typed the way a person types it.
     await page.locator('input[name="title"]').fill("Guide de Niamey");
     await page.locator('input[name="summary"]').fill("Un guide pratique");
     await page.locator('input[name="price"]').fill("15 000");
     await page.getByRole("button", { name: "Ajouter un produit", exact: true }).click();
     await expect(page.getByText("Guide de Niamey")).toBeVisible();
-
-    // 5. Now — and only now — the store can be published. The product cannot be
-    //    published before its store, so this is also the required order.
-    await page.getByRole("button", { name: "Publier la boutique" }).click();
-    await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
 
     // The price is whole francs, because XOF has zero decimals. Read straight
     // from the database: a 100× error would show as 1500000 here.

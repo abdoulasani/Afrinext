@@ -128,15 +128,16 @@ async function publishProductWithFile(page: Page, browser: Browser): Promise<{
   await page.getByTestId("consent-accept").click();
   await createStoreViaWizard(page, { slug: storeSlug });
 
-  // The offering comes first: the dashboard only offers to publish the store
-  // once there is something in it, so a buyer never lands on an empty shop.
+  // The storefront first — it may be published empty — then the offering.
+  // A product still cannot be published before its store, so this order is
+  // both the natural one and the required one.
+  await page.getByRole("button", { name: "Publier la boutique" }).click();
+  await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
+
   await page.locator('input[name="title"]').fill("Guide de Niamey");
   await page.locator('input[name="price"]').fill("15 000");
   await page.getByRole("button", { name: "Ajouter un produit", exact: true }).click();
   await expect(page.getByText("Guide de Niamey")).toBeVisible();
-
-  await page.getByRole("button", { name: "Publier la boutique" }).click();
-  await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
 
   // Before the file, the seller is told the product would deliver nothing.
   const productId = fixtureSql(

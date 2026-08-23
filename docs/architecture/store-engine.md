@@ -107,7 +107,41 @@ place.
 | `suspended` → `draft` | moderator (`store.moderate`) | **not** to published |
 | `suspended` → `published` | nobody | the SQL excludes it |
 
-Three of these deserve their reasons written down.
+Four of these deserve their reasons written down.
+
+**A store may be published with zero offerings.** *(Review decision 1, phase 4.)*
+
+An Afrinext store is a **commercial identity**, not a container that only
+becomes real once it holds stock. A tailor who has claimed her name and her
+public address can print it on a card and share it while she is still
+photographing her work; a courier can be findable before he has listed his
+first route. Requiring an offering first would hold a seller's storefront
+hostage to inventory they have not finished preparing.
+
+Nothing in the domain ever forbade this — `publishStore` has no offering check
+and never had one. The requirement lived only in the seller dashboard, which
+withheld the publish control until a product existed. That control is now tied
+to the store's own `status`, not to which guidance message is on screen; tying
+it to the message is how the rule became unwritten in the first place.
+
+The obligation that comes with the permission is **honesty**:
+
+| Surface | With zero published offerings |
+|---|---|
+| Public store page | "Aucune offre pour l'instant" / "Cette boutique prépare actuellement ses offres." |
+| Marketplace card | "Aucune offre pour l'instant" — never a fabricated count |
+| `listPublicProducts` | `[]` — never a placeholder row |
+| `discoverOfferings` | contributes nothing |
+| `countStoresByType` | counts the store once; it is a real store |
+
+No invented product, no placeholder price, no "coming soon" item in the list,
+no sales, ratings or followers. `store-engine.test.ts` asserts both halves —
+that it publishes, and that it produces nothing — and the browser suite visits
+the published empty storefront anonymously and asserts there is no `XOF` on the
+page and no link to an offering under it.
+
+The permission also loosened nothing else: an empty store is publishable, but
+not by a stranger and not while suspended. Both are tested.
 
 **`published_at` is stamped with `coalesce(published_at, now())`.** A store that
 is unpublished and republished keeps its original date. Without that, "newest
@@ -158,6 +192,30 @@ not it, and a seller cannot suspend a rival — or themselves, which is checked
 because "suspend my own store" and "unpublish my own store" are different
 operations with different audit meanings.
 
+### Granting the `seller` role — an open operational requirement
+
+There is **no admin console**. Becoming a seller means an operator running:
+
+```sql
+insert into role_assignments (id, user_id, role_id, scope_type, scope_id)
+select gen_random_uuid(), '<user-uuid>'::uuid, r.id, 'global', null
+  from roles r where r.key = 'seller';
+```
+
+*(Review decision 3, phase 4: keep this for now; do not build a console in this
+milestone.)*
+
+This is recorded as a **pre-launch operational requirement**, not a permanent
+design. It is workable at the scale of the first few sellers, who will be
+onboarded by hand anyway, and it is safe — the grant goes through the same
+`role_assignments` table `authorize()` reads, so nothing is bypassed. What it
+lacks is an audit trail naming *who* granted it and *why*, and a way for anyone
+but a database operator to do it.
+
+The console is its own milestone. Until it exists, every seller on Afrinext was
+enabled by a human with production database access, and that is a fact worth
+stating plainly rather than leaving to be discovered.
+
 ## Visibility is decided in SQL
 
 Every public query filters `status = 'published'` **in the statement**. A draft
@@ -201,6 +259,12 @@ A collision is refused with `SlugTakenError` rather than silently resolved by
 appending a number. `atelier-couture-2` is not a name anybody chose, and a
 seller who typed a name someone else already has should be told so while they
 can still pick a different one.
+
+*(Review decision 2, phase 4: keep this behaviour. Do **not** auto-append
+`-2`, `-3`. The refusal reaches the seller as a validation error on the form
+they are filling in, and the implementation stays deterministic — the same
+name always produces the same slug and the same answer — and reversible: the
+policy is one branch in `createStore`, not a scheme baked into stored data.)*
 
 The slug is **not editable**. It is the store's public address; changing it
 breaks every link a seller has already shared.

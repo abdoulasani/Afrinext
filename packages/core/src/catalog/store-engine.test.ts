@@ -8,7 +8,8 @@ import { money } from "../money";
 import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
 import {
   countDiscoverableStores, countStoresByType, createProduct, createStore, defaultBrandFor,
-  discoverOfferings, discoverStores, findPublicStore, isStoreType, NotPublishableError,
+  discoverOfferings, discoverStores, findPublicStore, isStoreType, listPublicProducts,
+  NotPublishableError,
   parseStoreBrand, parseStoreType, publishProduct, publishStore, reinstateStore,
   STORE_BRANDS, STORE_TYPES, suspendStore, unpublishStore, UnsupportedStoreBrandError,
   UnsupportedStoreTypeError, updateStore,
@@ -278,6 +279,98 @@ describe("visibility", () => {
 // ---------------------------------------------------------------------------
 
 describe("lifecycle", () => {
+  /*
+   * Review decision, phase 4: an Afrinext store is a commercial IDENTITY, not
+   * a container that only becomes real once it holds stock. A seller may claim
+   * their name and their public address and share it while they are still
+   * preparing what they will sell.
+   *
+   * The whole risk of that decision is in the second half of this test. An
+   * empty storefront is only acceptable while it stays empty and says so — the
+   * moment anything fills the silence with an invented product, a fabricated
+   * count or a placeholder price, the decision has been implemented wrongly.
+   * So this asserts both halves: it publishes, AND it produces nothing.
+   */
+  it("publishes a store with ZERO offerings, and invents nothing to fill it", async () => {
+    const seller = await makeSeller();
+    const store = await createStore(db, seller, {
+      name: "Boutique Vide", slug: "boutique-vide", storeType: "physical_product",
+      tagline: "Bientôt disponible",
+    });
+
+    // No products at all. Not a draft product — none.
+    const before = await db.execute<{ [k: string]: unknown; n: string }>(sql`
+      select count(*) as n from products where store_id = ${store.id}::uuid
+    `);
+    expect(Number(before.rows[0]?.n)).toBe(0);
+
+    // It publishes. No error, no special case, no offering required.
+    const published = await publishStore(db, seller, store.id);
+    expect(published.status).toBe("published");
+    expect(published.publishedAt).not.toBeNull();
+
+    // It is genuinely public: reachable by slug, and present in discovery.
+    const publicStore = await findPublicStore(db, "boutique-vide");
+    expect(publicStore, "a published empty store is publicly reachable").toBeDefined();
+    expect(publicStore?.name).toBe("Boutique Vide");
+    expect(
+      (await discoverStores(db)).map((s) => s.slug),
+      "and it appears in the marketplace listing",
+    ).toContain("boutique-vide");
+
+    // ---- and now the half that matters ----
+
+    // Its offering list is EMPTY, not a placeholder.
+    expect(await listPublicProducts(db, "boutique-vide")).toEqual([]);
+
+    // Its offering count is a real zero.
+    const summary = (await discoverStores(db)).find((s) => s.slug === "boutique-vide");
+    expect(summary?.offeringCount, "zero, not a decorative number").toBe(0);
+
+    // It contributes nothing to the offering feed.
+    expect(
+      (await discoverOfferings(db)).filter((o) => o.storeSlug === "boutique-vide"),
+      "an empty store puts nothing in the offerings feed",
+    ).toEqual([]);
+
+    // And the database agrees: publishing wrote no product row anywhere.
+    const after = await db.execute<{ [k: string]: unknown; n: string }>(sql`
+      select count(*) as n from products where store_id = ${store.id}::uuid
+    `);
+    expect(Number(after.rows[0]?.n), "publishing created no product").toBe(0);
+
+    // It still counts as one store of its type — one, not zero, not two.
+    expect(await countStoresByType(db)).toEqual({ physical_product: 1 });
+  });
+
+  /*
+   * The permissive rule must not have loosened anything else on the way in.
+   * An empty store is publishable; it is not therefore publishable by anyone,
+   * nor publishable while suspended.
+   */
+  it("still refuses an empty store to a stranger, and while suspended", async () => {
+    const seller = await makeSeller();
+    const rival = await makeSeller();
+    const moderator = await makeModerator();
+    const store = await createStore(db, seller, {
+      name: "Vide Gardée", slug: "vide-gardee", storeType: "creator",
+    });
+
+    await expect(
+      publishStore(db, rival, store.id),
+      "empty does not mean unowned",
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    expect(await findPublicStore(db, "vide-gardee")).toBeUndefined();
+
+    await publishStore(db, seller, store.id);
+    await suspendStore(db, moderator, store.id, "Contenu signalé");
+    await expect(
+      publishStore(db, seller, store.id),
+      "empty does not exempt a store from its suspension",
+    ).rejects.toBeInstanceOf(NotPublishableError);
+    expect(await findPublicStore(db, "vide-gardee")).toBeUndefined();
+  });
+
   it("stamps published_at once, so republishing cannot jump the queue", async () => {
     const seller = await makeSeller();
     const store = await publishedStore(seller, { name: "Ancienne", slug: "ancienne" });

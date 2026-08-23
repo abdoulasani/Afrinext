@@ -88,12 +88,22 @@ export default async function StoreAdminPage({
   /*
    * The one next action, derived from the store's real state.
    *
-   * Order matters: a product cannot be published before its store, so "publish
-   * the store" never appears before there is something to sell.
+   * Publishing comes FIRST, and an empty store may be published.
+   *
+   * An Afrinext store is a commercial identity, not a container that only
+   * becomes real once it has stock. A tailor who has claimed her name and her
+   * public address can print it on a card and share it while she photographs
+   * her work; requiring an offering first would have held her storefront
+   * hostage to inventory she has not finished preparing.
+   *
+   * A published store with nothing in it is not a broken page — it is an
+   * honest one, and it says so. What must never happen is the other thing:
+   * filling the silence with an invented product. See `listPublicProducts`,
+   * which returns exactly what the database holds and nothing else.
    */
   const nextStep: { key: MessageKey; done: boolean } =
-    products.length === 0 ? { key: "dash.stepAddOffering", done: false }
-    : !published ? { key: "dash.stepPublishStore", done: false }
+    !published ? { key: "dash.stepPublishStore", done: false }
+    : products.length === 0 ? { key: "dash.stepAddOffering", done: false }
     : { key: "dash.stepAllDone", done: true };
 
   return (
@@ -163,7 +173,14 @@ export default async function StoreAdminPage({
                   </p>
                 )}
               </div>
-              {nextStep.key === "dash.stepPublishStore" && (
+              {/*
+                * Rendered for ANY draft, not for a particular next-step
+                * message. Tying a control to the guidance text is how the
+                * offering requirement became an unwritten rule in the first
+                * place: reordering the guidance silently moved the button.
+                * The condition is now the store's own status.
+                */}
+              {!published && (
                 <PublishButton
                   locale={locale}
                   storeSlug={store.slug}
