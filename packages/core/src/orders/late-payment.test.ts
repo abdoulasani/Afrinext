@@ -8,7 +8,7 @@ import { acceptCurrentVersions, ACCOUNT_CONSENT_KINDS } from "../consent";
 import { commerceIsClean, reconcileCommerce } from "../ledger";
 import { money } from "../money";
 import { MockPaymentProvider } from "../payments";
-import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, giveProductAFile, resetData, testDb } from "../test/harness";
 import {
   applyProviderEvent, canTransitionOrder, createCheckout, DEFAULT_LATE_PAYMENT_GRACE_SECONDS,
   expireLapsedOrders, initiatePayment, isTerminalOrderState, LATE_PAYMENT_GRACE_SETTING_KEY,
@@ -104,6 +104,7 @@ async function pendingSale(): Promise<Sale> {
   const product = await createProduct(db, seller, {
     storeId: store.id, title: `P ${counter}`, slug: `p-${counter}`, price: money(5000n, "XOF"),
   });
+  await giveProductAFile(db, product.id);
   await publishProduct(db, seller, product.id);
 
   const buyer = await makeBuyer();

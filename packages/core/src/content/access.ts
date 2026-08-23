@@ -4,6 +4,8 @@ import type { Database } from "@afrinext/db";
 import { audit } from "../audit";
 import { authorize, type Actor } from "../authz";
 import { DomainError } from "../errors";
+import { ContentForbiddenError } from "./forbidden";
+import { openDraftVersion } from "./versions";
 import { uuidv7 } from "../ids";
 import { logger } from "../observability";
 import {
@@ -34,18 +36,25 @@ import {
 
 const log = logger.child({ component: "content.access" });
 
-export class ContentForbiddenError extends DomainError {
-  override readonly name = "ContentForbiddenError";
-  constructor() {
-    /*
-     * One message for every refusal.
-     *
-     * "No such asset", "not yours", "expired grant" and "revoked entitlement"
-     * answer identically, so the endpoint cannot be used to learn which asset
-     * ids exist or which products someone else owns. The real reason is
-     * audited.
-     */
-    super("content.forbidden", "You do not have access to this content.");
+export { ContentForbiddenError };
+
+/**
+ * The one refusal that is allowed to say what it means.
+ *
+ * Every other content refusal collapses into `ContentForbiddenError` so the
+ * endpoint cannot be used to enumerate assets or other people's purchases. This
+ * one is different because it is only reachable by somebody who has ALREADY
+ * proved a live entitlement to this exact file: telling them they have used
+ * their five downloads discloses a fact about their own purchase, to them. A
+ * stranger never gets here — they are refused, opaquely, one step earlier.
+ */
+export class DownloadLimitReachedError extends DomainError {
+  override readonly name = "DownloadLimitReachedError";
+  constructor(readonly limit: number) {
+    super(
+      "content.download_limit_reached",
+      `You have used all ${limit} downloads of this file.`,
+    );
   }
 }
 
@@ -229,27 +238,41 @@ export async function attachAsset(
     throw new AssetTooLargeError(MAX_ASSET_BYTES);
   }
 
+  /*
+   * The file goes into the product's DRAFT version, never into a published one.
+   *
+   * This is what makes "a new upload never silently replaces a purchased file"
+   * true rather than merely intended: an already-published version's file set
+   * is frozen by a database trigger, so even a caller that tried to write
+   * there would be refused by PostgreSQL rather than by this function.
+   */
+  const draft = await openDraftVersion(db, actor, input.productId);
+
   const assetId = uuidv7();
   // Generated, never composed from anything a caller supplied.
-  const storageKey = `products/${input.productId}/${assetId}`;
+  const storageKey = `products/${input.productId}/${draft.id}/${assetId}`;
   assertUsableStorageKey(storageKey);
 
   await storage.put(storageKey, input.bytes, input.contentType);
 
   await db.execute(sql`
-    insert into digital_assets (id, product_id, title, kind, content_type, byte_size,
-                                checksum_sha256, storage_key, sort_order)
-    values (${assetId}, ${input.productId}, ${input.title}, ${input.kind ?? "document"},
+    insert into digital_assets (id, product_id, version_id, title, kind, content_type,
+                                byte_size, checksum_sha256, storage_key, sort_order)
+    values (${assetId}, ${input.productId}, ${draft.id}, ${input.title},
+            ${input.kind ?? "document"},
             ${input.contentType}, ${String(input.bytes.byteLength)}, ${checksumOf(input.bytes)},
             ${storageKey},
             coalesce((select max(sort_order) + 1 from digital_assets
-                       where product_id = ${input.productId}::uuid), 0))
+                       where version_id = ${draft.id}::uuid), 0))
   `);
 
   await audit(db, {
     actorKind: "user", actorUserId: actor.userId, action: "product.asset.attached",
     targetType: "product", targetId: input.productId,
-    context: { assetId, contentType: input.contentType, byteSize: input.bytes.byteLength },
+    context: {
+      assetId, versionId: draft.id,
+      contentType: input.contentType, byteSize: input.bytes.byteLength,
+    },
   });
 
   const stored = await db.execute<AssetRow>(sql`
@@ -283,13 +306,23 @@ export async function listProductAssets(
 // The buyer's side
 // ---------------------------------------------------------------------------
 
+export interface EntitledAsset extends AssetRecord {
+  /** `null` when the seller set no limit. Counted, never stored. */
+  readonly downloadsRemaining: number | null;
+}
+
 export interface EntitledProduct {
   readonly productId: string;
   readonly title: string;
   readonly storeSlug: string;
   readonly productSlug: string;
   readonly deliveryMode: DeliveryMode;
-  readonly assets: readonly AssetRecord[];
+  /** The version this buyer paid for — not the product's current head. */
+  readonly versionNo: number;
+  /** The licence as it read on the day they bought it. */
+  readonly licenceSnapshot: string | null;
+  readonly downloadLimit: number | null;
+  readonly assets: readonly EntitledAsset[];
 }
 
 /*
@@ -317,11 +350,19 @@ export async function findEntitledProduct(
     product_id: string;
     title: string;
     delivery_mode: string;
+    entitlement_id: string;
+    version_id: string | null;
+    version_no: number | null;
+    licence_snapshot: string | null;
+    download_limit: number | null;
   }>(sql`
-    select p.id as product_id, p.title, p.delivery_mode
+    select p.id as product_id, p.title, p.delivery_mode,
+           e.id as entitlement_id, e.version_id, v.version_no,
+           e.licence_snapshot, p.download_limit
       from entitlements e
       join products p on p.id = e.product_id
       join stores s on s.id = p.store_id
+      left join product_versions v on v.id = e.version_id
      where e.user_id = ${actor.userId}::uuid
        and e.revoked_at is null
        and p.status = 'published'
@@ -332,10 +373,21 @@ export async function findEntitledProduct(
   const row = rows.rows[0];
   if (row === undefined) return undefined;
 
+  // Only the files of the version this person bought.
   const assets = await db.execute<AssetRow>(sql`
     select id, title, kind, content_type, byte_size, sort_order
-      from digital_assets where product_id = ${row.product_id}::uuid order by sort_order
+      from digital_assets
+     where version_id = ${row.version_id}::uuid
+     order by sort_order
   `);
+
+  const limit = row.download_limit === null ? null : Number(row.download_limit);
+  const withRemaining = await Promise.all(
+    assets.rows.map(async (a) => ({
+      ...toAsset(a),
+      downloadsRemaining: await downloadsRemaining(db, row.entitlement_id, a.id, limit),
+    })),
+  );
 
   return {
     productId: row.product_id,
@@ -343,32 +395,66 @@ export async function findEntitledProduct(
     storeSlug,
     productSlug,
     deliveryMode: row.delivery_mode as DeliveryMode,
-    assets: assets.rows.map(toAsset),
+    versionNo: row.version_no === null ? 1 : Number(row.version_no),
+    licenceSnapshot: row.licence_snapshot,
+    downloadLimit: limit,
+    assets: withRemaining,
   };
 }
 
-/** Everything this actor may read. The library screen's only source. */
+/**
+ * Everything this actor may read. The library screen's only source.
+ *
+ * Note what is NOT a parameter: no user id, no order id, no "owned" flag. The
+ * actor comes from the session and the entitlement is a join, so the only way
+ * into this list is to have actually bought the thing. There is no argument a
+ * caller can pass that widens it.
+ */
+export interface LibraryEntry {
+  readonly productId: string;
+  readonly title: string;
+  readonly storeSlug: string;
+  readonly storeName: string;
+  readonly productSlug: string;
+  readonly deliveryMode: DeliveryMode;
+  readonly versionNo: number;
+  readonly hasLicence: boolean;
+  readonly downloadLimit: number | null;
+  readonly assetCount: number;
+  readonly grantedAt: Date;
+  readonly price: { amountMinor: bigint; currency: string };
+}
+
 export async function listEntitledProducts(
   db: Database,
   actor: Actor,
-): Promise<ReadonlyArray<Omit<EntitledProduct, "assets"> & { assetCount: number; grantedAt: Date }>> {
+): Promise<ReadonlyArray<LibraryEntry>> {
   await authorize(db, actor, "order.read_own");
   const rows = await db.execute<{
     [key: string]: unknown;
     product_id: string;
     title: string;
     store_slug: string;
+    store_name: string;
     product_slug: string;
     delivery_mode: string;
+    version_no: number | null;
+    licence_snapshot: string | null;
+    download_limit: number | null;
     asset_count: string;
     granted_at: Date | string;
+    price_minor: string | bigint;
+    currency: string;
   }>(sql`
-    select p.id as product_id, p.title, s.slug as store_slug, p.slug as product_slug,
-           p.delivery_mode, e.granted_at,
-           (select count(*) from digital_assets a where a.product_id = p.id) as asset_count
+    select p.id as product_id, p.title, s.slug as store_slug, s.name as store_name,
+           p.slug as product_slug, p.delivery_mode, v.version_no, e.licence_snapshot,
+           p.download_limit, e.granted_at, p.price_minor, p.currency,
+           (select count(*) from digital_assets a where a.version_id = e.version_id)
+             as asset_count
       from entitlements e
       join products p on p.id = e.product_id
       join stores s on s.id = p.store_id
+      left join product_versions v on v.id = e.version_id
      where e.user_id = ${actor.userId}::uuid
        and e.revoked_at is null
        and p.status = 'published'
@@ -379,10 +465,15 @@ export async function listEntitledProducts(
     productId: r.product_id,
     title: r.title,
     storeSlug: r.store_slug,
+    storeName: r.store_name,
     productSlug: r.product_slug,
     deliveryMode: r.delivery_mode as DeliveryMode,
+    versionNo: r.version_no === null ? 1 : Number(r.version_no),
+    hasLicence: r.licence_snapshot !== null && r.licence_snapshot !== "",
+    downloadLimit: r.download_limit === null ? null : Number(r.download_limit),
     assetCount: Number(r.asset_count),
     grantedAt: r.granted_at instanceof Date ? r.granted_at : new Date(r.granted_at),
+    price: { amountMinor: BigInt(r.price_minor), currency: r.currency },
   }));
 }
 
@@ -394,19 +485,31 @@ export async function listEntitledProducts(
  * actor. Another buyer's asset id, a draft product's asset id and an id that
  * does not exist all resolve to nothing, and all produce the same refusal.
  */
+interface ResolvedAsset {
+  readonly storageKey: string;
+  readonly contentType: string;
+  readonly title: string;
+  readonly deliveryMode: DeliveryMode;
+  readonly entitlementId: string;
+  readonly downloadLimit: number | null;
+}
+
 async function resolveEntitledAsset(
   db: Database,
   actor: Actor,
   assetId: string,
-): Promise<{ storageKey: string; contentType: string; title: string; deliveryMode: DeliveryMode } | undefined> {
+): Promise<ResolvedAsset | undefined> {
   const rows = await db.execute<{
     [key: string]: unknown;
     storage_key: string;
     content_type: string;
     title: string;
     delivery_mode: string;
+    entitlement_id: string;
+    download_limit: number | null;
   }>(sql`
-    select a.storage_key, a.content_type, a.title, p.delivery_mode
+    select a.storage_key, a.content_type, a.title, p.delivery_mode,
+           e.id as entitlement_id, p.download_limit
       from digital_assets a
       join products p on p.id = a.product_id
       join stores s on s.id = p.store_id
@@ -414,6 +517,10 @@ async function resolveEntitledAsset(
      where a.id = ${assetId}::uuid
        and e.user_id = ${actor.userId}::uuid
        and e.revoked_at is null
+       -- The asset must belong to the version this buyer actually PAID for.
+       -- Without this, publishing a new version would silently hand every past
+       -- buyer the new files, and retiring one would take away what they bought.
+       and a.version_id = e.version_id
        and p.status = 'published'
        and s.status = 'published'
   `);
@@ -425,7 +532,33 @@ async function resolveEntitledAsset(
         contentType: row.content_type,
         title: row.title,
         deliveryMode: row.delivery_mode as DeliveryMode,
+        entitlementId: row.entitlement_id,
+        downloadLimit: row.download_limit === null ? null : Number(row.download_limit),
       };
+}
+
+/**
+ * How many downloads of one file this entitlement has left.
+ *
+ * Counted from `entitlement_downloads`, which is append-only and refuses DELETE
+ * at the database. "Remaining" is therefore always `limit − facts` and never a
+ * stored number somebody could reset: there is no counter to zero out, and
+ * erasing the history is not a thing the schema permits.
+ *
+ * `null` means the seller set no limit.
+ */
+export async function downloadsRemaining(
+  db: Database,
+  entitlementId: string,
+  assetId: string,
+  limit: number | null,
+): Promise<number | null> {
+  if (limit === null) return null;
+  const rows = await db.execute<{ [key: string]: unknown; n: string }>(sql`
+    select count(*) as n from entitlement_downloads
+     where entitlement_id = ${entitlementId}::uuid and asset_id = ${assetId}::uuid
+  `);
+  return Math.max(0, limit - Number(rows.rows[0]?.n ?? 0));
 }
 
 /**
@@ -522,24 +655,58 @@ export async function openContent(
   const asset = await resolveEntitledAsset(db, actor, claims.a);
   if (asset === undefined) return refuse("entitlement_missing", claims.a);
 
+  /*
+   * The limit is checked HERE, where the bytes are actually handed over, and
+   * not at grant time.
+   *
+   * Checking it when the grant is minted would count intentions rather than
+   * deliveries: a buyer who opens the page twice and downloads once would have
+   * spent two. What the seller is limiting is how many times the file leaves
+   * Afrinext, so that is what is counted.
+   */
+  const remaining = await downloadsRemaining(
+    db, asset.entitlementId, claims.a, asset.downloadLimit,
+  );
+  if (remaining !== null && remaining <= 0) {
+    log.warn("download limit reached", { actorUserId: actor.userId, assetId: claims.a });
+    await audit(db, {
+      actorKind: "user", actorUserId: actor.userId, action: "content.access.refused",
+      targetType: "digital_asset", targetId: claims.a,
+      context: { stage: "download_limit", limit: asset.downloadLimit },
+    });
+    throw new DownloadLimitReachedError(asset.downloadLimit!);
+  }
+
   const object = await storage.open(asset.storageKey);
+
+  /*
+   * Recorded AFTER the bytes were successfully read, so a storage failure does
+   * not spend one of the buyer's downloads. Append-only: there is no counter to
+   * increment and none to reset.
+   */
+  await db.execute(sql`
+    insert into entitlement_downloads (id, entitlement_id, asset_id, byte_size)
+    values (${uuidv7()}, ${asset.entitlementId}::uuid, ${claims.a}::uuid,
+            ${String(object.bytes.byteLength)})
+  `);
 
   await audit(db, {
     actorKind: "user", actorUserId: actor.userId, action: "content.access.granted",
     targetType: "digital_asset", targetId: claims.a,
-    context: { disposition: claims.d, byteSize: object.bytes.byteLength },
+    context: {
+      disposition: claims.d, byteSize: object.bytes.byteLength,
+      remainingAfter: remaining === null ? null : remaining - 1,
+    },
   });
 
   return { object, title: asset.title, disposition: claims.d };
 }
 
 /**
- * Revokes an entitlement. Not called by anything in this milestone.
+ * Revokes one entitlement.
  *
- * Refunds are out of scope, and inventing a rule about when access should end
- * would be inventing a refund policy. What exists here is the mechanism, so
- * that when that decision is taken it is a call site rather than a migration —
- * and so that "a revoked entitlement grants nothing" is testable today.
+ * The mechanism. `revokeEntitlementsForOrder` below is the policy that calls
+ * it, and the refund domain is what calls that.
  */
 export async function revokeEntitlement(
   db: Database,
@@ -560,4 +727,42 @@ export async function revokeEntitlement(
     });
   }
   return revoked;
+}
+
+/**
+ * Revokes every entitlement granted by one order. Returns how many were live.
+ *
+ * Called when a refund reaches `succeeded` — that is, when the money provably
+ * went back. Afrinext takes the position that a buyer who has been repaid is no
+ * longer entitled to the goods; the file they already downloaded cannot be
+ * recalled, but their continuing access can be, and is.
+ *
+ * Deliberately keyed on the ORDER rather than on a buyer and a product. A
+ * refund is settled against an order, so this cannot revoke somebody else's
+ * purchase of the same product by accident, and it needs no caller-supplied
+ * user id to decide whose access ends.
+ *
+ * Idempotent: the `revoked_at is null` guard means a webhook delivered twice
+ * revokes once and reports 0 the second time.
+ */
+export async function revokeEntitlementsForOrder(
+  db: Database,
+  orderId: string,
+  reason: string,
+): Promise<number> {
+  const revoked = await db.execute<{ [key: string]: unknown; user_id: string; product_id: string }>(sql`
+    update entitlements
+       set revoked_at = now(), revoked_reason = ${reason}
+     where order_id = ${orderId}::uuid and revoked_at is null
+    returning user_id, product_id
+  `);
+
+  for (const row of revoked.rows) {
+    await audit(db, {
+      actorKind: "system", action: "content.entitlement.revoked",
+      targetType: "product", targetId: row.product_id,
+      context: { userId: row.user_id, orderId, reason },
+    });
+  }
+  return revoked.rows.length;
 }

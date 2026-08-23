@@ -7,7 +7,7 @@ import { acceptCurrentVersions, ACCOUNT_CONSENT_KINDS } from "../consent";
 import { commerceIsClean, reconcileCommerce } from "../ledger";
 import { money } from "../money";
 import { applyProviderEvent } from "../orders";
-import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, giveProductAFile, resetData, testDb } from "../test/harness";
 import { ipaymoneyEventId, IPayMoneyProvider } from "./ipaymoney";
 import type { HeadersLike } from "./provider";
 
@@ -118,6 +118,7 @@ async function pendingSale(): Promise<Sale> {
   const product = await createProduct(db, seller, {
     storeId: store.id, title: `P ${counter}`, slug: `ipp-${counter}`, price: money(5000n, "XOF"),
   });
+  await giveProductAFile(db, product.id);
   await publishProduct(db, seller, product.id);
 
   const buyerId = await createTestUser(db, { locale: "fr" });

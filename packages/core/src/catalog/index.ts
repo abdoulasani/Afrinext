@@ -586,6 +586,36 @@ export async function publishProduct(
     );
   }
 
+  /*
+   * Publishing the product publishes its pending VERSION, and refuses if there
+   * is nothing to publish.
+   *
+   * A digital product exists to deliver a file. One published with none would
+   * take a buyer's money and hand back an empty page — which is the same
+   * dishonesty as a placeholder file, arriving by omission instead. So the two
+   * lifecycles are tied together here, in one place, rather than left to a
+   * seller remembering to do both.
+   *
+   * The draft is only promoted if it actually has files: a version with none
+   * would satisfy the letter of this rule and none of its purpose.
+   */
+  await db.execute(sql`
+    update product_versions pv
+       set status = 'published', published_at = now()
+     where pv.product_id = ${productId}::uuid
+       and pv.status = 'draft'
+       and exists (select 1 from digital_assets a where a.version_id = pv.id)
+  `);
+  const deliverable = await db.execute(sql`
+    select 1 from product_versions
+     where product_id = ${productId}::uuid and status = 'published' limit 1
+  `);
+  if (deliverable.rows.length === 0) {
+    throw new NotPublishableError(
+      "Add a file before publishing — a buyer would receive nothing.",
+    );
+  }
+
   const updated = await db.execute<ProductRow>(sql`
     update products
        set status = 'published', published_at = coalesce(published_at, now()), updated_at = now()

@@ -14,7 +14,7 @@ import type {
   ChargeInput, ChargeResult, ChargeStatus, HeadersLike, PaymentProvider, RefundInput,
   RefundResult, VerifiedEvent,
 } from "../payments";
-import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, giveProductAFile, resetData, testDb } from "../test/harness";
 import { chargeMetadataFor, loadBuyerPaymentIdentity } from "./payment";
 import { createCheckout, initiatePayment } from "./index";
 
@@ -168,6 +168,7 @@ async function listing(sellerCountry: string): Promise<{ storeSlug: string; prod
   const product = await createProduct(db, seller, {
     storeId: store.id, title: `G ${counter}`, slug: `g-${counter}`, price: money(5000n, "XOF"),
   });
+  await giveProductAFile(db, product.id);
   await publishProduct(db, seller, product.id);
   return { storeSlug: store.slug, productSlug: product.slug };
 }

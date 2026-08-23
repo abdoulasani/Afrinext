@@ -5,7 +5,7 @@ import type { Actor } from "../authz";
 import { acceptCurrentVersions, ACCOUNT_CONSENT_KINDS } from "../consent";
 import { PermissionDeniedError } from "../errors";
 import { money } from "../money";
-import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, giveProductAFile, resetData, testDb } from "../test/harness";
 import {
   countDiscoverableStores, countStoresByType, createProduct, createStore, defaultBrandFor,
   discoverOfferings, discoverStores, findPublicStore, isStoreType, listPublicProducts,
@@ -237,6 +237,7 @@ describe("visibility", () => {
     const product = await createProduct(db, seller, {
       storeId: store.id, title: "Guide", slug: "guide", price: money(5000n, "XOF"),
     });
+    await giveProductAFile(db, product.id);
     await publishProduct(db, seller, product.id);
 
     // Visible while published.
@@ -575,6 +576,7 @@ describe("marketplace discovery", () => {
     found = await discoverStores(db);
     expect(found[0]?.offeringCount).toBe(0);
 
+    await giveProductAFile(db, product.id);
     await publishProduct(db, seller, product.id);
     found = await discoverStores(db);
     expect(found[0]?.offeringCount).toBe(1);
@@ -647,6 +649,7 @@ describe("marketplace discovery", () => {
     const shown = await createProduct(db, seller, {
       storeId: live.id, title: "Visible", slug: "visible", price: money(1000n, "XOF"),
     });
+    await giveProductAFile(db, shown.id);
     await publishProduct(db, seller, shown.id);
     await createProduct(db, seller, {
       storeId: live.id, title: "Brouillon", slug: "brouillon", price: money(1000n, "XOF"),

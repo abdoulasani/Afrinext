@@ -16,7 +16,7 @@ import {
   RefundTransportError, screenDetail, stageOfTransportFailure, supportsRefundQuery,
   type MockRefundScenario,
 } from "../payments";
-import { createTestUser, ensureReferenceData, expectRejection, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, expectRejection, giveProductAFile, resetData, testDb } from "../test/harness";
 import {
   canTransitionRefund, confirmManualReconciliation, countManualReconcilers,
   DEFAULT_REFUND_MAX_ATTEMPTS, DEFAULT_REFUND_RETRY_BACKOFF_SECONDS,
@@ -132,6 +132,7 @@ async function owedRefund(
   const product = await createProduct(db, seller, {
     storeId: store.id, title: `P ${counter}`, slug: `rp-${counter}`, price: money(5000n, "XOF"),
   });
+  await giveProductAFile(db, product.id);
   await publishProduct(db, seller, product.id);
 
   const buyer = await makeMember();

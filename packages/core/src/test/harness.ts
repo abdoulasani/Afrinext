@@ -225,3 +225,48 @@ export async function expectRejection(promise: Promise<unknown>, pattern: RegExp
   }
   throw new Error(`Expected a rejection matching ${pattern}, but the promise resolved.`);
 }
+
+/**
+ * Gives a product one file, so it can be published.
+ *
+ * Phase 5 requires a digital product to deliver something before it may go
+ * public: publishing one with no files would take a buyer's money and hand back
+ * an empty page. Most fixtures are arranging a SELLABLE product for tests about
+ * orders, payments or refunds, and never read a byte — so a row in the draft
+ * version is exactly enough, and going through real storage would only make
+ * those suites slower.
+ *
+ * Tests that actually download bytes use `attachAsset` with a real
+ * `ContentStorage`, because there the file is the thing under test.
+ */
+export async function giveProductAFile(
+  db: Database,
+  productId: string,
+  title = "Fichier",
+): Promise<string> {
+  const versionRows = await db.execute<{ [key: string]: unknown; id: string }>(sql`
+    insert into product_versions (id, product_id, version_no, status)
+    select gen_random_uuid(), ${productId}::uuid,
+           coalesce((select max(version_no) from product_versions
+                      where product_id = ${productId}::uuid), 0) + 1,
+           'draft'
+    on conflict do nothing
+    returning id
+  `);
+  const versionId =
+    versionRows.rows[0]?.id ??
+    (await db.execute<{ [key: string]: unknown; id: string }>(sql`
+      select id from product_versions
+       where product_id = ${productId}::uuid and status = 'draft'
+    `)).rows[0]!.id;
+
+  const assetRows = await db.execute<{ [key: string]: unknown; id: string }>(sql`
+    insert into digital_assets (id, product_id, version_id, title, kind, content_type,
+                                byte_size, checksum_sha256, storage_key, sort_order)
+    values (gen_random_uuid(), ${productId}::uuid, ${versionId}::uuid, ${title},
+            'document', 'application/pdf', 1024, 'fixture',
+            ${"products/" + productId + "/"} || gen_random_uuid(), 0)
+    returning id
+  `);
+  return assetRows.rows[0]!.id;
+}

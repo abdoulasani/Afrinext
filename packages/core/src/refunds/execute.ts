@@ -5,6 +5,7 @@ import { requireElevation } from "../auth/session-bridge";
 import { authorize, type Actor } from "../authz";
 import { uuidv7 } from "../ids";
 import { logger } from "../observability";
+import { revokeEntitlementsForOrder } from "../content/access";
 import { queueNotification } from "../notifications";
 import {
   classifyRefundFailure, classifyRefundResponse, screenDetail,
@@ -144,6 +145,8 @@ async function lockRefund(tx: Database, refundId: string): Promise<LockedRefund 
 
 interface DispatchTicket {
   readonly refundId: string;
+  /** The order this refund settles — the key access revocation is scoped to. */
+  readonly orderId: string;
   readonly attemptId: string;
   readonly attemptNo: number;
   readonly idempotencyKey: string;
@@ -277,6 +280,7 @@ async function claimForDispatch(
 
     return {
       refundId: refund.id,
+      orderId: refund.orderId,
       attemptId,
       attemptNo,
       idempotencyKey,
@@ -396,6 +400,7 @@ async function settleAttempt(
       });
 
       await notifyOutcome(tx, ticket, to);
+      await revokeAccessIfRefunded(tx, ticket.orderId, to);
     }
 
     return {
@@ -407,6 +412,29 @@ async function settleAttempt(
       providerRefundRef: outcome.providerRefundRef ?? null,
     };
   });
+}
+
+/**
+ * What a succeeded refund does to the buyer's access.
+ *
+ * Called from BOTH places a refund can reach `succeeded` — the execution path
+ * and the provider-resolution path — because two code paths that both decide
+ * "the money went back" must agree about what that means for the goods.
+ *
+ * Only `succeeded` revokes. A refund that failed, or whose outcome we never
+ * learned, leaves access exactly as it was: taking a buyer's file away on a
+ * refund that did not actually pay them is the worst of both outcomes.
+ */
+async function revokeAccessIfRefunded(
+  tx: Database,
+  orderId: string,
+  to: RefundState,
+): Promise<void> {
+  if (to !== "succeeded") return;
+  const revoked = await revokeEntitlementsForOrder(tx, orderId, "refund.succeeded");
+  if (revoked > 0) {
+    log.info("entitlements revoked after refund", { orderId, revoked });
+  }
 }
 
 async function notifyOutcome(
@@ -727,6 +755,7 @@ async function applyResolution(
     if (recipient !== undefined) {
       await notifyOutcome(tx, { refundId: refund.id, buyerUserId: recipient }, to);
     }
+    await revokeAccessIfRefunded(tx, refund.orderId, to);
 
     return { refundId: refund.id, status: to, resolved: true, reason: input.source };
   });

@@ -4,7 +4,7 @@ import { closeDb, type Database } from "@afrinext/db";
 import { acceptCurrentVersions, ACCOUNT_CONSENT_KINDS } from "../consent";
 import { PermissionDeniedError } from "../errors";
 import { money } from "../money";
-import { createTestUser, ensureReferenceData, expectRejection, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, expectRejection, giveProductAFile, resetData, testDb } from "../test/harness";
 import type { Actor } from "../authz";
 import {
   assertUsableSlug, createProduct, createStore, findPublicProduct, InvalidSlugError,
@@ -251,6 +251,7 @@ describe("publishing", () => {
     const product = await createProduct(db, actor, {
       storeId, title: "Timed", price: XOF(3000),
     });
+    await giveProductAFile(db, product.id);
     const published = await publishProduct(db, actor, product.id);
     expect(published.status).toBe("published");
     expect(published.publishedAt).toBeInstanceOf(Date);
@@ -264,6 +265,7 @@ describe("publishing", () => {
   it("audits the publication", async () => {
     const { actor, storeId } = await sellerWithLiveStore("audit-store");
     const product = await createProduct(db, actor, { storeId, title: "Audited", price: XOF(1000) });
+    await giveProductAFile(db, product.id);
     await publishProduct(db, actor, product.id);
 
     const actions = (await db.execute<{ action: string }>(
@@ -282,6 +284,7 @@ describe("the public view shows only what it should", () => {
     const product = await createProduct(db, actor, {
       storeId, title: "Guide Niamey", summary: "Un guide", price: XOF(7500),
     });
+    await giveProductAFile(db, product.id);
     await publishProduct(db, actor, product.id);
 
     const seen = await findPublicProduct(db, "open-store", "guide-niamey");
@@ -300,6 +303,7 @@ describe("the public view shows only what it should", () => {
   it("hides everything under a store that is not published", async () => {
     const { actor, storeId } = await sellerWithLiveStore("later-hidden");
     const product = await createProduct(db, actor, { storeId, title: "Visible", price: XOF(1000) });
+    await giveProductAFile(db, product.id);
     await publishProduct(db, actor, product.id);
     expect(await findPublicProduct(db, "later-hidden", "visible")).toBeDefined();
 
@@ -315,6 +319,7 @@ describe("the public view shows only what it should", () => {
     const product = await createProduct(db, actor, {
       storeId, title: "Public Thing", price: XOF(4000),
     });
+    await giveProductAFile(db, product.id);
     await publishProduct(db, actor, product.id);
 
     const seen = await findPublicProduct(db, "privacy-store", "public-thing");
@@ -340,7 +345,9 @@ describe("the public view shows only what it should", () => {
     const b = await sellerWithLiveStore("store-beta");
     const pa = await createProduct(db, a.actor, { storeId: a.storeId, title: "Ebook", price: XOF(1000) });
     const pb = await createProduct(db, b.actor, { storeId: b.storeId, title: "Ebook", price: XOF(2000) });
+    await giveProductAFile(db, pa.id);
     await publishProduct(db, a.actor, pa.id);
+    await giveProductAFile(db, pb.id);
     await publishProduct(db, b.actor, pb.id);
 
     // Product slugs are unique per store, so the store slug is what

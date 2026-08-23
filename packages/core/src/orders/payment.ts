@@ -944,10 +944,33 @@ async function confirm(
  * agreeing about what that means.
  */
 async function fulfil(tx: Database, orderId: string): Promise<void> {
+  /*
+   * The entitlement names the VERSION bought and copies the licence text.
+   *
+   * Both are snapshots taken at the instant money moved, and that is the whole
+   * point. The seller may publish a corrected file tomorrow and reword their
+   * licence next month; this buyer keeps the files they paid for and the terms
+   * they agreed to. A receipt that changes afterwards is not a receipt.
+   *
+   * The version is chosen by a correlated subquery rather than passed in, so
+   * there is no argument a caller could supply to pin a purchase to somebody
+   * else's version — and `licence_snapshot` is a COPY, not a join, so it
+   * survives even if versions are ever reorganised.
+   */
   await tx.execute(sql`
-    insert into entitlements (id, user_id, product_id, order_id, source)
-    select ${uuidv7()}, o.buyer_user_id, i.product_id, o.id, 'purchase'
-      from orders o join order_items i on i.order_id = o.id
+    insert into entitlements (id, user_id, product_id, order_id, source,
+                              version_id, licence_snapshot)
+    select ${uuidv7()}, o.buyer_user_id, i.product_id, o.id, 'purchase',
+           v.id, v.licence_text
+      from orders o
+      join order_items i on i.order_id = o.id
+      left join lateral (
+        select pv.id, pv.licence_text
+          from product_versions pv
+         where pv.product_id = i.product_id and pv.status = 'published'
+         order by pv.version_no desc
+         limit 1
+      ) v on true
      where o.id = ${orderId}::uuid
     on conflict (user_id, product_id) do nothing
   `);

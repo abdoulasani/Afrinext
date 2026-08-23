@@ -8,7 +8,7 @@ import { acceptCurrentVersions, ACCOUNT_CONSENT_KINDS } from "../consent";
 import { ConsentRequiredError, PermissionDeniedError } from "../errors";
 import { money } from "../money";
 import { MockPaymentProvider } from "../payments";
-import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
+import { createTestUser, ensureReferenceData, giveProductAFile, resetData, testDb } from "../test/harness";
 import {
   AlreadyOwnedError, applyProviderEvent, canTransitionOrder, canTransitionPayment,
   CheckoutConflictError, createCheckout, expireLapsedOrders, findOwnOrder,
@@ -106,6 +106,7 @@ async function publishedProduct(options: { priceMinor?: bigint; title?: string }
     slug: `guide-${slugCounter}`,
     price: money(priceMinor, "XOF"),
   });
+  await giveProductAFile(db, product.id);
   await publishProduct(db, seller, product.id);
   return {
     seller,
@@ -281,6 +282,7 @@ describe("checkout prices the order, and the client does not", () => {
 
     // A published product whose store is suspended. The product is perfectly
     // fine; it is simply not reachable, so it is not buyable either.
+    await giveProductAFile(db, draft.id);
     await publishProduct(db, seller, draft.id);
     await db.execute(sql`update stores set status = 'suspended' where id = ${store.id}::uuid`);
     await rejectsWith(
