@@ -404,6 +404,39 @@ describe("marketplace discovery", () => {
     expect(await countStoresByType(db)).toEqual({ formation: 1, service: 1 });
   });
 
+  /*
+   * The category counts on the marketplace home, and they must be counts of
+   * what a visitor can actually reach.
+   *
+   * A count that included drafts and suspensions would advertise a marketplace
+   * larger than the one that exists — "3 boutiques" under a category with one
+   * store in it — and every extra would be a shop nobody can open. That is the
+   * same fabrication as a fake rating, arriving through arithmetic.
+   */
+  it("counts only what a visitor can reach, per category", async () => {
+    const seller = await makeSeller();
+    const moderator = await makeModerator();
+
+    await publishedStore(seller, { name: "Live", slug: "cat-live", storeType: "creator" });
+    // A draft of the same type.
+    await createStore(db, seller, {
+      name: "Draft", slug: "cat-draft", storeType: "creator",
+    });
+    // And one published then suspended, so it still carries a published_at.
+    const gone = await publishedStore(seller, {
+      name: "Gone", slug: "cat-gone", storeType: "creator",
+    });
+    await suspendStore(db, moderator, gone.id, "Contenu signalé");
+
+    expect(
+      await countStoresByType(db),
+      "one reachable creator store, not three",
+    ).toEqual({ creator: 1 });
+    // And the two other counts agree with it, because they read the same rule.
+    expect(await countDiscoverableStores(db, { type: "creator" })).toBe(1);
+    expect((await discoverStores(db, { type: "creator" })).length).toBe(1);
+  });
+
   it("searches name, tagline and description", async () => {
     const seller = await makeSeller();
     await publishedStore(seller, {

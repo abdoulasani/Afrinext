@@ -217,7 +217,7 @@ test.describe("a seller publishes a digital product, and the public can see it",
     await page.locator('input[name="title"]').fill("Guide de Niamey");
     await page.locator('input[name="summary"]').fill("Un guide pratique");
     await page.locator('input[name="price"]').fill("15 000");
-    await page.getByRole("button", { name: "Ajouter un produit numérique" }).click();
+    await page.getByRole("button", { name: "Ajouter un produit", exact: true }).click();
     await expect(page.getByText("Guide de Niamey")).toBeVisible();
 
     // 5. Now — and only now — the store can be published. The product cannot be

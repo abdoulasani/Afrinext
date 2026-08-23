@@ -14,6 +14,14 @@ export type StoreTypeCopy = {
   readonly tagline: MessageKey;
   /** What this type's offerings are called: "Formations", "Prestations". */
   readonly offerings: MessageKey;
+  /**
+   * The call to action for adding one.
+   *
+   * A store labelled "Formations" whose only button says "Add a digital
+   * product" tells the seller the vocabulary is decoration. It is not: it is
+   * the whole reason one table serves six trades.
+   */
+  readonly addOffering: MessageKey;
 };
 
 export const STORE_TYPE_COPY: Readonly<Record<string, StoreTypeCopy>> = {
@@ -22,36 +30,42 @@ export const STORE_TYPE_COPY: Readonly<Record<string, StoreTypeCopy>> = {
     singular: "storeType.formation.one",
     tagline: "storeType.formation.tagline",
     offerings: "offering.formation",
+    addOffering: "offering.add.formation",
   },
   digital_product: {
     label: "storeType.digital_product",
     singular: "storeType.digital_product.one",
     tagline: "storeType.digital_product.tagline",
     offerings: "offering.digital_product",
+    addOffering: "offering.add.digital_product",
   },
   physical_product: {
     label: "storeType.physical_product",
     singular: "storeType.physical_product.one",
     tagline: "storeType.physical_product.tagline",
     offerings: "offering.physical_product",
+    addOffering: "offering.add.physical_product",
   },
   service: {
     label: "storeType.service",
     singular: "storeType.service.one",
     tagline: "storeType.service.tagline",
     offerings: "offering.service",
+    addOffering: "offering.add.service",
   },
   creator: {
     label: "storeType.creator",
     singular: "storeType.creator.one",
     tagline: "storeType.creator.tagline",
     offerings: "offering.creator",
+    addOffering: "offering.add.creator",
   },
   delivery: {
     label: "storeType.delivery",
     singular: "storeType.delivery.one",
     tagline: "storeType.delivery.tagline",
     offerings: "offering.delivery",
+    addOffering: "offering.add.delivery",
   },
 };
 

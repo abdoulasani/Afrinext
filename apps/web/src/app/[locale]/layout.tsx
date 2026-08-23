@@ -56,7 +56,13 @@ export default async function LocaleLayout({
 
   return (
     <div lang={locale} className="min-h-full">
-      {children}
+      {/*
+        * `lg:pt-16` makes room for the navigation, which is a fixed h-16 bar at
+        * the TOP from `lg` up and a fixed tab bar at the bottom below that. The
+        * space is made once, here, rather than by every page — a page that
+        * forgot would render its first heading underneath the bar.
+        */}
+      <div className="lg:pt-16">{children}</div>
       <BottomNav tabs={tabs} />
     </div>
   );

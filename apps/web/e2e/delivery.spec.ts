@@ -132,7 +132,7 @@ async function publishProductWithFile(page: Page, browser: Browser): Promise<{
   // once there is something in it, so a buyer never lands on an empty shop.
   await page.locator('input[name="title"]').fill("Guide de Niamey");
   await page.locator('input[name="price"]').fill("15 000");
-  await page.getByRole("button", { name: "Ajouter un produit numérique" }).click();
+  await page.getByRole("button", { name: "Ajouter un produit", exact: true }).click();
   await expect(page.getByText("Guide de Niamey")).toBeVisible();
 
   await page.getByRole("button", { name: "Publier la boutique" }).click();

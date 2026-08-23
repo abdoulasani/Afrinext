@@ -263,7 +263,7 @@ export default async function StoreAdminPage({
           {/* ---------- Add an offering ---------- */}
           <section className="flex flex-col gap-3 border-t border-border pt-6">
             <h2 className="text-lg font-semibold tracking-tight">
-              {translate(locale, "sell.createProduct")}
+              {translate(locale, copy.addOffering)}
             </h2>
             <CreateProductForm
               locale={locale}
@@ -274,7 +274,7 @@ export default async function StoreAdminPage({
                 title: translate(locale, "sell.productTitle"),
                 summary: translate(locale, "sell.productSummary"),
                 price: translate(locale, "sell.price"),
-                submit: translate(locale, "sell.createProduct"),
+                submit: translate(locale, copy.addOffering),
               }}
             />
           </section>

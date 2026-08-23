@@ -42,6 +42,10 @@ yarn-error.log*
 apps/web/.e2e/
 apps/web/test-results/
 apps/web/playwright-report/
+# Playwright writes here when it is run from the repository root rather than
+# from apps/web, which is easy to do by accident.
+/test-results/
+/playwright-report/
 
 # Uploaded digital assets on a local filesystem store.
 .content-storage/

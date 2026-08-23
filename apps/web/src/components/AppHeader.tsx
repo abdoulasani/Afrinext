@@ -11,11 +11,14 @@ type Props = {
 
 export default function AppHeader({ title, subtitle, back, action }: Props) {
   return (
+    // `lg:top-16` clears the desktop navigation bar, which is fixed at the top
+    // from `lg` up and is exactly h-16 tall. Without it this header sticks to
+    // the viewport edge and slides underneath the nav on a laptop.
     <header
-      className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur"
+      className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur lg:top-16"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3 sm:max-w-2xl lg:max-w-5xl lg:px-6 xl:max-w-6xl">
         {back && (
           <Link
             href={back}

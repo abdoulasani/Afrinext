@@ -262,7 +262,14 @@ export default function StoreWizard({
 
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface">
             <StoreCover brand={brand} className="h-28" />
-            <div className="-mt-8 px-4 pb-4">
+            {/*
+              * `relative z-10`, exactly as on the public store page and the
+              * marketplace card. `StoreCover` is positioned, so without a
+              * stacking context of its own this block renders UNDERNEATH it and
+              * the monogram is sliced in half by the cover's bottom edge —
+              * which makes the preview a lie about the page it is previewing.
+              */}
+            <div className="relative z-10 -mt-8 px-4 pb-4">
               <StoreAvatar name={name || "?"} brand={brand} size="lg" />
               <h3 className="mt-2.5 text-xl font-semibold tracking-tight">{name}</h3>
               {tagline !== "" && <p className="mt-1 text-sm text-muted">{tagline}</p>}
