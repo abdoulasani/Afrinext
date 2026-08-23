@@ -9,6 +9,15 @@ type Asset = {
   byteSize: number;
   /** `null` when the seller set no limit. Counted server-side, shown here. */
   downloadsRemaining: number | null;
+  /**
+   * Already translated and already pluralised, by the server.
+   *
+   * A formatting FUNCTION cannot cross into a client component, and passing
+   * one silently broke this whole page. Passing a template instead would mean
+   * re-implementing plural rules here — and French puts zero in the singular
+   * where English does not — so the string arrives finished.
+   */
+  remainingLabel: string;
 };
 
 /**
@@ -31,10 +40,7 @@ export default function AssetList({
   productSlug: string;
   deliveryMode: "download" | "view_only";
   assets: readonly Asset[];
-  labels: {
-    download: string; view: string; failed: string;
-    remaining: (n: number) => string; unlimited: string; exhausted: string;
-  };
+  labels: { download: string; view: string; failed: string };
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -94,11 +100,7 @@ export default function AssetList({
               data-testid={`asset-remaining-${asset.id}`}
               className="block text-xs text-muted"
             >
-              {asset.downloadsRemaining === null
-                ? labels.unlimited
-                : asset.downloadsRemaining === 0
-                  ? labels.exhausted
-                  : labels.remaining(asset.downloadsRemaining)}
+              {asset.remainingLabel}
             </span>
           </span>
           <button

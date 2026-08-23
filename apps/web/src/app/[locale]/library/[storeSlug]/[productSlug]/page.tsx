@@ -62,14 +62,18 @@ export default async function LibraryProductPage({
             assets={product.assets.map((a) => ({
               id: a.id, title: a.title, contentType: a.contentType, byteSize: a.byteSize,
               downloadsRemaining: a.downloadsRemaining,
+              // Translated and pluralised here, where the catalogue lives.
+              remainingLabel:
+                a.downloadsRemaining === null
+                  ? translate(locale, "library.unlimited")
+                  : a.downloadsRemaining === 0
+                    ? translate(locale, "library.exhausted")
+                    : translate(locale, "library.remaining", { count: a.downloadsRemaining }),
             }))}
             labels={{
               download: translate(locale, "library.download"),
               view: translate(locale, "library.view"),
               failed: translate(locale, "error.generic"),
-              unlimited: translate(locale, "library.unlimited"),
-              exhausted: translate(locale, "library.exhausted"),
-              remaining: (n: number) => translate(locale, "library.remaining", { count: n }),
             }}
           />
         )}

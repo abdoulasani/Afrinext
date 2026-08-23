@@ -239,6 +239,44 @@ describe("versions are immutable once somebody could have paid for them", () => 
     expect(versions[0]?.assetCount).toBe(3);
   });
 
+  /*
+   * The mutation this exists for: inventing a placeholder file so that an
+   * empty product can be published anyway.
+   *
+   * That would be worse than refusing — a buyer would pay 5 000 XOF and
+   * receive a one-byte file called "Bientot disponible". So the assertion is
+   * not merely that publication is refused, but that NO asset row appeared.
+   */
+  it("refuses to publish a product with no files, and invents none", async () => {
+    counter += 1;
+    const seller = await makeSeller();
+    const store = await createStore(db, seller, {
+      storeType: "digital_product", name: `Vide ${counter}`, slug: `vide-${counter}`,
+    });
+    await publishStore(db, seller, store.id);
+    const product = await createProduct(db, seller, {
+      storeId: store.id, title: "Rien", slug: `rien-${counter}`, price: money(5000n, "XOF"),
+    });
+
+    await expect(publishProduct(db, seller, product.id)).rejects.toThrow(/Add a file/);
+
+    const assets = await db.execute<{ [k: string]: unknown; n: string }>(sql`
+      select count(*) as n from digital_assets where product_id = ${product.id}::uuid
+    `);
+    expect(Number(assets.rows[0]?.n), "no placeholder was conjured").toBe(0);
+
+    const versions = await db.execute<{ [k: string]: unknown; n: string }>(sql`
+      select count(*) as n from product_versions
+       where product_id = ${product.id}::uuid and status = 'published'
+    `);
+    expect(Number(versions.rows[0]?.n), "and no version was published").toBe(0);
+
+    const stillDraft = await db.execute<{ [k: string]: unknown; status: string }>(sql`
+      select status from products where id = ${product.id}::uuid
+    `);
+    expect(stillDraft.rows[0]?.status).toBe("draft");
+  });
+
   it("refuses to publish a version with no files in it", async () => {
     const l = await listing();
     await openDraftVersion(db, l.seller, l.productId);
@@ -358,6 +396,41 @@ describe("download limits are counted, not stored", () => {
       update entitlement_downloads set downloaded_at = now() - interval '1 year'
     `), /append|immutable|not permitted|cannot/i);
 
+    await expect(download(buyer, l.assetId))
+      .rejects.toBeInstanceOf(DownloadLimitReachedError);
+  });
+
+  /*
+   * The mutation this exists for: counting only TODAY's downloads.
+   *
+   * Every other test in this file downloads twice within a second, so a limit
+   * that silently reset at midnight would pass all of them and then hand a
+   * buyer unlimited copies from the second day onwards. The only way to catch
+   * it is to have a download that is genuinely old — inserted with an old
+   * timestamp, because the log is append-only and cannot be back-dated later.
+   */
+  it("counts every download ever, not just recent ones", async () => {
+    const l = await listing({ downloadLimit: 2 });
+    const buyer = await makeBuyer();
+    await buy(buyer, l);
+
+    const entitlementId = (await db.execute<{ [k: string]: unknown; id: string }>(sql`
+      select id from entitlements where user_id = ${buyer.userId}::uuid
+    `)).rows[0]!.id;
+
+    // Two downloads from a year ago. They spent the allowance then, and they
+    // still have.
+    for (let i = 0; i < 2; i += 1) {
+      await db.execute(sql`
+        insert into entitlement_downloads (id, entitlement_id, asset_id, byte_size, downloaded_at)
+        values (gen_random_uuid(), ${entitlementId}::uuid, ${l.assetId}::uuid, 100,
+                now() - interval '1 year')
+      `);
+    }
+
+    const owned = await findEntitledProduct(db, buyer, l.storeSlug, l.productSlug);
+    expect(owned?.assets[0]?.downloadsRemaining,
+      "an old download is still a download").toBe(0);
     await expect(download(buyer, l.assetId))
       .rejects.toBeInstanceOf(DownloadLimitReachedError);
   });
@@ -574,6 +647,37 @@ describe("the seller's controls are the seller's", () => {
       .rejects.toBeInstanceOf(PermissionDeniedError);
     await expect(listProductVersions(db, rival, l.productId))
       .rejects.toBeInstanceOf(PermissionDeniedError);
+  });
+
+  /*
+   * The IDOR shape, on the seller side: a store id smuggled into the input.
+   *
+   * `attachAsset` resolves the owning store from the PRODUCT row. If it ever
+   * preferred a caller-supplied one, a seller could authorize against their own
+   * store while writing a file into somebody else's product — which is a
+   * one-line change and exactly the kind that survives review.
+   */
+  it("ignores a store id supplied by the caller", async () => {
+    const victim = await listing();
+    const rival = await makeSeller();
+    const rivalStore = await createStore(db, rival, {
+      storeType: "digital_product", name: "Rival", slug: "rival-store",
+    });
+
+    await expect(
+      attachAsset(db, storage, rival, {
+        productId: victim.productId,
+        title: "smuggled", contentType: "application/pdf", bytes: V2,
+        // Not part of the input type. It is here because the type system is
+        // not on the wire, and the runtime must refuse it on its own.
+        ...({ storeId: rivalStore.id } as Record<string, unknown>),
+      }),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+
+    // And nothing was written into the victim's product.
+    const versions = await listProductVersions(db, victim.seller, victim.productId);
+    expect(versions.map((v) => v.versionNo), "no draft was opened by the attempt")
+      .toEqual([1]);
   });
 
   it("refuses a product that does not exist the same way as one that is not theirs",

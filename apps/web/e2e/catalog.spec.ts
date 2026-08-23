@@ -255,17 +255,38 @@ test.describe("a seller publishes a digital product, and the public can see it",
     );
     expect(storedMinor).toBe("15000");
 
-    // 6. Before the PRODUCT is published, its public URL must not exist.
+    /*
+     * 6. The file. A digital product must deliver something before it may be
+     *    published — one published with no files would take a buyer's money and
+     *    hand back an empty page, which is the same dishonesty as a placeholder
+     *    file arriving by omission.
+     *
+     *    The dashboard says so plainly until a file exists.
+     */
+    const productId = sqlOne(
+      `select p.id from products p join stores s on s.id = p.store_id
+        where s.slug = '${storeSlug}' and p.slug = '${productSlug}'`,
+    );
+    await expect(page.getByTestId(`no-assets-${productId}`)).toBeVisible();
+    await page.getByTestId(`asset-title-${productId}`).fill("Le guide (PDF)");
+    await page.getByTestId(`asset-file-${productId}`).setInputFiles({
+      name: "guide.pdf", mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.7\nle guide\n%%EOF\n", "utf8"),
+    });
+    await page.getByTestId(`asset-submit-${productId}`).click();
+    await expect(page.getByTestId(`no-assets-${productId}`)).toHaveCount(0);
+
+    // 7. Before the PRODUCT is published, its public URL must not exist.
     const anonymous = await browser.newContext();
     const visitor = await anonymous.newPage();
     const early = await visitor.goto(`/fr/s/${storeSlug}/${productSlug}`);
     expect(early?.status(), "a draft product must not be reachable").toBe(404);
 
-    // 7. Publish it.
+    // 8. Publish it.
     await page.getByRole("button", { name: "Publier", exact: true }).click();
     await expect(page.getByRole("link", { name: "Voir la page publique" })).toHaveCount(2);
 
-    // 8. The anonymous visitor — no cookies, no session — reaches the URL.
+    // 9. The anonymous visitor — no cookies, no session — reaches the URL.
     const response = await visitor.goto(`/fr/s/${storeSlug}/${productSlug}`);
     expect(response?.status()).toBe(200);
 

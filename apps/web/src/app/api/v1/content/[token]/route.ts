@@ -73,6 +73,25 @@ export async function GET(
         { status: 401, headers: { "content-type": "application/json" } },
       );
     }
+    /*
+     * The third answer, and the only refusal allowed to be specific.
+     *
+     * A download limit is reached only by somebody who has ALREADY proved a
+     * live entitlement to this exact file — the domain checks the entitlement
+     * before it counts. Telling them they have used their allowance discloses
+     * a fact about their own purchase, to them, and leaves them able to act on
+     * it. A prober never sees this: they are stopped by the 403 above, one
+     * check earlier, having proved nothing.
+     *
+     * 429 rather than 403 because the request was legitimate and the answer is
+     * about exhaustion, not about permission.
+     */
+    if (error instanceof content.DownloadLimitReachedError) {
+      return new Response(
+        JSON.stringify({ error: { code: error.code, message: error.message } }),
+        { status: 429, headers: { "content-type": "application/json" } },
+      );
+    }
     return new Response(
       JSON.stringify({ error: { code: "content.forbidden", message: "You do not have access to this content." } }),
       { status: 403, headers: { "content-type": "application/json" } },
