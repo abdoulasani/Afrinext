@@ -40,3 +40,49 @@ export function serialiseMoney(
     formatted: m.formatMoney(amount, registry),
   };
 }
+
+/**
+ * Country codes to display names, in the reader's language.
+ *
+ * The `countries` table stores one canonical name; `Intl.DisplayNames` turns
+ * the code into "Niger" or "Nigéria" for the locale being rendered. Falling
+ * back to the stored name keeps a country visible even if the runtime has no
+ * data for it, and falling back to the code keeps it visible even then.
+ */
+export async function countryNames(
+  locale: string = "fr",
+): Promise<Readonly<Record<string, string>>> {
+  const rows = await getDb().execute<{ [k: string]: unknown; code: string; name: string }>(
+    sql`select code, name from countries`,
+  );
+  let display: Intl.DisplayNames | undefined;
+  try {
+    display = new Intl.DisplayNames([locale === "en" ? "en" : "fr"], { type: "region" });
+  } catch {
+    display = undefined;
+  }
+  const names: Record<string, string> = {};
+  for (const row of rows.rows) {
+    names[row.code] = display?.of(row.code) ?? row.name;
+  }
+  return names;
+}
+
+/**
+ * The countries a seller may choose, in the reader's language.
+ *
+ * Only markets Afrinext has actually launched in: a store in a country with
+ * no currency row, no payment channel and no support is a store that cannot
+ * take money.
+ */
+export async function supportedCountries(
+  locale: string = "fr",
+): Promise<readonly { code: string; name: string }[]> {
+  const [rows, names] = await Promise.all([
+    getDb().execute<{ [k: string]: unknown; code: string }>(
+      sql`select code from countries where is_supported = true order by code`,
+    ),
+    countryNames(locale),
+  ]);
+  return rows.rows.map((row) => ({ code: row.code, name: names[row.code] ?? row.code }));
+}

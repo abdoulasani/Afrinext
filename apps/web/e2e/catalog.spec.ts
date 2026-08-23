@@ -129,37 +129,89 @@ test.describe("a seller publishes a digital product, and the public can see it",
     // as a permission but no role a new account holds carries it.
     await page.goto("/fr/sell");
     await expect(page.getByText("Votre compte n'a pas encore l'autorisation")).toBeVisible();
-    await expect(page.locator('input[name="name"]')).toHaveCount(0);
+    await expect(page.getByTestId("wizard-next")).toHaveCount(0);
+
+    // Nor by typing the wizard's URL, which is the whole point of not merely
+    // hiding the link.
+    await page.goto("/fr/sell/nouvelle");
+    await page.waitForURL(/\/fr\/sell$/);
 
     // And the SERVER refuses too, not just the screen. A hidden form is not a
     // permission: this posts straight to the endpoint the form would post to.
     // Without this assertion, dropping the authorize() call in createStore
     // leaves every test green — verified by doing exactly that.
-    const refused = await apiPost(page, "/api/v1/stores", { name: "Sneaky Store" });
+    const refused = await apiPost(page, "/api/v1/stores", {
+      name: "Sneaky Store", storeType: "digital_product",
+    });
     expect(refused.status, "a non-seller must be refused by the API").toBe(403);
     expect((refused.body as { error: { code: string } }).error.code).toBe("authz.denied");
     expect(sqlOne("select count(*) from stores where name = 'Sneaky Store'")).toBe("0");
 
+    /*
+     * And a request with a perfectly invalid body is STILL 403, not 400.
+     *
+     * That ordering is the assertion: permission is decided before the body is
+     * judged, so a stranger is never told which fields the endpoint wants or
+     * which store types exist. Reversing the two — validating first — turns
+     * this into a 400 and hands out a fact they had not earned.
+     */
+    const alsoRefused = await apiPost(page, "/api/v1/stores", { storeType: "not_a_type" });
+    expect(alsoRefused.status, "permission answers before validation").toBe(403);
+
     grantSeller(userId);
 
     // 1. Holding the role is still not enough: the seller terms must be
-    //    accepted first. The create form is not even rendered yet.
+    //    accepted first.
     await page.goto("/fr/sell");
     await expect(page.getByTestId("consent-gate")).toBeVisible();
-    await expect(page.locator('input[name="name"]')).toHaveCount(0);
     await page.getByTestId("consent-accept").click();
     await expect(page.getByTestId("consent-gate")).toHaveCount(0);
 
-    // 2. Now create the store.
-    await page.locator('input[name="name"]').fill(storeSlug);
-    await page.locator('form button[type="submit"]').click();
+    // 2. Now open a store, through the four-step wizard.
+    await page.goto("/fr/sell/nouvelle");
+
+    //    Step 1 — the trade. Nothing may continue until one is chosen, which is
+    //    what makes `store_type` a real answer rather than a silent default.
+    await expect(page.getByTestId("wizard-next")).toBeDisabled();
+    //    Six choices, one per store type, and each is a real radio with a real
+    //    accessible name. The input is visually hidden so the whole card can be
+    //    the target, which is only acceptable if a screen reader still gets a
+    //    labelled radio group — so that is asserted rather than assumed.
+    await expect(page.getByRole("radio")).toHaveCount(6);
+    await expect(page.getByRole("radio", { name: /Produits numériques/ })).toHaveCount(1);
+    await page.getByTestId("wizard-type-digital_product").click();
+    await page.getByTestId("wizard-next").click();
+
+    //    Step 2 — identity. The slug is derived from the name server-side; the
+    //    wizard never asks for one and never sends one.
+    await page.locator("#store-name").fill(storeSlug);
+    await page.locator("#store-tagline").fill("Guides pratiques");
+    await page.getByTestId("wizard-brand-indigo").click();
+    await page.getByTestId("wizard-next").click();
+
+    //    Step 3 — where. Optional, so it is skipped except for the city.
+    await page.locator("#store-city").fill("Niamey");
+    await page.getByTestId("wizard-next").click();
+
+    //    Step 4 — the preview shows the real store, then submits.
+    await expect(page.getByRole("heading", { name: storeSlug })).toBeVisible();
+    await page.getByTestId("wizard-submit").click();
     await page.waitForURL(new RegExp(`/fr/sell/${storeSlug}$`));
 
-    // 3. Publishing the product must be impossible while the store is a draft,
-    //    so the store is published first — which is also the seller's real order
-    //    of operations.
-    await page.getByRole("button", { name: "Publier la boutique" }).click();
-    await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
+    // The type and the brand are the ones that were chosen, not defaults that
+    // happened to match. Read from the database, not from the screen.
+    expect(
+      sqlOne(`select store_type || ' ' || brand from stores where slug = '${storeSlug}'`),
+    ).toBe("digital_product indigo");
+
+    /*
+     * 3. The dashboard asks for an offering BEFORE it offers to publish, and
+     *    that is the whole point of the guided flow: a seller is never invited
+     *    to publish an empty shop that a buyer would then land on. So the
+     *    publish control is not on screen yet.
+     */
+    await expect(page.getByText("Ajoutez votre première offre")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Publier la boutique" })).toHaveCount(0);
 
     // 4. Create a paid digital product. 15 000 XOF, typed the way a person types it.
     await page.locator('input[name="title"]').fill("Guide de Niamey");
@@ -167,6 +219,11 @@ test.describe("a seller publishes a digital product, and the public can see it",
     await page.locator('input[name="price"]').fill("15 000");
     await page.getByRole("button", { name: "Ajouter un produit numérique" }).click();
     await expect(page.getByText("Guide de Niamey")).toBeVisible();
+
+    // 5. Now — and only now — the store can be published. The product cannot be
+    //    published before its store, so this is also the required order.
+    await page.getByRole("button", { name: "Publier la boutique" }).click();
+    await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
 
     // The price is whole francs, because XOF has zero decimals. Read straight
     // from the database: a 100× error would show as 1500000 here.
@@ -176,17 +233,17 @@ test.describe("a seller publishes a digital product, and the public can see it",
     );
     expect(storedMinor).toBe("15000");
 
-    // 5. Before publishing, the public URL must not exist.
+    // 6. Before the PRODUCT is published, its public URL must not exist.
     const anonymous = await browser.newContext();
     const visitor = await anonymous.newPage();
     const early = await visitor.goto(`/fr/s/${storeSlug}/${productSlug}`);
     expect(early?.status(), "a draft product must not be reachable").toBe(404);
 
-    // 6. Publish it.
+    // 7. Publish it.
     await page.getByRole("button", { name: "Publier", exact: true }).click();
     await expect(page.getByRole("link", { name: "Voir la page publique" })).toHaveCount(2);
 
-    // 7. The anonymous visitor — no cookies, no session — reaches the URL.
+    // 8. The anonymous visitor — no cookies, no session — reaches the URL.
     const response = await visitor.goto(`/fr/s/${storeSlug}/${productSlug}`);
     expect(response?.status()).toBe(200);
 

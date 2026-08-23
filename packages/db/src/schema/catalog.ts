@@ -23,8 +23,24 @@ export const stores = pgTable(
     slug: text("slug").notNull(),
     name: text("name").notNull(),
     tagline: text("tagline"),
+    /**
+     * Which of the six businesses this store is. The type decides how the
+     * store PRESENTS — vocabulary, sections, dashboard — never what it is:
+     * orders, payments and authorization see one generic Store.
+     */
+    storeType: text("store_type").notNull().default("digital_product"),
+    /** The longer "about" text, distinct from the one-line tagline. */
+    description: text("description"),
     countryCode: text("country_code").references(() => countries.code),
+    city: text("city"),
+    /** A PUBLIC business contact the owner chose to show. Never the sign-in number. */
+    contactPhone: text("contact_phone"),
+    /** A named color story from the curated palette. Not an upload, on purpose. */
+    brand: text("brand").notNull().default("laterite"),
     status: text("status").notNull().default("draft"), // draft | published | suspended
+    /** Set once, at first publish. Re-publishing cannot bump a store to the top. */
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    suspendedAt: timestamp("suspended_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -33,6 +49,21 @@ export const stores = pgTable(
     index("stores_owner_idx").on(t.ownerUserId),
     check("stores_status_valid", sql`${t.status} in ('draft','published','suspended')`),
     check("stores_slug_shape", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and length(${t.slug}) between 3 and 48`),
+    check(
+      "stores_type_valid",
+      sql`${t.storeType} in ('formation','digital_product','physical_product','service','creator','delivery')`,
+    ),
+    check("stores_description_length", sql`${t.description} is null or char_length(${t.description}) <= 2000`),
+    check("stores_city_length", sql`${t.city} is null or char_length(btrim(${t.city})) between 2 and 80`),
+    check(
+      "stores_contact_phone_shape",
+      sql`${t.contactPhone} is null or ${t.contactPhone} ~ '^\+?[0-9][0-9 ]{6,18}[0-9]$'`,
+    ),
+    check(
+      "stores_brand_valid",
+      sql`${t.brand} in ('laterite','indigo','forest','ochre','aubergine','sable')`,
+    ),
+    check("stores_published_has_timestamp", sql`${t.status} <> 'published' or ${t.publishedAt} is not null`),
   ],
 );
 

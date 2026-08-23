@@ -137,8 +137,9 @@ function publishedProduct(priceMinor: number): { storeSlug: string; productSlug:
       insert into users (id, display_name, locale, status)
       values (gen_random_uuid(), 'Vendeur ${storeSlug}', 'fr', 'active') returning id
     ), store as (
-      insert into stores (id, owner_user_id, slug, name, status)
-      select gen_random_uuid(), seller.id, '${storeSlug}', 'Boutique', 'published' from seller
+      insert into stores (id, owner_user_id, slug, name, status, published_at)
+      select gen_random_uuid(), seller.id, '${storeSlug}', 'Boutique', 'published', now()
+        from seller
       returning id
     )
     insert into products (id, store_id, slug, kind, title, price_minor, currency, status, published_at)

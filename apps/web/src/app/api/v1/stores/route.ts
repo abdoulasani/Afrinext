@@ -30,20 +30,42 @@ export async function GET(): Promise<NextResponse> {
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const actor = await requireActor();
-    const body = (await request.json()) as { name?: unknown; slug?: unknown; tagline?: unknown };
-    if (typeof body.name !== "string") {
-      return NextResponse.json(
-        { error: { code: "request.invalid", message: "A store name is required." } },
-        { status: 400 },
-      );
-    }
+    const body = (await request.json()) as {
+      name?: unknown; slug?: unknown; tagline?: unknown; storeType?: unknown;
+      description?: unknown; city?: unknown; countryCode?: unknown;
+      contactPhone?: unknown; brand?: unknown;
+    };
+    /*
+     * Every field goes to the domain RAW.
+     *
+     * Nothing about the request body is judged here, and that ordering is the
+     * point: `createStore` runs `authorize()` and the seller-consent gate
+     * before it looks at a single value, so a caller who may not open a store
+     * is told exactly that — not that their store type is unsupported, which
+     * would answer a question they were never entitled to ask.
+     *
+     * The type and the brand are still validated; they are validated by
+     * `parseStoreType` and `parseStoreBrand` inside the domain, which is the
+     * only place that can be sure the gates have already run.
+     */
     const store = await catalog.createStore(getDb(), actor, {
-      name: body.name,
+      name: typeof body.name === "string" ? body.name : "",
+      storeType: typeof body.storeType === "string" ? body.storeType : "",
       ...(typeof body.slug === "string" ? { slug: body.slug } : {}),
       ...(typeof body.tagline === "string" ? { tagline: body.tagline } : {}),
+      ...(typeof body.description === "string" ? { description: body.description } : {}),
+      ...(typeof body.city === "string" ? { city: body.city } : {}),
+      ...(typeof body.countryCode === "string" ? { countryCode: body.countryCode } : {}),
+      ...(typeof body.contactPhone === "string" ? { contactPhone: body.contactPhone } : {}),
+      ...(body.brand !== undefined ? { brand: String(body.brand) } : {}),
     });
     return NextResponse.json(
-      { data: { id: store.id, slug: store.slug, name: store.name, status: store.status } },
+      {
+        data: {
+          id: store.id, slug: store.slug, name: store.name,
+          status: store.status, storeType: store.storeType,
+        },
+      },
       { status: 201 },
     );
   } catch (error: unknown) {

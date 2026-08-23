@@ -98,7 +98,7 @@ describe("1 · the protected action is refused without consent", () => {
 
     // The actor holds store.create. Authorization is satisfied; consent is not.
     // Those are two separate gates and this proves the second one exists.
-    await expect(createStore(db, actor, { name: "Sans Accord" }))
+    await expect(createStore(db, actor, { storeType: "digital_product", name: "Sans Accord" }))
       .rejects.toBeInstanceOf(ConsentRequiredError);
     expect(await storeCount()).toBe(0);
   });
@@ -106,7 +106,7 @@ describe("1 · the protected action is refused without consent", () => {
   it("names the document the client must present", async () => {
     const actor = await unconsentedSeller();
     try {
-      await createStore(db, actor, { name: "Sans Accord" });
+      await createStore(db, actor, { storeType: "digital_product", name: "Sans Accord" });
       throw new Error("should have been refused");
     } catch (error: unknown) {
       expect(error).toBeInstanceOf(ConsentRequiredError);
@@ -120,12 +120,12 @@ describe("1 · the protected action is refused without consent", () => {
     const notSeller = await createTestUser(db, { locale: "fr" });
     await grantGlobal(notSeller, "member");
     await accept({ userId: notSeller });
-    await expect(createStore(db, { userId: notSeller }, { name: "No Role" }))
+    await expect(createStore(db, { userId: notSeller }, { name: "No Role", storeType: "digital_product" }))
       .rejects.toBeInstanceOf(PermissionDeniedError);
 
     // Seller but not consented: refused for consent, not permission.
     const notConsented = await unconsentedSeller();
-    await expect(createStore(db, notConsented, { name: "No Consent" }))
+    await expect(createStore(db, notConsented, { storeType: "digital_product", name: "No Consent" }))
       .rejects.toBeInstanceOf(ConsentRequiredError);
 
     expect(await storeCount()).toBe(0);
@@ -137,7 +137,7 @@ describe("2 · the current version allows the action", () => {
     const actor = await unconsentedSeller();
     await accept(actor);
 
-    const store = await createStore(db, actor, { name: "Avec Accord", slug: "avec-accord" });
+    const store = await createStore(db, actor, { storeType: "digital_product", name: "Avec Accord", slug: "avec-accord" });
     expect(store.slug).toBe("avec-accord");
     expect(await storeCount()).toBe(1);
   });
@@ -148,7 +148,7 @@ describe("2 · the current version allows the action", () => {
     // so they are deliberately not gated again.
     const actor = await unconsentedSeller();
     await accept(actor);
-    const store = await createStore(db, actor, { name: "Flow", slug: "flow-store" });
+    const store = await createStore(db, actor, { storeType: "digital_product", name: "Flow", slug: "flow-store" });
     await publishStore(db, actor, store.id);
     await expect(
       createProduct(db, actor, { storeId: store.id, title: "Guide", price: money(5000n, "XOF") }),
@@ -160,13 +160,13 @@ describe("3 · an old version is not the current one", () => {
   it("refuses again after a newer version becomes effective", async () => {
     const actor = await unconsentedSeller();
     await accept(actor);
-    await expect(createStore(db, actor, { name: "First", slug: "first-store" })).resolves.toBeDefined();
+    await expect(createStore(db, actor, { storeType: "digital_product", name: "First", slug: "first-store" })).resolves.toBeDefined();
 
     await publishNewVersion("seller_terms", "2026-09-01");
 
     // The old acceptance is still on record and still true — it just is not an
     // acceptance of what is in force now.
-    await expect(createStore(db, actor, { name: "Second", slug: "second-store" }))
+    await expect(createStore(db, actor, { storeType: "digital_product", name: "Second", slug: "second-store" }))
       .rejects.toBeInstanceOf(ConsentRequiredError);
     expect(await storeCount()).toBe(1);
   });
@@ -177,7 +177,7 @@ describe("3 · an old version is not the current one", () => {
     await publishNewVersion("seller_terms", "2026-09-01");
     await accept(actor);
 
-    await expect(createStore(db, actor, { name: "After", slug: "after-store" })).resolves.toBeDefined();
+    await expect(createStore(db, actor, { storeType: "digital_product", name: "After", slug: "after-store" })).resolves.toBeDefined();
 
     // Both acceptances survive. Which terms bound this person in August has an
     // answer, and it is not overwritten by September's.
@@ -196,7 +196,7 @@ describe("3 · an old version is not the current one", () => {
     await recordConsent(db, {
       userId: actor.userId, documentVersionId: old!.versionId, method: "seller_onboarding",
     });
-    await expect(createStore(db, actor, { name: "Stale", slug: "stale-store" }))
+    await expect(createStore(db, actor, { storeType: "digital_product", name: "Stale", slug: "stale-store" }))
       .rejects.toBeInstanceOf(ConsentRequiredError);
   });
 });
@@ -275,9 +275,9 @@ describe("5 · the record identifies the actor and the version", () => {
     const other = await unconsentedSeller();
     await accept(consented);
 
-    await expect(createStore(db, other, { name: "Borrowed", slug: "borrowed-store" }))
+    await expect(createStore(db, other, { storeType: "digital_product", name: "Borrowed", slug: "borrowed-store" }))
       .rejects.toBeInstanceOf(ConsentRequiredError);
-    await expect(createStore(db, consented, { name: "Own", slug: "own-store" })).resolves.toBeDefined();
+    await expect(createStore(db, consented, { storeType: "digital_product", name: "Own", slug: "own-store" })).resolves.toBeDefined();
   });
 });
 
@@ -295,7 +295,7 @@ describe("7 · nobody can consent on someone else's behalf", () => {
     });
 
     expect(await sellerTermsRecords(victim.userId)).toBe(0);
-    await expect(createStore(db, victim, { name: "Victim", slug: "victim-store" }))
+    await expect(createStore(db, victim, { storeType: "digital_product", name: "Victim", slug: "victim-store" }))
       .rejects.toBeInstanceOf(ConsentRequiredError);
   });
 });
@@ -314,7 +314,7 @@ describe("the gate fails closed", () => {
     await acceptCurrentVersions(db, actor.userId, ["seller_terms"], { locale: "en" }, {
       method: "seller_onboarding",
     });
-    await expect(createStore(db, actor, { name: "English", slug: "english-store" })).resolves.toBeDefined();
+    await expect(createStore(db, actor, { storeType: "digital_product", name: "English", slug: "english-store" })).resolves.toBeDefined();
 
     // Now the realistic failure: the English translation is withdrawn while the
     // French one stays. This is a missing-translation incident, not a
@@ -332,13 +332,13 @@ describe("the gate fails closed", () => {
     `);
     await expect(requireConsent(db, actor.userId, ["seller_terms"], { locale: "en" }))
       .rejects.toBeInstanceOf(ConsentUnavailableError);
-    await expect(createStore(db, actor, { name: "Gone", slug: "gone-store" }))
+    await expect(createStore(db, actor, { storeType: "digital_product", name: "Gone", slug: "gone-store" }))
       .rejects.toBeInstanceOf(ConsentUnavailableError);
 
     // And the French speaker next door is unaffected — the gate is per locale,
     // not global.
     const french = await unconsentedSeller();
-    await expect(createStore(db, french, { name: "Fr", slug: "fr-store" }))
+    await expect(createStore(db, french, { storeType: "digital_product", name: "Fr", slug: "fr-store" }))
       .rejects.toBeInstanceOf(ConsentRequiredError);
   });
 
@@ -350,7 +350,7 @@ describe("the gate fails closed", () => {
         from legal_documents d
        where d.id = v.document_id and d.kind = 'seller_terms'
     `);
-    await expect(createStore(db, actor, { name: "Future", slug: "future-store" }))
+    await expect(createStore(db, actor, { storeType: "digital_product", name: "Future", slug: "future-store" }))
       .rejects.toBeInstanceOf(ConsentUnavailableError);
   });
 

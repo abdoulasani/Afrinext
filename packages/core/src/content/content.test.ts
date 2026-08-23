@@ -108,7 +108,7 @@ async function publishedWithAsset(
 ): Promise<Listing> {
   counter += 1;
   const seller = await makeSeller();
-  const store = await createStore(db, seller, {
+  const store = await createStore(db, seller, { storeType: "digital_product",
     name: `Boutique ${counter}`, slug: `boutique-${counter}`,
   });
   await publishStore(db, seller, store.id);

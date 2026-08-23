@@ -129,6 +129,13 @@ test.describe("consent is a server gate, not a screen", () => {
     // Straight to the endpoint. This session has never rendered /fr/sell, so
     // no consent UI has ever been shown to it — and that changes nothing.
     const ungated = uniqueName("Ungated Store");
+    /*
+     * No `storeType`, deliberately. It is a required field, so a request that
+     * got past the consent gate would be refused with 400 — and the fact that
+     * this answers 451 instead is the proof that the gate runs BEFORE the body
+     * is judged. A caller who has not accepted the terms learns nothing about
+     * which fields the endpoint wants.
+     */
     const refused = await api(page, "POST", "/api/v1/stores", { name: ungated });
     expect(refused.status, "consent is required, and this is where it is enforced").toBe(451);
     const error = (refused.body as { error: { code: string; message: string } }).error;
@@ -187,7 +194,8 @@ test.describe("consent is a server gate, not a screen", () => {
     expect(recorded).toBe("seller_terms|0.0.0-placeholder|seller_onboarding|true");
 
     // And now the same API call that was 451 succeeds.
-    const created = await api(page, "POST", "/api/v1/stores", { name: uniqueName("Gate Open") });
+    const created = await api(page, "POST", "/api/v1/stores",
+      { name: uniqueName("Gate Open"), storeType: "digital_product" });
     expect(created.status).toBe(201);
   });
 
@@ -204,7 +212,9 @@ test.describe("consent is a server gate, not a screen", () => {
     // to accept anything. One acceptance, one gate, two transports.
     await page.goto("/fr/sell");
     await expect(page.getByTestId("consent-gate")).toHaveCount(0);
-    await expect(page.locator('input[name="name"]')).toBeVisible();
+    // The wizard is now reachable, which it was not a moment ago.
+    await page.goto("/fr/sell/nouvelle");
+    await expect(page.locator("#store-name").or(page.getByTestId("wizard-next"))).toBeVisible();
 
     // Accepting twice records once — the acceptance is of a version, not an
     // event that can be repeated.
@@ -221,7 +231,8 @@ test.describe("consent is a server gate, not a screen", () => {
     grantSeller(userId);
     await api(page, "POST", "/api/v1/consent", {});
 
-    const first = await api(page, "POST", "/api/v1/stores", { name: uniqueName("Before New Terms") });
+    const first = await api(page, "POST", "/api/v1/stores",
+      { name: uniqueName("Before New Terms"), storeType: "digital_product" });
     expect(first.status).toBe(201);
 
     // An operator publishes new seller terms, effective now.
@@ -238,7 +249,8 @@ test.describe("consent is a server gate, not a screen", () => {
     // The previous acceptance is still on record and still true — it is simply
     // not an acceptance of what is in force now.
     const afterTerms = uniqueName("After New Terms");
-    const second = await api(page, "POST", "/api/v1/stores", { name: afterTerms });
+    const second = await api(page, "POST", "/api/v1/stores",
+      { name: afterTerms, storeType: "digital_product" });
     expect(second.status).toBe(451);
     expect(sqlOne(`select count(*) from stores where name = '${afterTerms}'`)).toBe("0");
 

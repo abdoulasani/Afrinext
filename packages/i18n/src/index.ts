@@ -31,6 +31,40 @@ export function resolveLocale(candidate: string | undefined | null): Locale {
 }
 
 /**
+ * Plural rules per locale, built once. `Intl.PluralRules` is what knows that
+ * French says "1 offre" AND "0 offre" but "2 offres", while English says
+ * "0 offers" — a difference that "offre(s)" papers over by being wrong in both.
+ */
+const PLURALS: Record<Locale, Intl.PluralRules> = {
+  fr: new Intl.PluralRules("fr"),
+  en: new Intl.PluralRules("en"),
+};
+
+/**
+ * Picks the plural variant of a key, if the catalogue defines one.
+ *
+ * A pluralised message is written as the base key plus `#one`, `#other` and so
+ * on — the categories are CLDR's, so a locale that needs `#few` gets it by
+ * adding the key rather than by changing this function. A message with no
+ * variants is returned untouched, which is almost all of them.
+ */
+function variantKey(
+  locale: Locale,
+  key: string,
+  values: Readonly<Record<string, string | number>>,
+): string {
+  const catalogue = CATALOGUES[locale];
+  // Cheapest possible check first: no `#one` means this key is not pluralised.
+  if (!(`${key}#one` in catalogue)) return key;
+
+  const numeric = Object.values(values).find((value) => typeof value === "number");
+  if (numeric === undefined) return key;
+
+  const category = PLURALS[locale].select(numeric);
+  return `${key}#${category}` in catalogue ? `${key}#${category}` : key;
+}
+
+/**
  * Looks up a message and substitutes {named} placeholders.
  * A missing key returns the key itself rather than an empty string, so the gap
  * is visible in the interface instead of silently rendering nothing.
@@ -40,7 +74,13 @@ export function translate(
   key: MessageKey,
   values: Readonly<Record<string, string | number>> = {},
 ): string {
-  const template = CATALOGUES[locale][key] ?? CATALOGUES[DEFAULT_LOCALE][key] ?? key;
+  const resolved = variantKey(locale, key, values);
+  const template =
+    CATALOGUES[locale][resolved]
+    ?? CATALOGUES[locale][key]
+    ?? CATALOGUES[DEFAULT_LOCALE][variantKey(DEFAULT_LOCALE, key, values)]
+    ?? CATALOGUES[DEFAULT_LOCALE][key]
+    ?? key;
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>
     name in values ? String(values[name]) : match,
   );

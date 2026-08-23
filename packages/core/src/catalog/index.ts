@@ -3,12 +3,17 @@ import type { Database } from "@afrinext/db";
 import { audit } from "../audit";
 import { authorize, type Actor } from "../authz";
 import { requireAccountConsent, requireConsent, type LegalDocumentKind } from "../consent";
+import {
+  defaultBrandFor, parseStoreBrand, parseStoreType, type StoreBrand, type StoreType,
+} from "./store-types";
 import { DomainError } from "../errors";
 import { uuidv7 } from "../ids";
 import { money, type Money } from "../money";
 import { assertUsableSlug, slugify } from "./slug";
 
 export * from "./slug";
+export * from "./store-types";
+export * from "./marketplace";
 
 /**
  * Stores and digital products.
@@ -67,8 +72,14 @@ export interface StoreRecord {
   readonly slug: string;
   readonly name: string;
   readonly tagline: string | null;
+  readonly storeType: StoreType;
+  readonly description: string | null;
   readonly countryCode: string | null;
+  readonly city: string | null;
+  readonly contactPhone: string | null;
+  readonly brand: StoreBrand;
   readonly status: "draft" | "published" | "suspended";
+  readonly publishedAt: Date | null;
   readonly ownerUserId: string;
 }
 
@@ -78,10 +89,22 @@ interface StoreRow {
   slug: string;
   name: string;
   tagline: string | null;
+  store_type: string;
+  description: string | null;
   country_code: string | null;
+  city: string | null;
+  contact_phone: string | null;
+  brand: string;
   status: string;
+  published_at: string | Date | null;
   owner_user_id: string;
 }
+
+/** Every store read selects the same columns, so the list exists once. */
+const STORE_COLUMNS = sql`
+  id, slug, name, tagline, store_type, description, country_code, city,
+  contact_phone, brand, status, published_at, owner_user_id
+`;
 
 function toStore(row: StoreRow): StoreRecord {
   return {
@@ -89,8 +112,14 @@ function toStore(row: StoreRow): StoreRecord {
     slug: row.slug,
     name: row.name,
     tagline: row.tagline,
+    storeType: row.store_type as StoreType,
+    description: row.description,
     countryCode: row.country_code,
+    city: row.city,
+    contactPhone: row.contact_phone,
+    brand: row.brand as StoreBrand,
     status: row.status as StoreRecord["status"],
+    publishedAt: row.published_at === null ? null : new Date(row.published_at),
     ownerUserId: row.owner_user_id,
   };
 }
@@ -107,10 +136,28 @@ export const SELLER_CONSENT_KINDS: readonly LegalDocumentKind[] = ["seller_terms
 
 export interface CreateStoreInput {
   readonly name: string;
+  /**
+   * Which of the six businesses this is. REQUIRED and validated: there is no
+   * sensible default, and guessing would decide how somebody's shop presents
+   * itself to buyers.
+   *
+   * Typed as raw rather than `StoreType`, and that is deliberate. When it was
+   * `StoreType`, every HTTP boundary had to call `parseStoreType` to satisfy
+   * the compiler — which put input validation BEFORE `authorize()` and
+   * `requireSellerConsent()`, so a caller with no permission was answered
+   * "unsupported store type" instead of "denied". `createStore` parses this
+   * itself, after the gates. The type system must not be able to reorder them.
+   */
+  readonly storeType: StoreType | (string & {});
   /** Optional: derived from the name when absent. */
   readonly slug?: string | undefined;
   readonly tagline?: string | undefined;
+  readonly description?: string | undefined;
   readonly countryCode?: string | undefined;
+  readonly city?: string | undefined;
+  readonly contactPhone?: string | undefined;
+  /** Optional: derived from the slug when absent. Raw, for the reason above. */
+  readonly brand?: StoreBrand | (string & {}) | undefined;
 }
 
 /**
@@ -156,8 +203,13 @@ export async function createStore(
   await authorize(db, actor, "store.create");
   await requireSellerConsent(db, actor);
 
+  // Validated before anything is written, so an unsupported type or brand
+  // leaves no row behind.
+  const storeType = parseStoreType(input.storeType);
+
   const slug = input.slug ?? slugify(input.name);
   assertUsableSlug(slug, "store");
+  const brand = input.brand === undefined ? defaultBrandFor(slug) : parseStoreBrand(input.brand);
 
   const taken = await db.execute(sql`select 1 from stores where slug = ${slug}`);
   if (taken.rows.length > 0) throw new SlugTakenError(slug);
@@ -165,9 +217,12 @@ export async function createStore(
   const storeId = uuidv7();
   await db.transaction(async (tx) => {
     await tx.execute(sql`
-      insert into stores (id, owner_user_id, slug, name, tagline, country_code, status)
+      insert into stores (id, owner_user_id, slug, name, tagline, store_type, description,
+                          country_code, city, contact_phone, brand, status)
       values (${storeId}, ${actor.userId}::uuid, ${slug}, ${input.name},
-              ${input.tagline ?? null}, ${input.countryCode ?? null}, 'draft')
+              ${input.tagline ?? null}, ${storeType}, ${input.description ?? null},
+              ${input.countryCode ?? null}, ${input.city ?? null},
+              ${input.contactPhone ?? null}, ${brand}, 'draft')
     `);
     await tx.execute(sql`
       insert into role_assignments (id, user_id, role_id, scope_type, scope_id, granted_by)
@@ -182,12 +237,11 @@ export async function createStore(
     action: "store.created",
     targetType: "store",
     targetId: storeId,
-    context: { slug, name: input.name },
+    context: { slug, name: input.name, storeType },
   });
 
   const created = await db.execute<StoreRow>(sql`
-    select id, slug, name, tagline, country_code, status, owner_user_id
-      from stores where id = ${storeId}
+    select ${STORE_COLUMNS} from stores where id = ${storeId}
   `);
   return toStore(created.rows[0]!);
 }
@@ -195,7 +249,19 @@ export async function createStore(
 export interface UpdateStoreInput {
   readonly name?: string | undefined;
   readonly tagline?: string | undefined;
+  readonly description?: string | undefined;
   readonly countryCode?: string | undefined;
+  readonly city?: string | undefined;
+  readonly contactPhone?: string | undefined;
+  readonly brand?: StoreBrand | undefined;
+  /**
+   * The type is editable while the store is still a DRAFT.
+   *
+   * Once published, buyers have seen the store presented one way and its
+   * offerings were written for that presentation; silently turning a formation
+   * into a delivery service is not an edit, it is a different business.
+   */
+  readonly storeType?: StoreType | (string & {}) | undefined;
 }
 
 /** Changes a store's public identity. The slug is deliberately not editable. */
@@ -207,17 +273,33 @@ export async function updateStore(
 ): Promise<StoreRecord> {
   await authorize(db, actor, "store.update", { type: "store", id: storeId });
 
+  const brand = patch.brand === undefined ? null : parseStoreBrand(patch.brand);
+  const storeType = patch.storeType === undefined ? null : parseStoreType(patch.storeType);
+
   const updated = await db.execute<StoreRow>(sql`
     update stores set
       name = coalesce(${patch.name ?? null}, name),
       tagline = coalesce(${patch.tagline ?? null}, tagline),
+      description = coalesce(${patch.description ?? null}, description),
       country_code = coalesce(${patch.countryCode ?? null}, country_code),
+      city = coalesce(${patch.city ?? null}, city),
+      contact_phone = coalesce(${patch.contactPhone ?? null}, contact_phone),
+      brand = coalesce(${brand}, brand),
+      -- Draft only. The guard is in the statement rather than a prior read, so
+      -- a publish racing this edit cannot slip a type change through.
+      store_type = case when status = 'draft' then coalesce(${storeType}, store_type)
+                        else store_type end,
       updated_at = now()
     where id = ${storeId}
-    returning id, slug, name, tagline, country_code, status, owner_user_id
+    returning ${STORE_COLUMNS}
   `);
   const row = updated.rows[0];
   if (row === undefined) throw new StoreNotFoundError(storeId);
+  if (storeType !== null && row.store_type !== storeType) {
+    throw new NotPublishableError(
+      "A store's kind can only be changed while it is still a draft.",
+    );
+  }
 
   await audit(db, {
     actorKind: "user", actorUserId: actor.userId, action: "store.updated",
@@ -235,9 +317,15 @@ export async function publishStore(
   await authorize(db, actor, "store.update", { type: "store", id: storeId });
 
   const updated = await db.execute<StoreRow>(sql`
-    update stores set status = 'published', updated_at = now()
+    update stores set
+      status = 'published',
+      -- coalesce, not now(): first publish stamps it and later ones leave it
+      -- alone, so "newest stores" cannot be gamed by unpublishing and
+      -- republishing.
+      published_at = coalesce(published_at, now()),
+      updated_at = now()
      where id = ${storeId} and status <> 'suspended'
-    returning id, slug, name, tagline, country_code, status, owner_user_id
+    returning ${STORE_COLUMNS}
   `);
   const row = updated.rows[0];
   if (row === undefined) {
@@ -251,11 +339,101 @@ export async function publishStore(
   return toStore(row);
 }
 
+/**
+ * Takes a store out of public view. Moderation, not the owner's own action.
+ *
+ * `store.moderate` is a platform permission, so an owner cannot suspend a
+ * rival and a moderator does not need to be made an owner to act. The reason
+ * is required and audited: a suspension somebody cannot explain later is a
+ * suspension that should not have happened.
+ */
+export async function suspendStore(
+  db: Database,
+  actor: Actor,
+  storeId: string,
+  reason: string,
+): Promise<StoreRecord> {
+  await authorize(db, actor, "store.moderate");
+  const why = reason.trim();
+  if (why.length < 4) {
+    throw new NotPublishableError("Say why the store is being suspended.");
+  }
+
+  const updated = await db.execute<StoreRow>(sql`
+    update stores set status = 'suspended', suspended_at = now(), updated_at = now()
+     where id = ${storeId}::uuid
+    returning ${STORE_COLUMNS}
+  `);
+  const row = updated.rows[0];
+  if (row === undefined) throw new StoreNotFoundError(storeId);
+
+  await audit(db, {
+    actorKind: "user", actorUserId: actor.userId, action: "store.suspended",
+    targetType: "store", targetId: storeId, context: { slug: row.slug, reason: why },
+  });
+  return toStore(row);
+}
+
+/**
+ * Lifts a suspension, back to DRAFT rather than straight to published.
+ *
+ * The owner decides when their store is public again, which is also what makes
+ * reinstatement safe to perform: it restores the ability to publish rather
+ * than publishing on somebody else's behalf.
+ */
+export async function reinstateStore(
+  db: Database,
+  actor: Actor,
+  storeId: string,
+): Promise<StoreRecord> {
+  await authorize(db, actor, "store.moderate");
+
+  const updated = await db.execute<StoreRow>(sql`
+    update stores set status = 'draft', suspended_at = null, updated_at = now()
+     where id = ${storeId}::uuid and status = 'suspended'
+    returning ${STORE_COLUMNS}
+  `);
+  const row = updated.rows[0];
+  if (row === undefined) {
+    throw new NotPublishableError("That store is not suspended.");
+  }
+
+  await audit(db, {
+    actorKind: "user", actorUserId: actor.userId, action: "store.reinstated",
+    targetType: "store", targetId: storeId, context: { slug: row.slug },
+  });
+  return toStore(row);
+}
+
+/** Takes a store out of public view at its OWNER's request. Back to draft. */
+export async function unpublishStore(
+  db: Database,
+  actor: Actor,
+  storeId: string,
+): Promise<StoreRecord> {
+  await authorize(db, actor, "store.update", { type: "store", id: storeId });
+
+  const updated = await db.execute<StoreRow>(sql`
+    update stores set status = 'draft', updated_at = now()
+     where id = ${storeId}::uuid and status = 'published'
+    returning ${STORE_COLUMNS}
+  `);
+  const row = updated.rows[0];
+  if (row === undefined) {
+    throw new NotPublishableError("That store is not published.");
+  }
+
+  await audit(db, {
+    actorKind: "user", actorUserId: actor.userId, action: "store.unpublished",
+    targetType: "store", targetId: storeId, context: { slug: row.slug },
+  });
+  return toStore(row);
+}
+
 /** The stores this actor owns. Scoped to the actor in SQL, never filtered after. */
 export async function listOwnStores(db: Database, actor: Actor): Promise<StoreRecord[]> {
   const rows = await db.execute<StoreRow>(sql`
-    select id, slug, name, tagline, country_code, status, owner_user_id
-      from stores where owner_user_id = ${actor.userId}::uuid
+    select ${STORE_COLUMNS} from stores where owner_user_id = ${actor.userId}::uuid
      order by created_at desc
   `);
   return rows.rows.map(toStore);
@@ -263,8 +441,7 @@ export async function listOwnStores(db: Database, actor: Actor): Promise<StoreRe
 
 export async function findStoreBySlug(db: Database, slug: string): Promise<StoreRecord> {
   const rows = await db.execute<StoreRow>(sql`
-    select id, slug, name, tagline, country_code, status, owner_user_id
-      from stores where slug = ${slug}
+    select ${STORE_COLUMNS} from stores where slug = ${slug}
   `);
   const row = rows.rows[0];
   if (row === undefined) throw new StoreNotFoundError(slug);
@@ -524,6 +701,13 @@ export interface PublicStore {
   readonly slug: string;
   readonly name: string;
   readonly tagline: string | null;
+  readonly storeType: StoreType;
+  readonly description: string | null;
+  readonly brand: StoreBrand;
+  readonly countryCode: string | null;
+  readonly city: string | null;
+  readonly contactPhone: string | null;
+  readonly publishedAt: Date | null;
 }
 
 /**
@@ -537,11 +721,32 @@ export async function findPublicStore(
   db: Database,
   storeSlug: string,
 ): Promise<PublicStore | undefined> {
-  const rows = await db.execute<{ [key: string]: unknown; slug: string; name: string; tagline: string | null }>(sql`
-    select slug, name, tagline from stores where slug = ${storeSlug} and status = 'published'
+  const rows = await db.execute<StoreRow>(sql`
+    select ${STORE_COLUMNS} from stores where slug = ${storeSlug} and status = 'published'
   `);
   const row = rows.rows[0];
-  return row === undefined ? undefined : { slug: row.slug, name: row.name, tagline: row.tagline };
+  if (row === undefined) return undefined;
+  const store = toStore(row);
+  /*
+   * A deliberate projection, not a cast.
+   *
+   * `StoreRecord` carries the owner's user id and the internal store id.
+   * Naming the public fields one by one is what stops a future field — an
+   * internal note, a moderation flag — from reaching a stranger's browser
+   * simply because somebody added a column.
+   */
+  return {
+    slug: store.slug,
+    name: store.name,
+    tagline: store.tagline,
+    storeType: store.storeType,
+    description: store.description,
+    brand: store.brand,
+    countryCode: store.countryCode,
+    city: store.city,
+    contactPhone: store.contactPhone,
+    publishedAt: store.publishedAt,
+  };
 }
 
 /** A published store's published products. Same rule, same place. */

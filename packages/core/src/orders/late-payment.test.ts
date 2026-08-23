@@ -99,7 +99,7 @@ async function pendingSale(): Promise<Sale> {
   await acceptCurrentVersions(db, sellerId, ["seller_terms"], { locale: "fr" }, { method: "signup" });
   const seller = { userId: sellerId };
 
-  const store = await createStore(db, seller, { name: `B ${counter}`, slug: `b-${counter}` });
+  const store = await createStore(db, seller, { storeType: "digital_product", name: `B ${counter}`, slug: `b-${counter}` });
   await publishStore(db, seller, store.id);
   const product = await createProduct(db, seller, {
     storeId: store.id, title: `P ${counter}`, slug: `p-${counter}`, price: money(5000n, "XOF"),

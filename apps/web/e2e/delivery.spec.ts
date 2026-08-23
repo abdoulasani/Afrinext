@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 import { MOCK_WEBHOOK_SECRET, SERVER_LOG } from "../playwright.config";
+import { createStoreViaWizard } from "./store-wizard";
 
 /**
  * Digital delivery, through the application a person actually uses.
@@ -125,17 +126,17 @@ async function publishProductWithFile(page: Page, browser: Browser): Promise<{
 
   await page.goto("/fr/sell");
   await page.getByTestId("consent-accept").click();
-  await page.locator('input[name="name"]').fill(storeSlug);
-  await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(new RegExp(`/fr/sell/${storeSlug}$`));
+  await createStoreViaWizard(page, { slug: storeSlug });
 
-  await page.getByRole("button", { name: "Publier la boutique" }).click();
-  await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
-
+  // The offering comes first: the dashboard only offers to publish the store
+  // once there is something in it, so a buyer never lands on an empty shop.
   await page.locator('input[name="title"]').fill("Guide de Niamey");
   await page.locator('input[name="price"]').fill("15 000");
   await page.getByRole("button", { name: "Ajouter un produit numérique" }).click();
   await expect(page.getByText("Guide de Niamey")).toBeVisible();
+
+  await page.getByRole("button", { name: "Publier la boutique" }).click();
+  await expect(page.getByRole("link", { name: "Voir la page publique" }).first()).toBeVisible();
 
   // Before the file, the seller is told the product would deliver nothing.
   const productId = fixtureSql(

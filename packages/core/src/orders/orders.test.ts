@@ -94,7 +94,7 @@ async function publishedProduct(options: { priceMinor?: bigint; title?: string }
 }> {
   slugCounter += 1;
   const seller = await makeSeller();
-  const store = await createStore(db, seller, {
+  const store = await createStore(db, seller, { storeType: "digital_product",
     name: `Boutique ${slugCounter}`,
     slug: `boutique-${slugCounter}`,
   });
@@ -267,7 +267,7 @@ describe("checkout prices the order, and the client does not", () => {
   it("refuses a draft product, an unpublished store and a product that does not exist", async () => {
     const buyer = await makeBuyer();
     const seller = await makeSeller();
-    const store = await createStore(db, seller, { name: "Cachée", slug: "cachee" });
+    const store = await createStore(db, seller, { storeType: "digital_product", name: "Cachée", slug: "cachee" });
     const draft = await createProduct(db, seller, {
       storeId: store.id, title: "Brouillon", slug: "brouillon", price: money(1000n, "XOF"),
     });

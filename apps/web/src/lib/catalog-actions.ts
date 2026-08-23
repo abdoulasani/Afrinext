@@ -74,11 +74,24 @@ export async function createStoreAction(
   let slug: string;
   try {
     const actor = await requireActor();
+    /*
+     * Every field is read from the form and validated by the domain. The
+     * OWNER is not: it comes from the session, so there is no field in this
+     * request through which somebody could open a store in another person's
+     * name.
+     */
+    const text = (key: string): string => String(form.get(key) ?? "").trim();
     const store = await catalog.createStore(getDb(), actor, {
-      name: String(form.get("name") ?? "").trim(),
-      ...(String(form.get("tagline") ?? "").trim() !== ""
-        ? { tagline: String(form.get("tagline")).trim() }
-        : {}),
+      name: text("name"),
+      // Raw. `createStore` validates it, but only after the permission and
+      // consent gates — see the note on `CreateStoreInput.storeType`.
+      storeType: text("storeType"),
+      ...(text("tagline") !== "" ? { tagline: text("tagline") } : {}),
+      ...(text("description") !== "" ? { description: text("description") } : {}),
+      ...(text("city") !== "" ? { city: text("city") } : {}),
+      ...(text("countryCode") !== "" ? { countryCode: text("countryCode") } : {}),
+      ...(text("contactPhone") !== "" ? { contactPhone: text("contactPhone") } : {}),
+      ...(text("brand") !== "" ? { brand: text("brand") } : {}),
     });
     slug = store.slug;
   } catch (error: unknown) {

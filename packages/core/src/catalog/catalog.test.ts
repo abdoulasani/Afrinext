@@ -57,7 +57,7 @@ async function makeSeller(): Promise<Actor> {
 /** A seller with a published store, which is the precondition for publishing. */
 async function sellerWithLiveStore(slug: string): Promise<{ actor: Actor; storeId: string }> {
   const actor = await makeSeller();
-  const store = await createStore(db, actor, { name: "Boutique", slug });
+  const store = await createStore(db, actor, { storeType: "digital_product", name: "Boutique", slug });
   await publishStore(db, actor, store.id);
   return { actor, storeId: store.id };
 }
@@ -99,7 +99,7 @@ describe("opening a store is a granted capability", () => {
     // Authorization is checked before consent, so this is a permission refusal
     // even though the terms are also unaccepted — asserting the specific error
     // keeps the two gates distinguishable.
-    await expect(createStore(db, { userId }, { name: "Chez Moi" }))
+    await expect(createStore(db, { userId }, { name: "Chez Moi", storeType: "digital_product" }))
       .rejects.toBeInstanceOf(PermissionDeniedError);
 
     expect((await db.execute(sql`select 1 from stores`)).rows).toHaveLength(0);
@@ -107,7 +107,7 @@ describe("opening a store is a granted capability", () => {
 
   it("lets a seller open one, and makes them its owner in the same breath", async () => {
     const actor = await makeSeller();
-    const store = await createStore(db, actor, { name: "Éditions du Sahel", tagline: "Livres" });
+    const store = await createStore(db, actor, { storeType: "digital_product", name: "Éditions du Sahel", tagline: "Livres" });
 
     expect(store.slug).toBe("editions-du-sahel");
     expect(store.status).toBe("draft");
@@ -129,14 +129,14 @@ describe("opening a store is a granted capability", () => {
   it("refuses a slug someone already holds", async () => {
     const a = await makeSeller();
     const b = await makeSeller();
-    await createStore(db, a, { name: "Sahel", slug: "sahel" });
-    await expect(createStore(db, b, { name: "Sahel Two", slug: "sahel" }))
+    await createStore(db, a, { storeType: "digital_product", name: "Sahel", slug: "sahel" });
+    await expect(createStore(db, b, { storeType: "digital_product", name: "Sahel Two", slug: "sahel" }))
       .rejects.toBeInstanceOf(SlugTakenError);
   });
 
   it("audits the creation", async () => {
     const actor = await makeSeller();
-    await createStore(db, actor, { name: "Sahel" });
+    await createStore(db, actor, { storeType: "digital_product", name: "Sahel" });
     const rows = await db.execute<{ action: string }>(
       sql`select action from audit_logs where action = 'store.created'`,
     );
@@ -148,8 +148,8 @@ describe("a store is a scope, not a suggestion", () => {
   it("stops a store owner from touching a store that is not theirs", async () => {
     const mine = await makeSeller();
     const theirs = await makeSeller();
-    const myStore = await createStore(db, mine, { name: "Mine", slug: "mine-store" });
-    const theirStore = await createStore(db, theirs, { name: "Theirs", slug: "theirs-store" });
+    const myStore = await createStore(db, mine, { storeType: "digital_product", name: "Mine", slug: "mine-store" });
+    const theirStore = await createStore(db, theirs, { storeType: "digital_product", name: "Theirs", slug: "theirs-store" });
 
     // Being a store_owner somewhere is not being a store_owner everywhere. This
     // is the whole reason roles carry a scope.
@@ -166,8 +166,8 @@ describe("a store is a scope, not a suggestion", () => {
   it("lists only the actor's own stores", async () => {
     const mine = await makeSeller();
     const theirs = await makeSeller();
-    await createStore(db, mine, { name: "Mine", slug: "mine-list" });
-    await createStore(db, theirs, { name: "Theirs", slug: "theirs-list" });
+    await createStore(db, mine, { storeType: "digital_product", name: "Mine", slug: "mine-list" });
+    await createStore(db, theirs, { storeType: "digital_product", name: "Theirs", slug: "theirs-list" });
 
     const listed = await listOwnStores(db, mine);
     expect(listed.map((s) => s.slug)).toEqual(["mine-list"]);
@@ -236,7 +236,7 @@ describe("prices stay in the money model", () => {
 describe("publishing", () => {
   it("refuses to publish a product whose store is still a draft", async () => {
     const actor = await makeSeller();
-    const store = await createStore(db, actor, { name: "Quiet", slug: "quiet-store" });
+    const store = await createStore(db, actor, { storeType: "digital_product", name: "Quiet", slug: "quiet-store" });
     const product = await createProduct(db, actor, {
       storeId: store.id, title: "Early", price: XOF(2000),
     });

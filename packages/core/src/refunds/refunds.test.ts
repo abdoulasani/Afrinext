@@ -127,7 +127,7 @@ async function owedRefund(
   });
   const seller = { userId: sellerId };
 
-  const store = await createStore(db, seller, { name: `R ${counter}`, slug: `r-${counter}` });
+  const store = await createStore(db, seller, { storeType: "digital_product", name: `R ${counter}`, slug: `r-${counter}` });
   await publishStore(db, seller, store.id);
   const product = await createProduct(db, seller, {
     storeId: store.id, title: `P ${counter}`, slug: `rp-${counter}`, price: money(5000n, "XOF"),

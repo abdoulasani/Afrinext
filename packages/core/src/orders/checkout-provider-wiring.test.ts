@@ -161,7 +161,7 @@ async function listing(sellerCountry: string): Promise<{ storeSlug: string; prod
   });
   const seller = { userId: sellerId };
 
-  const store = await createStore(db, seller, {
+  const store = await createStore(db, seller, { storeType: "digital_product",
     name: `B ${counter}`, slug: `b-${counter}`, countryCode: sellerCountry,
   });
   await publishStore(db, seller, store.id);

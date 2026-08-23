@@ -3,6 +3,10 @@
  *
  * Colours are CSS variables exposed to Tailwind through @theme inline, so a
  * component never hard-codes a hex value and both palettes stay in one place.
+ *
+ * The palette is warm and earthen rather than the cool greys of a SaaS
+ * dashboard: laterite red, Sahel sand, indigo. It reads as West African
+ * through material and warmth, not through pattern or flag colour.
  */
 
 :root {
@@ -17,6 +21,46 @@
   --primary-contrast: #ffffff;
   --accent: #0f6b53;
   --accent-soft: #dcefe8;
+
+  /* Elevation. Warm-tinted, because a neutral grey shadow on a sand-coloured
+     surface reads as dirt. Three steps only: resting, raised, floating. */
+  --shadow-sm: 0 1px 2px rgba(58, 38, 24, 0.06);
+  --shadow-md: 0 4px 16px -4px rgba(58, 38, 24, 0.12), 0 1px 3px rgba(58, 38, 24, 0.05);
+  --shadow-lg: 0 16px 40px -12px rgba(58, 38, 24, 0.22), 0 2px 8px rgba(58, 38, 24, 0.06);
+
+  /* Radius. Generous, consistent, and capped: everything is on the same
+     family so nothing looks borrowed from another product. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  /* One motion curve and two durations, so transitions feel like one hand. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 140ms;
+  --duration-slow: 320ms;
+
+  /*
+   * Store brand palettes.
+   *
+   * Six named colour stories a store chooses from. Each is a real material or
+   * dye from the region — laterite earth, indigo cloth, Sahel ochre — and each
+   * ships as a pair: a deep tone for covers and monograms, and a soft tone for
+   * tinted surfaces. A store is never unstyled, and no store can pick a colour
+   * that clashes with the product's own chrome.
+   */
+  --brand-laterite: #a8391b;
+  --brand-laterite-soft: #f7e3db;
+  --brand-indigo: #2f3d78;
+  --brand-indigo-soft: #e2e5f3;
+  --brand-forest: #1c5c46;
+  --brand-forest-soft: #dbeee6;
+  --brand-ochre: #8a5a12;
+  --brand-ochre-soft: #f6e9d3;
+  --brand-aubergine: #5d2b4e;
+  --brand-aubergine-soft: #f0e0ec;
+  --brand-sable: #4a4038;
+  --brand-sable-soft: #ece5dc;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +76,26 @@
     --primary-contrast: #1c1714;
     --accent: #4fc4a3;
     --accent-soft: #12332a;
+
+    /* Depth in the dark comes from a darker shadow AND a lighter surface;
+       the shadow alone is invisible against a dark ground. */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 16px 40px -12px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.45);
+
+    /* Brands lift and desaturate so a deep dye stays legible on a dark ground. */
+    --brand-laterite: #e8734b;
+    --brand-laterite-soft: #3a201a;
+    --brand-indigo: #8f9ede;
+    --brand-indigo-soft: #1c2140;
+    --brand-forest: #58c3a1;
+    --brand-forest-soft: #12302a;
+    --brand-ochre: #d9a85c;
+    --brand-ochre-soft: #33270f;
+    --brand-aubergine: #c98bb6;
+    --brand-aubergine-soft: #331b2c;
+    --brand-sable: #bdaea0;
+    --brand-sable-soft: #2b241e;
   }
 }
 
@@ -49,4 +113,38 @@
   --color-accent-soft: var(--accent-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/*
+ * A store's chosen identity, applied by setting `data-brand` on any element.
+ * Descendants then use `--brand` and `--brand-soft` without knowing which
+ * palette was picked, so one component renders every store.
+ */
+[data-brand="laterite"] { --brand: var(--brand-laterite); --brand-soft: var(--brand-laterite-soft); }
+[data-brand="indigo"] { --brand: var(--brand-indigo); --brand-soft: var(--brand-indigo-soft); }
+[data-brand="forest"] { --brand: var(--brand-forest); --brand-soft: var(--brand-forest-soft); }
+[data-brand="ochre"] { --brand: var(--brand-ochre); --brand-soft: var(--brand-ochre-soft); }
+[data-brand="aubergine"] { --brand: var(--brand-aubergine); --brand-soft: var(--brand-aubergine-soft); }
+[data-brand="sable"] { --brand: var(--brand-sable); --brand-soft: var(--brand-sable-soft); }
+
+/*
+ * Focus, once, for everything.
+ *
+ * A visible focus ring is not decoration: it is how a keyboard user knows
+ * where they are. Defined here so no component can quietly drop it, and using
+ * :focus-visible so a mouse click does not leave a ring behind.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

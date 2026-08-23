@@ -219,8 +219,8 @@ async function probeCommerceInside(
     insert into users (id, locale, status) values (${buyer}, 'fr', 'active'), (${seller}, 'fr', 'active')
   `);
   await db.execute(sql`
-    insert into stores (id, owner_user_id, slug, name, status)
-    values (${storeId}, ${seller}, ${"probe-" + tag}, 'Probe', 'published')
+    insert into stores (id, owner_user_id, slug, name, status, published_at)
+    values (${storeId}, ${seller}, ${"probe-" + tag}, 'Probe', 'published', now())
   `);
   await db.execute(sql`
     insert into products (id, store_id, slug, kind, title, price_minor, currency, status, published_at)
@@ -296,8 +296,8 @@ async function probeRefundInside(
     insert into users (id, locale, status) values (${buyer}, 'fr', 'active'), (${seller}, 'fr', 'active')
   `);
   await db.execute(sql`
-    insert into stores (id, owner_user_id, slug, name, status)
-    values (${storeId}, ${seller}, ${"rprobe-" + tag}, 'Refund probe', 'published')
+    insert into stores (id, owner_user_id, slug, name, status, published_at)
+    values (${storeId}, ${seller}, ${"rprobe-" + tag}, 'Refund probe', 'published', now())
   `);
   await db.execute(sql`
     insert into products (id, store_id, slug, kind, title, price_minor, currency, status, published_at)

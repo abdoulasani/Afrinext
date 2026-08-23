@@ -14,6 +14,7 @@ export const PERMISSIONS = {
   "store.create": "Create a store",
   "store.update": "Update a store's details",
   "store.read_analytics": "View a store's analytics",
+  "store.moderate": "Suspend or reinstate any store",
 
   "product.create": "Create a product in a store",
   "product.publish": "Publish a product",
@@ -118,7 +119,7 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     key: "ops",
     scopeType: "global",
     description: "Moderates the catalogue. No financial capability.",
-    permissions: ["admin.user.read", "product.publish", "course.publish"],
+    permissions: ["admin.user.read", "product.publish", "course.publish", "store.moderate"],
   },
   {
     key: "finance",
@@ -133,6 +134,6 @@ export const ROLE_DEFINITIONS: ReadonlyArray<{
     key: "superadmin",
     scopeType: "global",
     description: "Administers roles and settings. Deliberately holds no withdrawal.approve.",
-    permissions: ["admin.user.read", "admin.user.suspend", "admin.role.grant", "admin.settings.update", "admin.audit.read", "ledger.read"],
+    permissions: ["admin.user.read", "admin.user.suspend", "admin.role.grant", "admin.settings.update", "admin.audit.read", "ledger.read", "store.moderate"],
   },
 ];

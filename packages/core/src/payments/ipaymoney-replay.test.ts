@@ -113,7 +113,7 @@ async function pendingSale(): Promise<Sale> {
   });
   const seller = { userId: sellerId };
 
-  const store = await createStore(db, seller, { name: `IP ${counter}`, slug: `ip-${counter}` });
+  const store = await createStore(db, seller, { storeType: "digital_product", name: `IP ${counter}`, slug: `ip-${counter}` });
   await publishStore(db, seller, store.id);
   const product = await createProduct(db, seller, {
     storeId: store.id, title: `P ${counter}`, slug: `ipp-${counter}`, price: money(5000n, "XOF"),
