@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import type { Route } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -6,10 +7,12 @@ import { getDb } from "@afrinext/db";
 import { isLocale, translate, type MessageKey } from "@afrinext/i18n";
 import { Badge, buttonClass, Card, EmptyState, StoreAvatar, StoreCover, StoreTypeIcon } from "@afrinext/ui";
 import AppHeader from "@/components/AppHeader";
+import ProductDelivery from "@/components/ProductDelivery";
 import { AttachAssetForm, CreateProductForm, PublishButton } from "@/components/CatalogForms";
 import { Shell } from "@/components/Shell";
 import {
   attachAssetAction, createProductAction, publishProductAction, publishStoreAction,
+  publishVersionAction, setDownloadLimitAction, setLicenceAction,
 } from "@/lib/catalog-actions";
 import { currencyRegistry } from "@/lib/catalog";
 import { currentActor } from "@/lib/session";
@@ -83,6 +86,29 @@ export default async function StoreAdminPage({
         [product.id, await content.listProductAssets(db, actor, product.id)] as const,
       ),
     ),
+  );
+
+  /*
+   * Versions, per product. Read through `listProductVersions`, which authorizes
+   * on the product's own store — so this page cannot show a version belonging
+   * to a store the actor does not administer even if the query were wrong.
+   */
+  const versionsByProduct = new Map<string, content.ProductVersion[]>(
+    await Promise.all(
+      products.map(async (product) =>
+        [product.id, await content.listProductVersions(db, actor, product.id)] as const,
+      ),
+    ),
+  );
+
+  // The download limit lives on the product row and is not part of ProductRecord.
+  const limitRows = await db.execute<{
+    [key: string]: unknown; id: string; download_limit: number | null;
+  }>(sql`
+    select id, download_limit from products where store_id = ${store.id}::uuid
+  `);
+  const limitByProduct = new Map(
+    limitRows.rows.map((r) => [r.id, r.download_limit === null ? null : Number(r.download_limit)]),
   );
 
   /*
@@ -271,6 +297,45 @@ export default async function StoreAdminPage({
                         action={attachAssetAction}
                       />
                     </div>
+
+                    <ProductDelivery
+                      locale={locale}
+                      storeSlug={store.slug}
+                      productId={product.id}
+                      versions={(versionsByProduct.get(product.id) ?? []).map((v) => ({
+                        id: v.id, versionNo: v.versionNo, status: v.status,
+                        assetCount: v.assetCount,
+                      }))}
+                      licence={
+                        // The DRAFT's licence is the editable one; a published
+                        // version's is frozen, so showing it in a text box the
+                        // seller can type into would be a lie about what saving
+                        // does.
+                        (versionsByProduct.get(product.id) ?? [])
+                          .find((v) => v.status === "draft")?.licenceText
+                        ?? (versionsByProduct.get(product.id) ?? [])
+                          .find((v) => v.status === "published")?.licenceText
+                        ?? ""
+                      }
+                      downloadLimit={limitByProduct.get(product.id) ?? null}
+                      setLicence={setLicenceAction}
+                      setLimit={setDownloadLimitAction}
+                      publishVersion={publishVersionAction}
+                      labels={{
+                        versions: translate(locale, "sell.versions"),
+                        draft: translate(locale, "sell.versionDraft"),
+                        published: translate(locale, "sell.versionPublished"),
+                        publishVersion: translate(locale, "sell.publishVersion"),
+                        licence: translate(locale, "sell.licence"),
+                        licenceHint: translate(locale, "sell.licenceHint"),
+                        saveLicence: translate(locale, "sell.saveLicence"),
+                        downloadLimit: translate(locale, "sell.downloadLimit"),
+                        downloadLimitHint: translate(locale, "sell.downloadLimitHint"),
+                        saveLimit: translate(locale, "sell.saveLimit"),
+                        files: translate(locale, "sell.versionFiles", { count: 0 })
+                          .replace("0", "{count}"),
+                      }}
+                    />
                   </Card>
                 ))}
               </ul>

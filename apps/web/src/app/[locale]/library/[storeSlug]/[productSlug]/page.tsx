@@ -35,13 +35,22 @@ export default async function LibraryProductPage({
 
   return (
     <>
-      <AppHeader title={product.title} back={`/${locale}/orders` as Route} />
+      <AppHeader title={product.title} back={`/${locale}/library` as Route} />
       <div className="mx-auto flex max-w-md flex-col gap-5 px-4 py-6">
         {product.deliveryMode === "view_only" && (
           <p data-testid="view-only" className="text-xs text-muted">
             {translate(locale, "library.viewOnly")}
           </p>
         )}
+
+        {/*
+          * What was bought, not what the product is now. The seller may have
+          * published three versions since; this buyer owns one of them, and the
+          * page says which.
+          */}
+        <p data-testid="purchased-version" className="text-xs text-muted">
+          {translate(locale, "library.version", { n: product.versionNo })}
+        </p>
 
         {product.assets.length === 0 ? (
           <p className="text-sm text-muted">{translate(locale, "library.noAssets")}</p>
@@ -52,14 +61,38 @@ export default async function LibraryProductPage({
             deliveryMode={product.deliveryMode}
             assets={product.assets.map((a) => ({
               id: a.id, title: a.title, contentType: a.contentType, byteSize: a.byteSize,
+              downloadsRemaining: a.downloadsRemaining,
             }))}
             labels={{
               download: translate(locale, "library.download"),
               view: translate(locale, "library.view"),
               failed: translate(locale, "error.generic"),
+              unlimited: translate(locale, "library.unlimited"),
+              exhausted: translate(locale, "library.exhausted"),
+              remaining: (n: number) => translate(locale, "library.remaining", { count: n }),
             }}
           />
         )}
+
+        {/*
+          * The licence AS AGREED, from the entitlement's own snapshot — not the
+          * product's current terms. If the seller rewrote them last week, this
+          * buyer still sees what they accepted.
+          */}
+        <section aria-labelledby="licence-heading" data-testid="licence">
+          <h2 id="licence-heading" className="text-sm font-semibold">
+            {translate(locale, "library.licence")}
+          </h2>
+          {product.licenceSnapshot === null || product.licenceSnapshot.trim() === "" ? (
+            <p className="mt-1 text-sm text-muted">
+              {translate(locale, "library.licenceNone")}
+            </p>
+          ) : (
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted">
+              {product.licenceSnapshot}
+            </p>
+          )}
+        </section>
 
         {/* The boundary, still stated on the screen a buyer actually reaches. */}
         <p className="border-t border-border pt-4 text-xs text-muted">

@@ -47,6 +47,13 @@ export default async function LocaleLayout({
       icon: "M4 7.5h16M6 7.5V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1.5M5 7.5 6 20h12l1-12.5",
     },
     {
+      href: `/${locale}/library`,
+      match: "/library",
+      label: translate(locale, "nav.library"),
+      // A stack of pages, open at the top: what you own, not what you ordered.
+      icon: "M4 6.5A1.5 1.5 0 0 1 5.5 5H10a2 2 0 0 1 2 2v11a2 2 0 0 0-2-2H5.5A1.5 1.5 0 0 1 4 14.5ZM20 6.5A1.5 1.5 0 0 0 18.5 5H14a2 2 0 0 0-2 2v11a2 2 0 0 1 2-2h4.5a1.5 1.5 0 0 0 1.5-1.5Z",
+    },
+    {
       href: `/${locale}/orders`,
       match: "/orders",
       label: translate(locale, "nav.orders"),

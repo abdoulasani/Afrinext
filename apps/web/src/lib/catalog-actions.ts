@@ -174,3 +174,74 @@ export async function publishProductAction(
   revalidatePath(`/${locale}/sell/${storeSlug}`);
   return {};
 }
+
+/**
+ * Sets the licence text on the product's DRAFT version.
+ *
+ * The product id comes from the form, and that is safe for the same reason it
+ * is everywhere else here: `setDraftLicence` resolves the owning store from the
+ * product row and authorizes against it. A product id belonging to somebody
+ * else is refused, and refused identically to one that does not exist.
+ */
+export async function setLicenceAction(
+  _previous: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const locale = String(form.get("locale") ?? DEFAULT_LOCALE);
+  const storeSlug = String(form.get("storeSlug") ?? "");
+  try {
+    const actor = await requireActor();
+    const text = String(form.get("licence") ?? "").trim();
+    await content.setDraftLicence(
+      getDb(), actor, String(form.get("productId") ?? ""), text === "" ? null : text,
+    );
+  } catch (error: unknown) {
+    return fail(error);
+  }
+  revalidatePath(`/${locale}/sell/${storeSlug}`);
+  return {};
+}
+
+/** Sets the per-file, per-buyer download limit. Empty means unlimited. */
+export async function setDownloadLimitAction(
+  _previous: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const locale = String(form.get("locale") ?? DEFAULT_LOCALE);
+  const storeSlug = String(form.get("storeSlug") ?? "");
+  try {
+    const actor = await requireActor();
+    const raw = String(form.get("limit") ?? "").trim();
+    /*
+     * Empty is "no limit", which is a real answer and not a missing one. Any
+     * other non-integer is refused by the domain rather than coerced here — a
+     * silently coerced "abc" would become a limit the seller never chose.
+     */
+    const limit = raw === "" ? null : Number.parseInt(raw, 10);
+    await content.setDownloadLimit(
+      getDb(), actor, String(form.get("productId") ?? ""),
+      limit !== null && Number.isNaN(limit) ? Number.NaN : limit,
+    );
+  } catch (error: unknown) {
+    return fail(error);
+  }
+  revalidatePath(`/${locale}/sell/${storeSlug}`);
+  return {};
+}
+
+/** Publishes the product's draft version, making it what new buyers receive. */
+export async function publishVersionAction(
+  _previous: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const locale = String(form.get("locale") ?? DEFAULT_LOCALE);
+  const storeSlug = String(form.get("storeSlug") ?? "");
+  try {
+    const actor = await requireActor();
+    await content.publishVersion(getDb(), actor, String(form.get("productId") ?? ""));
+  } catch (error: unknown) {
+    return fail(error);
+  }
+  revalidatePath(`/${locale}/sell/${storeSlug}`);
+  return {};
+}

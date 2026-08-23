@@ -7,6 +7,8 @@ type Asset = {
   title: string;
   contentType: string;
   byteSize: number;
+  /** `null` when the seller set no limit. Counted server-side, shown here. */
+  downloadsRemaining: number | null;
 };
 
 /**
@@ -29,7 +31,10 @@ export default function AssetList({
   productSlug: string;
   deliveryMode: "download" | "view_only";
   assets: readonly Asset[];
-  labels: { download: string; view: string; failed: string };
+  labels: {
+    download: string; view: string; failed: string;
+    remaining: (n: number) => string; unlimited: string; exhausted: string;
+  };
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,11 +84,27 @@ export default function AssetList({
             <span className="block font-mono text-xs text-muted">
               {asset.contentType} · {Math.max(1, Math.round(asset.byteSize / 1024))} KB
             </span>
+            {/*
+              * How many are left, from the server's count. Shown so a buyer is
+              * never surprised by a refusal — but the button being enabled is
+              * not what decides: the content route counts again before it
+              * hands over a byte.
+              */}
+            <span
+              data-testid={`asset-remaining-${asset.id}`}
+              className="block text-xs text-muted"
+            >
+              {asset.downloadsRemaining === null
+                ? labels.unlimited
+                : asset.downloadsRemaining === 0
+                  ? labels.exhausted
+                  : labels.remaining(asset.downloadsRemaining)}
+            </span>
           </span>
           <button
             type="button"
             data-testid={`asset-open-${asset.id}`}
-            disabled={busy === asset.id}
+            disabled={busy === asset.id || asset.downloadsRemaining === 0}
             onClick={() => void open(asset.id)}
             className="shrink-0 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-primary-contrast disabled:opacity-60"
           >

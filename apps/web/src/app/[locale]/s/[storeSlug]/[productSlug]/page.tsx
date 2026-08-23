@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Metadata } from "next";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
-import { catalog, money as m, orders } from "@afrinext/core";
+import { catalog, content, money as m, orders } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate } from "@afrinext/i18n";
 import AppHeader from "@/components/AppHeader";
@@ -35,7 +35,13 @@ export default async function PublicProductPage({
   const product = await catalog.findPublicProduct(getDb(), storeSlug, productSlug);
   if (product === undefined) notFound();
 
-  const [registry, actor] = await Promise.all([currencyRegistry(), currentActor()]);
+  const [registry, actor, licence] = await Promise.all([
+    currencyRegistry(),
+    currentActor(),
+    // The terms of sale, before the sale. Terms nobody can read before paying
+    // are not terms.
+    content.publicLicenceFor(getDb(), storeSlug, productSlug),
+  ]);
   // What someone already owns is read from `entitlements`, never inferred from
   // an order's status at read time.
   const owned =
@@ -96,6 +102,31 @@ export default async function PublicProductPage({
               checkoutKey={randomUUID()}
               label={translate(locale, "product.buy")}
             />
+          )}
+        </section>
+
+        {/*
+          * The seller's licence, shown before the buy button is pressed.
+          *
+          * Afrinext writes none of this and adds no default: when a seller has
+          * stated nothing, the page says so rather than implying terms that do
+          * not exist. What the buyer sees here is copied into their entitlement
+          * at payment, so this is also exactly what they will keep.
+          */}
+        <section aria-labelledby="licence-heading" data-testid="product-licence"
+          className="border-t border-border pt-4">
+          <h2 id="licence-heading" className="text-sm font-semibold">
+            {translate(locale, "product.licence")}
+          </h2>
+          {licence?.licenceText === undefined || licence.licenceText === null
+            || licence.licenceText.trim() === "" ? (
+            <p className="mt-1 text-sm text-muted">
+              {translate(locale, "product.licenceNone")}
+            </p>
+          ) : (
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted">
+              {licence.licenceText}
+            </p>
           )}
         </section>
       </div>
