@@ -47,5 +47,9 @@ apps/web/playwright-report/
 /test-results/
 /playwright-report/
 
+# Ad-hoc screenshot and fixture scripts written next to the app so they
+# can resolve @playwright/test. Working files, never deliverables.
+apps/web/.*.mjs
+
 # Uploaded digital assets on a local filesystem store.
 .content-storage/
