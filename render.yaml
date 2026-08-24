@@ -15,6 +15,9 @@
 #   - any real customer, real order or real money
 #   - any secret VALUE (Render generates or stores those; Git holds none)
 #
+# One variable here has no production counterpart at all: ALLOW_PREVIEW_SELLERS.
+# Read its note below before copying this file for any other environment.
+#
 # See docs/deployment/render-preview.md for the full procedure.
 
 databases:
@@ -126,6 +129,21 @@ services:
       # read the log can sign in as any preview account — which is exactly why
       # ConsoleSender refuses to run without this being said explicitly.
       - key: ALLOW_CONSOLE_SENDER
+        value: "yes"
+
+      # Every account created here is granted the `seller` role at signup, so a
+      # test account can open a shop without an operator running SQL.
+      #
+      # It is a GRANT, not a bypass: a real role_assignments row, revocable like
+      # any other, and `authorize()` is not involved. The `seller` role holds
+      # exactly one permission, `store.create` — no moderation, no admin, no
+      # money — and per-store ownership is still granted by createStore to the
+      # person who opened the store. Seller terms are still required.
+      #
+      # In production this would hand a shop to anybody who can receive an SMS.
+      # It belongs to this preview service and nowhere else. See
+      # packages/core/src/auth/preview-sellers.ts.
+      - key: ALLOW_PREVIEW_SELLERS
         value: "yes"
 
       # ---- application ---------------------------------------------------

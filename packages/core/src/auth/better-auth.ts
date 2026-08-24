@@ -11,6 +11,7 @@ import {
   consumeAll, otpSendRules, resolveOtpPolicy, OTP_POLICY, type OtpPolicySource,
 } from "../ratelimit";
 import { RateLimitedError } from "./errors";
+import { previewSellersEnabled, PREVIEW_SELLERS_FLAG } from "./preview-sellers";
 import { hashPassword, verifyPassword } from "./password";
 import type { MessageSender } from "./messaging";
 import { deriveOtpKey } from "./otp";
@@ -242,6 +243,43 @@ export function createAuth(deps: AuthDeps) {
               context: { authUserId: created.id, grantedRole: "member" },
             });
             log.info("domain user provisioned", { userId: domainUserId });
+
+            /*
+             * PREVIEW ONLY, and additive by construction.
+             *
+             * Everything above this point is the production path and is not
+             * conditional on anything. What follows adds one more role row when
+             * the environment has explicitly declared itself a preview, so that
+             * a demonstration does not need a hand-written SQL grant per test
+             * account. See preview-sellers.ts for why this lives here and not
+             * inside `authorize()`, and for exactly what `seller` can do.
+             *
+             * The grant is a real `role_assignments` row: revocable with the
+             * same UPDATE as any other, visible to the same queries, and
+             * audited under its own action so a reader can tell a preview grant
+             * from an operator's.
+             */
+            if (previewSellersEnabled()) {
+              await deps.db.execute(sql`
+                insert into role_assignments (id, user_id, role_id, scope_type, scope_id)
+                select ${uuidv7()}, ${domainUserId}, r.id, 'global', null
+                  from roles r where r.key = 'seller'
+                on conflict do nothing
+              `);
+              await audit(deps.db, {
+                actorKind: "system",
+                action: "auth.user.preview_seller_granted",
+                targetType: "user",
+                targetId: domainUserId,
+                context: { authUserId: created.id, grantedRole: "seller", reason: PREVIEW_SELLERS_FLAG },
+              });
+              // Warn, not info. An operator reading these logs should be able to
+              // notice immediately if this is running somewhere it should not.
+              log.warn("preview seller role granted automatically", {
+                userId: domainUserId,
+                flag: PREVIEW_SELLERS_FLAG,
+              });
+            }
           },
         },
       },

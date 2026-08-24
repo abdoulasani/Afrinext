@@ -107,6 +107,7 @@ otherwise. **No secret value is committed to Git**, and none should ever be.
 | `ALLOW_MOCK_PAYMENTS` | `yes` | no | Blueprint |
 | `ALLOW_CONSOLE_SENDER` | `yes` | no | Blueprint |
 | `CONTENT_STORAGE_DIR` | `/var/data/content` | no | Blueprint |
+| `ALLOW_PREVIEW_SELLERS` | `yes` | no | Blueprint — **preview only, see §6** |
 | `LOG_LEVEL` | `info` | no | Blueprint |
 | `DATABASE_POOL_MAX` | `5` | no | Blueprint |
 | `NODE_VERSION` | `22` | no | Blueprint |
@@ -223,10 +224,73 @@ curl https://<your-url>/robots.txt      # → User-Agent: *  /  Disallow: /
 
 ---
 
-## 6. Granting seller access
+## 6. Seller access
 
-There is no admin console — Phase 4 review decision 3 kept the SQL grant and
-recorded a console as its own milestone. Sign up in the app first, then run:
+### On this preview: automatic
+
+`render.yaml` sets **`ALLOW_PREVIEW_SELLERS=yes`**, so **every account created
+on the preview is granted the `seller` role at signup**. Sign up, open
+*Vendre*, create a shop. No SQL, no operator, as many test accounts as you like.
+
+**This is a grant, not a bypass.** The flag adds one ordinary row to
+`role_assignments` — the same row an operator would insert by hand — and then
+gets out of the way. `authorize()` is not modified and never reads the flag, so
+a preview seller reaches `store.create` through exactly the code path a
+production seller does. Three consequences worth knowing:
+
+- **It is revocable.** `update role_assignments set revoked_at = now() ...`
+  takes the permission away while the flag is still set.
+- **It is bounded.** The `seller` role holds exactly one permission,
+  `store.create`. Not `store.moderate` (that is `ops` and `superadmin`), no
+  `admin.*`, nothing touching the ledger, refunds or withdrawals. The
+  `store_owner` role is still granted per store by `createStore` to whoever
+  opened it, so one preview seller cannot administer another's shop.
+- **It accepts nothing on your behalf.** Seller terms are still required before
+  a store can be created; the app asks for them.
+
+It is also audited under its own action, `auth.user.preview_seller_granted`, so
+a preview grant is distinguishable from an operator's in the log, and it warns
+at `WARN` level every time it fires — loud on purpose, so it is noticeable
+anywhere it should not be.
+
+> ### ⚠ Never set `ALLOW_PREVIEW_SELLERS` in production
+>
+> In production it would hand the ability to open a shop to anybody who can
+> receive an SMS code. It exists for this preview and for local testing. It is
+> off unless the value is the exact string `yes` — `true`, `1`, `YES` and
+> `false` all leave the ordinary seller control fully in force, deliberately, so
+> that somebody who sets it to `false` to disable it actually disables it.
+>
+> `packages/core/src/auth/preview-sellers.ts` explains the design; the
+> adversarial tests are in `preview-sellers.test.ts`.
+
+### Granting a role by hand
+
+Still needed for two cases: an account that existed **before** the flag was
+enabled (the grant happens at signup and is not retroactive), and any role other
+than `seller` — `ops` for store moderation, `finance` for refund execution.
+
+There is no admin console; Phase 4 review decision 3 kept the SQL grant and
+recorded a console as its own milestone.
+
+**First, find the right id.** This is where the mistake gets made:
+`role_assignments.user_id` references **`users.id`** — the Afrinext identity —
+and *not* `user.id`, which is Better Auth's credential row. They are different
+tables with different id types, and `auth_user_id` is the link between them.
+Insert the wrong one and you get zero rows and no error.
+
+```sql
+-- 1. Your credential row, by the phone number you signed up with (E.164).
+select id, "phoneNumber", "createdAt" from "user"
+ where "phoneNumber" = '+227XXXXXXXX';
+
+-- 2. The Afrinext identity keyed to it. This id is the one roles use.
+select id, auth_user_id, status, display_name from users
+ where auth_user_id = '<the id from step 1>';
+```
+
+**Then grant, in one statement that finds the id itself** — no copy-paste
+between windows, so there is nothing to get wrong:
 
 ```sql
 insert into role_assignments (id, user_id, role_id, scope_type, scope_id)
@@ -238,20 +302,23 @@ select gen_random_uuid(), u.id, r.id, 'global', null
    and r.key = 'seller';
 ```
 
-Run it from `render psql` or the service shell — never by opening the database
-to the internet. Check it inserted exactly one row; zero means the phone number
-does not match what you signed up with (it is stored in E.164, with the `+227`).
+`INSERT 0 1` is success. **`INSERT 0 0` means nothing was granted** — the phone
+number does not match what you signed up with (it is stored in E.164, `+227…`),
+or the role key is misspelled. Verify:
 
-The grant is safe in the sense that matters: it writes to the same
-`role_assignments` table `authorize()` reads, so no check is bypassed. What it
-lacks is an audit trail naming who granted it and why.
+```sql
+select r.key, ra.scope_type, ra.granted_at, ra.revoked_at
+  from role_assignments ra
+  join roles r on r.id = ra.role_id
+  join users u on u.id = ra.user_id
+  join "user" au on au.id = u.auth_user_id
+ where au."phoneNumber" = '+227XXXXXXXX';
+```
 
-The same statement grants `ops` (store suspension) or `finance` (refund
-execution) by changing `r.key`. Grant the fewest roles you need to test, to one
-account, and remember that on this preview anyone who can read the log can sign
-in as any account — including that one.
-
----
+Run it through `render psql` or the service shell — never by opening the
+database to the internet. Grant the fewest roles you need, to one account, and
+remember that on this preview anyone who can read the log can sign in as any
+account, including that one.
 
 ## 7. Testing the application
 
@@ -280,7 +347,8 @@ find out which accounts exist.
 - `/fr` and `/fr/explorer` — the marketplace, search and categories. Empty on a
   fresh preview, and honestly empty: nothing fabricates a product, a rating or a
   follower count.
-- `/fr/sell` — with the `seller` role, create a store, then publish it. A store
+- `/fr/sell` — every preview account already holds the `seller` role (§6), so
+  create a store, then publish it. A store
   may be published with zero offerings (Phase 4 review decision 1) and shows
   *« Aucune offre pour l'instant »* until it has one.
 - Add a digital product, upload a file, set the licence text and the per-file
@@ -326,10 +394,13 @@ for one explicitly if you want it.
 
 The preview keeps **every** application security rule switched on: the same
 `authorize()`, the same rate limits, the same OTP hashing, the same entitlement
-checks, the same append-only ledger. The `ALLOW_*` variables do not weaken a
-check — they are the codebase's own way of making a deployment state out loud
-that it is not handling real money, and without them the application refuses to
-start those components at all.
+checks, the same append-only ledger. `ALLOW_MOCK_PAYMENTS` and
+`ALLOW_CONSOLE_SENDER` do not weaken a check at all — they are the codebase's
+own way of making a deployment state out loud that it is not handling real
+money, and without them the application refuses to start those components.
+`ALLOW_PREVIEW_SELLERS` is different in kind and worth being precise about: it
+weakens no check either, but it hands out a role that production would make
+somebody earn. The gate still runs; more people pass it.
 
 What is genuinely weaker is the environment around it:
 
@@ -340,11 +411,15 @@ What is genuinely weaker is the environment around it:
 3. **Payments can be forged by anyone holding `MOCK_WEBHOOK_SECRET`.** They are
    fake payments, but that also means *the preview is not evidence about
    production payment security*.
-4. **`SESSION_SECRET` also signs download grants**, so a leak is both session
+4. **Anyone who signs up becomes a seller** (`ALLOW_PREVIEW_SELLERS`). That is
+   the point here and would be a serious defect anywhere else. It grants
+   `store.create` and nothing more, but it does mean the preview does not
+   demonstrate how sellers are onboarded in production.
+5. **`SESSION_SECRET` also signs download grants**, so a leak is both session
    forgery and download-token forgery.
-5. **There are no backups.** One disk, one database, no snapshots configured.
+6. **There are no backups.** One disk, one database, no snapshots configured.
    Everything in the preview is disposable and should be treated that way.
-6. **Uploaded files are real bytes on a real disk.** Upload only throwaway
+7. **Uploaded files are real bytes on a real disk.** Upload only throwaway
    content.
 
 ### Optional: a password gate
@@ -367,7 +442,8 @@ option, not implemented.**
 ## 9. The line that must not be crossed
 
 This environment must never be used with real customer money, real customer
-data, or a real payment credential. It has no settlement, no payouts, no
+data, or a real payment credential. Nor may `ALLOW_PREVIEW_SELLERS` follow it
+anywhere: it is the one variable here with no production counterpart at all. It has no settlement, no payouts, no
 iPayMoney integration, and a payment provider that confirms charges nobody
 made. Turning it into production is not a matter of changing variables: it
 needs a real payment provider, a real SMS provider, object storage, backups and
