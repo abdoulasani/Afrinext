@@ -76,9 +76,26 @@ export default async function LibraryPage({
                       <h2 className="text-[15px] font-semibold leading-snug text-foreground">
                         {item.title}
                       </h2>
-                      <Badge tone="neutral">
-                        {translate(locale, "library.version", { n: item.versionNo })}
-                      </Badge>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <Badge tone="neutral">
+                          {translate(locale, "library.version", { n: item.versionNo })}
+                        </Badge>
+                        {/*
+                          * A fact about the product, not a promise about this
+                          * purchase. The card only flags that one exists; the
+                          * product page explains what it does and does not mean.
+                          */}
+                        {item.latestVersionNo > item.versionNo && (
+                          <span
+                            data-testid="library-newer"
+                            className="text-[11px] font-medium text-muted"
+                          >
+                            {translate(locale, "library.newerVersion", {
+                              n: item.latestVersionNo,
+                            })}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-[13px] text-muted">{item.storeName}</p>

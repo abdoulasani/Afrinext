@@ -10,6 +10,7 @@ import {
   applyProviderEvent, createCheckout, initiatePayment,
 } from "../orders";
 import { LAUNCH_PAYMENT_CHANNEL, MockPaymentProvider } from "../payments";
+import { executeRefund, recordRefundOwed, refundRevokesAccess } from "../refunds";
 import { createTestUser, ensureReferenceData, expectRejection, resetData, testDb } from "../test/harness";
 import {
   attachAsset, ContentForbiddenError, deriveContentKey, DownloadLimitReachedError,
@@ -140,6 +141,59 @@ async function buy(buyer: Actor, l: Listing): Promise<string> {
   return order.id;
 }
 
+/** A finance user, elevated: the only kind who may make money leave. */
+async function makeFinance(): Promise<Actor> {
+  const userId = await createTestUser(db, { locale: "fr" });
+  await grantGlobal(userId, "member");
+  await grantGlobal(userId, "finance");
+  return { userId, elevated: true };
+}
+
+/**
+ * Records a refund owed against a paid order, ready to execute.
+ *
+ * With no amount it is the real path: `recordRefundOwed` copies the amount out
+ * of the payment, so a full refund is full because the payment says so and not
+ * because a test said so. A partial amount has to be written directly — the
+ * refund domain cannot yet express one, which is the whole reason the rule
+ * about partials is being pinned down now rather than discovered later.
+ */
+async function oweRefund(orderId: string): Promise<string> {
+  const id = await recordRefundOwed(db, {
+    orderId, paymentId: await succeededPaymentOf(orderId), reason: "buyer_request",
+  });
+  return id!;
+}
+
+/**
+ * A partial refund, written straight to the table.
+ *
+ * There is no domain function for this, because Afrinext has no partial
+ * refunds — `recordRefundOwed` copies the amount out of the payment and there
+ * is no parameter to say otherwise. The direct write exists only to stand in
+ * front of the guards and prove they refuse it.
+ */
+async function oweRefundDirectly(orderId: string, amountMinor: bigint): Promise<string> {
+  const paymentId = await succeededPaymentOf(orderId);
+  const inserted = await db.execute<{ [key: string]: unknown; id: string }>(sql`
+    insert into refunds (id, order_id, payment_id, provider, status,
+                         amount_minor, currency, reason)
+    select gen_random_uuid(), p.order_id, p.id, p.provider, 'owed',
+           ${amountMinor}, p.currency, 'buyer_request'
+      from payments p where p.id = ${paymentId}::uuid
+    returning id
+  `);
+  return inserted.rows[0]!.id;
+}
+
+async function succeededPaymentOf(orderId: string): Promise<string> {
+  const paid = await db.execute<{ [key: string]: unknown; id: string }>(sql`
+    select id from payments
+     where order_id = ${orderId}::uuid and status = 'succeeded'
+  `);
+  return paid.rows[0]!.id;
+}
+
 /** Grant, then spend it — the only path to bytes. */
 async function download(actor: Actor, assetId: string) {
   const grant = await grantContentAccess(db, key, actor, assetId, "attachment");
@@ -182,6 +236,59 @@ describe("versions are immutable once somebody could have paid for them", () => 
       expect(owned?.versionNo, "the library names the purchased version").toBe(1);
       expect(owned?.assets.map((a) => a.id)).toEqual([l.assetId]);
     });
+
+  /*
+   * Review decision, phase 5: pinned, WITH newer versions visible.
+   *
+   * The buyer is told a newer version exists and is still served the one they
+   * bought. Both halves matter: without the notice they cannot tell an
+   * out-of-date file from an abandoned product, and without the pin the notice
+   * would be the first step of an upgrade nobody agreed to.
+   */
+  it("tells a buyer a newer version exists, and still serves the one they bought",
+    async () => {
+      const l = await listing();
+      const buyer = await makeBuyer();
+      await buy(buyer, l);
+
+      const before = await findEntitledProduct(db, buyer, l.storeSlug, l.productSlug);
+      expect(before?.versionNo).toBe(1);
+      expect(before?.latestVersionNo,
+        "no newer version yet, so the head is their own").toBe(1);
+
+      const v2 = await attachAsset(db, storage, l.seller, {
+        productId: l.productId, title: "corrigé", contentType: "application/pdf", bytes: V2,
+      });
+      await publishVersion(db, l.seller, l.productId);
+
+      const after = await findEntitledProduct(db, buyer, l.storeSlug, l.productSlug);
+      expect(after?.versionNo, "still pinned to what they paid for").toBe(1);
+      expect(after?.latestVersionNo, "and told the seller has moved on").toBe(2);
+
+      // The notice grants nothing.
+      expect(after?.assets.map((a) => a.id)).toEqual([l.assetId]);
+      await expect(download(buyer, v2.id)).rejects.toBeInstanceOf(ContentForbiddenError);
+      expect((await download(buyer, l.assetId)).object.bytes.toString()).toBe(V1.toString());
+
+      const library = await listEntitledProducts(db, buyer);
+      expect(library[0]?.versionNo).toBe(1);
+      expect(library[0]?.latestVersionNo).toBe(2);
+    });
+
+  it("does not count a DRAFT version as one the buyer could be missing", async () => {
+    const l = await listing();
+    const buyer = await makeBuyer();
+    await buy(buyer, l);
+
+    // Uploading opens a draft. Nothing is published, so nothing is available.
+    await attachAsset(db, storage, l.seller, {
+      productId: l.productId, title: "wip", contentType: "application/pdf", bytes: V2,
+    });
+
+    const owned = await findEntitledProduct(db, buyer, l.storeSlug, l.productSlug);
+    expect(owned?.latestVersionNo,
+      "an unpublished draft is not a version anybody can have").toBe(1);
+  });
 
   it("refuses to change a published version's files, at the database", async () => {
     const l = await listing();
@@ -548,6 +655,121 @@ describe("a refunded buyer stops being entitled", () => {
     expect(await revokeEntitlementsForOrder(db, orderId, "refund.succeeded")).toBe(1);
     expect(await revokeEntitlementsForOrder(db, orderId, "refund.succeeded"),
       "a webhook delivered twice revokes once").toBe(0);
+  });
+
+  /*
+   * Review decision, phase 5: revoke on a FULL refund only.
+   *
+   *     money completely returned  ->  digital entitlement revoked
+   *     money partly returned      ->  entitlement remains
+   *
+   * Both directions are tested because both are expensive. Failing to revoke
+   * on a full refund gives away the goods; revoking on a partial one takes a
+   * buyer's file away over a price adjustment they asked for. These two go
+   * through the REAL refund execution path — `executeRefund` with a finance
+   * actor and the provider — so what is proved is the behaviour of the refund
+   * domain, not of a helper called directly.
+   */
+  it("revokes when the whole price has gone back", async () => {
+    const l = await listing();
+    const buyer = await makeBuyer();
+    const finance = await makeFinance();
+    const orderId = await buy(buyer, l);
+    await expect(download(buyer, l.assetId)).resolves.toBeDefined();
+
+    const refundId = await oweRefund(orderId);
+    const result = await executeRefund(db, finance, provider, refundId);
+    expect(result.status, "the fixture must produce a refund that really succeeded")
+      .toBe("succeeded");
+
+    await expect(download(buyer, l.assetId)).rejects.toBeInstanceOf(ContentForbiddenError);
+    expect(await listEntitledProducts(db, buyer)).toEqual([]);
+  });
+
+  /*
+   * The other half of the rule cannot be driven through `executeRefund`,
+   * because Afrinext refuses to execute a partial refund at all — and that
+   * refusal is asserted here rather than assumed, since it is the reason the
+   * rule is a predicate instead of a branch. When partial refunds arrive, this
+   * test fails, which is exactly the right moment to be reading it.
+   */
+  it("cannot yet execute a partial refund at all, by two independent guards",
+    async () => {
+      const l = await listing();
+      const buyer = await makeBuyer();
+      const finance = await makeFinance();
+      const orderId = await buy(buyer, l);
+
+      // Guard one: one refund per order and one per payment, each enforced by
+      // its own unique index. A second refund against the same purchase — the
+      // shape several partials would take — cannot be written at all.
+      await oweRefund(orderId);
+      // A second refund of one purchase is refused by the database itself.
+      await expectRejection(
+        oweRefundDirectly(orderId, 2000n),
+        /refunds_(order|payment)_key/,
+      );
+
+      // Guard two: the executor refuses an amount its payment does not
+      // corroborate, so a single refund of part of the price cannot be sent.
+      const partialOrder = await buy(await makeBuyer(), l);
+      const partial = await oweRefundDirectly(partialOrder, 2000n);
+      await expect(executeRefund(db, finance, provider, partial))
+        .rejects.toThrow(/no longer matches its payment/);
+
+      expect(await listEntitledProducts(db, buyer),
+        "and the buyer keeps what they bought throughout").toHaveLength(1);
+    });
+});
+
+// ===========================================================================
+
+/*
+ * The rule itself, over amounts the refund domain cannot produce today.
+ *
+ * `refundRevokesAccess` is where "full refund revokes, partial refund does
+ * not" is stated. Testing it here rather than only through the executor is
+ * what gives the partial branch coverage before the day it starts deciding
+ * what happens to somebody's purchase.
+ */
+describe("what a refund does to the goods", () => {
+  const XOF_5000 = { totalMinor: 5000n } as const;
+
+  it("revokes only when the whole price has gone back", () => {
+    expect(refundRevokesAccess({ status: "succeeded", refundedMinor: 5000n, ...XOF_5000 }),
+      "full refund").toBe(true);
+    expect(refundRevokesAccess({ status: "succeeded", refundedMinor: 4999n, ...XOF_5000 }),
+      "one franc short is not a full refund").toBe(false);
+    expect(refundRevokesAccess({ status: "succeeded", refundedMinor: 2000n, ...XOF_5000 }),
+      "a price adjustment does not take the product back").toBe(false);
+    expect(refundRevokesAccess({ status: "succeeded", refundedMinor: 0n, ...XOF_5000 }),
+      "nothing returned").toBe(false);
+  });
+
+  it("revokes when several partial refunds together return the whole price", () => {
+    // 2 000 + 2 000 + 2 000 against 6 000. The caller sums; the rule compares.
+    expect(refundRevokesAccess({ status: "succeeded", refundedMinor: 6000n, totalMinor: 6000n }))
+      .toBe(true);
+    expect(refundRevokesAccess({ status: "succeeded", refundedMinor: 4000n, totalMinor: 6000n }),
+      "two of the three partials are not the whole price").toBe(false);
+  });
+
+  it("revokes on an over-refund, which is still money completely returned", () => {
+    expect(refundRevokesAccess({ status: "succeeded", refundedMinor: 6000n, ...XOF_5000 }))
+      .toBe(true);
+  });
+
+  it("never revokes on a refund that did not succeed", () => {
+    for (const status of ["owed", "in_flight", "failed", "in_doubt"] as const) {
+      expect(refundRevokesAccess({ status, refundedMinor: 5000n, ...XOF_5000 }),
+        `a ${status} refund has not paid anybody back`).toBe(false);
+    }
+  });
+
+  it("does not revoke on an order with no price", () => {
+    expect(refundRevokesAccess({ status: "succeeded", refundedMinor: 0n, totalMinor: 0n }),
+      "0 >= 0 is true and would have revoked; an unpriced order has nothing returned")
+      .toBe(false);
   });
 });
 

@@ -13,7 +13,10 @@ import {
 } from "../payments";
 import { loadRefundPolicy, type RefundPolicy } from "./policy";
 import { RefundNotFoundError, RefundNotPayableError, REFUND_COLUMNS, toRefund, type RefundRecord, type RefundRow } from "./record";
-import { assertRefundTransition, type RefundResolutionSource, type RefundState } from "./state";
+import {
+  assertRefundTransition, refundRevokesAccess,
+  type RefundResolutionSource, type RefundState,
+} from "./state";
 
 /**
  * Executing a refund, and resolving one whose outcome we never learned.
@@ -421,19 +424,63 @@ async function settleAttempt(
  * and the provider-resolution path — because two code paths that both decide
  * "the money went back" must agree about what that means for the goods.
  *
- * Only `succeeded` revokes. A refund that failed, or whose outcome we never
- * learned, leaves access exactly as it was: taking a buyer's file away on a
+ * Two conditions, and both are necessary.
+ *
+ * **Only `succeeded`.** A refund that failed, or whose outcome we never
+ * learned, leaves access exactly as it was. Taking a buyer's file away on a
  * refund that did not actually pay them is the worst of both outcomes.
+ *
+ * **Only a FULL refund** *(review decision, phase 5)*. The rule itself is
+ * `refundRevokesAccess` in `refunds/state.ts`, where it is stated once and
+ * tested against amounts this path cannot yet produce. What is here is only
+ * the reading of the numbers it needs.
  */
 async function revokeAccessIfRefunded(
   tx: Database,
   orderId: string,
   to: RefundState,
 ): Promise<void> {
-  if (to !== "succeeded") return;
+  /*
+   * The amount read is a SUM of what has SUCCEEDED against the order, not this
+   * refund's amount.
+   *
+   * Today the unique index means there is exactly one refund per order, so the
+   * sum is one row. When several partial refunds become possible, three of
+   * 2 000 against a 6 000 order have between them returned the whole price and
+   * must revoke — reading only the refund in hand would miss that, and the bug
+   * would surface as a buyer keeping goods they had been fully repaid for.
+   *
+   * The sum runs even when this refund did not succeed, because the query is
+   * cheap and the alternative is two places that both know what `succeeded`
+   * means. `refundRevokesAccess` is the one that decides.
+   */
+  const settled = await tx.execute<{
+    [key: string]: unknown; refunded: string | null; total: string | null;
+  }>(sql`
+    select coalesce(sum(r.amount_minor) filter (where r.status = 'succeeded'), 0) as refunded,
+           max(o.total_minor) as total
+      from orders o
+      left join refunds r on r.order_id = o.id
+     where o.id = ${orderId}::uuid
+  `);
+  const row = settled.rows[0];
+  if (row === undefined || row.total === null) return;
+
+  const refunded = BigInt(row.refunded ?? 0);
+  const total = BigInt(row.total);
+
+  if (!refundRevokesAccess({ status: to, refundedMinor: refunded, totalMinor: total })) {
+    if (to === "succeeded") {
+      log.info("partial refund leaves access intact", {
+        orderId, refundedMinor: refunded.toString(), totalMinor: total.toString(),
+      });
+    }
+    return;
+  }
+
   const revoked = await revokeEntitlementsForOrder(tx, orderId, "refund.succeeded");
   if (revoked > 0) {
-    log.info("entitlements revoked after refund", { orderId, revoked });
+    log.info("entitlements revoked after full refund", { orderId, revoked });
   }
 }
 

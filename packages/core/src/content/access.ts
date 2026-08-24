@@ -319,6 +319,16 @@ export interface EntitledProduct {
   readonly deliveryMode: DeliveryMode;
   /** The version this buyer paid for — not the product's current head. */
   readonly versionNo: number;
+  /**
+   * The newest version the seller has published, which may be later.
+   *
+   * Shown to the buyer as a FACT, never as an entitlement. Review decision,
+   * phase 5: pinned, with newer versions visible. Knowing that version 3 exists
+   * is useful — it is the difference between "my file is out of date" and "the
+   * seller has abandoned this" — but it grants nothing, and every read below is
+   * still scoped to `e.version_id`.
+   */
+  readonly latestVersionNo: number;
   /** The licence as it read on the day they bought it. */
   readonly licenceSnapshot: string | null;
   readonly downloadLimit: number | null;
@@ -355,10 +365,16 @@ export async function findEntitledProduct(
     version_no: number | null;
     licence_snapshot: string | null;
     download_limit: number | null;
+    latest_version_no: number | null;
   }>(sql`
     select p.id as product_id, p.title, p.delivery_mode,
            e.id as entitlement_id, e.version_id, v.version_no,
-           e.licence_snapshot, p.download_limit
+           e.licence_snapshot, p.download_limit,
+           -- The seller's current head. A fact about the product, not about
+           -- this purchase, and deliberately kept in a separate column so it
+           -- can never be mistaken for the version being served.
+           (select max(pv.version_no) from product_versions pv
+             where pv.product_id = p.id and pv.status = 'published') as latest_version_no
       from entitlements e
       join products p on p.id = e.product_id
       join stores s on s.id = p.store_id
@@ -396,6 +412,10 @@ export async function findEntitledProduct(
     productSlug,
     deliveryMode: row.delivery_mode as DeliveryMode,
     versionNo: row.version_no === null ? 1 : Number(row.version_no),
+    latestVersionNo:
+      row.latest_version_no === null
+        ? (row.version_no === null ? 1 : Number(row.version_no))
+        : Number(row.latest_version_no),
     licenceSnapshot: row.licence_snapshot,
     downloadLimit: limit,
     assets: withRemaining,
@@ -418,6 +438,8 @@ export interface LibraryEntry {
   readonly productSlug: string;
   readonly deliveryMode: DeliveryMode;
   readonly versionNo: number;
+  /** The seller's newest published version. Stated, never granted. */
+  readonly latestVersionNo: number;
   readonly hasLicence: boolean;
   readonly downloadLimit: number | null;
   readonly assetCount: number;
@@ -439,6 +461,7 @@ export async function listEntitledProducts(
     product_slug: string;
     delivery_mode: string;
     version_no: number | null;
+    latest_version_no: number | null;
     licence_snapshot: string | null;
     download_limit: number | null;
     asset_count: string;
@@ -449,6 +472,8 @@ export async function listEntitledProducts(
     select p.id as product_id, p.title, s.slug as store_slug, s.name as store_name,
            p.slug as product_slug, p.delivery_mode, v.version_no, e.licence_snapshot,
            p.download_limit, e.granted_at, p.price_minor, p.currency,
+           (select max(pv.version_no) from product_versions pv
+             where pv.product_id = p.id and pv.status = 'published') as latest_version_no,
            (select count(*) from digital_assets a where a.version_id = e.version_id)
              as asset_count
       from entitlements e
@@ -469,6 +494,10 @@ export async function listEntitledProducts(
     productSlug: r.product_slug,
     deliveryMode: r.delivery_mode as DeliveryMode,
     versionNo: r.version_no === null ? 1 : Number(r.version_no),
+    latestVersionNo:
+      r.latest_version_no === null
+        ? (r.version_no === null ? 1 : Number(r.version_no))
+        : Number(r.latest_version_no),
     hasLicence: r.licence_snapshot !== null && r.licence_snapshot !== "",
     downloadLimit: r.download_limit === null ? null : Number(r.download_limit),
     assetCount: Number(r.asset_count),

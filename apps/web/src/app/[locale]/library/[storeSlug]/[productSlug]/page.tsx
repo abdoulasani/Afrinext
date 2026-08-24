@@ -52,6 +52,30 @@ export default async function LibraryProductPage({
           {translate(locale, "library.version", { n: product.versionNo })}
         </p>
 
+        {/*
+          * A newer version exists. Said, not offered.
+          *
+          * Review decision, phase 5: pinned, with newer versions visible. The
+          * buyer keeps what they paid for; knowing the seller has moved on is
+          * the difference between "my file is out of date" and "this was
+          * abandoned". The second sentence is the important one — without it
+          * this reads like an upgrade is about to happen, and Afrinext has
+          * decided no such policy.
+          */}
+        {product.latestVersionNo > product.versionNo && (
+          <div
+            data-testid="newer-version"
+            className="rounded-[var(--radius-md)] border border-border bg-surface-muted px-3.5 py-3"
+          >
+            <p className="text-[13px] font-semibold text-foreground">
+              {translate(locale, "library.newerVersion", { n: product.latestVersionNo })}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              {translate(locale, "library.newerVersionNote", { bought: product.versionNo })}
+            </p>
+          </div>
+        )}
+
         {product.assets.length === 0 ? (
           <p className="text-sm text-muted">{translate(locale, "library.noAssets")}</p>
         ) : (

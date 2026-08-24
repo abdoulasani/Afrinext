@@ -304,5 +304,7 @@
   "sell.saveLimit": "Enregistrer la limite",
   "sell.versionFiles": "{count} fichier",
   "sell.versionFiles#one": "{count} fichier",
-  "sell.versionFiles#other": "{count} fichiers"
+  "sell.versionFiles#other": "{count} fichiers",
+  "library.newerVersion": "Version {n} disponible chez le vendeur",
+  "library.newerVersionNote": "Vous conservez la version {bought}, celle que vous avez achetée. Afrinext n'accorde pas automatiquement les nouvelles versions."
 }

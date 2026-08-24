@@ -108,3 +108,50 @@ export class InvalidRefundTransitionError extends DomainError {
 export function assertRefundTransition(from: RefundState, to: RefundState): void {
   if (!canTransitionRefund(from, to)) throw new InvalidRefundTransitionError(from, to);
 }
+
+/**
+ * What a refund means for the goods it paid for.
+ *
+ *     money completely returned  ->  digital entitlement revoked
+ *     money partly returned      ->  entitlement remains
+ *
+ * *(Review decision, phase 5.)* A partial refund is a price adjustment, not an
+ * undoing of the sale — a seller who returns 1 000 of a 5 000 XOF purchase
+ * because one file was missing has not taken the product back, and revoking on
+ * it would punish a buyer for complaining. Only a refund that returned the
+ * whole price undoes the exchange.
+ *
+ * Written as a predicate over amounts rather than as a branch inside the
+ * refund executor for two reasons. It is the only place the rule is stated, so
+ * a future engine — physical goods, a course, a service — asks the same
+ * question instead of inventing a second answer. And Afrinext cannot yet
+ * execute a partial refund at all (`refunds_order_key` is unique on the order,
+ * and the executor refuses an amount its payment does not corroborate), so
+ * without a predicate the partial branch would be a line of code no test can
+ * reach until the day it starts deciding what happens to somebody's purchase.
+ *
+ * `refundedMinor` is the sum of everything that has SUCCEEDED against the
+ * order, not the refund in hand: three settled refunds of 2 000 against a
+ * 6 000 order have between them returned the whole price.
+ *
+ * Amounts are minor units in the order's own currency. Nothing here divides,
+ * scales or compares across currencies — XOF has no decimals, and a rule about
+ * money that does arithmetic is a rule that will eventually do it wrong.
+ */
+export function refundRevokesAccess(input: {
+  readonly status: RefundState;
+  readonly refundedMinor: bigint;
+  readonly totalMinor: bigint;
+}): boolean {
+  /*
+   * A refund that failed, or whose outcome was never learned, changes nothing.
+   * Taking a buyer's file away over a refund that did not actually pay them is
+   * the worst of both outcomes: they have neither the money nor the goods.
+   */
+  if (input.status !== "succeeded") return false;
+
+  // An order with no price to return cannot have had it returned.
+  if (input.totalMinor <= 0n) return false;
+
+  return input.refundedMinor >= input.totalMinor;
+}
