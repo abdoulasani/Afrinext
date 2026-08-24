@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ServiceWorker from "@/components/ServiceWorker";
+import { isNonProductionEnvironment } from "@/lib/preview";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
+const BASE_METADATA: Metadata = {
   title: {
     default: "Afrinext — apprendre, vendre, construire",
     template: "%s · Afrinext",
@@ -33,6 +34,24 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-icon.png" }],
   },
 };
+
+/**
+ * A function rather than a constant, so the environment is read per request.
+ *
+ * The only thing it decides is whether the page carries `noindex`. A preview
+ * deployment serves fake prices over a real HTTPS certificate, and the one
+ * thing that must not happen is somebody finding it in a search result and
+ * taking it for Afrinext. See `lib/preview.ts` for why the payment flag is the
+ * test. This is a request to crawlers and nothing more — it is not access
+ * control, and it changes no authorization decision anywhere.
+ */
+export function generateMetadata(): Metadata {
+  if (!isNonProductionEnvironment()) return BASE_METADATA;
+  return {
+    ...BASE_METADATA,
+    robots: { index: false, follow: false, nocache: true },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
