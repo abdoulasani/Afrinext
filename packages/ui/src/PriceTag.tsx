@@ -18,7 +18,7 @@
 export type PriceSize = "sm" | "md" | "lg" | "xl";
 
 export function PriceTag({
-  amount, size = "md", tone = "copper", className = "", note,
+  amount, size = "md", tone = "copper", className = "", note, ...rest
 }: {
   /** Already formatted by the money layer, e.g. "8 000 XOF". */
   amount: string;
@@ -27,6 +27,8 @@ export function PriceTag({
   className?: string;
   /** A quiet qualifier beside it: "Accès immédiat", "TVA incluse". */
   note?: string;
+  /** Passed through, so a page can label its canonical price for a test. */
+  "data-testid"?: string;
 }) {
   const sizes: Record<PriceSize, string> = {
     sm: "text-small",
@@ -41,7 +43,7 @@ export function PriceTag({
   } as const;
 
   return (
-    <span className={"inline-flex items-baseline gap-2 " + className}>
+    <span {...rest} className={"inline-flex items-baseline gap-2 " + className}>
       <span
         className={
           "font-semibold tabular-nums tracking-[-0.02em] " + sizes[size] + " " + tones[tone]
