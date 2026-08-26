@@ -5,16 +5,16 @@ import type { ActionState } from "@/lib/catalog-actions";
 
 // The same shapes the sign-in form uses, from the same tokens. No hex here.
 const field =
-  "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base outline-none " +
+  "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-body outline-none " +
   "focus:border-primary";
 const button =
-  "w-full rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-contrast " +
+  "w-full rounded-[var(--radius-md)] bg-primary px-4 py-2.5 text-small font-semibold text-primary-contrast " +
   "disabled:opacity-60";
 
 function Error({ state }: { state: ActionState }) {
   if (state.error === undefined) return null;
   return (
-    <p role="alert" className="rounded-xl bg-primary-soft px-3 py-2 text-sm font-medium text-primary">
+    <p role="alert" className="rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3.5 py-2.5 text-small font-medium text-[var(--danger)]">
       {state.error}
     </p>
   );
@@ -40,11 +40,11 @@ export function CreateStoreForm({
       <input type="hidden" name="locale" value={locale} />
       <Error state={state} />
       <label className="block">
-        <span className="text-xs font-medium text-muted">{labels.name}</span>
+        <span className="text-caption font-medium text-muted">{labels.name}</span>
         <input name="name" required minLength={3} className={`mt-1 ${field}`} />
       </label>
       <label className="block">
-        <span className="text-xs font-medium text-muted">{labels.tagline}</span>
+        <span className="text-caption font-medium text-muted">{labels.tagline}</span>
         <input name="tagline" className={`mt-1 ${field}`} />
       </label>
       <button type="submit" disabled={pending} className={button}>{labels.submit}</button>
@@ -69,15 +69,15 @@ export function CreateProductForm({
       <input type="hidden" name="currency" value={currency} />
       <Error state={state} />
       <label className="block">
-        <span className="text-xs font-medium text-muted">{labels.title}</span>
+        <span className="text-caption font-medium text-muted">{labels.title}</span>
         <input name="title" required minLength={3} className={`mt-1 ${field}`} />
       </label>
       <label className="block">
-        <span className="text-xs font-medium text-muted">{labels.summary}</span>
+        <span className="text-caption font-medium text-muted">{labels.summary}</span>
         <input name="summary" className={`mt-1 ${field}`} />
       </label>
       <label className="block">
-        <span className="text-xs font-medium text-muted">
+        <span className="text-caption font-medium text-muted">
           {labels.price} ({currency})
         </span>
         <input name="price" required inputMode="decimal" className={`mt-1 ${field}`} />
@@ -107,7 +107,7 @@ export function PublishButton({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-full border border-accent px-3 py-1.5 text-xs font-semibold text-accent disabled:opacity-60"
+        className="rounded-full border border-accent px-3 py-1.5 text-caption font-semibold text-accent disabled:opacity-60"
       >
         {label}
       </button>
@@ -151,7 +151,7 @@ export function AttachAssetForm({
         required
         accept=".pdf,.epub,.zip,.png,.jpg,.jpeg,.txt,.md"
         data-testid={`asset-file-${productId}`}
-        className="text-xs"
+        className="text-caption"
       />
       <button
         type="submit"

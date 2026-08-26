@@ -65,7 +65,7 @@ export default function StoreWizard({
 
       {/* Progress: a real meter, announced, not just four coloured bars. */}
       <div>
-        <p className="text-[12px] font-medium text-muted">
+        <p className="text-caption font-medium text-muted">
           {(labels["step"] ?? "").replace("{step}", String(step)).replace("{total}", String(total))}
         </p>
         <div
@@ -93,8 +93,8 @@ export default function StoreWizard({
         <fieldset className="flex flex-col gap-3">
           <legend className="sr-only">{labels["step1Title"]}</legend>
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">{labels["step1Title"]}</h2>
-            <p className="mt-1 text-sm text-muted">{labels["step1Body"]}</p>
+            <h2 className="text-h2 font-semibold tracking-tight">{labels["step1Title"]}</h2>
+            <p className="mt-1 text-small text-muted">{labels["step1Body"]}</p>
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
             {types.map((type) => {
@@ -108,7 +108,7 @@ export default function StoreWizard({
                     "duration-[var(--duration-fast)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 " +
                     "has-[:focus-visible]:outline-primary has-[:focus-visible]:outline-offset-2 " +
                     (selected
-                      ? "border-primary bg-primary-soft/50"
+                      ? "border-primary bg-copper-soft/50"
                       : "border-border bg-surface hover:border-muted/50")
                   }
                 >
@@ -120,18 +120,18 @@ export default function StoreWizard({
                     onChange={() => setStoreType(type.value)}
                     className="sr-only"
                   />
-                  <span className={selected ? "text-primary" : "text-muted"}>
+                  <span className={selected ? "text-copper" : "text-muted"}>
                     <StoreTypeIcon type={type.value} className="h-6 w-6" />
                   </span>
                   <span className="flex flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold leading-tight">{type.label}</span>
-                    <span className="text-[12px] leading-snug text-muted">{type.tagline}</span>
+                    <span className="text-body font-semibold leading-tight">{type.label}</span>
+                    <span className="text-caption leading-snug text-muted">{type.tagline}</span>
                   </span>
                   {/* Not colour alone: a check mark carries the same meaning. */}
                   {selected && (
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}
                       strokeLinecap="round" strokeLinejoin="round"
-                      className="ml-auto h-5 w-5 shrink-0 self-center text-primary" aria-hidden="true">
+                      className="ml-auto h-5 w-5 shrink-0 self-center text-copper" aria-hidden="true">
                       <path d="m5 13 4 4L19 7" />
                     </svg>
                   )}
@@ -147,8 +147,8 @@ export default function StoreWizard({
         <fieldset className="flex flex-col gap-4">
           <legend className="sr-only">{labels["step2Title"]}</legend>
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">{labels["step2Title"]}</h2>
-            <p className="mt-1 text-sm text-muted">{labels["step2Body"]}</p>
+            <h2 className="text-h2 font-semibold tracking-tight">{labels["step2Title"]}</h2>
+            <p className="mt-1 text-small text-muted">{labels["step2Body"]}</p>
           </div>
 
           <Field id="store-name" label={labels["name"] ?? ""} hint={labels["nameHint"]} required>
@@ -173,8 +173,8 @@ export default function StoreWizard({
           </Field>
 
           <fieldset>
-            <legend className="text-[13px] font-medium">{labels["brand"]}</legend>
-            <p className="mt-0.5 text-xs text-muted">{labels["brandHint"]}</p>
+            <legend className="text-small font-medium">{labels["brand"]}</legend>
+            <p className="mt-0.5 text-caption text-muted">{labels["brandHint"]}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {brands.map((option) => (
                 <label
@@ -220,8 +220,8 @@ export default function StoreWizard({
         <fieldset className="flex flex-col gap-4">
           <legend className="sr-only">{labels["step3Title"]}</legend>
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">{labels["step3Title"]}</h2>
-            <p className="mt-1 text-sm text-muted">{labels["step3Body"]}</p>
+            <h2 className="text-h2 font-semibold tracking-tight">{labels["step3Title"]}</h2>
+            <p className="mt-1 text-small text-muted">{labels["step3Body"]}</p>
           </div>
 
           <Field id="store-country" label={labels["country"] ?? ""}>
@@ -256,8 +256,8 @@ export default function StoreWizard({
       {step === 4 && (
         <section className="flex flex-col gap-3">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">{labels["step4Title"]}</h2>
-            <p className="mt-1 text-sm text-muted">{labels["step4Body"]}</p>
+            <h2 className="text-h2 font-semibold tracking-tight">{labels["step4Title"]}</h2>
+            <p className="mt-1 text-small text-muted">{labels["step4Body"]}</p>
           </div>
 
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface">
@@ -271,27 +271,27 @@ export default function StoreWizard({
               */}
             <div className="relative z-10 -mt-8 px-4 pb-4">
               <StoreAvatar name={name || "?"} brand={brand} size="lg" />
-              <h3 className="mt-2.5 text-xl font-semibold tracking-tight">{name}</h3>
-              {tagline !== "" && <p className="mt-1 text-sm text-muted">{tagline}</p>}
-              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2.5 py-1 text-[12px] font-medium text-muted">
+              <h3 className="mt-2.5 text-h2 font-semibold tracking-tight">{name}</h3>
+              {tagline !== "" && <p className="mt-1 text-small text-muted">{tagline}</p>}
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2.5 py-1 text-caption font-medium text-muted">
                 <StoreTypeIcon type={storeType} className="h-3.5 w-3.5" />
                 {chosenType?.label}
               </p>
               {(city !== "" || countryCode !== "") && (
-                <p className="mt-2 text-[13px] text-muted">
+                <p className="mt-2 text-small text-muted">
                   {[city, countries.find((c) => c.code === countryCode)?.name]
                     .filter((part) => part !== undefined && part !== "").join(", ")}
                 </p>
               )}
             </div>
           </div>
-          <p className="text-xs text-muted">{labels["publishHint"]}</p>
+          <p className="text-caption text-muted">{labels["publishHint"]}</p>
         </section>
       )}
 
       {state.error !== undefined && (
         <p role="alert" data-testid="wizard-error"
-          className="rounded-[var(--radius-md)] bg-primary-soft px-3.5 py-2.5 text-sm font-medium text-primary">
+          className="rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3.5 py-2.5 text-small font-medium text-[var(--danger)]">
           {state.error}
         </p>
       )}
@@ -315,7 +315,7 @@ export default function StoreWizard({
           </Button>
         ) : (
           <button type="submit" disabled={pending} data-testid="wizard-submit"
-            className={buttonClass("primary", "lg", "flex-1")}>
+            className={buttonClass("solid", "lg", "flex-1")}>
             {labels["createDraft"]}
           </button>
         )}

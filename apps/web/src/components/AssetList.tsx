@@ -76,18 +76,18 @@ export default function AssetList({
   return (
     <ul data-testid="assets" className="flex flex-col gap-2">
       {error !== null && (
-        <li role="alert" className="rounded-xl bg-primary-soft px-3 py-2 text-sm font-medium text-primary">
+        <li role="alert" className="rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3.5 py-2.5 text-small font-medium text-[var(--danger)]">
           {error}
         </li>
       )}
       {assets.map((asset) => (
         <li
           key={asset.id}
-          className="flex items-center justify-between gap-3 rounded-xl bg-surface-muted px-3 py-2"
+          className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] bg-surface-muted px-3 py-2"
         >
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium">{asset.title}</span>
-            <span className="block font-mono text-xs text-muted">
+            <span className="block truncate text-small font-medium">{asset.title}</span>
+            <span className="block text-caption text-muted">
               {asset.contentType} · {Math.max(1, Math.round(asset.byteSize / 1024))} KB
             </span>
             {/*
@@ -98,7 +98,7 @@ export default function AssetList({
               */}
             <span
               data-testid={`asset-remaining-${asset.id}`}
-              className="block text-xs text-muted"
+              className="block text-caption text-muted"
             >
               {asset.remainingLabel}
             </span>
@@ -108,7 +108,7 @@ export default function AssetList({
             data-testid={`asset-open-${asset.id}`}
             disabled={busy === asset.id || asset.downloadsRemaining === 0}
             onClick={() => void open(asset.id)}
-            className="shrink-0 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-primary-contrast disabled:opacity-60"
+            className="shrink-0 rounded-[var(--radius-md)] bg-primary px-3 py-2 text-caption font-semibold text-primary-contrast disabled:opacity-60"
           >
             {deliveryMode === "view_only" ? labels.view : labels.download}
           </button>

@@ -58,7 +58,7 @@ export default function ProductDelivery({
 
   return (
     <div className="flex flex-col gap-3 border-t border-border pt-3">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+      <span className="text-label font-semibold uppercase tracking-[0.14em] text-muted">
         {labels["versions"]}
       </span>
 
@@ -85,7 +85,7 @@ export default function ProductDelivery({
             type="submit"
             disabled={publishBusy}
             data-testid={`publish-version-${productId}`}
-            className={buttonClass("secondary", "sm")}
+            className={buttonClass("outline", "sm")}
           >
             {labels["publishVersion"]}
           </button>
@@ -94,10 +94,10 @@ export default function ProductDelivery({
 
       <form action={licenceAction} className="flex flex-col gap-1.5">
         {hidden}
-        <label htmlFor={`licence-${productId}`} className="text-[13px] font-medium">
+        <label htmlFor={`licence-${productId}`} className="text-small font-medium">
           {labels["licence"]}
         </label>
-        <p className="text-xs text-muted">{labels["licenceHint"]}</p>
+        <p className="text-caption text-muted">{labels["licenceHint"]}</p>
         <textarea
           id={`licence-${productId}`}
           name="licence"
@@ -107,7 +107,7 @@ export default function ProductDelivery({
           data-testid={`licence-${productId}`}
           className={inputClass}
         />
-        <button type="submit" disabled={licenceBusy} className={buttonClass("secondary", "sm")}
+        <button type="submit" disabled={licenceBusy} className={buttonClass("outline", "sm")}
           data-testid={`save-licence-${productId}`}>
           {labels["saveLicence"]}
         </button>
@@ -115,10 +115,10 @@ export default function ProductDelivery({
 
       <form action={limitAction} className="flex flex-col gap-1.5">
         {hidden}
-        <label htmlFor={`limit-${productId}`} className="text-[13px] font-medium">
+        <label htmlFor={`limit-${productId}`} className="text-small font-medium">
           {labels["downloadLimit"]}
         </label>
-        <p className="text-xs text-muted">{labels["downloadLimitHint"]}</p>
+        <p className="text-caption text-muted">{labels["downloadLimitHint"]}</p>
         <input
           id={`limit-${productId}`}
           name="limit"
@@ -130,7 +130,7 @@ export default function ProductDelivery({
           data-testid={`limit-${productId}`}
           className={inputClass}
         />
-        <button type="submit" disabled={limitBusy} className={buttonClass("secondary", "sm")}
+        <button type="submit" disabled={limitBusy} className={buttonClass("outline", "sm")}
           data-testid={`save-limit-${productId}`}>
           {labels["saveLimit"]}
         </button>
@@ -138,7 +138,7 @@ export default function ProductDelivery({
 
       {problem !== undefined && (
         <p role="alert" data-testid={`delivery-error-${productId}`}
-          className="rounded-[var(--radius-md)] bg-primary-soft px-3 py-2 text-sm font-medium text-primary">
+          className="rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3.5 py-2.5 text-small font-medium text-[var(--danger)]">
           {problem}
         </p>
       )}

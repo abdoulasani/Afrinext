@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Button } from "@afrinext/ui";
 import type { ActionState } from "@/lib/catalog-actions";
 
 export type OutstandingDocument = {
@@ -27,7 +28,20 @@ export default function ConsentGate({
 }: {
   locale: string;
   documents: readonly OutstandingDocument[];
-  labels: { heading: string; explain: string; version: string; placeholder: string; accept: string };
+  labels: {
+    heading: string; explain: string; version: string; placeholder: string; accept: string;
+    /**
+     * What each document is CALLED, keyed by its stored kind.
+     *
+     * Without this the gate printed `seller_terms` — a database enum — to a
+     * seller being asked to agree to it. A person cannot consent to a value
+     * they cannot read, and the sign-in form already did this correctly, which
+     * made the omission here a straightforward inconsistency rather than a
+     * missing feature. The kind is still the fallback, so a document type added
+     * tomorrow renders its key instead of nothing.
+     */
+    documentNames?: Readonly<Record<string, string>>;
+  };
   action: (state: ActionState, form: FormData) => Promise<ActionState>;
 }) {
   const [state, dispatch, pending] = useActionState(action, {});
@@ -35,21 +49,26 @@ export default function ConsentGate({
   return (
     <section
       data-testid="consent-gate"
-      className="flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-4"
+      className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-border bg-surface p-5"
     >
-      <h2 className="text-sm font-semibold">{labels.heading}</h2>
-      <p className="text-sm text-muted">{labels.explain}</p>
+      <h2 className="text-h3 text-foreground">{labels.heading}</h2>
+      <p className="text-small text-muted">{labels.explain}</p>
 
       <ul className="flex flex-col gap-2">
         {documents.map((doc) => (
-          <li key={`${doc.kind}:${doc.version}`} className="rounded-lg bg-surface-muted px-3 py-2">
-            <p className="text-sm font-medium">{doc.kind}</p>
-            <p className="font-mono text-xs text-muted">
+          <li
+            key={`${doc.kind}:${doc.version}`}
+            className="rounded-[var(--radius-md)] bg-surface-muted px-3.5 py-3"
+          >
+            <p className="text-small font-semibold text-foreground">
+              {labels.documentNames?.[doc.kind] ?? doc.kind}
+            </p>
+            <p className="mt-0.5 text-caption tabular-nums text-muted">
               {labels.version} {doc.version} · {doc.locale}
             </p>
             {/* The texts are a legal deliverable that does not exist yet. Saying
                 so is better than rendering an empty box that looks like terms. */}
-            <p className="mt-1 text-xs text-muted">{labels.placeholder}</p>
+            <p className="mt-1 text-caption text-muted">{labels.placeholder}</p>
           </li>
         ))}
       </ul>
@@ -57,18 +76,20 @@ export default function ConsentGate({
       <form action={dispatch}>
         <input type="hidden" name="locale" value={locale} />
         {state.error !== undefined && (
-          <p role="alert" className="mb-2 rounded-xl bg-primary-soft px-3 py-2 text-sm font-medium text-primary">
+          <p role="alert" className="mb-2 rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3.5 py-2.5 text-small font-medium text-[var(--danger)]">
             {state.error}
           </p>
         )}
-        <button
+        <Button
           type="submit"
-          disabled={pending}
+          variant="solid"
+          size="lg"
+          loading={pending}
           data-testid="consent-accept"
-          className="w-full rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-contrast disabled:opacity-60"
+          className="w-full"
         >
           {labels.accept}
-        </button>
+        </Button>
       </form>
     </section>
   );

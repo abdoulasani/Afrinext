@@ -1,11 +1,13 @@
 import type { Route } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { sql } from "drizzle-orm";
 import { authz, money as m } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate } from "@afrinext/i18n";
+import { EmptyState, PriceTag, SectionHeader } from "@afrinext/ui";
 import AppHeader from "@/components/AppHeader";
+import { PageIntro } from "@/components/PageIntro";
+import { Shell } from "@/components/Shell";
 import { currentActor } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -38,10 +40,12 @@ export default async function WalletPage({
   if (!(await authz.can(db, actor, "wallet.read_own"))) {
     return (
       <>
-        <AppHeader title={translate(locale, "wallet.available")} />
-        <p className="px-4 py-8 text-sm text-muted">
-          {translate(locale, "error.permissionDenied")}
-        </p>
+        <AppHeader title={translate(locale, "wallet.title")} />
+        <Shell width="narrow">
+          <div className="px-4 pt-8 sm:px-6">
+            <EmptyState title={translate(locale, "error.permissionDenied")} />
+          </div>
+        </Shell>
       </>
     );
   }
@@ -64,39 +68,72 @@ export default async function WalletPage({
   const available = rows.rows.filter((r) => r.kind === "user_available");
   const pending = rows.rows.filter((r) => r.kind === "user_pending");
 
-  const section = (title: string, entries: typeof rows.rows, explainer?: string) => (
-    <section className="px-4 py-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{title}</h2>
-      {entries.length === 0 ? (
-        <p className="mt-2 font-mono text-lg">{m.formatMoney(m.money(0n, "XOF"), registry)}</p>
-      ) : (
-        entries.map((r) => (
-          <p key={`${r.kind}-${r.currency}`} className="mt-2 font-mono text-lg">
-            {m.formatMoney(m.money(toBig(r.balance_minor), r.currency), registry)}
-          </p>
-        ))
-      )}
-      {explainer !== undefined && <p className="mt-1 text-xs text-muted">{explainer}</p>}
+  /*
+   * A balance, set as money rather than as monospaced debug output.
+   *
+   * The previous version printed these in `font-mono`, which is the typeface of
+   * a log file: it says "this is a value the system emitted", not "this is what
+   * you have". `PriceTag` is the same component the marketplace uses for a
+   * price, so an amount looks like an amount everywhere in Afrinext — and it is
+   * tabular, so two currencies line up.
+   *
+   * Zero is printed, never hidden. An empty balance is a fact, and a wallet
+   * that shows nothing at all reads as broken.
+   */
+  const section = (
+    title: string, entries: typeof rows.rows, explainer?: string,
+  ) => (
+    <section className="mt-8 first:mt-0">
+      <SectionHeader title={title} {...(explainer !== undefined ? { body: explainer } : {})} />
+      <div className="mt-4 rounded-[var(--radius-lg)] border border-border bg-surface p-5">
+        {entries.length === 0 ? (
+          <PriceTag
+            amount={m.formatMoney(m.money(0n, "XOF"), registry)}
+            size="xl"
+            tone="foreground"
+          />
+        ) : (
+          <div className="flex flex-col gap-2">
+            {entries.map((r) => (
+              <PriceTag
+                key={`${r.kind}-${r.currency}`}
+                amount={m.formatMoney(m.money(toBig(r.balance_minor), r.currency), registry)}
+                size="xl"
+                tone="foreground"
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 
   return (
     <>
-      <AppHeader title={translate(locale, "common.appName")} subtitle={locale.toUpperCase()} />
-      {section(translate(locale, "wallet.available"), available)}
-      {section(
-        translate(locale, "wallet.pending"),
-        pending,
-        translate(locale, "wallet.pendingExplainer"),
-      )}
-      <div className="px-4 pb-8 pt-2">
-        <Link
-          href={`/${locale === "fr" ? "en" : "fr"}/wallet` as Route}
-          className="text-xs font-medium text-primary"
-        >
-          {locale === "fr" ? "English" : "Français"}
-        </Link>
-      </div>
+      <PageIntro
+        eyebrow={translate(locale, "wallet.eyebrow")}
+        title={translate(locale, "wallet.title")}
+      />
+      <Shell width="narrow">
+        <div className="px-4 pt-6 sm:px-6">
+          {section(translate(locale, "wallet.available"), available)}
+          {section(
+            translate(locale, "wallet.pending"),
+            pending,
+            translate(locale, "wallet.pendingExplainer"),
+          )}
+
+          {/*
+           * The regulatory posture, on the screen rather than only in a
+           * document. These are contractual entitlements against Afrinext, not
+           * deposits and not protected client funds, and no screen here is
+           * allowed to imply otherwise.
+           */}
+          <p className="mt-8 border-t border-border pt-5 text-caption text-faint">
+            {translate(locale, "wallet.entitlementNote")}
+          </p>
+        </div>
+      </Shell>
     </>
   );
 }

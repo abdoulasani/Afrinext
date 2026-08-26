@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { useState } from "react";
+import { Button, inputClass } from "@afrinext/ui";
 import { acceptAccountConsent, sendPhoneOtp, verifyPhoneOtp, type OutstandingDoc } from "@/lib/auth-client";
 
 type Labels = {
@@ -101,50 +102,56 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
     }
   }
 
-  const input =
-    "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base outline-none focus:border-primary";
 
   return (
     <form
       onSubmit={
         step === "phone" ? requestCode : step === "code" ? verifyCode : acceptConsent
       }
-      className="space-y-4 px-4 py-6"
+      className="flex flex-col gap-5 px-4 pt-8 sm:px-6"
     >
       {error !== null && (
-        <p role="alert" className="rounded-xl bg-primary-soft px-3 py-2 text-sm font-medium text-primary">
+        <p
+          role="alert"
+          className="rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3.5 py-2.5 text-small font-medium text-[var(--danger)]"
+        >
           {error}
         </p>
       )}
 
       {step === "consent" && (
-        <section data-testid="signup-consent" className="space-y-3">
-          <h2 className="text-sm font-semibold">{labels.consentTitle}</h2>
-          <p className="text-sm text-muted">{labels.consentExplain}</p>
+        <section data-testid="signup-consent" className="flex flex-col gap-3">
+          <h2 className="text-h3 text-foreground">{labels.consentTitle}</h2>
+          <p className="text-small text-muted">{labels.consentExplain}</p>
 
-          <ul className="space-y-2">
+          <ul className="flex flex-col gap-2">
             {outstanding.map((doc) => (
-              <li key={doc.kind} className="rounded-xl bg-surface-muted px-3 py-2">
-                <p className="text-sm font-medium">
+              <li
+                key={doc.kind}
+                className="rounded-[var(--radius-md)] border border-border bg-surface px-3.5 py-3"
+              >
+                <p className="text-small font-semibold text-foreground">
                   {labels.documentNames[doc.kind] ?? doc.kind}
                 </p>
                 {/* The exact version and locale being agreed to, on screen.
                     Naming them is the difference between an acceptance and a
                     gesture. */}
-                <p className="font-mono text-xs text-muted">
+                <p className="mt-0.5 text-caption tabular-nums text-muted">
                   v{doc.version} · {labels.localeLabel}: {doc.locale}
                 </p>
               </li>
             ))}
           </ul>
 
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex items-start gap-3 py-1 text-small text-foreground">
             <input
               type="checkbox"
               name="agree"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0"
+              /* 20px, and the label is the rest of the target: a 16px
+                 checkbox is a miss waiting to happen on a phone. */
+              className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--copper)]"
               required
             />
             {/* The checkbox is how a person expresses the choice. It is not
@@ -157,7 +164,7 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
 
       {step === "phone" ? (
         <label className="block">
-          <span className="text-xs font-medium text-muted">{labels.phone}</span>
+          <span className="text-small font-medium text-foreground">{labels.phone}</span>
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -165,13 +172,13 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
             inputMode="tel"
             autoComplete="tel"
             placeholder="+227 90 00 00 01"
-            className={`mt-1 ${input}`}
+            className={`mt-1.5 ${inputClass}`}
             required
           />
         </label>
       ) : step === "code" ? (
         <label className="block">
-          <span className="text-xs font-medium text-muted">{labels.code}</span>
+          <span className="text-small font-medium text-foreground">{labels.code}</span>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
@@ -179,29 +186,36 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
             autoComplete="one-time-code"
             maxLength={6}
             placeholder="000000"
-            className={`mt-1 tracking-[0.4em] ${input}`}
+            /* Wide tracking and centred: a six-digit code read off a screen
+               and typed back is easier to check when the digits are apart. */
+            className={`mt-1.5 text-center text-h2 tabular-nums tracking-[0.35em] ${inputClass}`}
             required
           />
         </label>
       ) : null}
 
-      <button
+      <Button
         type="submit"
-        disabled={busy || (step === "consent" && !agreed)}
+        variant="solid"
+        size="lg"
+        loading={busy}
+        disabled={step === "consent" && !agreed}
         data-testid={step === "consent" ? "signup-consent-accept" : "signin-continue"}
-        className="w-full rounded-2xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-contrast disabled:opacity-60"
+        className="w-full"
       >
         {step === "consent" ? labels.acceptAll : labels.continue}
-      </button>
+      </Button>
 
       {step === "code" && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="md"
           onClick={() => { setStep("phone"); setError(null); }}
-          className="w-full text-center text-xs font-medium text-muted"
+          className="w-full"
         >
           {labels.back}
-        </button>
+        </Button>
       )}
     </form>
   );

@@ -175,8 +175,16 @@ test.describe("consent is a server gate, not a screen", () => {
     grantSeller(userId);
 
     await page.goto("/fr/sell");
-    // The panel names the document and the version being agreed to.
-    await expect(page.getByTestId("consent-gate")).toContainText("seller_terms");
+    /*
+     * The panel names the document and the version being agreed to.
+     *
+     * The NAME is the human one — "Conditions vendeur" — not the stored kind
+     * `seller_terms`, which is a database enum and not something a person can
+     * consent to. What binds the acceptance is the version and the content
+     * hash, both recorded server-side and both asserted below; what the screen
+     * owes the reader is a document they can identify.
+     */
+    await expect(page.getByTestId("consent-gate")).toContainText("Conditions vendeur");
     await expect(page.getByTestId("consent-gate")).toContainText("0.0.0-placeholder");
 
     await page.getByTestId("consent-accept").click();

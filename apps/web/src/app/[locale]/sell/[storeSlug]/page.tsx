@@ -141,9 +141,9 @@ export default async function StoreAdminPage({
           <StoreCover brand={store.brand} className="h-24 sm:h-32" />
           <div className="relative z-10 px-4 sm:px-5">
             <div className="-mt-8 flex items-end gap-3">
-              <StoreAvatar name={store.name} brand={store.brand} size="md" />
+              <StoreAvatar name={store.name} brand={store.brand} size="lg" ring />
               <div className="mb-1 flex flex-wrap items-center gap-2">
-                <Badge tone={published ? "accent" : suspended ? "primary" : "neutral"}>
+                <Badge tone={published ? "accent" : suspended ? "copper" : "neutral"}>
                   {translate(
                     locale,
                     published ? "dash.statusPublished"
@@ -151,22 +151,22 @@ export default async function StoreAdminPage({
                     : "dash.statusDraft",
                   )}
                 </Badge>
-                <span className="inline-flex items-center gap-1.5 text-[12px] text-muted">
+                <span className="inline-flex items-center gap-1.5 text-caption text-muted">
                   <StoreTypeIcon type={store.storeType} className="h-3.5 w-3.5" />
                   {translate(locale, copy.singular)}
                 </span>
               </div>
             </div>
 
-            <h1 className="mt-2.5 text-xl font-semibold tracking-tight">{store.name}</h1>
-            <p className="mt-1 text-[13px] text-muted">
+            <h1 className="mt-3 text-h1 text-foreground">{store.name}</h1>
+            <p className="mt-1.5 text-small text-muted">
               <span className="font-medium">{translate(locale, "dash.publicUrl")}: </span>
               {published ? (
-                <Link href={`/${locale}/s/${store.slug}` as Route} className="font-mono text-accent underline">
+                <Link href={`/${locale}/s/${store.slug}` as Route} className="font-medium text-copper underline underline-offset-2">
                   /{store.slug}
                 </Link>
               ) : (
-                <span className="font-mono">{translate(locale, "dash.notPublished")}</span>
+                <span className="text-muted">{translate(locale, "dash.notPublished")}</span>
               )}
             </p>
           </div>
@@ -175,11 +175,11 @@ export default async function StoreAdminPage({
         <div className="flex flex-col gap-6 px-4 py-5 sm:px-5">
           {/* ---------- Suspension notice, before anything else ---------- */}
           {suspended && (
-            <div className="rounded-[var(--radius-md)] border border-primary/30 bg-primary-soft px-4 py-3">
-              <p className="text-sm font-semibold text-primary">
+            <div className="rounded-[var(--radius-lg)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-4 py-3.5">
+              <p className="text-small font-semibold text-[var(--danger)]">
                 {translate(locale, "dash.suspendedTitle")}
               </p>
-              <p className="mt-1 text-[13px] text-primary/90">
+              <p className="mt-1 text-small text-[var(--danger)]/85">
                 {translate(locale, "dash.suspendedBody")}
               </p>
             </div>
@@ -189,12 +189,12 @@ export default async function StoreAdminPage({
           {!suspended && (
             <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                <p className="text-label uppercase text-copper">
                   {translate(locale, "dash.nextStep")}
                 </p>
-                <p className="mt-1 text-[15px] font-semibold">{translate(locale, nextStep.key)}</p>
+                <p className="mt-1.5 text-h3 text-foreground">{translate(locale, nextStep.key)}</p>
                 {nextStep.done && (
-                  <p className="mt-0.5 text-[13px] text-muted">
+                  <p className="mt-1 text-small text-muted">
                     {translate(locale, "dash.stepAllDoneBody")}
                   </p>
                 )}
@@ -215,7 +215,7 @@ export default async function StoreAdminPage({
                 />
               )}
               {published && (
-                <Link href={`/${locale}/s/${store.slug}` as Route} className={buttonClass("secondary", "md")}>
+                <Link href={`/${locale}/s/${store.slug}` as Route} className={buttonClass("outline", "md")}>
                   {translate(locale, "sell.viewPublic")}
                 </Link>
               )}
@@ -224,7 +224,7 @@ export default async function StoreAdminPage({
 
           {/* ---------- Offerings, named for the trade ---------- */}
           <section className="flex flex-col gap-3" aria-labelledby="offerings-heading">
-            <h2 id="offerings-heading" className="text-lg font-semibold tracking-tight">
+            <h2 id="offerings-heading" className="text-h2 text-foreground">
               {translate(locale, copy.offerings)}
             </h2>
 
@@ -239,8 +239,8 @@ export default async function StoreAdminPage({
                 {products.map((product) => (
                   <Card as="li" key={product.id} className="flex flex-col gap-2.5 p-4">
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-[15px] font-semibold">{product.title}</span>
-                      <span className="text-[15px] font-semibold tabular-nums text-primary">
+                      <span className="text-h3 text-foreground">{product.title}</span>
+                      <span className="text-h3 font-semibold tabular-nums text-copper">
                         {m.formatMoney(product.price, registry)}
                       </span>
                     </div>
@@ -251,7 +251,7 @@ export default async function StoreAdminPage({
                       {product.status === "published" ? (
                         <Link
                           href={`/${locale}/s/${store.slug}/${product.slug}` as Route}
-                          className="text-[13px] font-semibold text-accent underline"
+                          className="text-small font-semibold text-copper underline underline-offset-2"
                         >
                           {translate(locale, "sell.viewPublic")}
                         </Link>
@@ -267,7 +267,7 @@ export default async function StoreAdminPage({
                     </div>
 
                     <div className="flex flex-col gap-2 border-t border-border pt-3">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                      <span className="text-label uppercase text-muted">
                         {translate(locale, "sell.assets")}
                       </span>
                       {(assetsByProduct.get(product.id) ?? []).length === 0 ? (
@@ -279,7 +279,7 @@ export default async function StoreAdminPage({
                       ) : (
                         <ul className="flex flex-col gap-1">
                           {(assetsByProduct.get(product.id) ?? []).map((asset) => (
-                            <li key={asset.id} className="font-mono text-xs text-muted">
+                            <li key={asset.id} className="text-caption text-muted">
                               {asset.title} · {Math.max(1, Math.round(asset.byteSize / 1024))} KB
                             </li>
                           ))}
@@ -363,7 +363,7 @@ export default async function StoreAdminPage({
 
           {/* ---------- What is coming, stated honestly ---------- */}
           <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="soon-heading">
-            <h2 id="soon-heading" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+            <h2 id="soon-heading" className="text-label uppercase text-muted">
               {translate(locale, "dash.comingSoon")}
             </h2>
             <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
@@ -373,13 +373,13 @@ export default async function StoreAdminPage({
                     key={key}
                     className="rounded-[var(--radius-md)] border border-dashed border-border bg-surface-muted/40 px-3 py-3"
                   >
-                    <p className="text-[13px] font-medium text-muted">{translate(locale, key)}</p>
+                    <p className="text-small font-medium text-muted">{translate(locale, key)}</p>
                     {/*
                       * Deliberately no number, not even a zero. A metric card
                       * showing "0 orders" on a store that cannot yet receive
                       * orders is a fabricated metric with an honest value.
                       */}
-                    <p className="mt-0.5 text-[11px] text-muted/70">
+                    <p className="mt-0.5 text-caption text-faint">
                       {translate(locale, "dash.comingSoon")}
                     </p>
                   </li>

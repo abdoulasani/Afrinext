@@ -42,7 +42,7 @@ export default function PayButton({
       <input type="hidden" name="orderId" value={orderId} />
 
       <fieldset className="flex flex-col gap-2" data-testid="channel-choice">
-        <legend className="text-xs font-medium text-muted">{channelLabels.heading}</legend>
+        <legend className="text-caption font-medium text-muted">{channelLabels.heading}</legend>
         {channels.map((channel) => (
           <label
             key={channel.value}
@@ -58,18 +58,18 @@ export default function PayButton({
               className="mt-1"
             />
             <span className="flex flex-col">
-              <span className="text-sm font-medium">{channel.label}</span>
-              <span className="text-xs text-muted">{channel.detail}</span>
+              <span className="text-small font-medium">{channel.label}</span>
+              <span className="text-caption text-muted">{channel.detail}</span>
             </span>
           </label>
         ))}
         {channels.length === 1 && (
-          <p className="text-xs text-muted">{channelLabels.onlyOne}</p>
+          <p className="text-caption text-muted">{channelLabels.onlyOne}</p>
         )}
       </fieldset>
 
       {state.error !== undefined && (
-        <p role="alert" data-testid="pay-error" className="rounded-xl bg-primary-soft px-3 py-2 text-sm font-medium text-primary">
+        <p role="alert" data-testid="pay-error" className="rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3.5 py-2.5 text-small font-medium text-[var(--danger)]">
           {state.error}
         </p>
       )}
@@ -77,11 +77,11 @@ export default function PayButton({
         type="submit"
         disabled={pending}
         data-testid="pay"
-        className="w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-contrast disabled:opacity-60"
+        className="w-full rounded-[var(--radius-md)] bg-primary px-4 py-3 text-small font-semibold text-primary-contrast disabled:opacity-60"
       >
         {label}
       </button>
-      <p data-testid="pay-waiting" className="text-center text-xs text-muted">
+      <p data-testid="pay-waiting" className="text-center text-caption text-muted">
         {waiting}
       </p>
     </form>

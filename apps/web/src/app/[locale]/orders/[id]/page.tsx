@@ -83,10 +83,10 @@ export default async function OrderPage({
       <AppHeader title={translate(locale, "order.title")} back={`/${locale}/orders` as Route} />
       <div className="mx-auto flex max-w-md flex-col gap-5 px-4 py-6">
         <section className="flex flex-col gap-1">
-          <p data-testid="order-status" className="text-xs uppercase tracking-wide text-muted">
+          <p data-testid="order-status" className="text-caption uppercase tracking-wide text-muted">
             {statusLabel}
           </p>
-          <p data-testid="order-total" className="text-3xl font-semibold tabular-nums">
+          <p data-testid="order-total" className="text-h1 font-semibold tabular-nums">
             {m.formatMoney(order.total, registry)}
           </p>
         </section>
@@ -95,10 +95,10 @@ export default async function OrderPage({
           {order.items.map((item) => (
             <li
               key={item.productId}
-              className="flex items-baseline justify-between gap-3 rounded-xl bg-surface-muted px-3 py-2"
+              className="flex items-baseline justify-between gap-3 rounded-[var(--radius-md)] bg-surface-muted px-3 py-2"
             >
-              <span className="text-sm font-medium">{item.title}</span>
-              <span className="text-sm tabular-nums text-muted">
+              <span className="text-small font-medium">{item.title}</span>
+              <span className="text-small tabular-nums text-muted">
                 {item.quantity} × {m.formatMoney(item.unitPrice, registry)}
               </span>
             </li>
@@ -106,7 +106,7 @@ export default async function OrderPage({
         </ul>
 
         {payment !== undefined && (
-          <p data-testid="payment-status" className="font-mono text-xs text-muted">
+          <p data-testid="payment-status" className="text-caption text-muted">
             {payment.status}
           </p>
         )}
@@ -165,10 +165,10 @@ export default async function OrderPage({
               * anything warmer than that would be telling the buyer their money
               * is on its way when no code sends it.
               */}
-            <p data-testid="order-refund-due" className="text-sm font-medium">
+            <p data-testid="order-refund-due" className="text-small font-medium">
               {translate(locale, "order.refundDueExplain")}
             </p>
-            <p className="text-xs text-muted">
+            <p className="text-caption text-muted">
               {translate(locale, "order.refundNotYetExecuted")}
             </p>
           </section>
@@ -176,7 +176,7 @@ export default async function OrderPage({
 
         {order.status === "paid" && (
           <section className="flex flex-col gap-2 border-t border-border pt-5">
-            <p data-testid="order-paid" className="text-sm font-medium">
+            <p data-testid="order-paid" className="text-small font-medium">
               {translate(locale, "order.paidExplain")}
             </p>
             {/*
@@ -184,10 +184,10 @@ export default async function OrderPage({
               * confirmed, and the seller has not been settled. No screen in
               * Afrinext describes an entitlement as money held for someone.
               */}
-            <p className="text-xs text-muted">{translate(locale, "order.notSettled")}</p>
+            <p className="text-caption text-muted">{translate(locale, "order.notSettled")}</p>
             <a
               href={`/${locale}/orders`}
-              className="w-full rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-contrast"
+              className="w-full rounded-[var(--radius-md)] bg-primary px-4 py-3 text-center text-small font-semibold text-primary-contrast"
             >
               {translate(locale, "order.openLibrary")}
             </a>

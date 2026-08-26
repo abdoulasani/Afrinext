@@ -84,27 +84,49 @@ export default async function ExplorerPage({
 
   return (
     <Shell width="wide">
-      <header
-        className="px-4 pb-4 sm:px-5"
-        style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top))" }}
-      >
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {translate(locale, "explore.title")}
-        </h1>
-        <div className="mt-3">
-          <MarketSearch
-            action={`/${locale}/explorer`}
-            label={translate(locale, "market.searchLabel")}
-            placeholder={translate(locale, "market.searchPlaceholder")}
-            submitLabel={translate(locale, "market.searchAction")}
-            defaultValue={text}
-          />
+      {/*
+       * The search sits on an ink band rather than on the page ground.
+       *
+       * It is the same field the home page puts on the hero, and it is the
+       * reason the two screens feel like one product: search is what Explorer
+       * IS, so giving it the highest contrast on the page puts the eye exactly
+       * where the work happens. On sand it was a white box on a near-white
+       * ground — technically fine, and completely unremarkable.
+       */}
+      <div className="on-ink relative isolate overflow-hidden bg-ink text-[var(--on-ink)]">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-50"
+          style={{
+            backgroundImage:
+              "radial-gradient(ellipse 70% 80% at 92% -20%, var(--copper), transparent 62%)",
+          }}
+        />
+        <div
+          className="relative mx-auto max-w-2xl px-4 pb-7 sm:px-6 lg:max-w-5xl xl:max-w-6xl"
+          style={{ paddingTop: "calc(1.75rem + env(safe-area-inset-top))" }}
+        >
+          <p className="text-label uppercase text-copper-on-ink">
+            {translate(locale, "explore.eyebrow")}
+          </p>
+          <h1 className="mt-1.5 text-h1 text-[var(--on-ink)]">
+            {translate(locale, "explore.title")}
+          </h1>
+          <div className="mt-5 max-w-xl">
+            <MarketSearch
+              action={`/${locale}/explorer`}
+              label={translate(locale, "market.searchLabel")}
+              placeholder={translate(locale, "market.searchPlaceholder")}
+              submitLabel={translate(locale, "market.searchAction")}
+              defaultValue={text}
+            />
+          </div>
         </div>
-      </header>
+      </div>
 
       {/* Type filter. A horizontal scroller on a phone, a wrap on a desktop. */}
-      <nav aria-label={translate(locale, "market.categories")} className="px-4 sm:px-5">
-        <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
+      <nav aria-label={translate(locale, "market.categories")} className="px-4 pt-5 sm:px-6">
+        <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
           <li>
             <Link
               href={urlWith({ type: undefined, page: undefined }) as Route}
@@ -129,8 +151,8 @@ export default async function ExplorerPage({
         </ul>
       </nav>
 
-      <div className="flex items-center justify-between gap-3 px-4 pt-3 sm:px-5">
-        <p aria-live="polite" className="text-[13px] text-muted">
+      <div className="flex items-center justify-between gap-3 px-4 pt-4 sm:px-6">
+        <p aria-live="polite" className="text-small font-medium text-foreground">
           {translate(locale, "explore.resultsCount", { count: total })}
         </p>
         {/* Sorting by sales only offered when sales could exist. */}
@@ -144,7 +166,7 @@ export default async function ExplorerPage({
         </div>
       </div>
 
-      <section className="px-4 pt-3 sm:px-5">
+      <section className="px-4 pt-4 sm:px-6">
         {stores.length === 0 ? (
           <EmptyState
             icon={<StoreTypeIcon type={type ?? "service"} className="h-6 w-6" />}
@@ -152,18 +174,18 @@ export default async function ExplorerPage({
             body={translate(locale, filtered ? "explore.noResultsBody" : "market.emptyBody")}
             action={
               filtered ? (
-                <Link href={`/${locale}/explorer` as Route} className={buttonClass("secondary", "md")}>
+                <Link href={`/${locale}/explorer` as Route} className={buttonClass("outline", "md")}>
                   {translate(locale, "explore.clearFilters")}
                 </Link>
               ) : (
-                <Link href={`/${locale}/sell/nouvelle` as Route} className={buttonClass("primary", "lg")}>
+                <Link href={`/${locale}/sell/nouvelle` as Route} className={buttonClass("solid", "lg")}>
                   {translate(locale, "market.emptyAction")}
                 </Link>
               )
             }
           />
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {stores.map((store) => (
               <StoreCard
                 key={store.slug}
@@ -189,19 +211,19 @@ export default async function ExplorerPage({
       </section>
 
       {pages > 1 && (
-        <nav aria-label="Pagination" className="flex items-center justify-between gap-3 px-4 pt-6 sm:px-5">
+        <nav aria-label="Pagination" className="flex items-center justify-between gap-3 px-4 pt-8 sm:px-6">
           {page > 1 ? (
-            <Link href={urlWith({ page: String(page - 1) }) as Route} className={buttonClass("secondary", "sm")}>
+            <Link href={urlWith({ page: String(page - 1) }) as Route} className={buttonClass("outline", "md")}>
               {translate(locale, "explore.previous")}
             </Link>
           ) : (
             <span />
           )}
-          <p className="text-[13px] tabular-nums text-muted">
+          <p className="text-small tabular-nums text-muted">
             {translate(locale, "explore.page", { page, total: pages })}
           </p>
           {page < pages ? (
-            <Link href={urlWith({ page: String(page + 1) }) as Route} className={buttonClass("secondary", "sm")}>
+            <Link href={urlWith({ page: String(page + 1) }) as Route} className={buttonClass("outline", "md")}>
               {translate(locale, "explore.next")}
             </Link>
           ) : (
@@ -213,14 +235,35 @@ export default async function ExplorerPage({
   );
 }
 
-/** A filter pill. Selection is weight and colour AND aria-current, never colour alone. */
+/**
+ * A filter pill.
+ *
+ * Selected is ink-on-sand — maximum contrast, and the same "this is the one"
+ * language the primary button speaks. Selection is carried by weight and
+ * colour AND by `aria-current`, never by colour alone: a filter a
+ * colour-blind or screen-reader user cannot identify is a filter that does not
+ * work.
+ *
+ * The touch target is the padding. `py-2.5` puts these at 40px on a phone,
+ * which is the floor for a control in a horizontal scroller where a mis-tap
+ * costs a page load.
+ */
 function chip(active: boolean, small = false): string {
   return (
-    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 " +
-    (small ? "py-1 text-[12px] " : "py-2 text-[13px] ") +
-    "font-medium transition-colors duration-[var(--duration-fast)] " +
+    "inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] border " +
+    /*
+     * Both sizes are 44px tall, the mobile touch-target floor, set as a
+     * minimum height rather than left to padding arithmetic — the sort chips
+     * measured 113x35 with padding alone, then 113x39 after one nudge, which
+     * is how "close enough" gets shipped twice. A control that changes the
+     * whole result set is not the place to save six pixels of rhythm.
+     */
+    "min-h-11 " +
+    (small ? "px-3.5 text-caption " : "px-4 text-small ") +
+    "font-medium transition-[background-color,border-color,color,transform] " +
+    "duration-[var(--duration-fast)] active:scale-[0.97] " +
     (active
-      ? "border-primary bg-primary text-primary-contrast"
-      : "border-border bg-surface text-muted hover:border-muted/50 hover:text-foreground")
+      ? "border-transparent bg-primary text-primary-contrast shadow-[var(--shadow-sm)]"
+      : "border-border bg-surface text-muted hover:border-border-strong hover:text-foreground")
   );
 }

@@ -80,7 +80,7 @@ export default async function NewStorePage({
             countries={countries}
           />
         </div>
-        <p className="px-4 pb-2 text-center text-xs text-muted">
+        <p className="px-4 pb-2 text-center text-caption text-muted">
           <Link href={`/${locale}/sell` as Route} className="hover:underline">
             {translate(locale, "create.back")}
           </Link>

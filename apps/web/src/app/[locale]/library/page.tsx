@@ -4,8 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { content, money as m } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate } from "@afrinext/i18n";
-import { Badge, buttonClass, Card, EmptyState, StoreTypeIcon } from "@afrinext/ui";
-import AppHeader from "@/components/AppHeader";
+import { Badge, buttonClass, EmptyState, PriceTag, StoreTypeIcon } from "@afrinext/ui";
+import { PageIntro } from "@/components/PageIntro";
 import { Shell } from "@/components/Shell";
 import { currencyRegistry } from "@/lib/catalog";
 import { currentActor } from "@/lib/session";
@@ -50,95 +50,128 @@ export default async function LibraryPage({
 
   return (
     <>
-      <AppHeader title={translate(locale, "library.title")} />
+      <PageIntro
+        eyebrow={translate(locale, "library.eyebrow")}
+        title={translate(locale, "library.title")}
+        {...(owned.length > 0
+          ? { body: translate(locale, "library.countOwned", { count: owned.length }) }
+          : {})}
+      />
       <Shell width="wide">
-        <div className="flex flex-col gap-4 px-4 py-5 sm:px-5">
+        <div className="px-4 pt-6 sm:px-6">
           {owned.length === 0 ? (
             <EmptyState
               icon={<StoreTypeIcon type="digital_product" className="h-6 w-6" />}
               title={translate(locale, "library.emptyTitle")}
               body={translate(locale, "library.emptyBody")}
               action={
-                <Link href={`/${locale}/explorer` as Route} className={buttonClass("primary", "lg")}>
+                <Link href={`/${locale}/explorer` as Route} className={buttonClass("solid", "lg")}>
                   {translate(locale, "library.emptyAction")}
                 </Link>
               }
             />
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            /*
+             * A collection, two-up, with a plate for each thing owned.
+             *
+             * The plates are INK rather than the seller's brand, and that is a
+             * deliberate difference from the marketplace. On a storefront the
+             * colour is the seller's, because you are looking at their shop.
+             * Here you are looking at YOUR shelf, so the shelf is one material
+             * and the copper mark is the same on every item — which is also
+             * what makes "I own this" read at a glance rather than "this was
+             * sold by someone".
+             */
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-7 lg:grid-cols-4">
               {owned.map((item) => (
-                <Card as="li" key={item.productId} interactive data-testid="library-item">
+                <li key={item.productId} className="group" data-testid="library-item">
                   <Link
                     href={`/${locale}/library/${item.storeSlug}/${item.productSlug}` as Route}
-                    className="flex h-full flex-col gap-2.5 p-4"
+                    className="block focus-visible:outline-none"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <h2 className="text-[15px] font-semibold leading-snug text-foreground">
-                        {item.title}
-                      </h2>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <Badge tone="neutral">
+                    <div
+                      className={
+                        "relative isolate aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] " +
+                        "bg-ink transition-transform duration-[var(--duration-base)] " +
+                        "ease-[var(--ease-out)] group-hover:-translate-y-[3px] " +
+                        "group-focus-visible:-translate-y-[3px]"
+                      }
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 opacity-60"
+                        style={{
+                          backgroundImage:
+                            "radial-gradient(ellipse 100% 130% at 12% -10%, var(--copper), transparent 62%)",
+                        }}
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 grid place-items-center text-[var(--on-ink)] opacity-90"
+                      >
+                        <StoreTypeIcon type="digital_product" className="h-8 w-8" />
+                      </span>
+                      <span className="absolute left-2.5 top-2.5 z-10">
+                        <Badge tone="onInk">
                           {translate(locale, "library.version", { n: item.versionNo })}
                         </Badge>
-                        {/*
-                          * A fact about the product, not a promise about this
-                          * purchase. The card only flags that one exists; the
-                          * product page explains what it does and does not mean.
-                          */}
-                        {item.latestVersionNo > item.versionNo && (
-                          <span
-                            data-testid="library-newer"
-                            className="text-[11px] font-medium text-muted"
-                          >
-                            {translate(locale, "library.newerVersion", {
-                              n: item.latestVersionNo,
-                            })}
-                          </span>
-                        )}
-                      </div>
+                      </span>
                     </div>
 
-                    <p className="text-[13px] text-muted">{item.storeName}</p>
+                    <h2 className="mt-3 line-clamp-2 text-h3 text-foreground">{item.title}</h2>
+                    <p className="mt-1 truncate text-caption text-muted">{item.storeName}</p>
 
-                    <dl className="mt-auto flex flex-col gap-1 pt-1 text-[12px] text-muted">
-                      <div className="flex justify-between gap-3">
-                        <dt className="sr-only">{translate(locale, "library.since", { date: "" })}</dt>
-                        <dd>{translate(locale, "library.since", { date: dateOf(item.grantedAt) })}</dd>
-                        <dd className="font-semibold tabular-nums text-primary">
-                          {m.formatMoney(item.price, registry)}
-                        </dd>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {/*
+                     * A fact about the product, not a promise about this
+                     * purchase. The card flags only that a newer version
+                     * exists; the product page explains what that does and does
+                     * not mean.
+                     */}
+                    {item.latestVersionNo > item.versionNo && (
+                      <p
+                        data-testid="library-newer"
+                        className="mt-1 text-caption font-medium text-copper"
+                      >
+                        {translate(locale, "library.newerVersion", { n: item.latestVersionNo })}
+                      </p>
+                    )}
+
+                    <dl className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-muted">
+                      <div>
+                        <dt className="sr-only">{translate(locale, "library.files", { count: 0 })}</dt>
                         <dd>{translate(locale, "library.files", { count: item.assetCount })}</dd>
-                        {/*
-                          * The limit, stated on the card so a buyer knows before
-                          * they click. `null` is genuinely unlimited and says so
-                          * rather than showing an invented number.
-                          */}
-                        <dd data-testid="library-limit">
+                      </div>
+                      {/*
+                       * The limit, stated on the card so a buyer knows before
+                       * they open it. `null` is genuinely unlimited and says
+                       * so rather than showing an invented number.
+                       */}
+                      <div data-testid="library-limit">
+                        <dt className="sr-only">{translate(locale, "sell.downloadLimit")}</dt>
+                        <dd className="before:text-faint before:content-['·_']">
                           {item.downloadLimit === null
                             ? translate(locale, "library.unlimited")
                             : translate(locale, "sell.downloadLimit") +
                               ` · ${String(item.downloadLimit)}`}
                         </dd>
-                        {item.hasLicence && (
-                          <dd className="font-medium text-foreground/80">
-                            {translate(locale, "library.licence")}
-                          </dd>
-                        )}
                       </div>
                     </dl>
+
+                    <div className="mt-2 flex items-baseline justify-between gap-2">
+                      <PriceTag amount={m.formatMoney(item.price, registry)} size="sm" />
+                      <span className="text-caption text-faint">{dateOf(item.grantedAt)}</span>
+                    </div>
                   </Link>
-                </Card>
+                </li>
               ))}
             </ul>
           )}
 
           {/*
-            * The payment boundary, stated on the screen a buyer actually
-            * reaches rather than only in a document.
-            */}
-          <p className="border-t border-border pt-4 text-xs text-muted">
+           * The payment boundary, stated on the screen a buyer actually
+           * reaches rather than only in a document.
+           */}
+          <p className="mt-10 border-t border-border pt-5 text-caption text-faint">
             {translate(locale, "library.notSettled")}
           </p>
         </div>

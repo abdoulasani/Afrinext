@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { isLocale, translate } from "@afrinext/i18n";
-import AppHeader from "@/components/AppHeader";
+import { PageIntro } from "@/components/PageIntro";
+import { Shell } from "@/components/Shell";
 import SignInForm from "@/components/SignInForm";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,8 @@ export default async function SignInPage({
 
   return (
     <>
-      <AppHeader title={translate(locale, "auth.signIn")} />
+      <PageIntro title={translate(locale, "auth.signIn")} />
+      <Shell width="narrow">
       <SignInForm
         locale={locale}
         labels={{
@@ -36,6 +38,7 @@ export default async function SignInPage({
           },
         }}
       />
+      </Shell>
     </>
   );
 }

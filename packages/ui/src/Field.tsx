@@ -33,10 +33,10 @@ export function Field({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[13px] font-medium text-foreground">
+      <label htmlFor={id} className="text-small font-medium text-foreground">
         {label}
         {required && (
-          <span aria-hidden="true" className="ml-1 text-primary">*</span>
+          <span aria-hidden="true" className="ml-1 text-copper">*</span>
         )}
       </label>
       {children({
@@ -46,11 +46,11 @@ export function Field({
         required,
       })}
       {hint !== undefined && (
-        <p id={hintId} className="text-xs leading-relaxed text-muted">{hint}</p>
+        <p id={hintId} className="text-caption text-muted">{hint}</p>
       )}
       {error !== undefined && (
         /* Not colour alone: the message itself carries the meaning. */
-        <p id={errorId} role="alert" className="text-xs font-medium text-primary">
+        <p id={errorId} role="alert" className="text-caption font-medium text-[var(--danger)]">
           {error}
         </p>
       )}
@@ -58,8 +58,18 @@ export function Field({
   );
 }
 
-/** The one input style. Tall enough to tap, quiet enough to disappear. */
+/**
+ * The one input style.
+ *
+ * 48px tall, because that is what a thumb needs and because a form whose fields
+ * are shorter than its buttons looks like two designs sharing a page. The
+ * invalid state is a DANGER border rather than the accent: copper marks things
+ * worth attention, red marks things that are wrong, and a field that borrows
+ * the accent for an error teaches the reader that copper means trouble.
+ */
 export const inputClass =
-  "w-full rounded-[var(--radius-md)] border border-border bg-surface px-3.5 py-3 text-[15px] " +
-  "text-foreground placeholder:text-muted/70 transition-colors duration-[var(--duration-fast)] " +
-  "hover:border-muted/50 aria-[invalid=true]:border-primary";
+  "h-12 w-full rounded-[var(--radius-md)] border border-border bg-surface px-3.5 text-body " +
+  "text-foreground outline-none placeholder:text-faint " +
+  "transition-[border-color,box-shadow] duration-[var(--duration-fast)] " +
+  "hover:border-border-strong focus:border-copper " +
+  "aria-[invalid=true]:border-[var(--danger)]";
