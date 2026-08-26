@@ -145,9 +145,21 @@ test.describe("the marketplace, anonymously", () => {
     expect(slugs).not.toContain(`${RUN}-draft`);
     expect(slugs).not.toContain(`${RUN}-suspended`);
 
-    // …and absent from the marketplace home too, which is a different query.
+    /*
+     * …and absent from the marketplace home too, which is a different query.
+     *
+     * The home page gives the newest store a lead slot of its own and puts the
+     * others in the grid behind it, so "does the newest store appear" is now a
+     * question about two places. Both are checked: the lead names the newest
+     * published store, and the grid holds the rest — with the draft and the
+     * suspended store in neither.
+     */
     await page.goto("/fr");
-    const home = oursOnly(await cardSlugs(page));
+    const lead = await page.getByTestId("lead-store").getAttribute("href");
+    expect(lead, "the lead slot features the newest published store")
+      .toBe(`/fr/s/${RUN}-newest`);
+
+    const home = [...oursOnly(await cardSlugs(page)), (lead ?? "").split("/").pop() ?? ""];
     expect(home).not.toContain(`${RUN}-draft`);
     expect(home).not.toContain(`${RUN}-suspended`);
     expect(home, "the home page shows published stores").toContain(`${RUN}-newest`);
