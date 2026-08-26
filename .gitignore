@@ -38,6 +38,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Design-audit working directory: screenshots, probe scripts, a scratch server
+# log. Evidence for a review, never a deliverable.
+apps/web/.audit/
+
 # Playwright browser-test output
 apps/web/.e2e/
 apps/web/test-results/
