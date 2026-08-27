@@ -3,8 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { content } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate } from "@afrinext/i18n";
+import { Badge } from "@afrinext/ui";
 import AppHeader from "@/components/AppHeader";
 import AssetList from "@/components/AssetList";
+import { Shell } from "@/components/Shell";
 import { currentActor } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -35,22 +37,40 @@ export default async function LibraryProductPage({
 
   return (
     <>
-      <AppHeader title={product.title} back={`/${locale}/library` as Route} />
-      <div className="mx-auto flex max-w-md flex-col gap-5 px-4 py-6">
-        {product.deliveryMode === "view_only" && (
-          <p data-testid="view-only" className="text-caption text-muted">
-            {translate(locale, "library.viewOnly")}
+      {/* `titleAs="p"`: the page sets its own <h1> below, and one document
+          gets one top-level heading. */}
+      <AppHeader
+        title={product.title}
+        titleAs="p"
+        back={`/${locale}/library` as Route}
+      />
+      <Shell width="narrow">
+      <div className="flex flex-col gap-5 px-4 pt-7 sm:px-6">
+        <div>
+          <p className="text-label uppercase text-copper">
+            {translate(locale, "library.eyebrow")}
           </p>
-        )}
+          <h1 className="mt-1.5 text-h1 text-foreground">{product.title}</h1>
 
-        {/*
-          * What was bought, not what the product is now. The seller may have
-          * published three versions since; this buyer owns one of them, and the
-          * page says which.
-          */}
-        <p data-testid="purchased-version" className="text-caption text-muted">
-          {translate(locale, "library.version", { n: product.versionNo })}
-        </p>
+          {/*
+            * What was bought, not what the product is now. The seller may have
+            * published three versions since; this buyer owns one of them, and
+            * the page says which — as a badge rather than a line of grey text,
+            * because it is the single most load-bearing fact on the screen.
+            */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span data-testid="purchased-version">
+              <Badge tone="ink">
+                {translate(locale, "library.version", { n: product.versionNo })}
+              </Badge>
+            </span>
+            {product.deliveryMode === "view_only" && (
+              <span data-testid="view-only">
+                <Badge tone="neutral">{translate(locale, "library.viewOnly")}</Badge>
+              </span>
+            )}
+          </div>
+        </div>
 
         {/*
           * A newer version exists. Said, not offered.
@@ -127,6 +147,7 @@ export default async function LibraryProductPage({
           {translate(locale, "library.notSettled")}
         </p>
       </div>
+      </Shell>
     </>
   );
 }

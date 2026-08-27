@@ -34,6 +34,36 @@ entitlements
 Files and licence text belong to a **version**, never to the product. A version
 is editable while `draft` and immutable once `published`.
 
+### Review decision 1 — pinned, with newer versions visible
+
+A buyer is entitled to **exactly the version they paid for**, and is **told**
+when the seller has published a newer one.
+
+Both halves are load-bearing, and either one alone is a different product:
+
+- **The pin without the notice** is silent staleness. A buyer cannot tell an
+  out-of-date file from an abandoned product, and the seller can quietly change
+  what was sold by publishing over it.
+- **The notice without the pin** is an automatic upgrade nobody agreed to.
+  Afrinext has decided no such commercial policy, and licences and refunds both
+  depend on knowing which version a purchase refers to.
+
+`EntitledProduct` and `LibraryEntry` therefore carry **two** numbers:
+
+| Field | Means |
+|---|---|
+| `versionNo` | the version this buyer owns, from `entitlements.version_id` |
+| `latestVersionNo` | the seller's current published head, from a correlated subquery |
+
+They are separate columns on purpose: one is a fact about the purchase and the
+other a fact about the product, and a single field would eventually be read as
+both. A **draft** version is never counted as newer, because nobody can buy it.
+
+The library says so in the seller's absence of ambiguity: *"Vous conservez la
+version 1, celle que vous avez achetée. Afrinext n'accorde pas automatiquement
+les nouvelles versions."* An explicit upgrade path is possible later; it is not
+implied now.
+
 ### Immutability is the database's job
 
 Not a convention, not a code path — four triggers:
@@ -103,8 +133,18 @@ makes "what did this person agree to?" answerable from one row.
 
 ## Download limits
 
-`products.download_limit`, `null` meaning unlimited. **Per file, per buyer**: a
-three-file product should not exhaust its allowance by being fetched once.
+`products.download_limit`, `null` meaning unlimited.
+
+### Review decision 2 — per file, per buyer
+
+Each file carries its own allowance. A product containing `guide.pdf`,
+`templates.zip` and `bonus.mp4` with a limit of 5 gives the buyer five
+downloads **of each**, not five across the three — a three-file product should
+not exhaust its allowance by being fetched once, and "you can download each file
+up to 5 times" is a sentence a seller can say to a customer without a footnote.
+
+Mechanically this is the scope of the count: `entitlement_downloads` is counted
+over `(entitlement_id, asset_id)`, so one file's history cannot spend another's.
 
 ### Counted, never stored
 
@@ -210,9 +250,35 @@ reach `succeeded` — the execution path and the provider-resolution path — vi
 one helper, because two code paths that both decide "the money went back" must
 agree about what that means for the goods.
 
-Only `succeeded` revokes. A refund that failed, or whose outcome we never
-learned (`in_doubt`), leaves access exactly as it was: taking a buyer's file
-away on a refund that did not actually pay them is the worst of both outcomes.
+### Review decision 3 — revoke on a FULL refund only
+
+    money completely returned  ->  digital entitlement revoked
+    money partly returned      ->  entitlement remains
+
+Two conditions, and both are necessary.
+
+**Only `succeeded`.** A refund that failed, or whose outcome we never learned
+(`in_doubt`), leaves access exactly as it was: taking a buyer's file away on a
+refund that did not actually pay them is the worst of both outcomes — they have
+neither the money nor the goods.
+
+**Only a full refund.** A partial refund is a price adjustment, not an undoing
+of the sale. A seller who returns 1 000 of a 5 000 XOF purchase because one file
+was missing has not taken the product back, and revoking on it would punish a
+buyer for complaining.
+
+The rule lives in `refundRevokesAccess()` in `refunds/state.ts` as a predicate
+over amounts, not as a branch inside the refund executor, and that placement is
+the interesting part. **Afrinext cannot execute a partial refund today**: two
+unique indexes allow one refund per order and per payment, and the executor
+refuses an amount its payment does not corroborate. So without a predicate the
+partial branch would be a line of code no test could reach — until the day it
+started deciding what happens to somebody's purchase. Both guards are asserted
+by a test, so when partial refunds arrive that test fails and points here.
+
+The amount compared is the **sum of everything that has succeeded against the
+order**, not the refund in hand: three settled refunds of 2 000 against a 6 000
+order have between them returned the whole price and must revoke.
 
 Afrinext's position is that a buyer who has been repaid is no longer entitled.
 The file they already downloaded cannot be recalled; their continuing access
@@ -231,7 +297,8 @@ product appears is that this person paid for it and has not been refunded.
 Each row shows the truth about the **purchase**, not the product's current
 state: the version bought, whether a licence was agreed, how many downloads
 remain, what was paid, and when. A seller publishing version 2 tomorrow changes
-none of it.
+none of it — and the library says that version 2 exists, which is review
+decision 1 rendered on the one screen where it matters.
 
 ## The financial boundary
 

@@ -221,6 +221,10 @@ test.describe("the digital product engine, end to end", () => {
 
       await buy(buyer, request, listing);
 
+      // No newer version exists yet, so nothing claims one does. A notice that
+      // is always present is a notice nobody reads.
+      await expect(buyer.getByTestId("newer-version")).toHaveCount(0);
+
       // The library now has exactly one item, naming the version bought.
       await buyer.goto("/fr/library");
       await expect(buyer.getByTestId("library-item")).toHaveCount(1);
@@ -299,6 +303,28 @@ test.describe("the digital product engine, end to end", () => {
       await expect(buyer.getByTestId("licence")).toContainText("Termes v1.");
       await expect(buyer.getByTestId("licence")).not.toContainText("Termes v2");
 
+      /*
+       * The other half of the pinned-with-newer-versions-visible decision.
+       *
+       * The buyer must be TOLD that version 2 exists — without the notice they
+       * cannot tell an out-of-date file from an abandoned product — and the
+       * notice must say plainly that Afrinext does not hand it over. Both
+       * halves are asserted here because either one alone is a different
+       * product: the notice without the pin is an upgrade nobody agreed to,
+       * and the pin without the notice is a silent staleness.
+       */
+      const notice = buyer.getByTestId("newer-version");
+      await expect(notice, "the buyer is told a newer version exists").toBeVisible();
+      await expect(notice).toContainText("2");
+      await expect(notice, "and told it is not granted automatically")
+        .toContainText("n'accorde pas automatiquement");
+
+      // The same fact, on the library index, without leaving the pin behind.
+      await buyer.goto("/fr/library");
+      await expect(buyer.getByTestId("library-newer")).toContainText("2");
+      await expect(buyer.getByTestId("library-item")).toContainText("Version 1");
+
+      await buyer.goto(`/fr/library/${listing.storeSlug}/${listing.productSlug}`);
       const served = await fetchAsset(buyer, listing, v1Asset);
       expect(served.status).toBe(200);
       expect(served.text, "the bytes they paid for, unchanged").toContain("version one");
