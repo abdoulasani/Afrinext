@@ -43,6 +43,27 @@ export class ContentUnavailableError extends DomainError {
   }
 }
 
+/**
+ * A write that did not land.
+ *
+ * Separate from `ContentUnavailableError` because of where it is SEEN: an
+ * upload failure is rendered on the seller's screen by the server action, which
+ * shows `error.message` verbatim. So this message carries no storage key, no
+ * bucket, no endpoint and nothing the provider said — a provider's error body
+ * names the bucket, the key and an account id, and a seller who can make an
+ * upload fail must not be shown Afrinext's infrastructure. The detail is
+ * logged instead, where an operator can read it.
+ */
+export class StorageWriteFailedError extends DomainError {
+  override readonly name = "StorageWriteFailedError";
+  constructor() {
+    super(
+      "content.write_failed",
+      "The file could not be saved. Please try again.",
+    );
+  }
+}
+
 export class InvalidStorageKeyError extends DomainError {
   override readonly name = "InvalidStorageKeyError";
   constructor(key: string) {

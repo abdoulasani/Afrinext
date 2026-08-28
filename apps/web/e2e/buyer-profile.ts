@@ -42,9 +42,11 @@ export async function completeBuyerProfileForOrder(
   page: Page,
   locale: string,
   orderId: string,
-  options: { name?: string; country?: string } = {},
+  options: { name?: string; country?: string; base?: string } = {},
 ): Promise<void> {
-  await page.goto(`/${locale}/orders/${orderId}`);
+  // See the note on `createStoreViaWizard`: a relative goto resolves against
+  // `use.baseURL`, which is the wrong instance for a multi-instance spec.
+  await page.goto(`${options.base ?? ""}/${locale}/orders/${orderId}`);
   await completeBuyerProfile(page, options);
 }
 

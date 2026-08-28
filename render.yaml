@@ -154,6 +154,21 @@ services:
       - key: APP_URL
         sync: false
 
+      # ---- digital content ------------------------------------------------
+      # The preview is ONE instance with a mounted disk, so local storage is a
+      # legitimate choice here and the flag says that was deliberate. It is not
+      # a choice a multi-instance deployment may make: a file uploaded by one
+      # instance is not on another's disk, and the download fails depending on
+      # which machine answered.
+      #
+      # There is no object-storage account for Afrinext yet, so CONTENT_STORAGE
+      # is NOT set to s3 anywhere. When a bucket exists, this becomes s3 plus
+      # the five CONTENT_S3_* variables, and nothing else changes — the adapter
+      # is already built and tested. See docs/architecture/object-storage.md.
+      - key: CONTENT_STORAGE
+        value: filesystem
+      - key: ALLOW_LOCAL_CONTENT_STORAGE
+        value: "yes"
       # On the mounted disk, so uploaded files survive a deploy.
       - key: CONTENT_STORAGE_DIR
         value: /var/data/content

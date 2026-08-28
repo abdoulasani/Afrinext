@@ -10,12 +10,21 @@ import type { Page } from "@playwright/test";
  *
  * The caller must already be signed in, hold the `seller` role and have
  * accepted the seller terms.
+ *
+ * `base` exists for the object-storage spec, which drives TWO application
+ * instances. Playwright resolves a relative `goto` against `use.baseURL`, so a
+ * helper that navigates relatively silently pulls the actor back to the default
+ * instance — which is exactly what it did, and it took a debugging round to
+ * notice because everything still worked, just on the wrong server. Passing an
+ * absolute origin makes the instance explicit; the default keeps every existing
+ * caller unchanged.
  */
 export async function createStoreViaWizard(
   page: Page,
-  { slug, type = "digital_product" }: { slug: string; type?: string },
+  { slug, type = "digital_product", base = "" }:
+    { slug: string; type?: string; base?: string },
 ): Promise<void> {
-  await page.goto("/fr/sell/nouvelle");
+  await page.goto(`${base}/fr/sell/nouvelle`);
   await page.getByTestId(`wizard-type-${type}`).click();
   await page.getByTestId("wizard-next").click();
   await page.locator("#store-name").fill(slug);

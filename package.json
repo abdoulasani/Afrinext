@@ -13,6 +13,7 @@
     "typecheck": "pnpm -r --no-bail typecheck",
     "test": "pnpm -r --no-bail test",
     "test:unit": "pnpm --filter @afrinext/core test:unit",
+    "test:e2e": "pnpm --filter @afrinext/web test:e2e",
     "db:generate": "pnpm --filter @afrinext/db generate",
     "db:migrate": "pnpm --filter @afrinext/db migrate",
     "db:reset": "pnpm --filter @afrinext/db reset",

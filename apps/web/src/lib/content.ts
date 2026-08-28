@@ -6,8 +6,14 @@ import { content } from "@afrinext/core";
  *
  * Both are cached across hot reloads for the same reason the auth instance is.
  * Neither is a decision the domain makes — `packages/core` knows about a
- * `ContentStorage` interface and a Buffer, and nothing about a directory or an
- * environment variable.
+ * `ContentStorage` interface and a Buffer, and nothing about a directory, a
+ * bucket or an environment variable.
+ *
+ * The choice of adapter, and every refusal around it, lives in
+ * `content.selectContentStorage`. This file's whole job is to hand it
+ * `process.env` once and cache the answer: a fail-closed rule that only exists
+ * inside the Next.js app is a rule no unit test can reach, and the mutation
+ * matrix said so out loud.
  */
 const globalForContent = globalThis as unknown as {
   afrinextStorage?: content.ContentStorage;
@@ -22,19 +28,8 @@ function requiredEnv(name: string): string {
   return value;
 }
 
-/**
- * Local disk, under one directory.
- *
- * Honest about what it is: single-machine storage, fine for development, CI and
- * a single-server deployment, and wrong for two web instances behind a load
- * balancer. No object store is configured for Afrinext and none is pretended
- * here — when one is chosen, it is a second implementation of the port in
- * `packages/core/content/storage.ts` and this function returns that instead.
- */
 export function getContentStorage(): content.ContentStorage {
-  globalForContent.afrinextStorage ??= new content.FilesystemContentStorage(
-    process.env["CONTENT_STORAGE_DIR"] ?? ".content-storage",
-  );
+  globalForContent.afrinextStorage ??= content.selectContentStorage(process.env);
   return globalForContent.afrinextStorage;
 }
 
