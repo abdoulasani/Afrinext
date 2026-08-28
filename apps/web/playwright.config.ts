@@ -88,14 +88,65 @@ export const S3_FIXTURE_PORT = Number(process.env["S3_FIXTURE_PORT"] ?? PORT + 5
 export const PORT_A = PORT + 7;
 export const BASE_URL_A = `http://127.0.0.1:${PORT_A}`;
 
-/** What both instances are told about the bucket. Not a credential: a fixture. */
-const S3_ENV =
-  `CONTENT_STORAGE=s3 ` +
-  `CONTENT_S3_ENDPOINT=http://127.0.0.1:${S3_FIXTURE_PORT} ` +
-  `CONTENT_S3_REGION=us-east-1 CONTENT_S3_BUCKET=afrinext-e2e ` +
-  `CONTENT_S3_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE ` +
-  `CONTENT_S3_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY ` +
-  `CONTENT_S3_FORCE_PATH_STYLE=yes `;
+/**
+ * Whether this run drives a REAL bucket instead of the in-repo fixture.
+ *
+ * `E2E_REAL_BUCKET=yes` plus the five `CONTENT_S3_*` values sends the whole
+ * journey — seller uploads on instance A, buyer downloads on instance B —
+ * through an actual provider. Same specs, same assertions, different bucket:
+ * the point of a real-bucket run is that NOTHING about the test changes, so a
+ * pass means the provider behaves as the fixture claims providers behave.
+ *
+ * It is opt-in because it costs money, needs credentials, and leaves objects in
+ * somebody's account. CI never sets it.
+ */
+export const REAL_BUCKET = process.env["E2E_REAL_BUCKET"] === "yes";
+
+function requireForRealBucket(name: string): string {
+  const value = process.env[name];
+  if (value === undefined || value === "") {
+    throw new Error(
+      `E2E_REAL_BUCKET=yes needs ${name}. Set all five CONTENT_S3_* values, or ` +
+        "unset E2E_REAL_BUCKET to run against the in-repo fixture bucket.",
+    );
+  }
+  return value;
+}
+
+/**
+ * What both instances are told about the bucket.
+ *
+ * Against the fixture these are not credentials — they are AWS's own published
+ * example key, which is why it can sit in a repository. Against a real bucket
+ * they come from the environment and are never written down here.
+ */
+const S3_ENV = REAL_BUCKET
+  ? `CONTENT_STORAGE=s3 ` +
+    `CONTENT_S3_ENDPOINT=${requireForRealBucket("CONTENT_S3_ENDPOINT")} ` +
+    `CONTENT_S3_REGION=${requireForRealBucket("CONTENT_S3_REGION")} ` +
+    `CONTENT_S3_BUCKET=${requireForRealBucket("CONTENT_S3_BUCKET")} ` +
+    `CONTENT_S3_ACCESS_KEY_ID=${requireForRealBucket("CONTENT_S3_ACCESS_KEY_ID")} ` +
+    `CONTENT_S3_SECRET_ACCESS_KEY=${requireForRealBucket("CONTENT_S3_SECRET_ACCESS_KEY")} ` +
+    `CONTENT_S3_FORCE_PATH_STYLE=${process.env["CONTENT_S3_FORCE_PATH_STYLE"] ?? "yes"} `
+  : `CONTENT_STORAGE=s3 ` +
+    `CONTENT_S3_ENDPOINT=http://127.0.0.1:${S3_FIXTURE_PORT} ` +
+    `CONTENT_S3_REGION=us-east-1 CONTENT_S3_BUCKET=afrinext-e2e ` +
+    `CONTENT_S3_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE ` +
+    `CONTENT_S3_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY ` +
+    `CONTENT_S3_FORCE_PATH_STYLE=yes `;
+
+/**
+ * The bucket and endpoint host actually in use, for the assertion that neither
+ * appears in a page. Hard-coding the fixture's values would quietly stop
+ * asserting anything on a real-bucket run — the test would look for a string
+ * that was never going to be there.
+ */
+export const E2E_BUCKET = REAL_BUCKET
+  ? requireForRealBucket("CONTENT_S3_BUCKET")
+  : "afrinext-e2e";
+export const E2E_ENDPOINT_HOST = REAL_BUCKET
+  ? new URL(requireForRealBucket("CONTENT_S3_ENDPOINT")).host
+  : `127.0.0.1:${S3_FIXTURE_PORT}`;
 
 const SHARED_ENV =
   `NODE_ENV=production ALLOW_CONSOLE_SENDER=yes ` +
@@ -150,13 +201,14 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 180_000,
     },
-    {
-      // The shared bucket. Verifies every signature; see the file's own note.
+    // The shared bucket. Verifies every signature; see the file's own note.
+    // Omitted entirely on a real-bucket run — there the provider IS the bucket.
+    ...(REAL_BUCKET ? [] : [{
       command: `S3_FIXTURE_PORT=${S3_FIXTURE_PORT} node e2e/s3-fixture-server.mjs`,
       url: `http://127.0.0.1:${S3_FIXTURE_PORT}/__health`,
       reuseExistingServer: false,
       timeout: 30_000,
-    },
+    }]),
     {
       // Instance A of the object-storage pair. No disk is configured for it at
       // all, so anything it serves came out of the bucket.

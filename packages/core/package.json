@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:unit": "vitest run src/money src/authz src/auth src/payments",
     "lint": "eslint src --max-warnings 0",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "verify:storage": "tsx scripts/verify-object-storage.ts"
   },
   "dependencies": {
     "@afrinext/db": "workspace:*",

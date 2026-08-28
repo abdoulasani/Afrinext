@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FilesystemContentStorage } from "./storage";
 import { S3ContentStorage } from "./s3";
-import { selectContentStorage } from "./select";
+import { assertCredentialsCannotTravelInClear, selectContentStorage } from "./select";
 
 /**
  * The adapter a deployment ends up with, and — mostly — the ones it must not.
@@ -84,6 +84,43 @@ describe("choosing a content storage adapter", () => {
       })).toThrow();
     });
   }
+
+  // SigV4 authenticates; it does not encrypt. Over http:// the Authorization
+  // header and the seller's bytes are readable by anything on the path, and a
+  // typo that drops the "s" would otherwise work perfectly.
+  it("refuses a plaintext endpoint, because the credentials would be on the wire", () => {
+    for (const endpoint of [
+      "http://s3.example.com",
+      "http://afrinext.r2.cloudflarestorage.com",
+      "http://10.0.0.5:9000",
+      "http://localhost:9000",       // a hosts file can point this anywhere
+      "http://127.0.0.1.evil.test",  // not loopback, however much it looks it
+    ]) {
+      expect(
+        () => selectContentStorage({ ...S3_ENV, CONTENT_S3_ENDPOINT: endpoint }),
+        `${endpoint} must be refused`,
+      ).toThrow(/clear|storage_not_configured/i);
+    }
+  });
+
+  it("allows plaintext on literal loopback only, which is where the fixture runs", () => {
+    for (const endpoint of ["http://127.0.0.1:3105", "http://[::1]:3105"]) {
+      expect(
+        () => selectContentStorage({ ...S3_ENV, CONTENT_S3_ENDPOINT: endpoint }),
+        `${endpoint} is the test fixture`,
+      ).not.toThrow();
+    }
+    expect(() => selectContentStorage({ ...S3_ENV, CONTENT_S3_ENDPOINT: "https://s3.example.com" }))
+      .not.toThrow();
+  });
+
+  it("leaves a malformed endpoint to the adapter, which names the variable", () => {
+    // Not this function's job to explain a typo it cannot parse; the point is
+    // that it still refuses rather than proceeding.
+    expect(() => assertCredentialsCannotTravelInClear("not-a-url")).not.toThrow();
+    expect(() => selectContentStorage({ ...S3_ENV, CONTENT_S3_ENDPOINT: "not-a-url" }))
+      .toThrow();
+  });
 
   it("refuses an adapter name it does not know, in any environment", () => {
     // A typo must not resolve to the default. Under development too: a

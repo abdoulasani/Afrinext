@@ -54,6 +54,14 @@ function uriEncode(value: string, encodeSlash: boolean): string {
 
 export async function startS3TestServer(options: {
   bucket?: string; accessKeyId?: string; secretAccessKey?: string;
+  /**
+   * Serves GETs with no signature at all — a bucket somebody flipped public.
+   *
+   * Exists so the check that is SUPPOSED to catch that can be tested against a
+   * bucket that actually has the defect. A safety check nothing has ever seen
+   * fail is a safety check nobody knows the shape of.
+   */
+  publicReads?: boolean;
 } = {}): Promise<S3TestServer> {
   const bucket = options.bucket ?? "afrinext-test";
   const accessKeyId = options.accessKeyId ?? "AKIAIOSFODNN7EXAMPLE";
@@ -96,7 +104,18 @@ export async function startS3TestServer(options: {
         timingSafeEqual(Buffer.from(claimed), Buffer.from(expected));
       seen.push({ method: req.method ?? "GET", path, authorized: ok });
 
-      if (!ok) { res.writeHead(403).end("SignatureDoesNotMatch"); return; }
+      if (!ok) {
+        if (options.publicReads === true && (req.method ?? "GET") === "GET") {
+          const prefix = `/${bucket}/`;
+          const found = path.startsWith(prefix)
+            ? objects.get(decodeURIComponent(path.slice(prefix.length)))
+            : undefined;
+          if (found === undefined) { res.writeHead(404).end("NoSuchKey"); return; }
+          res.writeHead(200, { "content-type": found.contentType }).end(found.bytes);
+          return;
+        }
+        res.writeHead(403).end("SignatureDoesNotMatch"); return;
+      }
 
       // The body must hash to what the signature covered, which is what makes
       // a truncated or altered upload a signature failure rather than a

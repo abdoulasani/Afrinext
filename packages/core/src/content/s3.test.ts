@@ -173,6 +173,18 @@ describe("configuration is checked at construction, not at first download", () =
   it("constructs when everything is present", () => {
     expect(() => new S3ContentStorage(complete)).not.toThrow();
   });
+
+  // A typo in the endpoint would otherwise construct, start the server, publish
+  // the storefront, and fail at the first download — the failure shape this
+  // configuration path exists to prevent.
+  it("refuses an endpoint that is set but is not a URL", () => {
+    for (const endpoint of ["example.com", "s3.example.com/bucket", "://x", " "]) {
+      expect(
+        () => new S3ContentStorage({ ...complete, endpoint }),
+        `"${endpoint}" must be refused at construction`,
+      ).toThrow(StorageNotConfiguredError);
+    }
+  });
 });
 
 // ===========================================================================
@@ -222,5 +234,42 @@ describe("a failed write says nothing about where the bytes were going", () => {
     // And nothing was stored under that key, so a later read is a clean miss
     // rather than a truncated file.
     await expect(storage.open("products/p9/v9/a8")).rejects.toBeInstanceOf(ContentUnavailableError);
+  });
+});
+
+// ===========================================================================
+
+/**
+ * Credentials must not reach the log, however the request fails.
+ *
+ * Logs are the one place secrets leak without anybody attacking anything: they
+ * are copied into tickets, shipped to a third-party aggregator, and read by
+ * people who were never given the bucket. The adapter logs a provider failure
+ * on purpose — that is how an operator diagnoses an outage — so the question is
+ * not whether it logs, but what it is holding when it does.
+ */
+describe("nothing about the configuration reaches the log", () => {
+  it("logs a failure without the key, the secret or the Authorization header", async () => {
+    const lines: string[] = [];
+    const written = process.stdout.write.bind(process.stdout);
+    // The module logger writes to stdout; capture it rather than injecting a
+    // sink, so this tests the path production actually takes.
+    (process.stdout as unknown as { write: (s: string) => boolean }).write =
+      (chunk: string) => { lines.push(String(chunk)); return true; };
+    try {
+      s3.failNext(403);
+      await storage.put("products/p7/v7/a7", Buffer.from("x"), "application/pdf")
+        .catch(() => undefined);
+      s3.failNext(500);
+      await storage.remove("products/p7/v7/a7").catch(() => undefined);
+    } finally {
+      (process.stdout as unknown as { write: typeof written }).write = written;
+    }
+
+    const logged = lines.join("");
+    expect(logged, "the failure was logged at all").toContain("content.s3");
+    for (const secret of [s3.secretAccessKey, s3.accessKeyId, "AWS4-HMAC-SHA256", "Credential="]) {
+      expect(logged, `"${secret}" must never be logged`).not.toContain(secret);
+    }
   });
 });

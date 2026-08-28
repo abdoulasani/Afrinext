@@ -202,6 +202,24 @@ export class S3ContentStorage implements ContentStorage {
     })) {
       if (value === undefined || value === "") throw new StorageNotConfiguredError(name);
     }
+    /*
+     * The endpoint is parsed HERE, not at the first download.
+     *
+     * `target()` builds a URL from it on every request, so an unparseable
+     * endpoint would construct cleanly, start the server, publish the
+     * storefront, and fail the first time a buyer clicked download. That is the
+     * exact failure shape this whole configuration path exists to prevent, and
+     * it does not become acceptable just because the cause is a typo rather
+     * than a missing variable.
+     */
+    try {
+      new URL(config.endpoint);
+    } catch {
+      throw new StorageNotConfiguredError(
+        "CONTENT_S3_ENDPOINT, which is set but is not a URL (it needs a scheme, " +
+          "e.g. https://<account>.r2.cloudflarestorage.com)",
+      );
+    }
     this.config = config;
   }
 

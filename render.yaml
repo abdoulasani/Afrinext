@@ -43,9 +43,10 @@ services:
     name: afrinext-preview
     runtime: node
     region: frankfurt
-    # A paid instance type, and not for performance. A free instance has no
-    # disk and is reclaimed when idle, which would delete every uploaded
-    # product file — the digital engine would appear to lose people's purchases.
+    # A paid instance type, and not for performance. A free instance is spun
+    # down when idle and cold-starts on the next request, which makes every
+    # timing-sensitive check — OTP expiry, grant expiry, a webhook arriving —
+    # read as a failure of the thing being tested rather than of the host.
     plan: starter
     branch: claude/create-app-repository-1cxsih
     autoDeploy: true
@@ -74,14 +75,15 @@ services:
     # hosts or credentials.
     healthCheckPath: /api/health
 
-    disk:
-      # Uploaded product files. `FilesystemContentStorage` writes bytes to a
-      # directory, so without a mounted disk they live in the container and
-      # vanish on the next deploy. One gigabyte is far more than a preview
-      # needs; it can be grown later but never shrunk.
-      name: afrinext-preview-content
-      mountPath: /var/data
-      sizeGB: 1
+    # No disk, deliberately. Uploaded files live in R2 now, and a Render
+    # service with a mounted disk cannot run more than one instance — which
+    # would make the multi-instance guarantee untestable on the very deployment
+    # meant to demonstrate it.
+    #
+    # Removing it deletes the existing volume and anything on it. That is
+    # correct here: it holds preview uploads only, and they do not survive the
+    # move to a bucket. A production service with real files would migrate the
+    # objects first.
 
     envVars:
       # ---- database ----------------------------------------------------
@@ -155,23 +157,46 @@ services:
         sync: false
 
       # ---- digital content ------------------------------------------------
-      # The preview is ONE instance with a mounted disk, so local storage is a
-      # legitimate choice here and the flag says that was deliberate. It is not
-      # a choice a multi-instance deployment may make: a file uploaded by one
-      # instance is not on another's disk, and the download fails depending on
-      # which machine answered.
+      # Object storage, Cloudflare R2. Local disk is no longer an option here:
+      # a file uploaded by one instance is not on another's disk, so the
+      # download fails depending on which machine answered — and this service
+      # is meant to be able to run more than one.
       #
-      # There is no object-storage account for Afrinext yet, so CONTENT_STORAGE
-      # is NOT set to s3 anywhere. When a bucket exists, this becomes s3 plus
-      # the five CONTENT_S3_* variables, and nothing else changes — the adapter
-      # is already built and tested. See docs/architecture/object-storage.md.
+      # `ALLOW_LOCAL_CONTENT_STORAGE` is deliberately ABSENT. Without it a
+      # production build refuses filesystem storage outright, so there is no
+      # path from a broken bucket configuration back to a disk.
+      #
+      # THIS SERVICE WILL NOT START until the four `sync: false` values below
+      # are set in the Render dashboard. That is the intended behaviour: a
+      # deployment that cannot reach its bucket must fail loudly at startup
+      # rather than serve a storefront that loses files days later.
+      # See docs/providers/r2/README.md.
       - key: CONTENT_STORAGE
-        value: filesystem
-      - key: ALLOW_LOCAL_CONTENT_STORAGE
+        value: s3
+      - key: CONTENT_S3_REGION
+        # R2 has no AWS-style regions. The signature carries this literal.
+        value: auto
+      - key: CONTENT_S3_FORCE_PATH_STYLE
+        # Bucket in the path, not the hostname. R2 supports both; this is the
+        # form every S3-compatible provider accepts.
         value: "yes"
-      # On the mounted disk, so uploaded files survive a deploy.
-      - key: CONTENT_STORAGE_DIR
-        value: /var/data/content
+
+      # https://<ACCOUNT_ID>.r2.cloudflarestorage.com — account-scoped, no
+      # bucket in the host. Not a credential, but not published either.
+      - key: CONTENT_S3_ENDPOINT
+        sync: false
+      # One bucket per environment, never shared. See the provider doc, §4.
+      - key: CONTENT_S3_BUCKET
+        sync: false
+      # ---- the two actual credentials -------------------------------------
+      # An R2 API token, permission "Object Read & Write", SCOPED TO THIS
+      # BUCKET ONLY. Set in Render → Environment and rotated there. A value
+      # written into this file would be committed, pushed, and readable in git
+      # history forever, including after the line is deleted.
+      - key: CONTENT_S3_ACCESS_KEY_ID
+        sync: false
+      - key: CONTENT_S3_SECRET_ACCESS_KEY
+        sync: false
 
       - key: LOG_LEVEL
         value: info

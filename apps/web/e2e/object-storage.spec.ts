@@ -2,7 +2,18 @@ import { createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { BASE_URL_A, BASE_URL_B, MOCK_WEBHOOK_SECRET, S3_FIXTURE_PORT, SERVER_LOG } from "../playwright.config";
+
+/** What one download attempt tells us. */
+interface Served {
+  status: number;
+  text: string;
+  type: string;
+  disposition: string;
+}
+import {
+  BASE_URL_A, BASE_URL_B, E2E_BUCKET, E2E_ENDPOINT_HOST, MOCK_WEBHOOK_SECRET, REAL_BUCKET,
+  SERVER_LOG,
+} from "../playwright.config";
 import { completeBuyerProfile, chooseMobileMoney } from "./buyer-profile";
 import { createStoreViaWizard } from "./store-wizard";
 
@@ -25,6 +36,7 @@ import { createStoreViaWizard } from "./store-wizard";
 
 const DB = process.env["DATABASE_URL"] ?? "";
 const PDF = "%PDF-1.7\nles bytes du vendeur\n%%EOF\n";
+const PDF_V2 = "%PDF-1.7\nla correction du vendeur\n%%EOF\n";
 const A = BASE_URL_A;
 const B = BASE_URL_B;
 
@@ -82,6 +94,15 @@ async function signIn(page: Page, base: string, phone: string): Promise<string> 
 }
 
 test.describe("two instances, one bucket", () => {
+  test.beforeAll(() => {
+    // Says which bucket this run proved something about. A green run against
+    // the fixture and a green run against R2 are different facts, and the
+    // report should never have to guess which one it is looking at.
+    console.log(REAL_BUCKET
+      ? `object-storage spec: REAL bucket "${E2E_BUCKET}" at ${E2E_ENDPOINT_HOST}`
+      : `object-storage spec: in-repo fixture bucket "${E2E_BUCKET}"`);
+  });
+
   test("a seller uploads on instance A and a buyer downloads on instance B",
     async ({ browser, request }) => {
       test.setTimeout(180_000);
@@ -117,10 +138,20 @@ test.describe("two instances, one bucket", () => {
       });
       await seller.getByTestId(`asset-submit-${productId}`).click();
       await expect(seller.getByText("Le fichier (PDF)")).toBeVisible();
+
+      // Two downloads, set through the seller's own control. An explicit small
+      // limit is what makes exhaustion observable later; leaving the default
+      // would test nothing and read as if it had.
+      await seller.getByTestId(`limit-${productId}`).fill("2");
+      await seller.getByTestId(`save-limit-${productId}`).click();
+      await expect(seller.getByTestId(`limit-${productId}`)).toHaveValue("2");
+
       await seller.getByRole("button", { name: "Publier", exact: true }).click();
       await expect(seller.getByRole("link", { name: "Voir la page publique" }))
         .toHaveCount(2);
-      await sellerCtx.close();
+      // The seller's session stays open: the version-pinning check below needs
+      // the store's actual owner to upload a second version, and a fresh
+      // sign-in would be a different person who owns nothing.
 
       // ---------- instance B: the buyer ----------
       const buyerCtx = await browser.newContext();
@@ -156,24 +187,38 @@ test.describe("two instances, one bucket", () => {
       // wrote to.
       const assetId = sql(
         `select a.id from digital_assets a where a.product_id = '${productId}'::uuid`);
-      const served = await buyer.evaluate(async ([store, product, asset]) => {
-        const minted = await fetch(`/api/v1/library/${store}/${product}/access`, {
-          method: "POST", credentials: "same-origin",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ assetId: asset, disposition: "attachment" }),
-        });
-        // The refusal body, not just its status: a bare 403 in a failure
-        // message costs a debugging round trip, and the domain answers with a
-        // code that names which check said no.
-        if (!minted.ok) return { status: minted.status, text: await minted.text() };
-        const body = (await minted.json()) as { data: { url: string } };
-        const response = await fetch(body.data.url, { credentials: "same-origin" });
-        return { status: response.status, text: await response.text() };
-      }, [storeSlug, "fichier-partage", assetId] as [string, string, string]);
+      const download = (page: Page, asset: string): Promise<Served> =>
+        page.evaluate(async ([store, product, id]) => {
+          const minted = await fetch(`/api/v1/library/${store}/${product}/access`, {
+            method: "POST", credentials: "same-origin",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ assetId: id, disposition: "attachment" }),
+          });
+          // The refusal body, not just its status: a bare 403 in a failure
+          // message costs a debugging round trip, and the domain answers with a
+          // code that names which check said no.
+          if (!minted.ok) {
+            return { status: minted.status, text: await minted.text(), type: "", disposition: "" };
+          }
+          const body = (await minted.json()) as { data: { url: string } };
+          const response = await fetch(body.data.url, { credentials: "same-origin" });
+          return {
+            status: response.status,
+            text: await response.text(),
+            type: response.headers.get("content-type") ?? "",
+            disposition: response.headers.get("content-disposition") ?? "",
+          };
+        }, [storeSlug, "fichier-partage", asset] as [string, string, string]);
+
+      const served = await download(buyer, assetId);
 
       expect(served.status, "instance B serves a file it never had on disk").toBe(200);
       expect(served.text, "byte-for-byte what the seller uploaded elsewhere")
         .toContain("les bytes du vendeur");
+      expect(served.type, "the seller's content type survived the bucket")
+        .toContain("application/pdf");
+      expect(served.disposition, "and it arrives as a download, named from the title")
+        .toMatch(/^attachment; filename="Le fichier PDF"/);
 
       // ---------- and the storage key never reaches the browser ----------
       const storageKey = sql(
@@ -186,8 +231,8 @@ test.describe("two instances, one bucket", () => {
         await buyer.goto(url);
         const html = await buyer.content();
         expect(html, `${url} must not contain the storage key`).not.toContain(storageKey);
-        expect(html, "nor the bucket").not.toContain("afrinext-e2e");
-        expect(html, "nor the endpoint").not.toContain(`127.0.0.1:${S3_FIXTURE_PORT}`);
+        expect(html, "nor the bucket").not.toContain(E2E_BUCKET);
+        expect(html, "nor the endpoint").not.toContain(E2E_ENDPOINT_HOST);
       }
 
       // ---------- a stranger on instance B still gets nothing ----------
@@ -204,8 +249,79 @@ test.describe("two instances, one bucket", () => {
       }, [storeSlug, "fichier-partage", assetId] as [string, string, string]);
       expect(refused, "object storage changes nothing about who may read")
         .toBeGreaterThanOrEqual(400);
-
       await strangerCtx.close();
+
+      // ---------- the download limit is counted, across instances ----------
+      //
+      // The limit was two. One download has been spent. The second must work
+      // and the third must not — and the counting happens in the database, so
+      // it holds even though the bytes came from a bucket both machines share.
+      const second = await download(buyer, assetId);
+      expect(second.status, "the second download is within the allowance").toBe(200);
+      expect(second.text).toContain("les bytes du vendeur");
+
+      const third = await download(buyer, assetId);
+      expect(third.status, "the third is refused — 429, an exhausted allowance")
+        .toBe(429);
+      expect(third.text, "and says so specifically, to the person it belongs to")
+        .toContain("download_limit");
+
+      // ---------- version pinning, across the two machines ----------
+      //
+      // The seller uploads a corrected file on instance A and publishes it. The
+      // buyer paid for v1 and must still be served v1's bytes — out of the same
+      // bucket that now holds both versions.
+      await seller.goto(`${A}/fr/sell/${storeSlug}`);
+      await seller.getByTestId(`asset-title-${productId}`).fill("Le fichier (corrigé)");
+      await seller.getByTestId(`asset-file-${productId}`).setInputFiles({
+        name: "corrige.pdf", mimeType: "application/pdf",
+        buffer: Buffer.from(PDF_V2, "utf8"),
+      });
+      await seller.getByTestId(`asset-submit-${productId}`).click();
+      await expect(seller.getByText("Le fichier (corrigé)")).toBeVisible();
+      await seller.getByTestId(`publish-version-${productId}`).click();
+      await expect(seller.getByText("Le fichier (corrigé)")).toBeVisible();
+
+      const v2Asset = sql(
+        `select a.id from digital_assets a
+           join product_versions v on v.id = a.version_id
+          where a.product_id = '${productId}'::uuid
+          order by v.version_no desc, a.created_at desc limit 1`);
+      expect(v2Asset, "a second version exists now").not.toBe(assetId);
+
+      // Raise the allowance, so what follows is answered by the version rules
+      // rather than by a limit that has nothing to do with them.
+      execFileSync("psql", [DB, "-Atc",
+        `update products set download_limit = 9 where id = '${productId}'::uuid`]);
+
+      const pinned = await download(buyer, assetId);
+      expect(pinned.status, "the version paid for is still served").toBe(200);
+      expect(pinned.text, "and it is v1's bytes, not the newest upload")
+        .toContain("les bytes du vendeur");
+      expect(pinned.text, "the corrected file is not what they get")
+        .not.toContain("la correction du vendeur");
+
+      const notOwned = await download(buyer, v2Asset);
+      expect(notOwned.status, "and the new version's file is not theirs to take")
+        .toBe(403);
+
+      // ---------- a suspended store takes the file back ----------
+      //
+      // The bucket still holds the object and the entitlement row still exists.
+      // The refusal has to come from the chain, which is the point: storage
+      // never became the thing that decides.
+      execFileSync("psql", [DB, "-Atc",
+        `update stores set status = 'suspended' where slug = '${storeSlug}'`]);
+      const suspended = await download(buyer, assetId);
+      expect(suspended.status, "a suspended store is not a source of downloads")
+        .toBe(403);
+      execFileSync("psql", [DB, "-Atc",
+        `update stores set status = 'published' where slug = '${storeSlug}'`]);
+      expect((await download(buyer, assetId)).status,
+        "and lifting the suspension restores it, so the refusal was the store")
+        .toBe(200);
+
       await buyerCtx.close();
+      await sellerCtx.close();
     });
 });
