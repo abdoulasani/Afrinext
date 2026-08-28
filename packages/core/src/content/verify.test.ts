@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { startS3TestServer, type S3TestServer } from "../test/s3-server";
-import { anonymousUrls, safeOrigin, verifyObjectStorage } from "./verify";
+import {
+  anonymousUrls, probeAnonymousAccess, safeOrigin, verifyObjectStorage,
+} from "./verify";
 
 /**
  * The pre-deploy bucket check, checked.
@@ -66,13 +68,45 @@ describe("verifying a real bucket", () => {
   });
 
   it("reports an unreachable bucket as a failure, never as a pass", async () => {
-    // "Refused" and "could not connect" are different facts. Treating a
-    // connection error as proof of privacy would pass every misconfiguration.
     const result = await verifyObjectStorage({
       ...envFor(priv),
       CONTENT_S3_ENDPOINT: "http://127.0.0.1:1",
     });
     expect(result.ok).toBe(false);
+  });
+});
+
+/**
+ * The unsigned probe, against all three answers a bucket can give.
+ *
+ * Tested directly rather than only through a full run, because in a full run it
+ * is unreachable the moment anything earlier fails — which is how a mutation
+ * that broke it survived the matrix once. The whole-run test above cannot cover
+ * this: its endpoint is so broken the run stops at the write.
+ */
+describe("the unsigned probe", () => {
+  it("passes only when the request is refused", async () => {
+    const probe = await probeAnonymousAccess(
+      anonymousUrls(envFor(priv), "probe/nothing/here").object);
+    expect(probe.ok, "the private fixture refuses an unsigned GET").toBe(true);
+    expect(probe.detail).toMatch(/refused with 40\d/);
+  });
+
+  it("FAILS on a 200, and says the bucket is public", async () => {
+    const key = "probe/public/object";
+    pub.objects.set(key, { bytes: Buffer.from("x"), contentType: "text/plain" });
+    const probe = await probeAnonymousAccess(anonymousUrls(envFor(pub), key).object);
+    expect(probe.ok).toBe(false);
+    expect(probe.detail).toContain("THE BUCKET IS PUBLIC");
+  });
+
+  it("FAILS when it cannot connect — that is not evidence of privacy", async () => {
+    // "Refused" and "could not connect" are different facts. Treating a
+    // connection error as proof would bless every misconfiguration that never
+    // reaches the provider at all.
+    const probe = await probeAnonymousAccess("http://127.0.0.1:1/afrinext/nope");
+    expect(probe.ok).toBe(false);
+    expect(probe.detail).toContain("could not reach it");
   });
 });
 

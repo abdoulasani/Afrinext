@@ -52,6 +52,41 @@ export function anonymousUrls(env: StorageEnv, key: string): { object: string; b
   return { object: `${url.protocol}//${host}/${key}`, bucket: `${url.protocol}//${host}/` };
 }
 
+/**
+ * One unsigned GET, and what its answer means.
+ *
+ * Separate from {@link verifyObjectStorage} so it can be tested against all
+ * three answers a bucket can give. Inside the full run it is unreachable when
+ * anything earlier fails — the write, say — and a mutation that broke it
+ * survived the matrix for exactly that reason: the test that was supposed to
+ * cover it pointed at an endpoint so broken that the run never got this far.
+ *
+ * The three answers are three different facts:
+ *   - refused        → the bucket is private. The only pass.
+ *   - 2xx            → the bucket is PUBLIC. The failure this exists to find.
+ *   - cannot connect → nothing was learned. Also a failure, because treating
+ *                      it as a pass would bless every misconfiguration that
+ *                      never reaches the provider at all.
+ */
+export async function probeAnonymousAccess(objectUrl: string): Promise<StorageCheck> {
+  const label = "the object is refused without a signature";
+  try {
+    const anonymous = await fetch(objectUrl);
+    if (anonymous.ok) {
+      return {
+        label, ok: false,
+        detail: `THE BUCKET IS PUBLIC — an unauthenticated GET returned ${anonymous.status}`,
+      };
+    }
+    return { label, ok: true, detail: `refused with ${anonymous.status}` };
+  } catch (error: unknown) {
+    return {
+      label, ok: false,
+      detail: `could not reach it at all: ${(error as Error).message}`,
+    };
+  }
+}
+
 export async function verifyObjectStorage(env: StorageEnv): Promise<StorageVerification> {
   const checks: StorageCheck[] = [];
   const add = (label: string, ok: boolean, detail?: string): void => {
@@ -103,17 +138,7 @@ export async function verifyObjectStorage(env: StorageEnv): Promise<StorageVerif
   // The point of the whole exercise. These requests carry NO Authorization
   // header, which is exactly what a browser that guessed the URL would send.
   const urls = anonymousUrls(env, key);
-  try {
-    const anonymous = await fetch(urls.object);
-    add("the object is refused without a signature", !anonymous.ok,
-      anonymous.ok
-        ? `THE BUCKET IS PUBLIC — an unauthenticated GET returned ${anonymous.status}`
-        : `refused with ${anonymous.status}`);
-  } catch (error: unknown) {
-    // A connection error is NOT a pass: it says nothing about the bucket.
-    add("the object is refused without a signature", false,
-      `could not reach it at all: ${(error as Error).message}`);
-  }
+  checks.push(await probeAnonymousAccess(urls.object));
 
   try {
     const listing = await fetch(urls.bucket);
