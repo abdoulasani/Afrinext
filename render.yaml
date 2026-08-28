@@ -166,7 +166,7 @@ services:
       # production build refuses filesystem storage outright, so there is no
       # path from a broken bucket configuration back to a disk.
       #
-      # THIS SERVICE WILL NOT START until the four `sync: false` values below
+      # THIS SERVICE WILL NOT START until the three `sync: false` values below
       # are set in the Render dashboard. That is the intended behaviour: a
       # deployment that cannot reach its bucket must fail loudly at startup
       # rather than serve a storefront that loses files days later.
@@ -185,9 +185,11 @@ services:
       # bucket in the host. Not a credential, but not published either.
       - key: CONTENT_S3_ENDPOINT
         sync: false
-      # One bucket per environment, never shared. See the provider doc, §4.
+      # One bucket per environment, never shared. Not a credential — useless
+      # without a token — and pinned here rather than typed into a dashboard so
+      # that which bucket this service writes to is reviewable in the diff.
       - key: CONTENT_S3_BUCKET
-        sync: false
+        value: afrinext-content-preview
       # ---- the two actual credentials -------------------------------------
       # An R2 API token, permission "Object Read & Write", SCOPED TO THIS
       # BUCKET ONLY. Set in Render → Environment and rotated there. A value

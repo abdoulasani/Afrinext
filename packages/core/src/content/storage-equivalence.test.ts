@@ -195,6 +195,77 @@ async function observe(storage: ContentStorage): Promise<Record<string, unknown>
 
 // ===========================================================================
 
+/**
+ * Storage is append-only, and a second upload proves it.
+ *
+ * `ContentStorage` offers `remove()`, so the obvious question a reviewer asks
+ * is what happens to the old bytes when a seller replaces a file. The answer is
+ * that nothing does: every upload mints a fresh uuid asset id and therefore a
+ * fresh key, the domain never calls `remove()`, and a published version's file
+ * set is frozen by a database trigger. Bytes somebody paid for are never
+ * overwritten and never deleted.
+ *
+ * That is a claim about the whole design rather than about one adapter, so it
+ * is asserted against the object store rather than only in the abstract — a
+ * PUT to a key that already existed WOULD overwrite it on any S3-compatible
+ * provider, and the reason that never happens is that the key is never reused.
+ */
+describe("a second upload never overwrites the first", () => {
+  it("mints a new key, and leaves the earlier object byte-for-byte intact", async () => {
+    const storage = s3Storage();
+    counter += 1;
+    const seller = await makeSeller();
+    const store = await createStore(db, seller, {
+      storeType: "digital_product", name: `A ${counter}`, slug: `apx-${counter}`,
+    });
+    const product = await createProduct(db, seller, {
+      storeId: store.id, title: `G ${counter}`, slug: `apx-g-${counter}`,
+      price: money(5000n, "XOF"),
+    });
+
+    const first = await attachAsset(db, storage, seller, {
+      productId: product.id, title: "Le guide", contentType: "application/pdf", bytes: V1,
+    });
+    const second = await attachAsset(db, storage, seller, {
+      productId: product.id, title: "Le guide (corrigé)",
+      contentType: "application/pdf", bytes: V2,
+    });
+
+    const keyOf = async (assetId: string): Promise<string> => {
+      const row = await db.execute<{ [k: string]: unknown; storage_key: string }>(sql`
+        select storage_key from digital_assets where id = ${assetId}::uuid
+      `);
+      return row.rows[0]?.storage_key ?? "";
+    };
+    const firstKey = await keyOf(first.id);
+    const secondKey = await keyOf(second.id);
+
+    expect(firstKey, "the key exists").not.toBe("");
+    expect(secondKey, "and the second upload got its own").not.toBe(firstKey);
+
+    // Both objects are in the bucket, and the first still holds v1's bytes.
+    expect((await storage.open(firstKey)).bytes.toString("utf8")).toBe(V1.toString("utf8"));
+    expect((await storage.open(secondKey)).bytes.toString("utf8")).toBe(V2.toString("utf8"));
+    expect(s3.objects.has(firstKey), "the first object was never removed").toBe(true);
+  });
+
+  it("never asks storage to delete anything during a normal journey", async () => {
+    // `remove()` exists on the port and the adapter implements it, but nothing
+    // in the domain calls it. If that ever changes, this fails and the change
+    // has to be deliberate rather than incidental.
+    const storage = s3Storage();
+    const removals: string[] = [];
+    const watched: ContentStorage = {
+      id: storage.id,
+      put: (k, b, t) => storage.put(k, b, t),
+      open: (k) => storage.open(k),
+      remove: (k) => { removals.push(k); return storage.remove(k); },
+    };
+    await observe(watched);
+    expect(removals, "a full purchase journey deletes nothing").toEqual([]);
+  });
+});
+
 describe("the storage adapter is interchangeable", () => {
   it("gives byte-for-byte identical behaviour on both adapters", async () => {
     const memory = await observe(new InMemoryContentStorage());

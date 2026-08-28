@@ -110,7 +110,7 @@ appears in the library or product HTML.
 | Environment | Bucket | Data |
 |---|---|---|
 | production | `afrinext-content-prod` | real sellers' files |
-| preview (Render) | `afrinext-content-preview` | throwaway |
+| preview (Render) | `afrinext-content-preview` | throwaway — pinned in `render.yaml` |
 | local development | *no bucket* — filesystem adapter | throwaway |
 | CI and browser tests | *no bucket* — the in-repo fixture | throwaway |
 
@@ -128,6 +128,28 @@ CI does **not** get a bucket. The browser suite runs its own signature-verifying
 fixture, so a CI run neither needs a credential nor can be made to leak one.
 
 ---
+
+## What is written, and what is never deleted
+
+`ContentStorage` offers `remove()`, so the fair question is what happens to the
+old bytes when a seller replaces a file. **Nothing does.**
+
+Every upload mints a fresh uuid asset id and writes
+`products/{productId}/{versionId}/{assetId}`, so a key is never reused and a
+`PUT` never lands on an object that already exists. The domain calls `put()` and
+`open()` and **never calls `remove()`** — only the pre-deploy verification does,
+to clean up its own probe. A published version's file set is additionally frozen
+by a database trigger, so even a caller that tried could not write into one.
+
+Bytes somebody paid for are therefore never overwritten and never deleted, which
+is the same posture the ledger takes. Two tests hold it: one asserts a second
+upload gets its own key and leaves the first object intact, and one watches a
+whole purchase journey and asserts storage was asked to delete nothing.
+
+The practical consequence is that the bucket only grows. Retiring objects for
+products nobody can buy any more is a deliberate future job with its own rules
+about what is safe to delete — not something that should happen as a side effect
+of a seller editing a product.
 
 ## 5. CORS: nothing to open, and nothing to configure
 
@@ -238,9 +260,12 @@ a deployment that is deliberately a single server, which must say so with
    that bucket only**. Copy the **Access Key ID** and **Secret Access Key** —
    Cloudflare shows the secret once.
 6. Repeat 2–5 for **`afrinext-content-preview`** with its own token.
-7. In **Render → Environment**, set `CONTENT_S3_ENDPOINT`, `CONTENT_S3_BUCKET`,
-   `CONTENT_S3_ACCESS_KEY_ID`, `CONTENT_S3_SECRET_ACCESS_KEY`. `CONTENT_STORAGE`,
-   `CONTENT_S3_REGION` and `CONTENT_S3_FORCE_PATH_STYLE` come from `render.yaml`.
+7. In **Render → Environment**, set the **three** `sync: false` values:
+   `CONTENT_S3_ENDPOINT`, `CONTENT_S3_ACCESS_KEY_ID`,
+   `CONTENT_S3_SECRET_ACCESS_KEY`. `CONTENT_STORAGE`, `CONTENT_S3_REGION`,
+   `CONTENT_S3_FORCE_PATH_STYLE` and `CONTENT_S3_BUCKET` come from
+   `render.yaml` — the bucket name is not a credential, and pinning it in the
+   file keeps *which bucket this service writes to* visible in a diff.
 8. Run `pnpm --filter @afrinext/core verify:storage` against the bucket, and
    read its output. It must end `ALL CHECKS PASSED`.
 9. Deploy, then run the real end-to-end journey.
