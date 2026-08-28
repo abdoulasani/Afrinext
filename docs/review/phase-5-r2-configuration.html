@@ -188,10 +188,10 @@
   <p class="lede">Cloudflare R2 needed no code: it is the same S3 API the adapter already speaks. What it needed was the eight answers you asked for before implementation, three new refusals so a misconfigured deployment cannot start, and a way to <b>prove</b> a bucket is private rather than promise it. All of that is done. <b>One thing is not, and cannot be from here: no Cloudflare account exists, so no real bucket has been touched.</b></p>
   <div class="meta">
     <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
-    <span>HEAD <b>bb71640</b></span>
-    <span>Unit tests <b class="ok">UNIT_HERE</b></span>
-    <span>Browser tests <b class="ok">E2E_HERE</b></span>
-    <span>Mutations killed <b class="ok">MUT_HERE</b></span>
+    <span>HEAD <b>621c2e0</b></span>
+    <span>Unit tests <b class="ok">683 passed</b></span>
+    <span>Browser tests <b class="ok">46 passed</b></span>
+    <span>Mutations killed <b class="ok">27 / 27</b></span>
     <span>Real R2 bucket <b class="no">not yet</b></span>
     <span>Ledger touched <b>none</b></span>
   </div>
@@ -360,28 +360,34 @@
   <table class="tbl">
     <thead><tr><th>#</th><th>The lie the mutation tells</th><th>Result</th></tr></thead>
     <tbody>
-      <tr><td>S6</td><td>A plaintext endpoint is accepted anywhere, not only on loopback.</td><td class="mono">MUT_S6</td></tr>
-      <tr><td>S7</td><td>The public-access probe passes regardless of what the unsigned request returned.</td><td class="mono">MUT_S7</td></tr>
-      <tr><td>S8</td><td>A bucket that cannot be reached counts as a bucket that is private.</td><td class="mono">MUT_S8</td></tr>
-      <tr><td>S9</td><td>A malformed endpoint is discovered at the first download instead of at startup.</td><td class="mono">MUT_S9</td></tr>
-      <tr><td>S1–S5,<br>D1–D18</td><td>The existing matrix, re-run in full against this HEAD.</td><td class="mono">MUT_REST</td></tr>
+      <tr><td>S6</td><td>A plaintext endpoint is accepted anywhere, not only on loopback.</td><td class="mono">killed · 1 failing</td></tr>
+      <tr><td>S7</td><td>The public-access probe passes regardless of what the unsigned request returned.</td><td class="mono">killed · 2 failing</td></tr>
+      <tr><td>S8</td><td>A bucket that cannot be reached counts as a bucket that is private.</td><td class="mono">killed · 1 failing</td></tr>
+      <tr><td>S9</td><td>A malformed endpoint is discovered at the first download instead of at startup.</td><td class="mono">killed · 2 failing</td></tr>
+      <tr><td>S1–S5,<br>D1–D18</td><td>The existing matrix, re-run in full against this HEAD.</td><td class="mono">all 23 killed</td></tr>
     </tbody>
   </table>
 
-  <p class="mono" style="font-size:0.86em">MUT_VERDICT</p>
+  <div class="note info">
+    <span class="n-label">S8 survived the first run, and the bug was in my test</span>
+    <p>"A bucket that cannot be reached counts as private" survived — not because the product was wrong, but because the test meant to cover it pointed at an endpoint so broken that the run failed at the <i>write</i> and never reached the probe. Its assertion, <code>result.ok === false</code>, was satisfied by that earlier failure. <b>It would have passed no matter what the probe did.</b></p>
+    <p style="margin-bottom:0">The probe is now its own function, tested against all three answers a bucket can give. This is the second time in two milestones the matrix has found a weak test rather than a weak line of code, which is most of what it is for.</p>
+  </div>
+
+  <p class="mono" style="font-size:0.86em">27 mutations, 27 killed, 0 survivors. Source verified pristine afterwards.</p>
 
   <table class="tbl">
     <thead><tr><th>Check</th><th>Result</th></tr></thead>
     <tbody>
       <tr><td><code>pnpm lint</code></td><td class="yes">clean</td></tr>
       <tr><td><code>pnpm typecheck</code></td><td class="yes">clean</td></tr>
-      <tr><td><code>pnpm test</code></td><td class="yes">UNIT_HERE</td></tr>
+      <tr><td><code>pnpm test</code></td><td class="yes">683 passed</td></tr>
       <tr><td><code>pnpm build</code></td><td class="yes">compiled</td></tr>
-      <tr><td><code>pnpm test:e2e</code></td><td class="yes">E2E_HERE</td></tr>
+      <tr><td><code>pnpm test:e2e</code></td><td class="yes">46 passed</td></tr>
       <tr><td><code>verify:storage</code> against the fixture</td><td class="yes">8 / 8 checks</td></tr>
-      <tr><td>Mutations</td><td class="yes">MUT_HERE</td></tr>
+      <tr><td>Mutations</td><td class="yes">27 / 27</td></tr>
       <tr><td>Migrations</td><td>none — this milestone adds no schema</td></tr>
-      <tr><td>CI</td><td>CI_HERE</td></tr>
+      <tr><td>CI</td><td><span class="yes">3 / 3 green</span></td></tr>
       <tr><td><b>Real R2 bucket</b></td><td class="no"><b>not tested — no account exists</b></td></tr>
     </tbody>
   </table>
@@ -399,15 +405,15 @@
   <p>Nine steps, and only the first six need a person. They are in <code>docs/providers/r2/README.md</code> too, so they do not live only in this PDF.</p>
 
   <ol class="steps">
-    <li>Create a <b>Cloudflare account</b> for AFRI NEXT TECHNOLOGIE and enable R2.</li>
-    <li>Create bucket <b><code>afrinext-content-prod</code></b>. Pick a jurisdiction deliberately if data location matters — the endpoint changes if you do.</li>
-    <li>Confirm <b>Public access → r2.dev subdomain: Disabled</b>, and no custom domain connected.</li>
-    <li>Leave <b>CORS unset</b>. There is nothing to configure.</li>
-    <li>Create an <b>R2 API token</b>, permission <b>Object Read &amp; Write</b>, <b>scoped to that bucket only</b>. Copy the Access Key ID and Secret Access Key — Cloudflare shows the secret once.</li>
-    <li>Repeat 2–5 for <b><code>afrinext-content-preview</code></b>, with its own token. A leaked preview credential must not reach a real seller's file.</li>
-    <li>Set the four values in <b>Render → Environment</b>. The other three come from <code>render.yaml</code>.</li>
-    <li>Run <code>verify:storage</code> against the bucket. It must end <span class="mono">ALL CHECKS PASSED</span>.</li>
-    <li>Run the journey against it: <span class="mono">E2E_REAL_BUCKET=yes pnpm test:e2e</span>.</li>
+    <li><b>Create the Cloudflare account.</b> For AFRI NEXT TECHNOLOGIE, and enable R2 on it.</li>
+    <li><b>Create the production bucket.</b> Name it <code>afrinext-content-prod</code>. Pick a jurisdiction deliberately if data location matters — the endpoint changes if you do.</li>
+    <li><b>Confirm public access is off.</b> Under the bucket's Settings, <i>r2.dev subdomain</i> must read <code>Disabled</code>, and no custom domain may be connected. Both publish a bucket; only one of them uses the word.</li>
+    <li><b>Leave CORS unset.</b> There is nothing to configure. A browser never talks to the bucket, so a CORS policy on it would mean something upstream had changed.</li>
+    <li><b>Create the API token.</b> Permission <i>Object Read &amp; Write</i>, scoped to that bucket only. Copy the Access Key ID and the Secret Access Key — Cloudflare shows the secret once and never again.</li>
+    <li><b>Repeat 2–5 for the preview bucket.</b> <code>afrinext-content-preview</code>, with its own token. A leaked preview credential must not be able to reach a real seller's file.</li>
+    <li><b>Set four values in Render.</b> Endpoint, bucket, access key, secret key, under the service's Environment. The other three come from <code>render.yaml</code>. Until this is done the service will not start.</li>
+    <li><b>Verify the bucket.</b> <code>pnpm --filter @afrinext/core verify:storage</code>. It must end <span class="mono">ALL CHECKS PASSED</span>.</li>
+    <li><b>Run the journey against it.</b> <code>E2E_REAL_BUCKET=yes pnpm test:e2e</code> — the whole list in section F, on the real bucket.</li>
   </ol>
 
   <div class="note key">
