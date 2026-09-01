@@ -8,11 +8,13 @@ import {
   buttonClass, Badge, EmptyState, ProductCard, SectionHeader,
   StoreAvatar, StoreCover, StoreTypeIcon,
 } from "@afrinext/ui";
+import { HomeTop } from "@/components/HomeTop";
 import MarketSearch from "@/components/MarketSearch";
 import { Shell } from "@/components/Shell";
 import StoreCard from "@/components/StoreCard";
 import { copyFor, locationLabel } from "@/lib/store-presentation";
 import { countryNames } from "@/lib/catalog";
+import { currentActor } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +71,7 @@ export default async function MarketplacePage({
     countryNames(),
   ]);
 
+  const signedIn = (await currentActor()) !== undefined;
   const totalStores = Object.values(typeCounts).reduce((sum, n) => sum + n, 0);
   const [lead, ...rest] = newest;
 
@@ -84,7 +87,17 @@ export default async function MarketplacePage({
 
   return (
     <Shell width="wide">
-      <Hero locale={locale} totalStores={totalStores} />
+      {/*
+       * Two openings, one page.
+       *
+       * Somebody signed in gets their own screen: a compact header, their real
+       * activity, and the shortcuts they use. A visitor gets the marketplace
+       * pitch, because they have no activity to show and inventing some would
+       * be the one thing this redesign must not do. `HomeTop` returns null when
+       * nobody is signed in, so the hero below is the visitor's opening.
+       */}
+      <HomeTop locale={locale} />
+      {signedIn ? null : <Hero locale={locale} totalStores={totalStores} />}
 
       <Worlds locale={locale} typeCounts={typeCounts} />
 

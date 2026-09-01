@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 
 /**
  * The four places a person goes, in the shape each screen deserves.
@@ -46,7 +47,21 @@ function Wordmark() {
   );
 }
 
-export default function BottomNav({ tabs }: { tabs: readonly NavTab[] }) {
+export default function BottomNav({
+  tabs, menu,
+}: {
+  tabs: readonly NavTab[];
+  /**
+   * The fifth slot on a phone: a drawer trigger, not a destination.
+   *
+   * It is passed in rather than built here because what it contains depends on
+   * what the actor is allowed to do, and that question is answered on the
+   * server. On desktop it is dropped entirely — the top bar has room for the
+   * real destinations, and a "Menu" that opens a sheet over a 1440px window is
+   * a phone affordance left behind.
+   */
+  menu?: ReactNode;
+}) {
   const pathname = usePathname();
   // Strip /fr or /en so "is this tab active" is a question about the app.
   const path = pathname.replace(/^\/(fr|en)(?=\/|$)/, "") || "/";
@@ -117,10 +132,11 @@ export default function BottomNav({ tabs }: { tabs: readonly NavTab[] }) {
               </li>
             );
           })}
+          {menu !== undefined && <li className="flex-1">{menu}</li>}
         </ul>
       </nav>
 
-      {/* ---------- Desktop: the same four, across the top ---------- */}
+      {/* ---------- Desktop: the same destinations, across the top ---------- */}
       <nav
         aria-label="Principal"
         className={

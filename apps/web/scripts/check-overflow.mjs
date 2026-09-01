@@ -24,10 +24,21 @@ import { chromium } from "@playwright/test";
  * page/width pair. Exits non-zero if any page overflows.
  */
 
+/*
+ * Six widths, and each is a real device rather than a round number.
+ *
+ * 390 is the iPhone 13/14, 393 the Pixel and iPhone 15, 430 the Pro Max — the
+ * three that matter most for a launch market where the phone IS the computer.
+ * The 393 and 430 columns are not padding: a layout tuned only at 390 tends to
+ * break at 430, where a two-column grid gains just enough room to try a third.
+ */
 const WIDTHS = [
-  { name: "mobile", width: 390, height: 844 },
+  { name: "iphone", width: 390, height: 844 },
+  { name: "pixel", width: 393, height: 852 },
+  { name: "promax", width: 430, height: 932 },
   { name: "tablet", width: 768, height: 1024 },
-  { name: "desktop", width: 1280, height: 900 },
+  { name: "laptop", width: 1024, height: 800 },
+  { name: "desktop", width: 1440, height: 900 },
   { name: "large", width: 1680, height: 1000 },
 ];
 

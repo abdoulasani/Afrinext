@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "echo \"(unit tests live in packages/core; browser tests: pnpm test:e2e)\" && exit 0",
     "test:e2e": "playwright test",
-    "check:overflow": "node scripts/check-overflow.mjs http://127.0.0.1:3200 /fr /fr/explorer /fr/sign-in /fr/sell"
+    "check:overflow": "node scripts/check-overflow.mjs http://127.0.0.1:3200 /fr /fr/explorer /fr/sign-in /fr/sell /fr/library /fr/orders"
   },
   "dependencies": {
     "@afrinext/core": "workspace:*",

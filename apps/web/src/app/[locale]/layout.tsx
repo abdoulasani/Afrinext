@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
+import { authz } from "@afrinext/core";
+import { getDb } from "@afrinext/db";
 import { isLocale, translate, type Locale } from "@afrinext/i18n";
 import type { ReactNode } from "react";
 import BottomNav from "@/components/BottomNav";
+import { AppMenu, type MenuSection } from "@/components/AppMenu";
+import { currentActor } from "@/lib/session";
 
 /**
  * Locale-scoped routes: /fr/... and /en/....
@@ -12,6 +16,22 @@ import BottomNav from "@/components/BottomNav";
  *
  * The navigation lives here rather than at the root because its labels are
  * words, and words have a language.
+ *
+ * ---------------------------------------------------------------------------
+ * Four destinations and a drawer
+ * ---------------------------------------------------------------------------
+ *
+ * The bar used to carry five destinations, one of which was Orders — a screen
+ * people visit when something is wrong, given the same permanent weight as the
+ * marketplace itself. Four real places plus a Menu reads faster, and it gives
+ * the screens that do not deserve a tab (orders, wallet, profile) somewhere to
+ * live that is not a shortcut grid on the home screen.
+ *
+ * `Vendre` stays in the bar for everybody, deliberately. It is the invitation
+ * this marketplace is built on, and hiding it from people who have not yet
+ * opened a store would hide the one thing they might come back for. It is not
+ * a permission: `/sell` itself asks `authorize()` and tells an actor without
+ * `store.create` exactly that, which is a better answer than a missing tab.
  */
 export function generateStaticParams(): { locale: Locale }[] {
   return [{ locale: "fr" }, { locale: "en" }];
@@ -53,12 +73,56 @@ export default async function LocaleLayout({
       // A stack of pages, open at the top: what you own, not what you ordered.
       icon: "M4 6.5A1.5 1.5 0 0 1 5.5 5H10a2 2 0 0 1 2 2v11a2 2 0 0 0-2-2H5.5A1.5 1.5 0 0 1 4 14.5ZM20 6.5A1.5 1.5 0 0 0 18.5 5H14a2 2 0 0 0-2 2v11a2 2 0 0 1 2-2h4.5a1.5 1.5 0 0 0 1.5-1.5Z",
     },
+  ];
+
+  /*
+   * What the drawer offers is decided HERE, by asking the same authorize()
+   * every route handler asks. A section absent below is absent because the
+   * permission check said so — the client component renders what it is given
+   * and has no flag that could put it back.
+   */
+  const actor = await currentActor();
+  const canSell = actor === undefined
+    ? false
+    : await authz.can(getDb(), actor, "store.create");
+
+  const sections: MenuSection[] = [
     {
-      href: `/${locale}/orders`,
-      match: "/orders",
-      label: translate(locale, "nav.orders"),
-      icon: "M9 5h6m-8 3.5h10l-1 11H8l-1-11ZM9.5 12v4M14.5 12v4",
+      title: translate(locale, "menu.marketplace"),
+      links: [
+        { href: `/${locale}/explorer`, label: translate(locale, "shortcut.explore"), icon: "explore" },
+        { href: `/${locale}/library`, label: translate(locale, "shortcut.library"), icon: "library" },
+        { href: `/${locale}/orders`, label: translate(locale, "shortcut.orders"), icon: "orders" },
+      ],
     },
+  ];
+
+  if (canSell) {
+    sections.push({
+      title: translate(locale, "menu.selling"),
+      links: [
+        { href: `/${locale}/sell`, label: translate(locale, "shortcut.myStore"), icon: "myStore" },
+      ],
+    });
+  }
+
+  if (actor !== undefined) {
+    sections.push({
+      title: translate(locale, "menu.account"),
+      links: [
+        { href: `/${locale}/wallet`, label: translate(locale, "shortcut.wallet"), icon: "wallet" },
+      ],
+    });
+  }
+
+  // The other language, as a link to the same page in it. Offered to everyone,
+  // signed in or not — language is not a privilege.
+  const other: Locale = locale === "fr" ? "en" : "fr";
+  const footer = [
+    { href: `/${other}`, label: other === "fr" ? "Français" : "English", icon: "globe" as const },
+    ...(actor === undefined
+      ? [{ href: `/${locale}/sign-in`, label: translate(locale, "home.signIn"), icon: "profile" as const }]
+      : []),
   ];
 
   return (
@@ -70,7 +134,18 @@ export default async function LocaleLayout({
         * forgot would render its first heading underneath the bar.
         */}
       <div className="lg:pt-16">{children}</div>
-      <BottomNav tabs={tabs} />
+      <BottomNav
+        tabs={tabs}
+        menu={
+          <AppMenu
+            label={translate(locale, "nav.menu")}
+            title={translate(locale, "menu.title")}
+            sections={sections}
+            footer={footer}
+            closeLabel={translate(locale, "home.closeMenu")}
+          />
+        }
+      />
     </div>
   );
 }

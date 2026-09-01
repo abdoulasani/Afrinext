@@ -53,7 +53,9 @@ export default function MarketSearch({
       <button
         type="submit"
         className={
-          "absolute right-2 top-2 h-10 rounded-[var(--radius-pill)] bg-[var(--ink)] px-5 " +
+          /* 44px, not 40: this is the marketplace's primary action on a phone, and
+   the floor for a thumb. Centred in the 56px field by top-1.5. */
+          "absolute right-2 top-1.5 h-11 rounded-[var(--radius-pill)] bg-[var(--ink)] px-5 " +
           "text-small font-semibold text-[var(--on-ink)] " +
           "transition-[background-color,transform] duration-[var(--duration-fast)] " +
           "hover:bg-[#2a2320] active:scale-[0.96]"

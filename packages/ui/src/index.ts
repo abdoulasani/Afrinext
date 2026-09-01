@@ -6,6 +6,7 @@ export * from "./Field";
 export * from "./PriceTag";
 export * from "./ProductCard";
 export * from "./SectionHeader";
+export * from "./ServiceTile";
 export * from "./Skeleton";
 export * from "./StoreTypeIcon";
 export * from "./StoreVisual";
