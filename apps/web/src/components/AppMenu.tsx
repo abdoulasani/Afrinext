@@ -100,13 +100,13 @@ export function AppMenu({
         aria-haspopup="dialog"
         data-testid="open-menu"
         className={
-          "group relative flex h-[58px] w-full flex-col items-center justify-center gap-1 " +
-          "text-faint transition-colors duration-[var(--duration-fast)] " +
+          "group relative flex h-16 w-full flex-col items-center justify-center gap-1.5 " +
+          "text-muted transition-colors duration-[var(--duration-fast)] " +
           "hover:text-foreground active:scale-[0.94] active:duration-[80ms]"
         }
       >
-        {icons.menu}
-        <span className="text-[10px] font-medium leading-none tracking-[0.01em]">{label}</span>
+        <span className="flex h-6 w-6 items-center justify-center">{icons.menu}</span>
+        <span className="text-[11px] font-medium leading-none tracking-[0.01em]">{label}</span>
       </button>
 
       {open && (

@@ -54,16 +54,24 @@ export async function HomeTop({ locale }: { locale: Locale }) {
     authz.can(db, actor, "wallet.read_own"),
   ]);
 
+  /*
+   * Each tile takes the colour whose JOB it is, not the one that looks nice
+   * next to its neighbour. Discovery is gold, content is green, the library is
+   * violet, records are clay, money is indigo, and selling — the brand act —
+   * is the brand orange. Somebody who uses this twice reaches for the green
+   * square without reading the word under it, which is the whole point of
+   * giving each shortcut a permanent identity.
+   */
   const shortcuts: Shortcut[] = [
-    { href: `/${locale}/explorer`, label: translate(locale, "shortcut.explore"), icon: "explore", tone: "indigo" },
-    { href: `/${locale}/explorer?type=formation`, label: translate(locale, "storeType.formation"), icon: "products", tone: "ochre" },
-    { href: `/${locale}/library`, label: translate(locale, "shortcut.library"), icon: "library", tone: "forest" },
+    { href: `/${locale}/explorer`, label: translate(locale, "shortcut.explore"), icon: "explore", tone: "ochre" },
+    { href: `/${locale}/explorer?type=formation`, label: translate(locale, "storeType.formation"), icon: "products", tone: "forest" },
+    { href: `/${locale}/library`, label: translate(locale, "shortcut.library"), icon: "library", tone: "aubergine" },
     { href: `/${locale}/orders`, label: translate(locale, "shortcut.orders"), icon: "orders", tone: "clay" },
   ];
   if (canReadWallet) {
     shortcuts.push({
       href: `/${locale}/wallet`, label: translate(locale, "shortcut.wallet"),
-      icon: "wallet", tone: "aubergine",
+      icon: "wallet", tone: "indigo",
     });
   }
   shortcuts.push(
@@ -85,7 +93,7 @@ export async function HomeTop({ locale }: { locale: Locale }) {
           (canReadWallet ? "pt-7" : "pt-6")
         }
       >
-        <h2 id="services-heading" className="text-label uppercase text-faint">
+        <h2 id="services-heading" className="text-label uppercase text-muted">
           {translate(locale, "home.services")}
         </h2>
         <div className="mt-4">
@@ -118,30 +126,53 @@ function Header({ locale, children }: { locale: Locale; children: React.ReactNod
   return (
     <>
       <header
-        className="relative isolate overflow-hidden bg-ink text-[var(--on-ink)]"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
+        className="relative isolate overflow-hidden text-[var(--on-brand)]"
+        style={{
+          paddingTop: "env(safe-area-inset-top)",
+          /*
+           * Sunset, and it runs DARKER downward, not lighter.
+           *
+           * The caption and the wordmark sit in the top-left, over the lightest
+           * point — so that point is the one that had to clear 4.5:1 against
+           * white, and it does at 4.75:1. A gradient that brightened toward the
+           * bottom would have put small white text over an orange too pale to
+           * read, which is the usual way a warm header fails an audit.
+           */
+          backgroundImage:
+            "linear-gradient(168deg, var(--copper) 0%, #b33e14 58%, #92300f 100%)",
+        }}
       >
+        {/* The low sun, off the top-right corner. Behind the language chip,
+            which carries its own surface, so it never sits under small text. */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 opacity-[0.5]"
+          className="absolute inset-0 opacity-[0.6]"
           style={{
             backgroundImage:
-              "radial-gradient(ellipse 70% 70% at 90% -20%, var(--copper), transparent 60%)",
+              "radial-gradient(ellipse 60% 95% at 90% -5%, #f8c46b, transparent 64%)",
           }}
         />
         <div
           className={
+            /*
+             * Deep enough that the gradient is a sunset rather than a stripe.
+             * The first pass gave it pb-14 and the warm-to-deep ramp had barely
+             * 90px to travel, so it read as flat orange — the colour was there
+             * and the light was not.
+             */
             "relative mx-auto flex max-w-2xl items-start justify-between gap-4 px-5 " +
-            "pb-14 pt-4 sm:px-6 lg:max-w-5xl xl:max-w-6xl"
+            "pb-24 pt-6 sm:px-6 lg:max-w-5xl xl:max-w-6xl lg:pb-28"
           }
         >
           <div className="min-w-0">
-            <p className="text-caption text-[var(--on-ink-muted)]">
+            <p className="text-caption text-[var(--on-brand-muted)]">
               {translate(locale, "home.welcomeTo")}
             </p>
-            <h1 className="mt-0.5 flex items-baseline gap-[3px] text-h1 tracking-[-0.03em] text-[var(--on-ink)]">
+            <h1 className="mt-0.5 flex items-baseline gap-[3px] text-h1 tracking-[-0.03em] text-white">
               Afrinext
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-copper-on-ink" />
+              {/* The dot was copper on ink. On a sunset band copper is
+                  invisible, so it becomes the sand it always contrasted with. */}
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#f6d9a8]" />
             </h1>
           </div>
           <AppMenuTrigger
@@ -152,7 +183,7 @@ function Header({ locale, children }: { locale: Locale; children: React.ReactNod
       </header>
 
       {children !== null && (
-        <div className="mx-auto -mt-10 max-w-2xl px-4 sm:px-6 lg:max-w-5xl xl:max-w-6xl">
+        <div className="mx-auto -mt-16 max-w-2xl px-4 sm:px-6 lg:max-w-5xl xl:max-w-6xl">
           {children}
         </div>
       )}

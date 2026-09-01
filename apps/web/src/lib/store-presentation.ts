@@ -9,6 +9,16 @@ import type { MessageKey } from "@afrinext/i18n";
  * have compiled and shipped a page labelled `offering.auction`.
  */
 export type StoreTypeCopy = {
+  /**
+   * The identity colour of this world, fixed forever.
+   *
+   * Not the store's own brand — a seller chooses that in the wizard. This is
+   * the colour of the CATEGORY, so the six tiles on the marketplace read as
+   * six different places rather than six copies of one. Once assigned it does
+   * not move: somebody who has visited twice reaches for the green tile
+   * without reading it, and rotating the palette would take that away.
+   */
+  readonly tone: "laterite" | "indigo" | "forest" | "ochre" | "aubergine" | "clay";
   readonly label: MessageKey;
   readonly singular: MessageKey;
   readonly tagline: MessageKey;
@@ -26,6 +36,7 @@ export type StoreTypeCopy = {
 
 export const STORE_TYPE_COPY: Readonly<Record<string, StoreTypeCopy>> = {
   formation: {
+    tone: "forest",
     label: "storeType.formation",
     singular: "storeType.formation.one",
     tagline: "storeType.formation.tagline",
@@ -33,6 +44,7 @@ export const STORE_TYPE_COPY: Readonly<Record<string, StoreTypeCopy>> = {
     addOffering: "offering.add.formation",
   },
   digital_product: {
+    tone: "aubergine",
     label: "storeType.digital_product",
     singular: "storeType.digital_product.one",
     tagline: "storeType.digital_product.tagline",
@@ -40,6 +52,7 @@ export const STORE_TYPE_COPY: Readonly<Record<string, StoreTypeCopy>> = {
     addOffering: "offering.add.digital_product",
   },
   physical_product: {
+    tone: "ochre",
     label: "storeType.physical_product",
     singular: "storeType.physical_product.one",
     tagline: "storeType.physical_product.tagline",
@@ -47,6 +60,7 @@ export const STORE_TYPE_COPY: Readonly<Record<string, StoreTypeCopy>> = {
     addOffering: "offering.add.physical_product",
   },
   service: {
+    tone: "indigo",
     label: "storeType.service",
     singular: "storeType.service.one",
     tagline: "storeType.service.tagline",
@@ -54,6 +68,7 @@ export const STORE_TYPE_COPY: Readonly<Record<string, StoreTypeCopy>> = {
     addOffering: "offering.add.service",
   },
   creator: {
+    tone: "laterite",
     label: "storeType.creator",
     singular: "storeType.creator.one",
     tagline: "storeType.creator.tagline",
@@ -61,6 +76,7 @@ export const STORE_TYPE_COPY: Readonly<Record<string, StoreTypeCopy>> = {
     addOffering: "offering.add.creator",
   },
   delivery: {
+    tone: "clay",
     label: "storeType.delivery",
     singular: "storeType.delivery.one",
     tagline: "storeType.delivery.tagline",

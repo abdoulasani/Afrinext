@@ -69,14 +69,14 @@ export function ServiceTile({
       <span
         aria-hidden="true"
         className={
-          "flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] " +
+          "flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--radius-lg)] " +
           "transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] " +
           "group-hover:-translate-y-0.5 " + TONES[tone]
         }
       >
         {icon}
       </span>
-      <span className="text-caption font-medium leading-tight text-foreground">
+      <span className="text-small font-medium leading-tight text-foreground">
         {label}
       </span>
     </span>

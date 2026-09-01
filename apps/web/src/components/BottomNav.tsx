@@ -89,8 +89,8 @@ export default function BottomNav({
       <nav
         aria-label="Principal"
         className={
-          "fixed inset-x-0 bottom-0 z-40 border-t border-border/80 " +
-          "bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] backdrop-blur-xl lg:hidden"
+          "fixed inset-x-0 bottom-0 z-40 border-t border-border " +
+          "bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur-xl lg:hidden"
         }
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
@@ -103,29 +103,38 @@ export default function BottomNav({
                   href={tab.href as Route}
                   aria-current={active ? "page" : undefined}
                   className={
-                    "group relative flex h-[58px] flex-col items-center justify-center gap-1 " +
+                    "group relative flex h-16 flex-col items-center justify-center gap-1.5 " +
                     "transition-colors duration-[var(--duration-fast)] " +
                     "active:scale-[0.94] active:duration-[80ms] " +
-                    (active ? "text-copper" : "text-faint hover:text-foreground")
+                    (active ? "text-copper-ink" : "text-muted hover:text-foreground")
                   }
                 >
                   {/*
-                    * The active mark is a copper bar ON the top edge, not a
-                    * filled pill behind the icon. A pill in a five-across bar
-                    * at 390px eats the label's room and makes the whole strip
-                    * look crowded; a 2px rule reads instantly and costs nothing.
+                    * The active tab gets a soft brand pill behind its icon.
+                    *
+                    * The previous mark was a 2px rule on the top edge, chosen
+                    * when five tabs at 390px left no room for anything larger.
+                    * Four tabs and a menu changed that arithmetic: there is now
+                    * room for the pill, and a filled shape reads as "you are
+                    * here" from arm's length in a way a hairline never did —
+                    * which is what a tab bar is for.
                     */}
                   <span
                     aria-hidden="true"
                     className={
-                      "absolute inset-x-0 top-0 mx-auto h-[2px] rounded-full bg-copper " +
+                      "absolute top-2 h-8 rounded-[var(--radius-pill)] bg-copper-soft " +
                       "transition-[width,opacity] duration-[var(--duration-base)] " +
                       "ease-[var(--ease-out)] " +
-                      (active ? "w-7 opacity-100" : "w-0 opacity-0")
+                      (active ? "w-14 opacity-100" : "w-8 opacity-0")
                     }
                   />
-                  {icon(tab, active, "h-[22px] w-[22px]")}
-                  <span className="text-[10px] font-medium leading-none tracking-[0.01em]">
+                  <span className="relative">{icon(tab, active, "h-6 w-6")}</span>
+                  <span
+                    className={
+                      "text-[11px] leading-none tracking-[0.01em] " +
+                      (active ? "font-semibold" : "font-medium")
+                    }
+                  >
                     {tab.label}
                   </span>
                 </Link>
@@ -159,8 +168,8 @@ export default function BottomNav({
                       "flex items-center gap-2 rounded-[var(--radius-sm)] px-3 py-2 text-[14px] " +
                       "font-medium transition-colors duration-[var(--duration-fast)] " +
                       (active
-                        ? "bg-surface-muted text-foreground"
-                        : "text-muted hover:bg-surface-muted/60 hover:text-foreground")
+                        ? "bg-copper-soft text-copper-ink"
+                        : "text-muted hover:bg-surface-muted hover:text-foreground")
                     }
                   >
                     {icon(tab, active, "h-[18px] w-[18px]")}

@@ -76,27 +76,31 @@ export function ActivityCard({
     <section
       aria-label={eyebrow}
       /*
-       * Paper on ink, not ink on ink.
+       * Indigo on sunset: cool over warm.
        *
-       * The first draft made this card a lighter ink, following a reference
-       * whose header is a saturated brand colour — there, a dark card on a
-       * bright header separates. On Afrinext the header is already ink, so an
-       * ink card merged into it and the whole top of the screen became one
-       * heavy block with the balance somewhere inside it.
+       * The card has to be instantly separable from the band it overlaps, and
+       * the reliable way to do that is temperature, not brightness — a lighter
+       * card on a light-orange band separates only by a step of tone, which
+       * disappears the moment a phone is held in sunlight. Cool against warm
+       * survives that.
        *
-       * Inverting it is the Afrinext answer rather than the borrowed one: the
-       * card is the paper the marketplace is printed on, laid over the ink.
-       * It separates completely, it is the brightest thing on the screen at
-       * exactly the point the eye lands, and it needs no extra contrast work
-       * because it uses the page's own text colours.
+       * Indigo also happens to be the right colour by role rather than only by
+       * contrast: it is Afrinext's information tone, and it is the oldest dye
+       * in this part of the world. White on it measures 10.89:1, so the
+       * largest number on the home screen is also the most legible thing on it.
        */
       className={
-        "relative z-10 rounded-[var(--radius-xl)] border border-border bg-surface " +
-        "p-5 shadow-[var(--shadow-lg)] sm:p-6"
+        "relative z-10 overflow-hidden rounded-[var(--radius-2xl)] bg-info " +
+        "p-5 text-[var(--info-contrast)] shadow-[var(--shadow-lg)] sm:p-6"
       }
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-label uppercase text-faint">{eyebrow}</p>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full opacity-[0.22]"
+        style={{ background: "radial-gradient(circle, var(--copper) 0%, transparent 68%)" }}
+      />
+      <div className="relative flex items-start justify-between gap-3">
+        <p className="text-label uppercase text-[color-mix(in_srgb,#fff_72%,transparent)]">{eyebrow}</p>
         <button
           type="button"
           onClick={toggle}
@@ -104,10 +108,11 @@ export function ActivityCard({
           data-testid="toggle-amounts"
           className={
             "-m-2 flex h-11 w-11 items-center justify-center rounded-[var(--radius-pill)] " +
-            "text-muted transition-colors duration-[var(--duration-fast)] " +
-            "hover:bg-surface-muted hover:text-foreground " +
+            "text-[color-mix(in_srgb,#fff_78%,transparent)] " +
+            "transition-colors duration-[var(--duration-fast)] " +
+            "hover:bg-[color-mix(in_srgb,#fff_16%,transparent)] hover:text-white " +
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
-            "focus-visible:outline-copper"
+            "focus-visible:outline-white"
           }
         >
           <span className="sr-only">{hidden ? showLabel : hideLabel}</span>
@@ -115,30 +120,32 @@ export function ActivityCard({
         </button>
       </div>
 
-      <p className="mt-4 text-caption text-muted">{availableLabel}</p>
+      <p className="relative mt-4 text-caption text-[color-mix(in_srgb,#fff_78%,transparent)]">{availableLabel}</p>
       <p
         data-testid="activity-available"
-        className="mt-1 text-display tabular-nums text-foreground"
+        className="relative mt-1 text-display tabular-nums text-white"
       >
         {hidden ? mask : available}
       </p>
       <span className="sr-only" aria-live="polite">{hidden ? hiddenLabel : ""}</span>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-        <p className="text-caption text-muted">
+      <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[color-mix(in_srgb,#fff_22%,transparent)] pt-4">
+        <p className="text-caption text-[color-mix(in_srgb,#fff_78%,transparent)]">
           {pendingLabel}{" "}
-          <span className="tabular-nums text-foreground">
+          <span className="tabular-nums text-white">
             {hidden ? mask : pending}
           </span>
         </p>
         <Link
           href={walletHref as Route}
           className={
+            /* The one action inside the card, and it is the brand colour: on a
+               cool card, warm is the thing the eye goes to. */
             "inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-pill)] " +
             "bg-primary px-4 text-small font-medium text-primary-contrast " +
             "transition-colors duration-[var(--duration-fast)] hover:bg-primary-hover " +
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
-            "focus-visible:outline-copper"
+            "focus-visible:outline-white"
           }
         >
           {walletLabel}

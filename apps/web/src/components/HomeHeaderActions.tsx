@@ -31,11 +31,11 @@ export function AppMenuTrigger({ locale, label }: { locale: Locale; label: strin
       aria-label={`${label}: ${other === "fr" ? "Français" : "English"}`}
       className={
         "flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] " +
-        "bg-[var(--on-ink-raised)] px-3.5 text-small font-medium uppercase " +
-        "text-[var(--on-ink)] transition-colors duration-[var(--duration-fast)] " +
-        "hover:bg-[color-mix(in_srgb,var(--on-ink)_16%,transparent)] " +
+        "bg-[var(--on-brand-raised)] px-3.5 text-small font-medium uppercase " +
+        "text-white transition-colors duration-[var(--duration-fast)] " +
+        "hover:bg-[color-mix(in_srgb,#fff_26%,transparent)] " +
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
-        "focus-visible:outline-[var(--copper-on-ink)]"
+        "focus-visible:outline-white"
       }
     >
       {icons.globe}

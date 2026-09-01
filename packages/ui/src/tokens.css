@@ -1,118 +1,141 @@
 /*
- * Afrinext design tokens — "Encre & Cuivre".
+ * Afrinext design tokens — "Sahel".
  *
  * ---------------------------------------------------------------------------
  * The idea in one paragraph
  * ---------------------------------------------------------------------------
  *
- * Authority is carried by INK — a warm near-black — and warmth by SAND. Copper
- * is an accent and never a ground: it marks a price, an active tab, and the
- * one action on a screen that deserves the eye. The previous palette made
- * orange the background of the hero, of every store cover and of every primary
- * button, and a colour that is everywhere cannot emphasise anything. Pulling it
- * back to roughly five percent of the surface is what gives it its force back.
+ * Sunset light on ivory. The brand is a terracotta ORANGE — the hour before
+ * dusk over the Sahel — and it is what a person touches: the primary button,
+ * the active tab, the price. Under it the page is IVORY, warm and almost
+ * white, so the colour has somewhere to land. Depth comes from one saturated
+ * band at the top of a screen and a great deal of quiet beneath it.
  *
- * The blacks are never neutral. #000 on a sand ground reads as a hole; every
- * dark here carries red and yellow, so ink on sand looks like ink on paper.
+ * This replaces "Encre & Cuivre", which was correct about restraint and wrong
+ * about temperature: a near-black ground read as a developer's dashboard
+ * rather than as an African marketplace. The discipline survives the change —
+ * colour still earns its place — but the mood is daylight instead of midnight.
+ *
+ * ---------------------------------------------------------------------------
+ * Every colour has one job, and only one
+ * ---------------------------------------------------------------------------
+ *
+ *   sunset   brand, the primary action, the active tab, a price
+ *   indigo   information and money held to account — the account card
+ *   green    confirmed: paid, owned, available
+ *   gold     highlighted and discoverable
+ *   violet   digital content and the library
+ *   clay     records and history
+ *   danger   a refusal. Never merely "important".
+ *
+ * A screen that needs to stress something reaches for the colour whose JOB it
+ * is, never for whichever is prettiest. That is what stops a six-hue palette
+ * becoming a carnival: the hues are not decoration, they are a vocabulary, and
+ * a reader learns it in two visits.
+ *
+ * ---------------------------------------------------------------------------
+ * Why there are two oranges
+ * ---------------------------------------------------------------------------
+ *
+ * `--copper` fills a surface with white text on it; `--copper-ink` is orange
+ * TEXT on a light ground. One value cannot do both: an orange bright enough to
+ * feel like sunset behind white text is too light to be read as text itself.
+ * Both were measured rather than chosen — 4.75:1 for white on the fill, 5.58:1
+ * for the text tone on ivory. The token name stays `--copper` because the whole
+ * codebase already reaches for it as "the accent", and renaming it across
+ * thirty files would be churn dressed up as design.
  *
  * ---------------------------------------------------------------------------
  * How the primary button knows what colour to be
  * ---------------------------------------------------------------------------
  *
- * `--primary` is INK in the light theme and OFF-WHITE in the dark one, with
- * `--primary-contrast` inverted alongside it. So "primary" means *maximum
- * contrast against the page*, and a black-on-light / white-on-dark button
- * system falls out of the theme rather than out of a prop somebody has to
- * remember. Components that sit on an ink panel regardless of theme — the hero
- * — use the `--on-ink-*` tokens below, which are fixed in both themes because
- * the panel they sit on is fixed too.
+ * `--primary` is now the SUNSET, not the ink. A primary action on Afrinext is
+ * orange, in both themes, because the brand is what invites the tap. Secondary
+ * actions are ivory with a border, and `--ink` survives for the few surfaces
+ * that are genuinely dark by design: a store cover, an immersive panel.
  */
 
 :root {
   color-scheme: light;
 
-  /* ---- ground and surfaces ---- */
-  --background: #fbf8f4;
+  /* ---- ground and surfaces: ivory, then sand ---- */
+  --background: #fdfaf5;
   --surface: #ffffff;
-  --surface-muted: #f4ede4;
-  --surface-sunken: #f0e8dd;
+  --surface-muted: #f6f0e7;
+  --surface-sunken: #efe7da;
 
-  /* The immersive dark panel: hero, covers, bars. Warm, never neutral. */
-  --ink: #141110;
-  --ink-raised: #211b18;
+  /* The few surfaces that stay dark by design: covers, immersive panels. */
+  --ink: #241a14;
+  --ink-raised: #33261d;
 
-  /* ---- text ---- */
-  --foreground: #171310;
-  --muted: #77685c;
-  --faint: #9c8d80;
+  /* ---- text, all measured on the ivory ground ---- */
+  --foreground: #1a1512;   /* 17.39:1 */
+  --muted: #6b5d4f;        /*  6.10:1 */
+  --faint: #7a6b5b;        /*  4.94:1 */
 
   /* ---- lines ---- */
-  --border: #e9dfd3;
-  --border-strong: #d8c9b8;
+  --border: #ece3d6;
+  --border-strong: #dbcdb9;
 
   /*
-   * Primary = maximum contrast with the page. Ink here, off-white in the dark
-   * theme; `--primary-contrast` is whatever sits legibly on top of it.
+   * Primary = the brand. An Afrinext call to action is sunset orange.
+   * White on it measures 4.75:1, which is why the fill is this tone and not
+   * the brighter one it wants to be.
    */
-  --primary: #141110;
-  --primary-hover: #2a2320;
-  --primary-contrast: #fbf8f4;
-  --primary-soft: #efe7dc;
+  --primary: #c9481a;
+  --primary-hover: #b33e14;
+  --primary-contrast: #ffffff;
+  --primary-soft: #fdede5;
 
   /*
-   * Copper. The accent, and the whole reason the rest is restrained.
-   * Reached for by prices, the active tab, and one call to action per screen.
+   * The accent, same hue as the brand, kept under its old name so every
+   * screen that already reaches for `copper` keeps working.
    */
-  /*
-   * Measured, not chosen by eye. #c2582b was the first draft and it failed:
-   * 4.20:1 against the sand ground and 4.44:1 on white, so every PRICE on the
-   * marketplace — the most decision-relevant text there is — sat below the
-   * 4.5:1 floor. This one clears 4.99:1 on white and 4.71:1 on sand, and still
-   * reads as copper rather than as brown.
-   */
-  --copper: #b85024;
-  --copper-hover: #9e4218;
-  --copper-contrast: #fffaf6;
+  --copper: #c9481a;
+  --copper-hover: #b33e14;
+  --copper-contrast: #ffffff;
+  /* Orange as TEXT, which needs to be darker than orange as a SURFACE. */
+  --copper-ink: #b33e14;    /* 5.58:1 on ivory */
+  --copper-on-ink: #f0824d; /* 7.21:1 on the dark panels that remain */
+  --copper-soft: #fdede5;   /* the tint the icon at 5.09:1 sits on */
+  --copper-line: #f3d3c2;
 
-  /*
-   * Copper for an INK panel, and a different value on purpose.
-   *
-   * An ink panel is ink in both themes, so a token that inverts with the theme
-   * cannot serve it. The deep copper above scores 3.94:1 on ink — fine for a
-   * large heading, not for the 11px uppercase eyebrow it was being used for.
-   * The lifted tone scores 7.51:1 there.
-   */
-  --copper-on-ink: #f0894f;
-  /* Lighter than it looks like it should be, and measured for that reason:
-     the badge sets copper text ON this tint, so the tint has to stay light
-     enough for 12px type to clear 4.5:1 against it (4.56:1). */
-  --copper-soft: #fdf3ed;
-  --copper-line: #e9c3ac;
+  /* Information, and the account card. Indigo, the oldest dye in the region. */
+  --info: #243a73;
+  --info-soft: #e3e7f6;
+  --info-contrast: #ffffff;
 
-  /* Trust. One colour, one job: money confirmed, access granted. */
-  --accent: #1f6b4f;
-  --accent-soft: #ddeee6;
+  /* Confirmed: paid, owned, available. */
+  --accent: #15694c;
+  --accent-soft: #dff0e7;
 
   /* Refusal and destruction. Never used for anything merely important. */
-  --danger: #a32a1e;
-  --danger-hover: #8a2117;
-  --danger-soft: #f9e2de;
+  --danger: #a6271b;
+  --danger-hover: #8c1f15;
+  --danger-soft: #fae3df;
 
-  /* ---- text ON an ink panel: fixed, because the panel is fixed ---- */
-  --on-ink: #f7f1e9;
-  --on-ink-muted: #b3a598;
-  --on-ink-line: rgba(247, 241, 233, 0.14);
-  --on-ink-raised: rgba(247, 241, 233, 0.07);
+  /* ---- text ON a dark panel: fixed, because the panel is fixed ---- */
+  --on-ink: #fbf5ee;
+  --on-ink-muted: #c0b0a0;
+  --on-ink-line: rgba(251, 245, 238, 0.16);
+  --on-ink-raised: rgba(251, 245, 238, 0.09);
+
+  /* ---- text ON the sunset band ---- */
+  --on-brand: #ffffff;
+  --on-brand-muted: #ffe6d8;
+  --on-brand-line: rgba(255, 255, 255, 0.24);
+  --on-brand-raised: rgba(255, 255, 255, 0.16);
 
   /*
-   * Elevation. Warm-tinted — a neutral grey shadow on a sand surface reads as
-   * dirt — and shallow: depth here comes from surface contrast, not from
-   * dropping every card three feet off the page.
+   * Elevation. Warm-tinted — a neutral grey shadow on ivory reads as dirt —
+   * and shallow: depth comes from surface contrast, not from dropping every
+   * card three feet off the page.
    */
-  --shadow-sm: 0 1px 2px rgba(42, 27, 16, 0.05);
-  --shadow-md: 0 2px 8px -2px rgba(42, 27, 16, 0.10), 0 1px 2px rgba(42, 27, 16, 0.04);
-  --shadow-lg: 0 12px 32px -12px rgba(42, 27, 16, 0.20), 0 2px 6px rgba(42, 27, 16, 0.05);
-  --shadow-ink: 0 20px 50px -20px rgba(20, 17, 16, 0.55);
+  --shadow-sm: 0 1px 2px rgba(74, 45, 24, 0.05);
+  --shadow-md: 0 2px 8px -2px rgba(74, 45, 24, 0.10), 0 1px 2px rgba(74, 45, 24, 0.05);
+  --shadow-lg: 0 14px 34px -14px rgba(74, 45, 24, 0.24), 0 2px 6px rgba(74, 45, 24, 0.06);
+  --shadow-ink: 0 20px 50px -20px rgba(36, 26, 20, 0.5);
+  --shadow-brand: 0 14px 30px -14px rgba(201, 72, 26, 0.45);
 
   /*
    * Radius, deliberately NOT uniform. Rounding everything equally is what makes
@@ -122,9 +145,10 @@
    */
   --radius-xs: 0.375rem;
   --radius-sm: 0.625rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.125rem;
   --radius-xl: 1.5rem;
+  --radius-2xl: 1.75rem;
   --radius-pill: 9999px;
 
   /* ---- motion: one curve, three durations ---- */
@@ -135,80 +159,89 @@
   --duration-slow: 380ms;
 
   /*
-   * Store identities.
+   * The service and store identities.
    *
-   * Each store gets three tones rather than two, and that is what fixes the
-   * old wall-of-orange: `--brand-deep` is a near-ink version used for covers,
-   * so a grid of stores reads as one dark, coherent family lit in six
-   * different hues — instead of six saturated rectangles competing. `--brand`
-   * is the readable mid-tone for type and icons, `--brand-soft` the tint.
+   * Six hues, each with a fixed job, each measured as an icon on its own tint.
+   * `-deep` is the near-dark version a store cover uses, so a wall of
+   * storefronts reads as one family lit six ways rather than six saturated
+   * rectangles competing.
    */
-  --brand-laterite-deep: #572214;  --brand-laterite: #b8552f;  --brand-laterite-soft: #f8e6dd;
-  --brand-indigo-deep:   #212a52;  --brand-indigo:   #3b4a8f;  --brand-indigo-soft:   #e4e7f4;
-  --brand-forest-deep:   #16382c;  --brand-forest:   #1f6b4f;  --brand-forest-soft:   #dcefe7;
-  --brand-ochre-deep:    #4a3413;  --brand-ochre:    #8f6014;  --brand-ochre-soft:    #f7ead4;
-  --brand-aubergine-deep:#3f1c36;  --brand-aubergine:#6d3459;  --brand-aubergine-soft:#f2e2ee;
-  --brand-clay-deep:     #392f26;  --brand-clay:     #6b5a49;  --brand-clay-soft:     #ece4da;
+  --brand-laterite-deep: #6d2a10;  --brand-laterite: #b33e14;  --brand-laterite-soft: #fbe0d2;
+  --brand-indigo-deep:   #1b2a55;  --brand-indigo:   #2a4180;  --brand-indigo-soft:   #e3e7f6;
+  --brand-forest-deep:   #0f3d2c;  --brand-forest:   #15694c;  --brand-forest-soft:   #dff0e7;
+  --brand-ochre-deep:    #4d3308;  --brand-ochre:    #8a5a0b;  --brand-ochre-soft:    #fbefd3;
+  --brand-aubergine-deep:#3d1a41;  --brand-aubergine:#6b3070;  --brand-aubergine-soft:#f1e4f3;
+  --brand-clay-deep:     #3b2f24;  --brand-clay:     #6b5442;  --brand-clay-soft:     #efe7dc;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
 
-    --background: #0e0b0a;
-    --surface: #191412;
-    --surface-muted: #221b18;
-    --surface-sunken: #120e0d;
+    /* Warm, never neutral: a grey dark theme under a sunset brand looks broken. */
+    --background: #14100e;
+    --surface: #1e1815;
+    --surface-muted: #29211c;
+    --surface-sunken: #100d0b;
 
-    --ink: #191412;
-    --ink-raised: #241d19;
+    --ink: #1e1815;
+    --ink-raised: #2b231e;
 
-    --foreground: #f6efe6;
-    --muted: #a29386;
-    --faint: #7d6f64;
+    --foreground: #f7f1e8;   /* 16.85:1 */
+    --muted: #b5a695;        /*  7.97:1 */
+    --faint: #9a8b7b;        /*  5.72:1 */
 
-    --border: #2e2521;
-    --border-strong: #443833;
+    --border: #342a24;
+    --border-strong: #4a3c33;
 
-    /* Inverted, so "primary" still means maximum contrast with the page. */
-    --primary: #f6efe6;
-    --primary-hover: #ffffff;
-    --primary-contrast: #14100e;
-    --primary-soft: #2a2320;
+    /*
+     * The primary stays the brand fill with white on it — a fill carries its
+     * own contrast, so it does not need to invert with the theme the way a
+     * black-on-light button system did.
+     */
+    --primary: #c9481a;
+    --primary-hover: #d9531c;
+    --primary-contrast: #ffffff;
+    --primary-soft: #3a1b0e;
 
-    /* Copper lifts and warms; the deep tone would vanish on a dark ground. */
-    --copper: #f0894f;
-    --copper-hover: #ff9d67;
-    --copper-on-ink: #f0894f;
-    --copper-contrast: #1a0f08;
-    --copper-soft: #33190f;
-    --copper-line: #4d2717;
+    --copper: #f0824d;       /* as TEXT on the dark ground: 7.21:1 */
+    --copper-hover: #f79462;
+    --copper-contrast: #2a1108;
+    --copper-ink: #f0824d;
+    --copper-on-ink: #f0824d;
+    --copper-soft: #3a1b0e;
+    --copper-line: #5c2c16;
 
-    --accent: #52c298;
-    --accent-soft: #12302a;
+    --info: #93a4e6;
+    --info-soft: #1a2141;
+    --info-contrast: #10142b;
 
-    --danger: #f07a6a;
-    --danger-hover: #ff9384;
-    --danger-soft: #33170f;
+    --accent: #5bc79e;
+    --accent-soft: #0e2e23;
+
+    --danger: #f0837a;
+    --danger-hover: #ff9a92;
+    --danger-soft: #3a1714;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
     --shadow-md: 0 2px 8px -2px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 12px 32px -12px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 14px 34px -14px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.45);
     --shadow-ink: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+    --shadow-brand: 0 14px 30px -14px rgba(0, 0, 0, 0.7);
 
-    /* Brands lift for legibility; the deep tones stay deep — a cover is a
-       cover in both themes, and it is the one surface that does not invert. */
-    --brand-laterite: #e07d55;
-    --brand-indigo:   #93a1e2;
-    --brand-forest:   #5cc9a6;
-    --brand-ochre:    #dcae63;
-    --brand-aubergine:#cd93bc;
-    --brand-clay:     #bfb0a1;
-    --brand-laterite-soft: #33190f;
-    --brand-indigo-soft:   #1a1e38;
-    --brand-forest-soft:   #123028;
-    --brand-ochre-soft:    #2f2510;
-    --brand-aubergine-soft:#2e1927;
+    /* Lifted for legibility; the deep tones stay deep — a cover is a cover in
+       both themes, and it is the one surface that does not invert. */
+    --brand-laterite: #f0824d;
+    --brand-indigo:   #93a4e6;
+    --brand-forest:   #5bc79e;
+    --brand-ochre:    #e0ae55;
+    --brand-aubergine:#c98fce;
+    --brand-clay:     #c3b2a0;
+    --brand-laterite-soft: #3a1b0e;
+    --brand-indigo-soft:   #1a2141;
+    --brand-forest-soft:   #0e2e23;
+    --brand-ochre-soft:    #2e2410;
+    --brand-aubergine-soft:#2c1830;
     --brand-clay-soft:     #262019;
   }
 }
@@ -233,6 +266,12 @@
   --color-copper-soft: var(--copper-soft);
   --color-copper-line: var(--copper-line);
   --color-copper-contrast: var(--copper-contrast);
+  --color-copper-ink: var(--copper-ink);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-contrast: var(--info-contrast);
+  --color-on-brand: var(--on-brand);
+  --color-on-brand-muted: var(--on-brand-muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);

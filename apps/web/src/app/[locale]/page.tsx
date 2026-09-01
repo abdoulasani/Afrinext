@@ -211,14 +211,23 @@ export default async function MarketplacePage({
  */
 function Hero({ locale, totalStores }: { locale: Locale; totalStores: number }) {
   return (
-    <header className="on-ink relative isolate overflow-hidden bg-ink text-[var(--on-ink)]">
-      {/* One warm light, top-right. Not a full-surface gradient: a source. */}
+    <header
+      className="relative isolate overflow-hidden text-[var(--on-brand)]"
+      style={{
+        /* The same sunset the signed-in header uses, so a visitor and a member
+           are looking at one product. Darkening downward, because the small
+           white copy sits over the top. */
+        backgroundImage:
+          "linear-gradient(168deg, var(--copper) 0%, #b33e14 55%, #92300f 100%)",
+      }}
+    >
+      {/* The low sun, off the top-right corner. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 opacity-[0.55]"
+        className="absolute inset-0 opacity-[0.45]"
         style={{
           backgroundImage:
-            "radial-gradient(ellipse 75% 65% at 88% -8%, var(--copper), transparent 62%)",
+            "radial-gradient(ellipse 55% 80% at 92% -10%, #f6b352, transparent 62%)",
         }}
       />
       {/* A fine grain, which is what stops a large dark area looking flat. */}
@@ -235,15 +244,15 @@ function Hero({ locale, totalStores }: { locale: Locale; totalStores: number }) 
         className="relative mx-auto max-w-2xl px-5 pb-9 sm:px-6 lg:max-w-5xl xl:max-w-6xl"
         style={{ paddingTop: "calc(2.25rem + env(safe-area-inset-top))" }}
       >
-        <p className="text-label uppercase text-copper-on-ink">
+        <p className="text-label uppercase text-[var(--on-brand-muted)]">
           {translate(locale, "market.eyebrow")}
         </p>
 
-        <h1 className="mt-3.5 max-w-[16ch] text-display text-[var(--on-ink)] sm:text-[3.25rem]">
+        <h1 className="mt-3.5 max-w-[16ch] text-display text-white sm:text-[3.25rem]">
           {translate(locale, "market.heroTitle")}
         </h1>
 
-        <p className="mt-3.5 max-w-[46ch] text-body text-[var(--on-ink-muted)]">
+        <p className="mt-3.5 max-w-[46ch] text-body text-[var(--on-brand-muted)]">
           {translate(locale, "market.heroBody")}
         </p>
 
@@ -349,7 +358,20 @@ function Worlds({
                   "hover:shadow-[var(--shadow-md)] active:translate-y-0 active:duration-[80ms]"
                 }
               >
-                <span className="text-copper">
+                {/*
+                 * A pastille per world, in that world's own tone — the same
+                 * six identities the shortcut grid and the storefronts use. Six
+                 * copper icons in a row said "these are all the same"; six
+                 * tones say "these are six different places", which is the only
+                 * thing this section exists to communicate.
+                 */}
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)]"
+                  style={{
+                    backgroundColor: `var(--brand-${copy.tone}-soft)`,
+                    color: `var(--brand-${copy.tone})`,
+                  }}
+                >
                   <StoreTypeIcon type={type} className="h-[22px] w-[22px]" />
                 </span>
                 <span className="mt-auto">

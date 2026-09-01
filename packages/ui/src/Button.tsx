@@ -68,8 +68,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
     "rounded-[var(--radius-md)] bg-primary text-primary-contrast " +
     "shadow-[var(--shadow-sm)] hover:bg-[var(--primary-hover)] hover:shadow-[var(--shadow-md)]",
   inverse:
-    "rounded-[var(--radius-md)] bg-[var(--on-ink)] text-[var(--ink)] " +
-    "shadow-[var(--shadow-md)] hover:bg-white",
+    "rounded-[var(--radius-md)] bg-white text-[color:var(--copper-ink)] " +
+    "shadow-[var(--shadow-md)] hover:bg-[var(--surface-muted)]",
   accent:
     "rounded-[var(--radius-md)] bg-copper text-[var(--copper-contrast)] " +
     "shadow-[var(--shadow-sm)] hover:bg-[var(--copper-hover)] hover:shadow-[var(--shadow-md)]",
@@ -78,11 +78,20 @@ const VARIANTS: Record<ButtonVariant, string> = {
     "hover:border-foreground/35 hover:bg-surface-muted",
   ghost:
     "rounded-[var(--radius-md)] text-muted hover:bg-surface-muted hover:text-foreground",
+  /*
+   * The secondary action on a saturated panel, and it has to be WHITE.
+   *
+   * It used to be drawn from the on-ink tokens, which are a warm off-white —
+   * correct on the near-black panel it was designed for, invisible on the
+   * sunset band that replaced it, where a warm translucent outline on orange
+   * is orange. A white border at real opacity separates on both, so this
+   * variant now states its own colour instead of inheriting the panel's.
+   */
   inverseOutline:
-    "rounded-[var(--radius-md)] border border-[var(--on-ink-line)] bg-[var(--on-ink-raised)] " +
-    "text-[var(--on-ink)] hover:border-[var(--on-ink)]/45 hover:bg-[var(--on-ink)]/12",
+    "rounded-[var(--radius-md)] border border-white/55 bg-white/10 " +
+    "text-white hover:border-white hover:bg-white/20",
   inverseGhost:
-    "rounded-[var(--radius-md)] text-[var(--on-ink)] hover:bg-[var(--on-ink-raised)]",
+    "rounded-[var(--radius-md)] text-white hover:bg-white/15",
   danger:
     "rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] " +
     "text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white hover:border-transparent",
