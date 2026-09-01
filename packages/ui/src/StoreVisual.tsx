@@ -82,8 +82,16 @@ export function StoreCover({
         aria-hidden="true"
         className="absolute inset-0"
         style={{
+          /*
+           * The light is warmer than the panel, which is what makes it read as
+           * light. The first version lit each cover with its own `--brand`, so
+           * the source and the surface were the same hue and the "light" was
+           * just a slightly paler patch. Blending toward the Sahel sun gives
+           * every identity the same hour of the day.
+           */
           backgroundImage:
-            "radial-gradient(ellipse 120% 150% at 0% -20%, var(--brand), transparent 70%)",
+            "radial-gradient(ellipse 120% 150% at 0% -20%, " +
+            "color-mix(in srgb, var(--brand) 62%, #f8c46b), transparent 72%)",
         }}
       />
       {scrim && (

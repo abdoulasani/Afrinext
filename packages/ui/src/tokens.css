@@ -162,16 +162,18 @@
    * The service and store identities.
    *
    * Six hues, each with a fixed job, each measured as an icon on its own tint.
-   * `-deep` is the near-dark version a store cover uses, so a wall of
-   * storefronts reads as one family lit six ways rather than six saturated
-   * rectangles competing.
+   * `-deep` is the version a store cover uses. Under Encre & Cuivre these were
+   * near-black so a grid of covers would not shout; under Sahel that reads as
+   * mud — six brown bands stacked down a page. They are lifted here to
+   * saturated mid-darks that still carry white type, and the cover's own light
+   * source does the rest.
    */
-  --brand-laterite-deep: #6d2a10;  --brand-laterite: #b33e14;  --brand-laterite-soft: #fbe0d2;
-  --brand-indigo-deep:   #1b2a55;  --brand-indigo:   #2a4180;  --brand-indigo-soft:   #e3e7f6;
-  --brand-forest-deep:   #0f3d2c;  --brand-forest:   #15694c;  --brand-forest-soft:   #dff0e7;
-  --brand-ochre-deep:    #4d3308;  --brand-ochre:    #8a5a0b;  --brand-ochre-soft:    #fbefd3;
-  --brand-aubergine-deep:#3d1a41;  --brand-aubergine:#6b3070;  --brand-aubergine-soft:#f1e4f3;
-  --brand-clay-deep:     #3b2f24;  --brand-clay:     #6b5442;  --brand-clay-soft:     #efe7dc;
+  --brand-laterite-deep: #a63a13;  --brand-laterite: #b33e14;  --brand-laterite-soft: #fbe0d2;
+  --brand-indigo-deep:   #2b3d78;  --brand-indigo:   #2a4180;  --brand-indigo-soft:   #e3e7f6;
+  --brand-forest-deep:   #176249;  --brand-forest:   #15694c;  --brand-forest-soft:   #dff0e7;
+  --brand-ochre-deep:    #9a6410;  --brand-ochre:    #8a5a0b;  --brand-ochre-soft:    #fbefd3;
+  --brand-aubergine-deep:#5e2b64;  --brand-aubergine:#6b3070;  --brand-aubergine-soft:#f1e4f3;
+  --brand-clay-deep:     #5d4b3a;  --brand-clay:     #6b5442;  --brand-clay-soft:     #efe7dc;
 }
 
 @media (prefers-color-scheme: dark) {

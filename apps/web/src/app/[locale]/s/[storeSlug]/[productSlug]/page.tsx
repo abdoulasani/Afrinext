@@ -127,7 +127,7 @@ export default async function PublicProductPage({
              */}
             <StoreCover
               brand={brand}
-              className="h-52 sm:h-64 lg:h-80 lg:rounded-[var(--radius-xl)]"
+              className="h-64 sm:h-72 lg:h-80 lg:rounded-[var(--radius-2xl)]"
             >
               <div className="flex h-full flex-col justify-between p-5">
                 <Badge tone="onInk">
@@ -136,7 +136,7 @@ export default async function PublicProductPage({
                 </Badge>
                 <StoreTypeIcon
                   type={storeType}
-                  className="mx-auto h-16 w-16 text-[var(--on-ink)] opacity-40"
+                  className="mx-auto h-20 w-20 text-white opacity-45"
                 />
                 <span aria-hidden="true" />
               </div>
@@ -144,6 +144,27 @@ export default async function PublicProductPage({
 
             <div className="px-4 pt-6 sm:px-6 lg:px-0">
               <h1 className="text-h1 text-foreground">{product.title}</h1>
+
+              {/*
+               * The price, said once at full size where the title is.
+               *
+               * It used to live only in the purchase bar, at `md`, competing
+               * with a button two centimetres away. On a marketplace the price
+               * is not a detail of the transaction — it is half of what the
+               * page is about, and somebody deciding whether to keep reading
+               * needs it in the first screenful, not pinned to the bottom
+               * edge. The bar still carries it, because the bar is where the
+               * decision is finally made.
+               *
+               * Hidden from `lg`, where the sidebar states it larger still and
+               * two copies on one screen would be one too many.
+               */}
+              <PriceTag
+                amount={price}
+                size="xl"
+                className="mt-3 lg:hidden"
+                data-testid="product-price-lead"
+              />
 
               {product.summary !== null && product.summary !== "" && (
                 <p className="mt-3 max-w-[60ch] text-body text-muted">{product.summary}</p>
@@ -189,26 +210,51 @@ export default async function PublicProductPage({
             <div
               className={
                 "fixed inset-x-0 bottom-0 z-30 border-t border-border " +
-                "bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur-xl " +
-                "lg:static lg:rounded-[var(--radius-lg)] lg:border lg:bg-surface " +
-                "lg:p-5 lg:shadow-[var(--shadow-md)] lg:backdrop-blur-none lg:pb-5"
+                "bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] backdrop-blur-xl " +
+                "shadow-[0_-8px_24px_-12px_rgba(74,45,24,0.28)] " +
+                "lg:static lg:rounded-[var(--radius-2xl)] lg:border lg:bg-surface " +
+                "lg:p-6 lg:shadow-[var(--shadow-lg)] lg:backdrop-blur-none lg:pb-6"
               }
               style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 62px)" }}
             >
-              <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3 lg:block lg:max-w-none lg:px-0 lg:py-0">
-                <div className="shrink-0">
+              {/*
+               * Two rows on a phone, not two columns.
+               *
+               * The first version sat the price and the button side by side,
+               * which works until the button says "Connectez-vous pour
+               * acheter" — twenty-six characters that had nowhere to go at
+               * 390px, so the label was sliced mid-word. Stacking gives the
+               * action the full width it needs and makes it a bigger target
+               * besides; the price keeps its own line above, which is where a
+               * price belongs anyway.
+               */}
+              <div className="mx-auto flex max-w-md flex-col gap-2.5 px-4 py-3 lg:max-w-none lg:px-0 lg:py-0">
+                <div className="flex items-baseline justify-between gap-3 lg:block">
                   <p className="text-label uppercase text-muted">
                     {translate(locale, "product.priceLabel")}
                   </p>
-                  <PriceTag
-                    amount={price}
-                    size="md"
-                    className="mt-0.5 whitespace-nowrap lg:hidden"
-                    data-testid="product-price"
-                  />
-                  <PriceTag amount={price} size="xl" className="mt-1.5 hidden lg:inline-flex" />
+                  {/*
+                   * The size differs between phone and laptop, so the two are
+                   * separate elements — and the visibility switch lives on a
+                   * wrapper rather than on PriceTag's own class list. Passing
+                   * `hidden` INTO a component whose base classes already set a
+                   * display is a coin toss decided by stylesheet order, and it
+                   * came up heads: both prices rendered, side by side, on
+                   * every phone.
+                   */}
+                  <span className="lg:hidden">
+                    <PriceTag
+                      amount={price}
+                      size="lg"
+                      className="whitespace-nowrap"
+                      data-testid="product-price"
+                    />
+                  </span>
+                  <span className="hidden lg:block lg:mt-1.5">
+                    <PriceTag amount={price} size="xl" />
+                  </span>
                 </div>
-                <div className="ml-auto min-w-0 lg:ml-0 lg:mt-5">
+                <div className="min-w-0 lg:mt-5">
                   <BuyArea
                     locale={locale} actor={actor} owned={owned}
                     storeSlug={storeSlug} productSlug={productSlug}
@@ -369,7 +415,16 @@ function SellerCard({
  */
 function WhatYouGet({ locale, versionNo }: { locale: Locale; versionNo?: number }) {
   return (
-    <section aria-labelledby="get-heading" className="mt-8">
+    /*
+     * Green, because this section is the one that says "confirmed": what is
+     * actually delivered, in the palette's own vocabulary for availability.
+     * The licence below it is clay — a record, not a promise — so a buyer can
+     * tell the two apart before reading either.
+     */
+    <section
+      aria-labelledby="get-heading"
+      className="mt-8 rounded-[var(--radius-xl)] border border-[var(--brand-forest-soft)] bg-[var(--brand-forest-soft)] p-5"
+    >
       <h2 id="get-heading" className="text-h3 text-foreground">
         {translate(locale, "product.whatYouGet")}
       </h2>
@@ -404,7 +459,7 @@ function Licence({ locale, licenceText }: { locale: Locale; licenceText: string 
     <section
       aria-labelledby="licence-heading"
       data-testid="product-licence"
-      className="mt-8 rounded-[var(--radius-lg)] border border-border bg-surface-muted/60 p-5"
+      className="mt-5 rounded-[var(--radius-xl)] border border-border bg-surface p-5"
     >
       <h2 id="licence-heading" className="text-h3 text-foreground">
         {translate(locale, "product.licence")}
