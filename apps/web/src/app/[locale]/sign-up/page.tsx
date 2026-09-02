@@ -71,6 +71,7 @@ export default async function SignUpPage({
             generic: translate(locale, "error.generic"),
             haveAccount: translate(locale, "auth.haveAccount"),
             signIn: translate(locale, "auth.signIn"),
+            addressTaken: translate(locale, "auth.addressTaken"),
             consentTitle: translate(locale, "signup.consentTitle"),
             consentExplain: translate(locale, "signup.consentExplain"),
             consentRequired: translate(locale, "signup.consentRequired"),

@@ -6,8 +6,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button, inputClass } from "@afrinext/ui";
 import {
-  acceptAccountConsent, chooseProgramme, requestEmailVerification, signUpWithEmail,
-  type OutstandingDoc,
+  acceptAccountConsent, chooseProgramme, requestEmailVerification, signInWithEmail,
+  signUpWithEmail, type OutstandingDoc,
 } from "@/lib/auth-client";
 import { ProgrammeChoice, type ProgrammeOption } from "./ProgrammeChoice";
 
@@ -26,6 +26,7 @@ export type SignUpLabels = {
   generic: string;
   haveAccount: string;
   signIn: string;
+  addressTaken: string;
   consentTitle: string;
   consentExplain: string;
   consentRequired: string;
@@ -77,14 +78,32 @@ export default function SignUpForm({
     try {
       const result = await signUpWithEmail({ email, password, name });
       if (result.error) {
-        /*
-         * Better Auth answers "user already exists" here, and that is a real
-         * enumeration surface — but it is one every signup form has, because a
-         * form that accepted a duplicate address would be broken instead. The
-         * message is passed through as it comes; the endpoints that DO have a
-         * choice (reset, verification) are the ones that answer identically.
-         */
         setError(result.error.message ?? labels.generic);
+        return;
+      }
+
+      /*
+       * Sign in explicitly, and treat a failure here as "that address is
+       * taken".
+       *
+       * `autoSignIn` is off — consent has not been given yet, so a session
+       * handed out by signup would be a session for an account that cannot use
+       * it — which means signup alone never leaves a session behind and this
+       * step is required, not optional.
+       *
+       * It doubles as the duplicate check. Better Auth answers a signup on an
+       * existing address with a success that creates nothing and issues no
+       * token, so the only way to tell the two apart from here is to try the
+       * credentials: they work for the account just created, and they do not
+       * work for somebody else's. A signup form telling you an address is
+       * taken IS an enumeration surface, and an unavoidable one — a form that
+       * silently accepted a duplicate would be broken instead. The endpoints
+       * that DO have a choice, reset and verification, are the ones that
+       * answer identically for every address.
+       */
+      const session = await signInWithEmail({ email, password });
+      if (session.error) {
+        setError(labels.addressTaken);
         return;
       }
 

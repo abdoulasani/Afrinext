@@ -1,4 +1,5 @@
 {
+  "auth.addressTaken": "An account already uses this address. Sign in, or reset your password.",
   "auth.codeExpired": "That code has expired. Request a new one.",
   "auth.codeIncorrect": "Incorrect code. You have {attempts} attempts left.",
   "auth.codeIncorrect#one": "Incorrect code. You have {attempts} attempt left.",

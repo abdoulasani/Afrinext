@@ -81,6 +81,9 @@ async function signIn(page: Page, phone: string): Promise<void> {
   await page.goto("/fr/sign-in");
   const before = logLength();
 
+  // Sign-in opens on email and password now. The phone flow is one tap away
+  // and still the only way in for every account created before that change.
+  await page.getByTestId("signin-use-phone").click();
   await page.locator('input[type="tel"]').fill(phone);
   await page.locator('button[type="submit"]').click();
 
