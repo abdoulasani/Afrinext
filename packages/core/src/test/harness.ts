@@ -35,6 +35,9 @@ const MUTABLE_TABLES = [
   "fee_schedules",
   "commission_rules",
   "settlement_holds",
+  // Programme subscriptions reference users and orders; listed before both so
+  // the truncation order is explicit rather than relying on a cascade.
+  "programme_subscriptions",
   "consent_records",
   "audit_logs",
   "role_assignments",

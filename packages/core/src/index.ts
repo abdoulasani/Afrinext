@@ -13,6 +13,7 @@ export * as auth from "./auth";
 export * as payments from "./payments";
 export * as consent from "./consent";
 export * as profile from "./profile";
+export * as programme from "./programme";
 export * as audit from "./audit";
 export * as observability from "./observability";
 export * as ratelimit from "./ratelimit";

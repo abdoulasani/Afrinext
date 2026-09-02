@@ -13,7 +13,22 @@ import { createHmac, hkdfSync, randomInt, timingSafeEqual } from "node:crypto";
  */
 export const OTP_LENGTH = 6;
 
-export type OtpPurpose = "sign_in" | "verify_identity" | "step_up";
+/**
+ * What a one-time code is for.
+ *
+ * Email verification and password reset were added here rather than given to
+ * Better Auth's `verification` table, for the reason phone codes were moved
+ * back in the first place: this table stores a keyed hash and nothing else, and
+ * PostgreSQL — not application code — enforces single use, expiry and the
+ * attempt ceiling. Two stores for one kind of secret is one store too many, and
+ * the second one is always the one nobody audits.
+ */
+export type OtpPurpose =
+  | "sign_in"
+  | "verify_identity"
+  | "step_up"
+  | "email_verification"
+  | "password_reset";
 
 /**
  * Timings and bounds an operator may need to change without a deploy.

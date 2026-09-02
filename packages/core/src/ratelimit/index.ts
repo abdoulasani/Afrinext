@@ -125,6 +125,16 @@ export interface OtpPolicy {
   readonly verificationAttempts: number;
   readonly ttlMs: number;
   readonly stepUpPerHour: number;
+  /**
+   * Email codes, per address per hour.
+   *
+   * Separate from `perPhonePerHour` because the two cost different things. An
+   * SMS is money out of the door on every send; an email is cheap but spends
+   * the sending domain's reputation, and a mailbox that receives forty Afrinext
+   * codes in an hour marks the next one as spam for everybody. Same order of
+   * magnitude, different knob, tunable without touching the SMS budget.
+   */
+  readonly perEmailPerHour: number;
 }
 
 export const OTP_POLICY: OtpPolicy = {
@@ -134,6 +144,7 @@ export const OTP_POLICY: OtpPolicy = {
   verificationAttempts: 5,
   ttlMs: 5 * 60 * 1000,
   stepUpPerHour: 3,
+  perEmailPerHour: 5,
 };
 
 /** The `platform_settings` key the overlay is read from. */
@@ -163,6 +174,7 @@ export async function loadOtpPolicy(db: Database): Promise<OtpPolicy> {
     verificationAttempts: positiveInt(stored["verificationAttempts"], OTP_POLICY.verificationAttempts),
     ttlMs: positiveInt(stored["ttlMs"], OTP_POLICY.ttlMs),
     stepUpPerHour: positiveInt(stored["stepUpPerHour"], OTP_POLICY.stepUpPerHour),
+    perEmailPerHour: positiveInt(stored["perEmailPerHour"], OTP_POLICY.perEmailPerHour),
   };
 }
 
@@ -204,4 +216,32 @@ export function stepUpSendRules(userId: string, policy: OtpPolicy = OTP_POLICY):
     { bucket: `stepup:send:user:${userId}`, limit: policy.stepUpPerHour, windowMs: 3_600_000 },
     { bucket: `stepup:cooldown:user:${userId}`, limit: 1, windowMs: policy.cooldownMs },
   ];
+}
+
+/**
+ * Email issuance: per address, a cooldown, and per IP.
+ *
+ * The shape deliberately mirrors `otpSendRules`, because the lesson is the
+ * same one and it was expensive the first time: bounding *verification
+ * attempts* alone protects nothing when fresh codes can be requested without
+ * limit. What differs is only which policy field sets the ceiling.
+ *
+ * The per-IP bucket is shared with nothing — an attacker enumerating addresses
+ * from one connection is stopped by it long before any single address hits its
+ * own limit.
+ */
+export function emailSendRules(
+  address: string,
+  ipAddress: string | undefined,
+  purpose: string,
+  policy: OtpPolicy = OTP_POLICY,
+): RateLimitRule[] {
+  const rules: RateLimitRule[] = [
+    { bucket: `email:send:${purpose}:addr:${address}`, limit: policy.perEmailPerHour, windowMs: 3_600_000 },
+    { bucket: `email:cooldown:${purpose}:addr:${address}`, limit: 1, windowMs: policy.cooldownMs },
+  ];
+  if (ipAddress !== undefined && ipAddress !== "") {
+    rules.push({ bucket: `email:send:ip:${ipAddress}`, limit: policy.perIpPerHour, windowMs: 3_600_000 });
+  }
+  return rules;
 }

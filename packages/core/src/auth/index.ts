@@ -1,6 +1,7 @@
 export * from "./password";
 export * from "./otp";
 export * from "./otp-store";
+export * from "./email-identity";
 export * from "./phone";
 export * from "./messaging";
 export * from "./errors";
