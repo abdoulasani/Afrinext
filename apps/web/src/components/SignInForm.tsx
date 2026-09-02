@@ -3,8 +3,12 @@
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { useState } from "react";
+import Link from "next/link";
 import { Button, inputClass } from "@afrinext/ui";
-import { acceptAccountConsent, sendPhoneOtp, verifyPhoneOtp, type OutstandingDoc } from "@/lib/auth-client";
+import {
+  acceptAccountConsent, sendPhoneOtp, signInWithEmail, verifyPhoneOtp,
+  type OutstandingDoc,
+} from "@/lib/auth-client";
 
 type Labels = {
   phone: string;
@@ -12,6 +16,15 @@ type Labels = {
   continue: string;
   back: string;
   generic: string;
+  email: string;
+  password: string;
+  signIn: string;
+  invalidCredentials: string;
+  forgotPassword: string;
+  usePhone: string;
+  useEmail: string;
+  noAccount: string;
+  createAccount: string;
   consentTitle: string;
   consentExplain: string;
   consentRequired: string;
@@ -21,21 +34,79 @@ type Labels = {
 };
 
 /**
- * Phone-first sign-in.
+ * Sign-in: email and password first, phone still there.
  *
- * Two steps: request a code, then verify it. Rate limiting lives on the server —
- * a client-side cooldown is a courtesy, never a control — so a refusal comes
- * back as an error the person can act on, with the wait time.
+ * Email became the main path because that is where new accounts now come from,
+ * but the phone flow is not a legacy branch kept out of politeness — it is how
+ * every account created before this milestone signs in, and those accounts have
+ * no password at all. Removing it would lock out real people with real stores,
+ * real orders and real ledger balances. It stays until every one of them has an
+ * address, and the switch is one tap away rather than buried.
+ *
+ * Rate limiting lives on the server — a client-side cooldown is a courtesy,
+ * never a control — so a refusal comes back as an error with the wait time.
  */
 export default function SignInForm({ locale, labels }: { locale: string; labels: Labels }) {
   const router = useRouter();
-  const [step, setStep] = useState<"phone" | "code" | "consent">("phone");
+  const [step, setStep] = useState<"email" | "phone" | "code" | "consent">("email");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [outstanding, setOutstanding] = useState<readonly OutstandingDoc[]>([]);
   const [agreed, setAgreed] = useState(false);
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  async function signIn(event: React.FormEvent): Promise<void> {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await signInWithEmail({ email, password });
+      if (result.error) {
+        /*
+         * One message for a wrong password and for an address with no account.
+         * Better Auth already answers both the same way; this keeps the screen
+         * from re-introducing the difference in the words it shows.
+         */
+        setError(labels.invalidCredentials);
+        return;
+      }
+      await afterSession();
+    } catch {
+      setError(labels.generic);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * Where a fresh session lands.
+   *
+   * A `pending_consent` account holds a session and resolves to no actor, so
+   * the outstanding documents are asked for before going anywhere. That is the
+   * same gate the phone path meets, reached from the other direction.
+   */
+  async function afterSession(): Promise<void> {
+    const response = await fetch("/api/v1/consent/account", {
+      credentials: "same-origin",
+      headers: { accept: "application/json" },
+    });
+    const body = (await response.json().catch(() => null)) as
+      | { data?: { outstanding?: OutstandingDoc[] } }
+      | null;
+    const pending = body?.data?.outstanding ?? [];
+    if (pending.length > 0) {
+      setOutstanding(pending);
+      setStep("consent");
+      return;
+    }
+    // Client-side navigation: a full page load would drop the freshly set
+    // session cookie state the router already knows about.
+    router.push(`/${locale}` as Route);
+    router.refresh();
+  }
 
   async function requestCode(event: React.FormEvent) {
     event.preventDefault();
@@ -106,9 +177,13 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
   return (
     <form
       onSubmit={
-        step === "phone" ? requestCode : step === "code" ? verifyCode : acceptConsent
+          step === "email" ? signIn
+        : step === "phone" ? requestCode
+        : step === "code" ? verifyCode
+        : acceptConsent
       }
       className="flex flex-col gap-5 px-4 pt-8 sm:px-6"
+      data-testid={`signin-step-${step}`}
     >
       {error !== null && (
         <p
@@ -162,7 +237,41 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
         </section>
       )}
 
-      {step === "phone" ? (
+      {step === "email" ? (
+        <div className="flex flex-col gap-4">
+          <label className="block">
+            <span className="text-small font-medium text-foreground">{labels.email}</span>
+            <input
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); }}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              className={`mt-1.5 ${inputClass}`}
+              required
+            />
+          </label>
+          <label className="block">
+            <span className="text-small font-medium text-foreground">{labels.password}</span>
+            <input
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); }}
+              type="password"
+              autoComplete="current-password"
+              className={`mt-1.5 ${inputClass}`}
+              required
+            />
+          </label>
+          <Link
+            href={`/${locale}/password-reset` as Route}
+            className="self-start text-small font-medium text-copper underline underline-offset-2"
+          >
+            {labels.forgotPassword}
+          </Link>
+        </div>
+      ) : step === "phone" ? (
         <label className="block">
           <span className="text-small font-medium text-foreground">{labels.phone}</span>
           <input
@@ -203,7 +312,9 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
         data-testid={step === "consent" ? "signup-consent-accept" : "signin-continue"}
         className="w-full"
       >
-        {step === "consent" ? labels.acceptAll : labels.continue}
+        {step === "consent" ? labels.acceptAll
+          : step === "email" ? labels.signIn
+          : labels.continue}
       </Button>
 
       {step === "code" && (
@@ -216,6 +327,34 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
         >
           {labels.back}
         </Button>
+      )}
+
+      {(step === "email" || step === "phone") && (
+        <>
+          {/* The other credential, one tap away. Existing phone accounts have
+              no password, so this is not an alternative for them — it is the
+              only way in, and it must not read as a fallback. */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="md"
+            data-testid={step === "email" ? "signin-use-phone" : "signin-use-email"}
+            onClick={() => { setStep(step === "email" ? "phone" : "email"); setError(null); }}
+            className="w-full"
+          >
+            {step === "email" ? labels.usePhone : labels.useEmail}
+          </Button>
+
+          <p className="text-center text-small text-muted">
+            {labels.noAccount}{" "}
+            <Link
+              href={`/${locale}/sign-up` as Route}
+              className="font-semibold text-copper underline underline-offset-2"
+            >
+              {labels.createAccount}
+            </Link>
+          </p>
+        </>
       )}
     </form>
   );

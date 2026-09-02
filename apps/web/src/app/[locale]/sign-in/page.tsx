@@ -16,7 +16,7 @@ export default async function SignInPage({
 
   return (
     <>
-      <PageIntro title={translate(locale, "auth.signIn")} />
+      <PageIntro title={translate(locale, "auth.signInTitle")} />
       <Shell width="narrow">
       <SignInForm
         locale={locale}
@@ -26,6 +26,15 @@ export default async function SignInPage({
           continue: translate(locale, "common.continue"),
           back: translate(locale, "common.back"),
           generic: translate(locale, "error.generic"),
+          email: translate(locale, "auth.emailLabel"),
+          password: translate(locale, "auth.passwordLabel"),
+          signIn: translate(locale, "auth.signIn"),
+          invalidCredentials: translate(locale, "auth.invalidCredentials"),
+          forgotPassword: translate(locale, "auth.forgotPassword"),
+          usePhone: translate(locale, "auth.usePhone"),
+          useEmail: translate(locale, "auth.useEmail"),
+          noAccount: translate(locale, "auth.noAccount"),
+          createAccount: translate(locale, "auth.createAccount"),
           consentTitle: translate(locale, "signup.consentTitle"),
           consentExplain: translate(locale, "signup.consentExplain"),
           consentRequired: translate(locale, "signup.consentRequired"),

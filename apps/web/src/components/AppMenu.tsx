@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { icons } from "./icons";
@@ -33,13 +33,19 @@ export type MenuSection = { title: string; links: readonly MenuLink[] };
  * that could be flipped to bring it back.
  */
 export function AppMenu({
-  label, title, sections, footer, closeLabel,
+  label, title, sections, footer, footerAction, closeLabel,
 }: {
   /** The trigger's accessible name, and the tab's visible word. */
   label: string;
   title: string;
   sections: readonly MenuSection[];
   footer?: readonly MenuLink[];
+  /**
+   * Something that is not a link — sign out, which has to be a POST. Rendered
+   * in the footer list so it reads as one more item rather than as a control
+   * bolted on below.
+   */
+  footerAction?: ReactNode;
   closeLabel: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -153,9 +159,13 @@ export function AppMenu({
                   <ul className="mt-2 flex flex-col gap-0.5">{section.links.map(item)}</ul>
                 </section>
               ))}
-              {footer !== undefined && footer.length > 0 && (
+              {((footer !== undefined && footer.length > 0) || footerAction !== undefined) && (
                 <ul className="flex flex-col gap-0.5 border-t border-border pt-4">
-                  {footer.map(item)}
+                  {(footer ?? []).map(item)}
+                  {/* The handler is on the wrapper so the sheet closes on the
+                      button's own click — which a keyboard Enter also fires, so
+                      this is not a mouse-only path. */}
+                  {footerAction !== undefined && <li onClick={close}>{footerAction}</li>}
                 </ul>
               )}
             </div>

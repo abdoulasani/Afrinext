@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
-import { authz } from "@afrinext/core";
+import { auth as core, authz } from "@afrinext/core";
 import { getDb } from "@afrinext/db";
 import { isLocale, translate, type Locale } from "@afrinext/i18n";
 import type { ReactNode } from "react";
 import BottomNav from "@/components/BottomNav";
 import { AppMenu, type MenuSection } from "@/components/AppMenu";
+import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
+import { SignOutButton } from "@/components/SignOutButton";
+import { sessionIdentity } from "@/lib/email-auth";
 import { currentActor } from "@/lib/session";
 
 /**
@@ -111,6 +114,9 @@ export default async function LocaleLayout({
       title: translate(locale, "menu.account"),
       links: [
         { href: `/${locale}/wallet`, label: translate(locale, "shortcut.wallet"), icon: "wallet" },
+        // Changing programme is an UPDATE on the account somebody already has.
+        // Reachable from the drawer so nobody ever concludes they need a second.
+        { href: `/${locale}/programme`, label: translate(locale, "programme.change"), icon: "profile" },
       ],
     });
   }
@@ -125,8 +131,35 @@ export default async function LocaleLayout({
       : []),
   ];
 
+  /*
+   * The unverified banner.
+   *
+   * Read here so it appears on every signed-in screen rather than being
+   * remembered by each one. It is shown only for an account that HAS a
+   * reachable address and has not confirmed it: a phone account's synthetic
+   * `@phone.afrinext.local` address can receive nothing, so nagging its owner
+   * to verify it would be asking for something impossible.
+   *
+   * It gates nothing. `users.status` is the consent gate and is untouched by
+   * verification; every screen behind this banner is reachable with it showing.
+   */
+  const identity = actor === undefined ? undefined : await sessionIdentity();
+  const showVerifyBanner =
+    identity !== undefined
+    && !identity.emailVerified
+    && core.isReachableEmail(identity.email);
+
   return (
     <div lang={locale} className="min-h-full">
+      {showVerifyBanner && identity !== undefined && (
+        <EmailVerificationBanner
+          email={identity.email}
+          message={translate(locale, "auth.verifyBanner", { email: "{email}" })}
+          action={translate(locale, "auth.verifyBannerAction")}
+          dismiss={translate(locale, "auth.verifyLater")}
+          href={`/${locale}/verify-email`}
+        />
+      )}
       {/*
         * `lg:pt-16` makes room for the navigation, which is a fixed h-16 bar at
         * the TOP from `lg` up and a fixed tab bar at the bottom below that. The
@@ -142,6 +175,11 @@ export default async function LocaleLayout({
             title={translate(locale, "menu.title")}
             sections={sections}
             footer={footer}
+            footerAction={
+              actor === undefined
+                ? undefined
+                : <SignOutButton locale={locale} label={translate(locale, "menu.signOut")} />
+            }
             closeLabel={translate(locale, "home.closeMenu")}
           />
         }
