@@ -704,7 +704,7 @@ waits the cooldown out and resends for real.
 | --- | --- |
 | `packages/core` | **39 files, 747 passed, 20 skipped** (12 new) |
 | `pnpm test:e2e` | **57 passed** (3 new) |
-| Mutation matrix D1–D4 | 13 designed, see the review packet |
+| Mutation matrix D1–D4 | **13 designed, 13 caught, 0 escaped** |
 | lint / typecheck / build | clean |
 
 No migration. No provider connected. No limit relaxed. No Origin or CSRF
