@@ -554,12 +554,14 @@ missing.
 
 | Suite | Result |
 | --- | --- |
-| `packages/core` (whole suite) | **39 files, 734 passed, 20 skipped, 0 failed** |
-| `email-identity.test.ts` | 26 passed |
+| `packages/core` (whole suite) | **39 files, 735 passed, 20 skipped, 0 failed** |
+| `email-identity.test.ts` | 27 passed |
 | `programme.test.ts` | 20 passed |
 | `email-password.test.ts` | 16 passed |
 | `packages/i18n` | 14 passed (catalogue parity, placeholders, plurals) |
 | `pnpm lint` | clean, `--max-warnings 0`, all six packages |
+| `e2e/email-auth.spec.ts` | 8 passed |
+| `pnpm test:e2e` (whole browser suite) | **54 passed** |
 | `pnpm typecheck` / `pnpm build` | clean |
 
 Note for anyone re-running these: the suite truncates the tables it touches, so
