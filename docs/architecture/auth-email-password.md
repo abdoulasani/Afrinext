@@ -810,9 +810,29 @@ policy applies to money — so the code stays valid and the neutral wording from
 
 | Suite | Result |
 | --- | --- |
-| `packages/core` | **41 files, 778 passed, 20 skipped** (31 new) |
+| `packages/core` | **41 files, 781 passed, 20 skipped** (34 new) |
 | `pnpm test:e2e` | **57 passed** — phone sign-in unaffected |
+| Mutation matrix | **20 designed, 19 caught, 1 no-op** (see below) |
 | lint / typecheck / build | clean |
+
+Two mutations are worth recording rather than hiding in a score.
+
+**G6 survived the first pass.** Replacing `idempotencyKey: challenge.challengeId`
+with `undefined` broke nothing: `ConsoleSender` ignores the field, so every test
+in the file passed whether or not the key was threaded, and the adapter tests
+only proved the adapter sends a key it is handed. A recording sender now
+compares the key against the row the challenge store wrote.
+
+**G11 is a no-op, and it took me two attempts to see it.** Giving
+`EmailDeliveryFailedError` an optional `detail` parameter that no call site
+passes changes nothing observable — that is not a surviving defect, it is a
+badly designed mutation. G11b expresses the same property properly, throwing
+with the status, Brevo's message and the address, and it is caught by six tests.
+
+**G12 first reported PATTERN NOT FOUND**, which was an artifact of my own
+harness: a run killed by a command timeout had left a mutation applied in the
+worktree. Re-run against a clean tree it is caught. Worth knowing before
+trusting a resumed matrix.
 
 No migration. No real credential in the repository — the only `xkeysib-` strings
 are the test server's fixed placeholder and the wrong-key case.
