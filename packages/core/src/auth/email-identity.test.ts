@@ -845,3 +845,81 @@ describe("hasLiveChallenge", () => {
     })).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// What the sender is actually handed
+// ---------------------------------------------------------------------------
+
+describe("the message handed to the email sender", () => {
+  /** Records what it was asked to send, and sends nothing. */
+  class RecordingSender {
+    readonly id = "recording";
+    readonly sent: { to: string; subject: string; body: string; idempotencyKey?: string | undefined }[] = [];
+    sendEmail(message: { to: string; subject: string; body: string; idempotencyKey?: string | undefined }): Promise<void> {
+      this.sent.push(message);
+      return Promise.resolve();
+    }
+  }
+
+  it("carries the live challenge's id as the idempotency key", async () => {
+    /*
+     * `ConsoleSender` ignores the key, so every other test in this file passes
+     * whether or not it is threaded through — which is how a mutation that
+     * replaced it with `undefined` survived the first matrix. This one records
+     * the message and compares the key against the row the challenge store
+     * actually wrote.
+     *
+     * It has to be the challenge id and not a fresh uuid: the point is that a
+     * retried send collapses to ONE delivery, and two calls that each invent
+     * an identifier are two deliveries wearing different names.
+     */
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    const recorder = new RecordingSender();
+
+    await requestEmailVerification(db, { ...deps, sender: recorder }, { email });
+
+    const rows = await db.execute<{ id: string }>(sql`
+      select id from otp_challenges
+       where identifier = ${email} and purpose = 'email_verification'
+         and consumed_at is null
+    `);
+    const challengeId = rows.rows[0]?.id;
+    expect(challengeId, "a challenge should exist").toBeDefined();
+
+    expect(recorder.sent).toHaveLength(1);
+    expect(recorder.sent[0]?.idempotencyKey).toBe(challengeId);
+  });
+
+  it("gives the reset flow its own key, not the verification one", async () => {
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    const recorder = new RecordingSender();
+    const scoped = { ...deps, sender: recorder, policy: { ...OTP_POLICY, cooldownMs: 1 } };
+
+    await requestEmailVerification(db, scoped, { email });
+    await requestPasswordReset(db, scoped, { email });
+
+    expect(recorder.sent).toHaveLength(2);
+    const [verification, reset] = recorder.sent;
+    // Two purposes, two live challenges, two keys. A shared key would let a
+    // provider collapse a reset into a verification that went out first.
+    expect(verification?.idempotencyKey).toBeDefined();
+    expect(reset?.idempotencyKey).toBeDefined();
+    expect(reset?.idempotencyKey).not.toBe(verification?.idempotencyKey);
+  });
+
+  it("never puts the code in the subject, only in the body", async () => {
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    const recorder = new RecordingSender();
+    await requestEmailVerification(db, { ...deps, sender: recorder }, { email });
+
+    const message = recorder.sent[0];
+    const code = /(\d{6})/.exec(message?.body ?? "")?.[1];
+    expect(code).toBeDefined();
+    // A subject line shows in a notification preview, in a mail client's list,
+    // and over somebody's shoulder on a bus.
+    expect(message?.subject).not.toContain(code as string);
+  });
+});
