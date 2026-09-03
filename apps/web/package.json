@@ -1,0 +1,37 @@
+{
+  "name": "@afrinext/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"(unit tests live in packages/core; browser tests: pnpm test:e2e)\" && exit 0",
+    "test:e2e": "playwright test",
+    "check:overflow": "node scripts/check-overflow.mjs http://127.0.0.1:3200 /fr /fr/explorer /fr/sign-in /fr/sell /fr/library /fr/orders"
+  },
+  "dependencies": {
+    "@afrinext/core": "workspace:*",
+    "@afrinext/db": "workspace:*",
+    "@afrinext/i18n": "workspace:*",
+    "@afrinext/ui": "workspace:*",
+    "better-auth": "1.7.1",
+    "drizzle-orm": "^0.45.2",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "^4",
+    "typescript": "^5.9.3"
+  }
+}

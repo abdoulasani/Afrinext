@@ -1,0 +1,35 @@
+{
+  "name": "afrinext",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @afrinext/web dev",
+    "build": "pnpm --filter @afrinext/web build",
+    "start": "pnpm --filter @afrinext/web start",
+    "lint": "pnpm -r --no-bail lint",
+    "typecheck": "pnpm -r --no-bail typecheck",
+    "test": "pnpm -r --no-bail test",
+    "test:unit": "pnpm --filter @afrinext/core test:unit",
+    "test:e2e": "pnpm --filter @afrinext/web test:e2e",
+    "db:generate": "pnpm --filter @afrinext/db generate",
+    "db:migrate": "pnpm --filter @afrinext/db migrate",
+    "db:reset": "pnpm --filter @afrinext/db reset",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ],
+    "overrides": {
+      "vite": ">=6.4.3",
+      "esbuild": ">=0.25.0"
+    }
+  }
+}

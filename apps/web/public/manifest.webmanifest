@@ -1,0 +1,35 @@
+{
+  "name": "Afrinext — find African businesses",
+  "short_name": "Afrinext",
+  "description": "A mobile marketplace directory for African businesses: search verified suppliers, artisans and services, or list your own.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbf7f2",
+  "theme_color": "#b4421f",
+  "categories": ["business", "shopping", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Browse listings", "url": "/browse" },
+    { "name": "List a business", "url": "/submit" }
+  ]
+}

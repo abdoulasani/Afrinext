@@ -1,0 +1,489 @@
+<title>Digital Delivery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 2 · digital delivery</p>
+  <h1>Digital Delivery</h1>
+  <p class="lede">A buyer whose payment was confirmed can read the seller's file. Nobody else can — not by knowing the URL, the order id, an asset id, or another buyer's grant, and not by editing the page. Access is <em>derived</em> on the server from a session and a query, never accepted from a caller.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>Head <b>c4b0b42</b></span>
+    <span>1 commit · 31 files</span>
+    <span>Tests <b class="ok">317 passed · 24 browser</b></span>
+    <span>Mutations <b class="ok">12 of 12 caught</b></span>
+  </div>
+</header>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#architecture">1 · The access architecture</a>
+  <a href="#three">2 · Three checks</a>
+  <a href="#model">3 · The content model</a>
+  <a href="#policy">4 · Download policy</a>
+  <a href="#entitlement">5 · Entitlement is payment's job</a>
+  <a href="#mutations">6 · Mutation evidence</a>
+  <a href="#results">7 · Results and files</a>
+  <a href="#risks">8 · Risks and confirmations</a>
+</nav>
+
+<section id="architecture">
+  <div class="sec-head"><div class="sec-mark">1</div><h2 class="sec-title">The entitlement and access architecture</h2></div>
+
+  <div class="note key">
+    <span class="n-label">One sentence</span>
+    <p><strong>Access is derived on the server from the authenticated actor plus a live entitlement, and from nothing the client says.</strong> No entitlement id, product id, order id, user id or "payment succeeded" flag sent by a caller is read as an authorization fact. The only thing a client supplies is <em>which asset it wants</em> — and even that is resolved through a query scoped to the actor.</p>
+  </div>
+
+  <h3>The pieces, and who owns what</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Thing</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">entitlements</td><td>The authority. One row per buyer per product, created only inside the transaction that marks an order paid. Carries <code>revoked_at</code>, so ending access is one statement.</td></tr>
+      <tr><td class="mono">digital_assets</td><td>The files. One product, many assets. <code>storage_key</code> is opaque, generated from uuids, and never leaves the server.</td></tr>
+      <tr><td class="mono">ContentStorage</td><td>A port. <code>put</code> and <code>open</code> take keys and return bytes — never a URL, so no code path can hand a client something that reads bytes without passing the authorization first.</td></tr>
+      <tr><td class="mono">content grant</td><td>A signed, two-minute hand-off. <strong>Carries no permission.</strong> It says only "Afrinext issued this, to this person, for this asset, and it has not expired".</td></tr>
+    </tbody>
+  </table></div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 660 248" role="img" aria-label="How a request for a protected file is decided.">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.75" marker-end="url(#ar2)">
+          <path d="M118 44 H166"/><path d="M300 44 H348"/><path d="M482 44 H530"/>
+          <path d="M224 62 V104"/>
+          <path d="M118 140 H166"/><path d="M300 140 H348"/><path d="M482 140 H530"/>
+        </g>
+        <g stroke="currentColor" fill="none" stroke-width="1.2">
+          <rect x="16" y="26" width="102" height="36" rx="3"/>
+          <rect x="166" y="26" width="134" height="36" rx="3"/>
+          <rect x="348" y="26" width="134" height="36" rx="3"/>
+          <rect x="530" y="26" width="114" height="36" rx="3"/>
+          <rect x="16" y="122" width="102" height="36" rx="3"/>
+          <rect x="166" y="122" width="134" height="36" rx="3"/>
+          <rect x="348" y="122" width="134" height="36" rx="3"/>
+          <rect x="530" y="122" width="114" height="36" rx="3"/>
+        </g>
+        <text class="svg-t" x="67" y="48" text-anchor="middle">Session</text>
+        <text class="svg-t" x="233" y="42" text-anchor="middle">Entitlement query</text>
+        <text class="svg-s" x="233" y="55" text-anchor="middle">scoped to the actor</text>
+        <text class="svg-t" x="415" y="42" text-anchor="middle">Grant issued</text>
+        <text class="svg-s" x="415" y="55" text-anchor="middle">signed · 2 minutes</text>
+        <text class="svg-t" x="587" y="48" text-anchor="middle">Client holds it</text>
+        <text class="svg-t" x="67" y="138" text-anchor="middle">Grant spent</text>
+        <text class="svg-t" x="233" y="136" text-anchor="middle">Signature + expiry</text>
+        <text class="svg-s" x="233" y="149" text-anchor="middle">check 1</text>
+        <text class="svg-t" x="415" y="136" text-anchor="middle">Subject = actor</text>
+        <text class="svg-s" x="415" y="149" text-anchor="middle">check 2</text>
+        <text class="svg-t" x="587" y="136" text-anchor="middle">Entitlement</text>
+        <text class="svg-s" x="587" y="149" text-anchor="middle">check 3 · in SQL</text>
+        <text class="svg-u" x="16" y="196">THE GRANT IS A HAND-OFF, NOT AN AUTHORITY</text>
+        <text class="svg-s" x="16" y="214">The entitlement is read again when the grant is spent — so a revocation inside those two</text>
+        <text class="svg-s" x="16" y="228">minutes stops it immediately, and a takedown stops it on the next request.</text>
+      </svg>
+    </div>
+    <figcaption>Two round trips, six checks between them. The top row issues a grant; the bottom row spends it. <b>Nothing in the bottom row trusts anything from the top row</b> except the fact that Afrinext signed it.</figcaption>
+  </figure>
+</section>
+
+<section id="three">
+  <div class="sec-head"><div class="sec-mark">2</div><h2 class="sec-title">How the bytes are prevented from being read</h2></div>
+
+  <p>Serving one byte requires three independent checks. Each is sufficient on its own to refuse, and each is a mutation in section 6 that fails a test when removed.</p>
+
+  <ol class="steps">
+    <li><b>The grant verifies, and has not expired</b>
+      <p>HMAC-SHA256, compared in constant time, over the claims. The key is derived from the application secret with HKDF and a distinct label — <em>not</em> the secret itself, and not the OTP key — so a grant signature cannot be replayed against any other subsystem. Two minutes of life. A test edits the subject inside a grant, keeps the signature, and requires the refusal.</p></li>
+    <li><b>The session actor is the person the grant was issued to</b>
+      <p>So a grant copied out of one browser and pasted into another is refused <em>even when both people own the product</em> — proved by a test where both do. A grant with no session never reaches the domain at all: the route resolves an actor first, and answers <code>401</code>.</p></li>
+    <li><b>The entitlement is read again, from the database</b>
+      <p>One query joins asset → product → store → entitlement <strong>for this actor</strong>, and requires the entitlement to be live and both the product and its store to still be published. Another buyer's asset id, a draft product's asset id and an id that does not exist all resolve to nothing, and all produce the same refusal.</p></li>
+  </ol>
+
+  <div class="note block">
+    <span class="n-label">The nine cases, and where each is proved</span>
+    <p>Buyer with an entitlement can read · buyer without cannot · unauthenticated cannot · buyer A cannot use buyer B's grant · nobody can read an unpublished product's content · a seller cannot read another seller's file · a revoked entitlement grants nothing · changing the id in the request changes nothing · removing the button from the page changes nothing.</p>
+    <p>All nine are domain tests, and the last four are <em>also</em> browser tests: the unauthorized buyer signs in with their own real account and tries the library page, the grant endpoint, the buyer's own grant URL, and the same request with no session at all.</p>
+  </div>
+
+  <h3>What the response says, and does not say</h3>
+
+  <p>Every authenticated refusal is the same <code>403</code> with the same message. Expired grant, wrong subject, no entitlement, revoked, unpublished, no such asset — indistinguishable, so a prober learns nothing; the real reason goes to the audit log. A request with no session is a <code>401</code>, which is deliberate and leaks nothing: the caller already knows they are signed out, and the client needs to send them to sign in.</p>
+
+  <p>The bytes themselves are served <code>private, no-store</code> with <code>nosniff</code>, a <code>default-src 'none'; sandbox</code> policy and no referrer, and the filename is stripped before it enters a header. Uploads are restricted to an allow-list that excludes <code>text/html</code> — these bytes come back from an Afrinext origin, so an accepted HTML upload would be stored XSS against our own domain.</p>
+</section>
+
+<section id="model">
+  <div class="sec-head"><div class="sec-mark">3</div><h2 class="sec-title">The content model, and what it deliberately is not</h2></div>
+
+  <p><code>digital_assets</code> is one product to many files: title, kind, content type, size, SHA-256, opaque storage key, sort order. That is the minimum a PDF, a guide, a downloadable file or a protected resource needs.</p>
+
+  <div class="note">
+    <span class="n-label">Room for a course, without a course</span>
+    <p>A future <code>Course → Module → Lesson</code> hangs its video and document resources off a table shaped like this one, rather than needing a parallel storage and access model. What this milestone does <strong>not</strong> build is that structure: there is no module, no lesson, no ordering beyond a sort key, no progress, no player, and <code>kind</code> is deliberately coarse — <code>document</code> and <code>file</code>. Adding <code>video</code> as a word here would imply a transcoder and a player that do not exist.</p>
+  </div>
+
+  <h3>Storage</h3>
+
+  <p><code>ContentStorage</code> is a port with three methods and no concept of a URL. Two implementations ship: an in-memory one the domain tests run against, and a filesystem one used by the app and CI. <strong>No object store is configured for Afrinext and none is invented.</strong> The filesystem store is described in code as what it is — single-machine storage, right for development, CI and one server, wrong for two web instances behind a load balancer — and an S3-compatible adapter is a new class in that one file rather than a change anywhere else.</p>
+
+  <p>Keys are generated from uuids and never composed from client input. They are still validated: a shape check plus a resolved-path assertion, because a filesystem implementation joins a key onto a root directory and <code>../../etc/passwd</code> is the oldest bug there is. A test tries five malformed keys and a traversal against the real filesystem store.</p>
+</section>
+
+<section id="policy">
+  <div class="sec-head"><div class="sec-mark">4</div><h2 class="sec-title">Download policy, stated honestly</h2></div>
+
+  <p><code>products.delivery_mode</code> is <code>download</code> or <code>view_only</code>. A view-only product refuses an attachment grant at issuance — refused rather than quietly downgraded, so the seller's policy is a decision the server makes rather than a header the client picks — and is served <code>inline</code>.</p>
+
+  <div class="note risk">
+    <span class="n-label">This is not DRM, and nothing in the codebase says it is</span>
+    <p><code>view_only</code> is a <strong>policy about what Afrinext offers</strong>, not a technical protection. The bytes are served, so anyone who can read them can save them. The comment in the schema says so, the comment in the domain says so, and the test that covers it says so. Calling browser-only viewing "protected" would be a claim the system cannot keep.</p>
+    <p>What <em>is</em> enforced is the entitlement: a view-only product still requires the same three checks, and a downloadable one is no less protected — <strong>downloadable does not mean public</strong>.</p>
+  </div>
+</section>
+
+<section id="entitlement">
+  <div class="sec-head"><div class="sec-mark">5</div><h2 class="sec-title">Entitlement is still payment's job</h2></div>
+
+  <p>Nothing about entitlement creation changed. It still happens only inside the transaction that marks an order paid, is still idempotent against a unique index, and is still one row per buyer per product. What this milestone adds is tests that assert it <em>from the delivery side</em> — the side that now has something to lose:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Situation</th><th>Entitlement</th><th>Content</th></tr></thead>
+    <tbody>
+      <tr><td>Checkout opened, nothing paid</td><td>none</td><td><span class="chip no">refused</span></td></tr>
+      <tr><td>Payment initiated, still pending</td><td>none</td><td><span class="chip no">refused</span></td></tr>
+      <tr><td>Five concurrent confirmations of one event</td><td><strong>exactly one</strong></td><td><span class="chip yes">granted once</span></td></tr>
+      <tr><td>Order expired, provider confirms afterwards</td><td>none</td><td><span class="chip no">refused</span></td></tr>
+      <tr><td>Entitlement revoked</td><td>revoked, not deleted</td><td><span class="chip no">refused, mid-grant</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">The expiry case, re-checked and NOT papered over</span>
+    <p>The previous milestone flagged it: an order expires, the provider confirms afterwards, the payment succeeds, the order stays expired. A test now asserts from this side that <strong>no entitlement is created and no content is reachable</strong> — delivery does not quietly rescue the case.</p>
+    <p>It also does not invent a rule to resolve it. Deciding what happens to a buyer who was charged for an expired order <em>is</em> a refund and reconciliation decision, and that is yours to take. It remains the open risk it was.</p>
+  </div>
+
+  <h3>Revocation</h3>
+
+  <p><code>revoked_at</code> is set, never deleted — the grant happened, and that it happened is part of why someone had access last month. <strong>Nothing in this milestone revokes anything</strong>, because deciding when access should end is a refund policy. The mechanism exists so that when that decision is taken it is a call site rather than a migration, and so that "a revoked entitlement grants nothing" is testable today. A test issues a grant, revokes, then spends the grant — and it fails, because the third check reads the database.</p>
+</section>
+
+<section id="mutations">
+  <div class="sec-head"><div class="sec-mark">6</div><h2 class="sec-title">Mutation evidence</h2></div>
+
+  <p>Twelve deliberate defects against the access-control guarantees. Each asserts its pattern was found before its result is believed.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Deliberate defect</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><strong>The entitlement query stops scoping to the actor</strong></td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>It stops requiring <code>revoked_at is null</code></td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>It stops requiring the product and store to be published</td><td><span class="chip yes">caught · 2 tests</span></td></tr>
+      <tr><td>The subject check is removed — a grant becomes a bearer token</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The grant is trusted instead of re-reading the entitlement</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>Grants stop expiring</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>Grant signatures stop being verified</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>Issuing a grant stops checking the entitlement</td><td><span class="chip yes">caught · 2 tests</span></td></tr>
+      <tr><td><code>authorize()</code> is removed from asset upload</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The content-type allow-list is removed</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>A view-only product accepts an attachment grant</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>Storage keys stop being validated — traversal is possible</td><td><span class="chip yes">caught</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note block">
+    <span class="n-label">The first one escaped, and it is the most important one</span>
+    <p>Removing the actor scope from the entitlement query — the single check that makes access <em>per person</em> — changed nothing, and every test still passed. The reason is worth stating plainly: every "a stranger is refused" test used a product <strong>nobody had bought</strong>. So the request was refused because no entitlement existed at all, and a check that merely asked whether <em>some</em> entitlement existed would have passed the suite while granting the world access to anything with one buyer.</p>
+    <p>The test that catches it now gives the product <strong>three buyers</strong> first, then has a fourth person ask. That is the realistic shape of the attack — a popular product, and someone who did not pay — and it was not being tested at all.</p>
+  </div>
+</section>
+
+<section id="results">
+  <div class="sec-head"><div class="sec-mark">7</div><h2 class="sec-title">Results and files</h2></div>
+
+<pre><code>pnpm lint                        <span class="cm">exit 0</span>
+pnpm typecheck                   <span class="cm">exit 0</span>
+pnpm test                        <span class="ok">317 passed | 3 skipped (21 files)</span>   <span class="cm">was 284</span>
+pnpm build                       <span class="cm">exit 0</span>
+playwright test                  <span class="ok">24 passed</span>                            <span class="cm">was 22 · production mode, DB from zero</span>
+ledger concurrency               <span class="ok">6 passed</span>
+reconcile-check                  <span class="ok">clean, zero drift</span>
+pnpm audit --audit-level high    <span class="ok">No known vulnerabilities found</span>
+mutation testing                 <span class="ok">12 of 12 caught</span></code></pre>
+
+  <p>New: <strong>33 domain tests</strong> in <code>content/content.test.ts</code> and <strong>2 browser tests</strong> in <code>delivery.spec.ts</code>. <strong>No new dependency</strong>; <code>pnpm-lock.yaml</code> is untouched.</p>
+
+  <div class="note">
+    <span class="n-label">CI</span>
+    <p><strong>CI, on this commit:</strong> run&nbsp;<span class="mono">#20</span> (<span class="mono">32394522332</span>) on <span class="mono">c4b0b42</span> — <span class="chip yes">all three jobs green</span>, 2&nbsp;m&nbsp;11&nbsp;s. Including a database built from zero, the schema rebuilt a second time to prove migration 0010 applies to an empty cluster, the ledger concurrency suite, the reconciliation check, and the browser suite against a production build.</p>
+  </div>
+
+  <div class="note good">
+    <span class="n-label">The browser journey proves delivery by delivery</span>
+    <p>The seller signs in, opens a store, creates a product, <strong>uploads a PDF through the seller's own form</strong> and publishes it. The buyer signs in, buys through the existing mock flow, and the confirmation arrives as a signed webhook from outside the browser. Then the buyer's page requests a grant and follows it — and the assertion is that <strong>the HTTP response body equals the PDF the seller uploaded</strong>. Nothing is declared successful by reading the database; SQL appears only to arrange the world.</p>
+  </div>
+
+  <h3>31 files</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td colspan="2" style="padding-top:12px"><strong>The domain</strong></td></tr>
+      <tr><td class="mono">core/content/storage.ts</td><td><strong>New.</strong> The port, key validation, and two implementations — in-memory and filesystem, the latter asserting every path stays under its root.</td></tr>
+      <tr><td class="mono">core/content/access.ts</td><td><strong>New.</strong> Grant derivation and verification, the entitlement query, upload with its allow-list, the view-only rule, revocation.</td></tr>
+      <tr><td class="mono">core/content/content.test.ts</td><td><strong>New.</strong> 33 tests, every one buying through the real payment path rather than inserting an entitlement.</td></tr>
+      <tr><td class="mono">core/content/index.ts · core/index.ts</td><td>Exports.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Schema</strong></td></tr>
+      <tr><td class="mono">db/migrations/0010 + schema</td><td><code>digital_assets</code>, <code>products.delivery_mode</code>, <code>entitlements.revoked_at</code>, and a partial index for the live-entitlement lookup.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Authorization</strong></td></tr>
+      <tr><td class="mono">core/authz/permissions.ts</td><td><code>product.manage_content</code> on <code>store_owner</code>. Scoped to the store, so one seller's grant says nothing about another's product.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Web</strong></td></tr>
+      <tr><td class="mono">api/v1/content/[token]/route.ts</td><td><strong>New.</strong> The only route that returns protected bytes. Session first, then the grant, then the entitlement.</td></tr>
+      <tr><td class="mono">api/v1/library/…/access/route.ts</td><td><strong>New.</strong> Mints a grant. Names an asset; never a user or an entitlement.</td></tr>
+      <tr><td class="mono">api/v1/products/[id]/assets/route.ts</td><td><strong>New.</strong> The seller's upload and listing.</td></tr>
+      <tr><td class="mono">lib/content.ts</td><td><strong>New.</strong> The storage instance and the grant key. The domain knows neither.</td></tr>
+      <tr><td class="mono">[locale]/library/… · AssetList.tsx</td><td><strong>New.</strong> The buyer's screen. No durable href: clicking mints a grant and follows it.</td></tr>
+      <tr><td class="mono">sell/[storeSlug]/page.tsx · CatalogForms · catalog-actions</td><td>The seller's upload form, and a plain statement when a product has no file — a published product with nothing attached is one a buyer pays for and receives nothing from.</td></tr>
+      <tr><td class="mono">orders/page.tsx · product page</td><td>Owned products now link into the library rather than back to the sales page.</td></tr>
+      <tr><td class="mono">lib/api.ts</td><td><code>content.forbidden</code> → 403.</td></tr>
+      <tr><td class="mono">e2e/delivery.spec.ts</td><td><strong>New.</strong> The journey, then an unauthorized buyer trying five different ways.</td></tr>
+      <tr><td class="mono">core/auth/better-auth.ts</td><td>The verify rate rule — section 8.</td></tr>
+      <tr><td class="mono">e2e/global-setup.ts · playwright.config.ts · .env.example · .gitignore</td><td>Asset tables cleared between local runs; a per-run storage directory; the new variable documented.</td></tr>
+      <tr><td class="mono">core/test/harness.ts · i18n</td><td>The new table in the truncation list; 16 keys per locale.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="risks">
+  <div class="sec-head"><div class="sec-mark">8</div><h2 class="sec-title">Risks, and the confirmations you asked for</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Confirmation</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>No iPayMoney code, credentials, endpoints, payloads or signatures were added. The mock remains the only provider</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No real settlement, no seller payout, no refund, no physical products, no riders, no services, no referral expansion, no course/video system</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No ledger change. <code>ledger/</code> and <code>money/</code> have no diff, and entitlement creation posts nothing to the ledger</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>Payment confirmation and financial settlement remain separate, exactly as approved</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>Account consent and <code>seller_terms</code> enforcement untouched; no new consent system</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>The checkout, order and payment state machines, idempotency and webhook verification have no behavioural change</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No new dependency</td><td><span class="chip yes">confirmed</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>One change to approved code, reported rather than buried</h3>
+
+  <div class="note risk">
+    <span class="n-label">The /phone-otp/verify transport rule</span>
+    <p>It was a literal: twenty requests a minute per IP. This milestone's extra sign-ins tripped it, and four legitimate sign-ins were refused with a 429 <em>after</em> their codes had been sent.</p>
+    <p>That is the same defect the <em>send</em> rule was corrected for last milestone — a fixed per-IP cap that pre-empts the configured policy — and it is exactly what carrier NAT in Niamey looks like from the server's side. It is now derived from the stored policy, like the send rule. <strong>Guessing is still bounded per challenge</strong> by <code>max_attempts</code> in PostgreSQL, which is the control that stops brute force; this rule only ever bounded flood volume.</p>
+    <p>I introduced that literal myself in the checkout milestone. It is fixed here rather than left for the next suite to trip over.</p>
+  </div>
+
+  <h3>Open risks</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><strong>The expired-order case is unchanged and unresolved.</strong> A buyer may have been charged for an order that expired; no entitlement, no content, no refund. Resolving it is a refund and reconciliation decision, and this milestone deliberately did not invent one.</td><td><span class="chip no">needs your decision</span></td></tr>
+      <tr><td><strong>Nothing revokes.</strong> The mechanism and its tests exist; no code path calls it, because when access should end is a refund policy.</td><td><span class="chip hold">awaiting policy</span></td></tr>
+      <tr><td><strong>Filesystem storage is single-machine.</strong> Correct for development, CI and one server; wrong for two web instances. Named as such in code. An object-store adapter is one new class implementing the port.</td><td><span class="chip hold">before scaling out</span></td></tr>
+      <tr><td><strong>Files are held in memory while being served.</strong> A 25 MiB cap keeps that bounded, but a streaming read is the right shape for larger assets and is what a video milestone would need.</td><td><span class="chip hold">watch</span></td></tr>
+      <tr><td><strong>Nothing scans uploads.</strong> The allow-list stops HTML being served from our origin; it does not stop a malicious PDF. A seller can therefore distribute a hostile file to their own buyers.</td><td><span class="chip hold">open</span></td></tr>
+      <tr><td>A grant is bound to a person, not to a device or an IP. Within its two minutes, someone who takes over that session could spend it — but so could they simply ask for a new one.</td><td><span class="chip info">accepted</span></td></tr>
+      <tr><td>No versioning, replacement or deletion of assets; no per-asset ordering interface beyond the sort key; no download counting or audit-facing usage report beyond the access log.</td><td><span class="chip info">out of scope</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <hr class="soft">
+
+  <p><strong>Proposed next</strong>, in the order I would take them: the refund and reconciliation decision that closes the expired-order case (it is the only item that can leave a real buyer out of pocket), then settlement — the first thing that should touch the ledger and the first that needs a real provider. <strong>Not started.</strong></p>
+
+  <p style="color:var(--ink-2)">Phase&nbsp;2 · digital delivery · branch <span class="mono">claude/create-app-repository-1cxsih</span> · head <span class="mono">c4b0b42</span></p>
+</section>
+
+</div>

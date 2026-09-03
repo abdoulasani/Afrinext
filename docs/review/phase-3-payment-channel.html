@@ -1,0 +1,487 @@
+<title>Payment Channel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 3 · payment channel</p>
+  <h1>Two Words for One Thing, and Why They Must Stay Different</h1>
+  <p class="lede">The last field iPayMoney requires is settled: Afrinext launches with mobile money. The value is <b>quoted from the documentation, not chosen</b> — and the domain deliberately does not speak it, so no browser can name a provider header.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>HEAD <b>07329e0</b></span>
+    <span>Unit tests <b class="ok">531 passed</b></span>
+    <span>Browser tests <b class="ok">33 passed</b></span>
+    <span>Mutations killed <b class="ok">43 / 45</b></span>
+    <span>Real sandbox calls <b>0</b></span>
+  </div>
+</header>
+
+<div class="note good" style="margin-top:34px">
+  <span class="n-label">The gate: the documentation was conclusive</span>
+  <p>The milestone said to stop and ask if the documentation did not establish the exact value, Niger/XOF support, or the field semantics. <b>It establishes all three</b>, so no question was sent:</p>
+  <p style="margin-left:18px;border-left:2px solid var(--ledger);padding-left:14px"><i>« Ipay-Payment-Type | string | Doit comporter <b>mobile</b> ou <b>card</b> »</i><br>— extract <b>L165</b> (<code>POST /api/v1/payments</code>) and <b>L238</b> (<code>GET /api/v1/payments/{reference}</code>)</p>
+  <p style="margin-bottom:0">Stated verbatim and <b>identically on both endpoints</b>. It is a required HTTP header, type string. The launch value is <code>mobile</code>.</p>
+</div>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#a">A · The evidence</a>
+  <a href="#b">B · Two vocabularies</a>
+  <a href="#c">C · Files and flow</a>
+  <a href="#d">D · Refusals</a>
+  <a href="#e">E · The visible choice</a>
+  <a href="#f">F · Mutations</a>
+  <a href="#g">G · Results</a>
+  <a href="#h">H · Blockers</a>
+</nav>
+
+<section id="a">
+  <div class="sec-head"><div class="sec-mark">A</div><h2 class="sec-title">The documentary evidence, line by line</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Question the gate asked</th><th>Documented</th><th>Line</th></tr></thead>
+    <tbody>
+      <tr><td><b>The exact channel value</b></td><td>« Doit comporter <b>mobile</b> ou <b>card</b> »</td><td class="mono">L165, L238</td></tr>
+      <tr><td><b>The field semantics</b></td><td>A required HTTP <b>header</b>, <code>Ipay-Payment-Type</code>, type string, on <i>both</i> documented endpoints</td><td class="mono">L164–168, L234–239</td></tr>
+      <tr><td>Which operators "mobile money" means</td><td>Airtel Money, Zamani Cash, Moov Money — the three Niger operators</td><td class="mono">L254, L256–257</td></tr>
+      <tr><td>The currency</td><td><code>currency</code> · string · <b>XOF</b></td><td class="mono">L172</td></tr>
+      <tr><td>The country code</td><td>« <b>NE</b> pour le Niger »</td><td class="mono">L173</td></tr>
+      <tr><td>Whether the sandbox exercises it</td><td>« les numeros de test à utiliser pour les paiements <b>mobile</b> »</td><td class="mono">L147</td></tr>
+      <tr><td>The cost</td><td>3 % on each mobile-money collection</td><td class="mono">L271</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">The one thing NOT printed, recorded as assumption A13</span>
+    <p style="margin-bottom:0">The documentation gives no <b>per-country channel matrix</b>. Mobile money for Niger/XOF is inferred from four converging facts — the operators are Niger's, the currency is XOF, the country example is NE, and the sandbox numbers are for mobile — rather than from a single sentence saying so. That is recorded as <b>A13</b> in the assumptions register instead of being asserted, and a real sandbox call is what confirms it.</p>
+  </div>
+</section>
+
+<section id="b">
+  <div class="sec-head"><div class="sec-mark">B</div><h2 class="sec-title">Two vocabularies, and why the difference is the security property</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Word</th></tr></thead>
+    <tbody>
+      <tr><td>Afrinext's domain, and anything a browser posts</td><td class="mono">mobile_money</td></tr>
+      <tr><td>iPayMoney's header</td><td class="mono">mobile</td></tr>
+    </tbody>
+  </table></div>
+
+  <pre><code>browser ──"mobile_money"──▶ parsePaymentChannel()
+                                 <span class="cm">refuses everything not in the allowlist,</span>
+                                 <span class="cm">INCLUDING "mobile" and "card"</span>
+                                          │
+                                          ▼
+                            IPAYMONEY_PAYMENT_TYPE[channel] ──▶ <span class="ok">"mobile"</span>
+                                 <span class="cm">the only place this literal exists</span></code></pre>
+
+  <p>A browser <b>cannot</b> hand iPayMoney a header value of its choosing — not because the value is filtered, but because <b>the domain does not speak that vocabulary at all</b>. Someone who reads <code>mobile</code> out of this repository, or out of iPayMoney's public documentation, and posts it is refused exactly as firmly as someone posting nonsense.</p>
+
+  <p>That is a stronger guarantee than validation. A filter can be bypassed by finding an unfiltered path; a vocabulary the domain never accepts has no path at all.</p>
+
+  <div class="note key">
+    <span class="n-label"><code>card</code> is absent on purpose</span>
+    <p style="margin-bottom:0">It is a <i>documented</i> iPayMoney value, and it is deliberately not in the mapping. Afrinext does not offer card payments at launch, and a mapping entry for a channel the business has not adopted is a route to sending one. A test asserts the mapping's values do not contain it.</p>
+  </div>
+
+  <h3>One undocumented path removed</h3>
+
+  <p><code>createCharge</code> used to read <code>?? metadata["paymentType"]</code> when no channel was given. It was <b>unreachable</b> — the order domain builds that metadata and never set the key — but it was a second, undocumented way to set a provider header, which is exactly the hidden default this integration must not have. It is gone, and a mutation restores it to prove something notices.</p>
+</section>
+
+<section id="c">
+  <div class="sec-head"><div class="sec-mark">C</div><h2 class="sec-title">Files, and the flow</h2></div>
+
+  <p>Two commits on <code>claude/create-app-repository-1cxsih</code>, neither merged to <code>main</code>: <code>07329e0</code> implements the channel (27 files, +601 −86), and <code>c54b7e3</code> adds the one assertion the mutation matrix showed was missing (section F).</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th class="num">Δ</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">packages/core/src/payments/channel.ts</td><td class="num">+63 new</td><td>The allowlist, the parser, the error. The whole domain representation</td></tr>
+      <tr><td class="mono">packages/core/src/payments/channel.test.ts</td><td class="num">+87 new</td><td>9 tests, including the documented value and the provider-vocabulary refusal</td></tr>
+      <tr><td class="mono">packages/core/src/payments/ipaymoney.ts</td><td class="num">+56 −8</td><td><code>IPAYMONEY_PAYMENT_TYPE</code> with its L165/L238 citation; the metadata fallback removed</td></tr>
+      <tr><td class="mono">packages/core/src/payments/provider.ts</td><td class="num">+10 −1</td><td><code>ChargeInput.channel</code> narrowed from <code>string</code> to the allowlist type</td></tr>
+      <tr><td class="mono">packages/core/src/orders/payment.ts</td><td class="num">+25 −2</td><td><code>channel</code> required; validated before the payment row is written</td></tr>
+      <tr><td class="mono">.../orders/checkout-provider-wiring.test.ts</td><td class="num">+85 −32</td><td>Three tests rewritten for the new contract, two added</td></tr>
+      <tr><td class="mono">apps/web/src/components/PayButton.tsx</td><td class="num">+49 −5</td><td>The visible, checked radio built from the allowlist</td></tr>
+      <tr><td class="mono">apps/web/src/app/[locale]/orders/[id]/page.tsx</td><td class="num">+38 −2</td><td>An exhaustive label record, so adding a channel fails the build until it is named</td></tr>
+      <tr><td class="mono">apps/web/src/app/api/v1/orders/[id]/pay/route.ts</td><td class="num">+18 −6</td><td>Reads and validates the channel from the JSON body</td></tr>
+      <tr><td class="mono">apps/web/src/lib/order-actions.ts</td><td class="num">+12 −2</td><td>Same, from the form</td></tr>
+      <tr><td class="mono">apps/web/e2e/checkout.spec.ts</td><td class="num">+76 −4</td><td>Two new browser tests: DOM tampering, and the API's refusals</td></tr>
+      <tr><td class="mono">e2e/{buyer-profile,delivery,refunds}</td><td class="num">+19 −2</td><td>The shared <code>chooseMobileMoney</code> step</td></tr>
+      <tr><td class="mono">core tests (content, orders, refunds, late-payment, ipaymoney)</td><td class="num">+32 −21</td><td>Call sites given the launch channel — every one found by the compiler, not by searching</td></tr>
+      <tr><td class="mono">docs/architecture/payment-channel.md</td><td class="num">+86 new</td><td>The decision, the evidence, the rules</td></tr>
+      <tr><td class="mono">docs/providers/ipaymoney/README.md</td><td class="num">+37 −4</td><td>All four fields now supplied; assumption A13</td></tr>
+      <tr><td class="mono">packages/i18n/src/messages/{fr,en}.json</td><td class="num">+10 −2</td><td>Four strings each</td></tr>
+    </tbody>
+  </table></div>
+
+  <pre><code>buyer taps pay
+  └─ form posts  { orderId, channel: "mobile_money" }   <span class="cm">Afrinext's word</span>
+       │
+       ├─ payOrderAction / POST /api/v1/orders/{id}/pay
+       │     parsePaymentChannel(untrusted)   <span class="cm">refuses anything else</span>
+       │
+       └─ initiatePayment({ orderId, channel })
+            ├─ parsePaymentChannel again      <span class="cm">for untyped callers</span>
+            ├─ requireCompleteProfile()
+            ├─ writes the payment row
+            └─ createCharge({ channel, … })
+                 └─ IPAYMONEY_PAYMENT_TYPE[channel]
+                      └─ header  Ipay-Payment-Type: mobile</code></pre>
+
+  <p>The amount is still read from the order row, the phone from the verified sign-in number, and the name and country from the buyer's profile. <b>The channel is the only new thing a person can influence</b>, and it is checked twice before it is used.</p>
+</section>
+
+<section id="d">
+  <div class="sec-head"><div class="sec-mark">D</div><h2 class="sec-title">Every way a channel can be wrong</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>What arrives</th><th>Result</th><th>Provider requests</th><th>Payment rows</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">"mobile_money"</td><td><span class="chip yes">accepted</span></td><td class="num">1</td><td class="num">1</td></tr>
+      <tr><td class="mono">"mobile"</td><td><span class="chip no">refused</span> the provider's own word</td><td class="num">0</td><td class="num">0</td></tr>
+      <tr><td class="mono">"card"</td><td><span class="chip no">refused</span> documented, not offered</td><td class="num">0</td><td class="num">0</td></tr>
+      <tr><td class="mono">"ussd" · "bank_transfer"</td><td><span class="chip no">refused</span></td><td class="num">0</td><td class="num">0</td></tr>
+      <tr><td class="mono">"MOBILE_MONEY" · " mobile_money"</td><td><span class="chip no">refused</span> exact match only</td><td class="num">0</td><td class="num">0</td></tr>
+      <tr><td>absent · <code>null</code> · <code>""</code></td><td><span class="chip no">refused</span> never defaulted</td><td class="num">0</td><td class="num">0</td></tr>
+      <tr><td><code>1</code> · <code>{}</code> · <code>["mobile_money"]</code> · <code>true</code></td><td><span class="chip no">refused</span></td><td class="num">0</td><td class="num">0</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Every refusal happens <b>before the payment row is written</b>, so an invalid channel leaves nothing behind — no row for <code>payments_one_live_per_order</code> to wedge, and nothing to clean up. The buyer picks again and pays the same order.</p>
+
+  <p>Two layers do this and both are load-bearing:</p>
+
+  <ul>
+    <li><b>The type.</b> <code>InitiatePaymentInput.channel</code> is required and typed as the allowlist, so a caller that omits or mistypes it <b>fails to compile</b>. That is how every existing call site in the codebase was found — the compiler listed them.</li>
+    <li><b>The runtime check.</b> <code>parsePaymentChannel</code> catches what the type cannot: a JSON body, a form field, a caller compiled against an older shape.</li>
+  </ul>
+</section>
+
+<section id="e">
+  <div class="sec-head"><div class="sec-mark">E</div><h2 class="sec-title">One option, still a visible choice</h2></div>
+
+  <p>Afrinext offers exactly one channel, and it is rendered as a <b>checked radio naming its operators</b> — not a hidden input.</p>
+
+  <pre><code>Moyen de paiement
+  (•) Mobile Money
+      Airtel Money, Zamani Cash ou Moov Money
+  C'est le seul moyen de paiement disponible au lancement.</code></pre>
+
+  <p>A hidden field would have been less code and worse: <b>a payment method the buyer never saw is not a method they chose</b>, and it would make the single option look like an implementation detail rather than a decision. The radio also means a second channel needs no new control.</p>
+
+  <p>The list is built from <code>PAYMENT_CHANNELS</code>, so the screen can only offer what the server accepts — there is no second list to forget. The label lookup is a <code>Record</code> over the allowlist rather than a template-literal key, so <b>adding a channel fails the build</b> until somebody names it in both catalogues. A dynamic key would have compiled and shipped a screen showing a raw identifier.</p>
+</section>
+
+<section id="f">
+  <div class="sec-head"><div class="sec-mark">F</div><h2 class="sec-title">Mutation results</h2></div>
+
+  <p>Ten deliberate defects, each one a rule this milestone names, run against the full <code>@afrinext/core</code> suite.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Defect introduced</th><th>First run</th><th>After</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">C1</td><td>The allowlist also accepts <code>mobile</code> and <code>card</code></td><td><span class="chip yes">killed</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C2</td><td>The parser accepts any non-empty string</td><td><span class="chip yes">killed</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C3</td><td>A missing channel silently defaults to the launch channel</td><td><span class="chip yes">killed</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C4</td><td>Matching becomes case-insensitive and trims</td><td><span class="chip yes">killed</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C5</td><td><code>card</code> added to the provider mapping</td><td><span class="chip yes">killed</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C6</td><td>The header value becomes <code>mobile_money</code> instead of the documented <code>mobile</code></td><td><span class="chip yes">killed</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C7</td><td>The mapping is no longer frozen</td><td><span class="chip yes">killed</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C8</td><td><b>The <code>metadata["paymentType"]</code> fallback is restored</b></td><td><span class="chip no">SURVIVED</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C9</td><td>The runtime validation in <code>initiatePayment</code> is removed</td><td><span class="chip yes">killed</span></td><td><span class="chip yes">killed</span></td></tr>
+      <tr><td class="mono">C10</td><td>The channel is validated <i>after</i> the payment row is written</td><td><span class="chip yes">killed</span> · 162 failing</td><td><span class="chip yes">killed</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">C8 survived, and it is the same lesson as last milestone</span>
+    <p>Restoring the metadata fallback walked through a fully green suite — for exactly the reason three mutants did in the buyer-profile milestone. The order domain never sets <code>metadata.paymentType</code>, and <code>initiatePayment</code> always supplies a validated channel, so <b>the fallback is unreachable from a checkout</b>. Every test starts from a checkout.</p>
+    <p>Unreachable from there is not unreachable. <code>ChargeInput.channel</code> is optional at the <i>adapter</i> boundary, so a direct caller can omit it — and with the fallback in place, metadata would then decide a provider header. That is precisely the hidden default this milestone exists to prevent.</p>
+    <p style="margin-bottom:0">It is now asserted where it is reachable: <code>createCharge</code> with no channel and a <code>metadata.paymentType</code> refuses and constructs nothing. <b>No production behaviour changed</b> — only whether something checks it.</p>
+  </div>
+
+  <p>C10 is worth a glance for the opposite reason: moving the validation after the row write failed <b>162</b> tests. A guarantee that many things depend on is one it is hard to remove quietly.</p>
+
+  <h3>The other matrices, unchanged</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Matrix</th><th>Result</th><th>Against baseline</th></tr></thead>
+    <tbody>
+      <tr><td>Channel (new)</td><td><span class="chip yes">10 / 10 killed</span></td><td>First run 9 of 10 — see C8</td></tr>
+      <tr><td>Buyer profile</td><td><span class="chip yes">9 / 9 killed</span></td><td>unchanged</td></tr>
+      <tr><td>Refund execution</td><td><span class="chip yes">24 / 26 killed</span></td><td>unchanged · R7/R8 redundant by design, R26 kills all three</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="g">
+  <div class="sec-head"><div class="sec-mark">G</div><h2 class="sec-title">Results, against the previous baseline</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Check</th><th>Result</th><th>Baseline</th><th>Delta explained</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">pnpm lint</td><td><span class="chip yes">clean</span></td><td>clean</td><td>—</td></tr>
+      <tr><td class="mono">pnpm typecheck</td><td><span class="chip yes">clean</span></td><td>clean</td><td>—</td></tr>
+      <tr><td class="mono">pnpm test</td><td><span class="chip yes">531 passed · 16 skipped</span> · 28 files</td><td>520 · 16 · 27</td><td><b>+11</b>: 9 channel tests, 2 wiring tests. No existing test removed or weakened</td></tr>
+      <tr><td class="mono">pnpm build</td><td><span class="chip yes">compiled</span></td><td>compiled</td><td>—</td></tr>
+      <tr><td class="mono">playwright</td><td><span class="chip yes">33 passed</span></td><td>31 passed</td><td><b>+2</b>: DOM tampering, and the API refusing five bad channels</td></tr>
+      <tr><td class="mono">reconcile-check</td><td><span class="chip yes">clean</span></td><td>clean</td><td>drift 0 · 0 unbalanced · net XOF 0 · both probes firing</td></tr>
+      <tr><td>CI</td><td><span class="chip yes">success</span></td><td>success</td><td>Run #56 on <code>07329e0</code>, all three jobs green; run #58 on <code>c54b7e3</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>What the compiler found for us</h3>
+
+  <p>Making <code>channel</code> required turned every existing call site into a compile error — in <code>content</code>, <code>orders</code>, <code>late-payment</code>, <code>refunds</code> and the adapter's own fixtures. That list came from the compiler rather than from grepping, which is the difference between "I updated the call sites" and "the call sites are updated".</p>
+
+  <p>Three tests in the wiring suite were rewritten because their subject no longer exists: they asserted behaviour for an <i>omitted</i> channel, which is now a type error rather than a runtime path. Their replacements assert the reachable cases — a missing channel from an untyped caller, six unsupported values including the provider's own two, and six non-string values.</p>
+
+  <h3>Untouched, and verified so</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Suite</th><th class="num">Tests</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td>OTP and phone auth</td><td class="num">26</td><td><span class="chip yes">unmodified</span></td></tr>
+      <tr><td>Refund execution</td><td class="num">80</td><td><span class="chip hold">call sites given the channel; assertions unmodified</span></td></tr>
+      <tr><td>Late payment</td><td class="num">31</td><td><span class="chip hold">same</span></td></tr>
+      <tr><td>iPayMoney adapter · webhook</td><td class="num">44</td><td><span class="chip hold">fixture channel updated; one assertion added</span></td></tr>
+      <tr><td>Replay</td><td class="num">5</td><td><span class="chip yes">unmodified</span></td></tr>
+      <tr><td>Buyer profile</td><td class="num">21</td><td><span class="chip yes">unmodified</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Settlement, the ledger, payout logic, the refund state machine, the late-payment state machine, webhook verification, OTP and signup are all <b>byte-identical</b>.</p>
+</section>
+
+<section id="h">
+  <div class="sec-head"><div class="sec-mark">H</div><h2 class="sec-title">Blockers, and what comes next</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Blocker</th><th>Whose</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">S9</td><td>No payment channel chosen</td><td>Product</td><td><span class="chip yes">CLOSED</span> by this milestone</td></tr>
+      <tr><td class="mono">S8</td><td>No buyer name collected</td><td>Afrinext</td><td><span class="chip yes">CLOSED</span></td></tr>
+      <tr><td class="mono">S7</td><td>Checkout does not pass the buyer's details</td><td>Afrinext</td><td><span class="chip yes">CLOSED</span></td></tr>
+      <tr><td class="mono">S6</td><td><b>No sandbox credentials.</b> No real payment has ever been made</td><td>External</td><td><span class="chip no">open — now the ONLY thing in the way</span></td></tr>
+      <tr><td class="mono">S1</td><td>Phase 3 has not been approved</td><td>You</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S2</td><td>Settlement timing T+N — K16</td><td>iPayMoney</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S3</td><td>The amount is not verifiable from the provider — K8</td><td>iPayMoney</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S4</td><td>The 3 % fee's treatment on refund — K11</td><td>iPayMoney</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S5</td><td>No customer-refund execution — K1, K5</td><td>iPayMoney</td><td><span class="chip no">open</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note good">
+    <span class="n-label">Every field iPayMoney requires is now supplied</span>
+    <div class="tbl" style="margin-top:10px"><table>
+      <thead><tr><th>Field</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">msisdn</td><td>The number that answered an OTP at sign-in</td></tr>
+        <tr><td class="mono">customer_name</td><td><code>users.full_name</code> — what the buyer typed</td></tr>
+        <tr><td class="mono">country</td><td><code>users.country_code</code> — what the buyer chose</td></tr>
+        <tr><td class="mono">Ipay-Payment-Type</td><td><code>mobile</code>, mapped from the chosen <code>mobile_money</code></td></tr>
+        <tr><td class="mono">amount · currency · transaction_id</td><td>Server-derived from the order, unchanged</td></tr>
+      </tbody>
+    </table></div>
+    <p style="margin-bottom:0"><b>The adapter can now construct a complete, well-formed charge. What it has never done is send one.</b></p>
+  </div>
+
+  <h3>Yes — sandbox credentials are the right next step</h3>
+
+  <p>Nothing in the code stands between here and a real call. Sixteen tests are written, gated on <code>IPAYMONEY_BASE_URL</code>, <code>IPAYMONEY_API_KEY</code> and an explicit <code>IPAYMONEY_ENVIRONMENT=sandbox</code>, and they answer questions no amount of local testing can:</p>
+
+  <ul>
+    <li><b>A13</b> — that mobile money is in fact available for Niger and XOF, which the documentation implies across four separate facts but never states in one sentence.</li>
+    <li><b>K12</b> — the real <code>status</code> string a declined or insufficient-funds payment carries. The adapter refuses an undocumented status rather than guessing, so the first run reports the exact value.</li>
+    <li><b>K8</b> — whether an amount comes back after all, which would change <code>statesChargeAmount</code> in our favour.</li>
+    <li><b>K13</b> — that <code>"5000"</code> means 5 000 francs and not 50. A factor of 100 on real money.</li>
+  </ul>
+
+  <p>The gate cannot fall back to Live: <code>IPAYMONEY_ENVIRONMENT</code> has no default at all, and a missing or mistyped value skips rather than proceeds. <b>K1–K18 remain outstanding</b>; none was answered, inferred or modified by this milestone.</p>
+
+  <a class="totop" href="#">↑ Back to top</a>
+</section>
+
+</div>

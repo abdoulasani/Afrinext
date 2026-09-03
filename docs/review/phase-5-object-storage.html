@@ -1,0 +1,464 @@
+<title>Object Storage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 5 · object storage</p>
+  <h1>Two Machines, One Bucket, Nothing Else Changed</h1>
+  <p class="lede">A file uploaded by one web instance is not on another instance's disk. Until this milestone, Afrinext could only ever run on one server without a buyer's download failing depending on which machine answered. The fix is an object-storage adapter behind the port that already existed — and the point of the work is everything that <b>did not</b> move: not one line of the authorization chain.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>HEAD <b>2eeb148</b></span>
+    <span>Unit tests <b class="ok">668 passed</b></span>
+    <span>Browser tests <b class="ok">46 passed</b></span>
+    <span>Mutations killed <b class="ok">23 / 23</b></span>
+    <span>Migrations <b>none</b></span>
+    <span>Ledger touched <b>none</b></span>
+  </div>
+</header>
+
+<div class="note key" style="margin-top:34px">
+  <span class="n-label">The milestone in one paragraph</span>
+  <p><code>ContentStorage</code> gained a third implementation, <code>S3ContentStorage</code>, which speaks the S3 HTTP API to any S3-compatible provider. The in-memory and filesystem adapters are untouched and still used. <b>No durable public URL exists anywhere in the design</b> — <code>open()</code> returns a <code>Buffer</code>, authenticated server-to-server, so there is no pre-signed link to leak, log or share. The authorization chain — session → live entitlement → purchased version → published product and store → download limit → short-lived HMAC grant → <code>ContentStorage.open()</code> — is byte-identical to what Phase 5 shipped, and a test proves both adapters produce the same answers to all fourteen of its observable outcomes.</p>
+  <p style="margin-bottom:0"><b>No credentials, no bucket, no bill.</b> <code>CONTENT_STORAGE</code> is not set to <code>s3</code> anywhere, including the Render preview. The adapter is real code tested against a real HTTP server that verifies its signatures; what does not exist is an account, and nothing here pretends otherwise.</p>
+</div>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#a">A · The boundary</a>
+  <a href="#b">B · Why no URL</a>
+  <a href="#c">C · Signing</a>
+  <a href="#d">D · Equivalence</a>
+  <a href="#e">E · Two instances</a>
+  <a href="#f">F · Misconfiguration</a>
+  <a href="#g">G · Mutations</a>
+  <a href="#h">H · Results &amp; what is next</a>
+</nav>
+
+<!-- ===================================================================== -->
+<section id="a">
+  <div class="sec-head"><div class="sec-mark">A</div><h2 class="sec-title">The boundary was already there. It was not moved.</h2></div>
+
+  <p>Phase 5 defined a port with two properties chosen for exactly this moment: <b>keys are opaque</b> (a key is not a URL and cannot be turned into one by a client) and <b>reads return bytes, not locations</b>. Adding object storage was therefore a new class, not a change to any caller.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 740 300" role="img" aria-label="The authorization chain ends at ContentStorage.open, which has three implementations">
+        <rect x="10" y="16" width="720" height="150" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text class="svg-t" x="30" y="38">packages/core — the chain, unchanged by this milestone</text>
+
+        <rect x="28" y="52" width="120" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text class="svg-s" x="88" y="73" text-anchor="middle">session</text>
+        <rect x="160" y="52" width="140" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text class="svg-s" x="230" y="73" text-anchor="middle">live entitlement</text>
+        <rect x="312" y="52" width="150" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text class="svg-s" x="387" y="73" text-anchor="middle">purchased version</text>
+        <rect x="474" y="52" width="150" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text class="svg-s" x="549" y="73" text-anchor="middle">published product</text>
+
+        <rect x="28" y="100" width="140" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text class="svg-s" x="98" y="121" text-anchor="middle">download limit</text>
+        <rect x="180" y="100" width="180" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text class="svg-s" x="270" y="121" text-anchor="middle">short-lived HMAC grant</text>
+        <rect x="372" y="100" width="200" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text class="svg-t" x="472" y="121" text-anchor="middle">ContentStorage.open(key)</text>
+
+        <path d="M472 134 V186" stroke="currentColor" stroke-width="1.2" fill="none"/>
+        <path d="M472 186 l-3.5 -7 h7 z" fill="currentColor"/>
+
+        <rect x="120" y="196" width="180" height="56" rx="3" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text class="svg-t" x="210" y="218" text-anchor="middle">InMemory</text>
+        <text class="svg-s" x="210" y="236" text-anchor="middle">domain tests</text>
+
+        <rect x="320" y="196" width="180" height="56" rx="3" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text class="svg-t" x="410" y="218" text-anchor="middle">Filesystem</text>
+        <text class="svg-s" x="410" y="236" text-anchor="middle">dev, CI, one server</text>
+
+        <rect x="520" y="196" width="180" height="56" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text class="svg-t" x="610" y="218" text-anchor="middle">S3 — NEW</text>
+        <text class="svg-s" x="610" y="236" text-anchor="middle">any S3-compatible</text>
+
+        <path d="M472 186 H210 V196" stroke="currentColor" stroke-width="1" fill="none" opacity="0.5"/>
+        <path d="M472 186 H610 V196" stroke="currentColor" stroke-width="1" fill="none" opacity="0.5"/>
+        <path d="M472 186 H410 V196" stroke="currentColor" stroke-width="1" fill="none" opacity="0.5"/>
+
+        <text class="svg-d" x="370" y="278" text-anchor="middle">THE ADAPTER PERFORMS NO AUTHORIZATION AND IS UNREACHABLE UNTIL EVERY BOX ABOVE HAS PASSED</text>
+      </svg>
+    </div>
+    <figcaption>Three implementations of one port. The chain above them is the same code it was before this milestone.</figcaption>
+  </figure>
+
+  <p>The adapter is <b>S3-compatible, not AWS-only</b>. One implementation serves AWS S3, Cloudflare R2, Backblaze B2, Scaleway, DigitalOcean Spaces and MinIO, because they implement the same API. A provider is chosen by setting an endpoint, not by shipping different code — which matters most at the moment vendor lock-in usually bites, when egress pricing changes.</p>
+</section>
+
+<!-- ===================================================================== -->
+<section id="b">
+  <div class="sec-head"><div class="sec-mark">B</div><h2 class="sec-title">There is no pre-signed URL, and that is deliberate</h2></div>
+
+  <p>The brief permitted pre-signed URLs provided they were minted only after authorization and were short-lived. <b>This implementation does not mint one at all</b>, which is strictly stronger, and the reasoning is worth stating because the weaker option is the industry default.</p>
+
+  <div class="note risk">
+    <span class="n-label">What a pre-signed URL would cost</span>
+    <p style="margin-bottom:0">A pre-signed URL is a bearer credential for the object. Once created it is valid for whoever holds it: it survives being pasted into a chat, appearing in a browser history, being captured by a CDN or proxy log, or being forwarded. Its lifetime cannot be shortened after the fact, and the object store honours it without consulting Afrinext — so a revoked entitlement, a refunded order or a suspended store <b>cannot stop it</b>. Every one of those is a rule this engine enforces.</p>
+  </div>
+
+  <p>Instead, <code>open()</code> performs an authenticated <code>GET</code> from the server and reads the response into a <code>Buffer</code>. The browser keeps receiving bytes from Afrinext's own origin, through the one route that demands a session and an unexpired grant. The cost is bandwidth through the application; the benefit is that <b>access remains revocable at every instant</b>, which is the property the refund and suspension rules depend on.</p>
+
+  <table class="tbl">
+    <thead><tr><th>Property</th><th>Pre-signed URL</th><th>What this ships</th></tr></thead>
+    <tbody>
+      <tr><td>Valid for</td><td>anyone holding the string</td><td class="yes">the session that was authorized</td></tr>
+      <tr><td>After a refund revokes entitlement</td><td class="no">still works until expiry</td><td class="yes">refused immediately</td></tr>
+      <tr><td>After the store is suspended</td><td class="no">still works until expiry</td><td class="yes">refused immediately</td></tr>
+      <tr><td>Leaks through logs, history, chat</td><td class="no">yes, it is the whole URL</td><td class="yes">nothing to leak</td></tr>
+      <tr><td>Counts against the download limit</td><td class="no">once, at mint time</td><td class="yes">once, at delivery</td></tr>
+      <tr><td>Bucket name reaches the browser</td><td class="no">yes</td><td class="yes">no</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note risk">
+    <span class="n-label">A leak this milestone introduced, and closed</span>
+    <p>The first version of the adapter put the provider's response body into the error it threw on a failed upload, with a comment claiming that error was only ever logged. It is not: the server action that attaches a file renders <code>error.message</code> straight onto the seller's screen, so any seller who could make an upload fail would have been shown the bucket name, the object key and an account id.</p>
+    <p style="margin-bottom:0">The detail is now logged under <code>component: content.s3</code> and the thrown <code>StorageWriteFailedError</code> says only that the file could not be saved. A test asserts the bucket, the key, the endpoint host and the provider's status are all absent from what the seller reads, and mutation <b>S5</b> restores the old shape to prove the test catches it. <b>Reads were never affected</b> — the download route collapses every refusal into one generic 403.</p>
+  </div>
+
+  <p>The last row is asserted by a browser test: after a real purchase, the library page and the product page are fetched and their HTML checked to contain neither the <code>storage_key</code>, nor the bucket name, nor the endpoint.</p>
+</section>
+
+<!-- ===================================================================== -->
+<section id="c">
+  <div class="sec-head"><div class="sec-mark">C</div><h2 class="sec-title">Signature Version 4, written out and checked against AWS's own answer</h2></div>
+
+  <p><code>packages/core</code> has five runtime dependencies on purpose. This adapter needs three verbs on one object, and SigV4 is a published, closed specification: a canonical request, a string to sign, a derived key, an HMAC. Sixty lines of <code>node:crypto</code> is the same posture the codebase already takes with its own HMAC content grants and its hand-written SQL.</p>
+
+  <p>The risk is real — a subtly wrong signature fails only against a live server — so it is answered twice:</p>
+
+  <ol class="steps">
+    <li><b>AWS's published test vector.</b> <code>signV4</code> is asserted to reproduce, exactly, the <code>Authorization</code> header from Amazon's own worked example, including the <code>Range</code> header and the signed-header list. That checks canonicalisation and key derivation against a known-good answer rather than against one reading of the specification.</li>
+    <li><b>A server that verifies.</b> Every adapter test runs against an HTTP server that independently recomputes the signature from the request it received and answers <code>403</code> on a mismatch. It also verifies <code>x-amz-content-sha256</code> against the body, so a request whose payload hash disagrees with its payload is refused rather than accepted.</li>
+  </ol>
+
+  <p>A third test changes one signed element at a time — the object path, the verb, the region, the date, the secret — and asserts the signature changes each time. A signature that ignores an input is a signature that can be replayed against a different object.</p>
+</section>
+
+<!-- ===================================================================== -->
+<section id="d">
+  <div class="sec-head"><div class="sec-mark">D</div><h2 class="sec-title">"Nothing else changed" is a claim, so it is a test</h2></div>
+
+  <p>An adapter that returned a slightly different content type, or failed in a way the download counter read as success, would leave every existing test green while changing what a buyer receives. So the same journey runs <b>twice</b>, once per adapter, through the same domain functions, and the two runs are compared field by field.</p>
+
+  <p>The journey: a seller opens a store, publishes it, creates a product, attaches a file, sets a download limit of two, writes licence text and publishes. A buyer checks out, pays through the mock provider, and downloads. The seller then publishes a <i>second</i> version. The buyer downloads again, and again. A stranger tries. The order is refunded. Fourteen observations are recorded:</p>
+
+  <table class="tbl">
+    <thead><tr><th>Observed</th><th>Value, on both adapters</th></tr></thead>
+    <tbody>
+      <tr><td>bytes served</td><td class="mono">version one</td></tr>
+      <tr><td>content type</td><td class="mono">application/pdf</td></tr>
+      <tr><td>asset title, disposition</td><td>as attached</td></tr>
+      <tr><td>version owned</td><td class="mono">1</td></tr>
+      <tr><td>licence snapshot</td><td class="mono">Usage personnel.</td></tr>
+      <tr><td>download limit</td><td class="mono">2</td></tr>
+      <tr><td>a stranger downloading</td><td class="mono">ContentForbiddenError</td></tr>
+      <tr><td>bytes after v2 is published</td><td class="mono">version one</td> </tr>
+      <tr><td>the buyer requesting v2's file</td><td class="mono">ContentForbiddenError</td></tr>
+      <tr><td>second download</td><td class="mono">ok</td></tr>
+      <tr><td>third download</td><td class="mono">DownloadLimitReachedError</td></tr>
+      <tr><td>after the refund</td><td class="mono">ContentForbiddenError</td></tr>
+      <tr><td>rows in <code>entitlement_downloads</code></td><td class="mono">2</td></tr>
+    </tbody>
+  </table>
+
+  <p>The test asserts the two records are equal <i>and</i> that the values are the right ones — two adapters broken the same way would pass equality alone.</p>
+
+  <div class="note key">
+    <span class="n-label">The one that matters most: a storage outage must not cost a download</span>
+    <p style="margin-bottom:0">A second test makes the object store answer <code>503</code>. The download is refused, <b>zero rows</b> appear in <code>entitlement_downloads</code>, and the buyer's next attempt succeeds and returns the right bytes with both downloads still available. A buyer who paid must not lose an allowance because a bucket had a bad minute — and the ordering that makes this true is that the delivery is counted after <code>open()</code> returns, never before.</p>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="e">
+  <div class="sec-head"><div class="sec-mark">E</div><h2 class="sec-title">Two application instances, proved through the real screens</h2></div>
+
+  <p>This is the milestone's actual promise, so it is tested the way the promise is made rather than by calling a function twice. The browser suite now starts <b>four</b> processes: the existing instance on filesystem storage, a signature-verifying bucket, and two further <code>next start</code> instances — A and B — on different ports, configured for object storage and sharing only the database and that bucket.</p>
+
+  <ol class="steps">
+    <li>A seller signs in on <b>instance A</b>, opens a store through the real four-step wizard, publishes it, adds a product, uploads a PDF through the real file input, and publishes.</li>
+    <li>A buyer signs in on <b>instance B</b>, buys the product, completes the buyer profile, chooses mobile money, pays, and the mock webhook confirms.</li>
+    <li>The buyer mints an access grant and fetches the file <b>from instance B</b>. The response is 200 and the body is byte-for-byte what the seller uploaded on A.</li>
+    <li>The library page and product page on B are checked for the storage key, the bucket name and the endpoint. None appears.</li>
+    <li>A third signed-in stranger on B mints nothing: the request is refused.</li>
+  </ol>
+
+  <p>Neither instance is given a content directory. Against the filesystem adapter this test cannot pass unless the two processes happen to share a disk — which is precisely the limitation being removed.</p>
+
+  <div class="note info">
+    <span class="n-label">A debugging note worth recording</span>
+    <p style="margin-bottom:0">The first run failed with a 403 that looked like a signing bug and was not. Playwright resolves a relative <code>page.goto</code> against <code>use.baseURL</code>, so the shared sign-in and store-wizard helpers were silently pulling both actors back to the default instance — everything worked, on the wrong server. The helpers now take an explicit origin. A multi-instance test that quietly collapses into a single-instance test is worse than no test, because it reports success.</p>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="f">
+  <div class="sec-head"><div class="sec-mark">F</div><h2 class="sec-title">The interesting half is what a misconfiguration does</h2></div>
+
+  <p>The failure this milestone exists to prevent does not announce itself at startup. It looks like this: a deployment is set to object storage, a variable is missing, the code quietly uses the local disk, the storefront appears healthy for a week, and then one buyer's download breaks on one machine out of two. So every misconfiguration <b>fails closed, at startup</b>:</p>
+
+  <table class="tbl">
+    <thead><tr><th>Configuration</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>CONTENT_STORAGE=s3</code>, any of the five settings missing or empty</td><td class="yes">throws — never falls back to disk</td></tr>
+      <tr><td><code>CONTENT_STORAGE=filesystem</code> under <code>NODE_ENV=production</code></td><td class="yes">throws unless <code>ALLOW_LOCAL_CONTENT_STORAGE=yes</code></td></tr>
+      <tr><td><code>ALLOW_LOCAL_CONTENT_STORAGE</code> set to <code>true</code>, <code>1</code>, <code>YES</code>, <code>y</code></td><td class="yes">throws — only the exact string counts</td></tr>
+      <tr><td><code>CONTENT_STORAGE=S3</code> or <code>r2</code> or any typo</td><td class="yes">throws — a typo must not resolve to the default</td></tr>
+      <tr><td>nothing set, development</td><td>filesystem, as before</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note key">
+    <span class="n-label">The mutation matrix moved this code, and that is the finding worth reading</span>
+    <p>This decision was first written inside the Next.js app, where it read <code>process.env</code> directly. Mutation <b>S2</b> deleted the guard — making a missing bucket fall through to local disk — and <b>survived</b>: no unit test could reach a function that only exists in <code>apps/web</code>.</p>
+    <p style="margin-bottom:0">It now lives in <code>packages/core/src/content/select.ts</code> as <code>selectContentStorage(env)</code>, a pure function of an environment object. Each misconfiguration became a two-line test, three further mutations became possible, and <code>apps/web/src/lib/content.ts</code> went back to what it should be: one call and a cache. <b>A fail-closed rule that nothing tests is a rule that quietly stops happening.</b></p>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="g">
+  <div class="sec-head"><div class="sec-mark">G</div><h2 class="sec-title">Mutations</h2></div>
+
+  <p>The Phase 5 matrix of eighteen was re-run in full against this HEAD and extended with four storage mutations. Each runs in a detached git worktree against a separate database, with a guard that refuses to start if it shares <code>TEST_DATABASE_URL</code> with the checkout.</p>
+
+  <table class="tbl">
+    <thead><tr><th>#</th><th>The lie the mutation tells</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>S1</td><td>A refused read from the object store returns an empty file instead of throwing — so the buyer receives zero bytes <i>and</i> spends a download.</td><td class="mono">killed · 4 failing</td></tr>
+      <tr><td>S2</td><td>Object storage selected with no bucket quietly falls back to the local disk.</td><td class="mono">killed · 3 failing</td></tr>
+      <tr><td>S3</td><td>An unrecognised adapter name resolves to the default instead of throwing.</td><td class="mono">killed · 1 failing</td></tr>
+      <tr><td>S4</td><td>A production build is allowed to keep uploaded files on one machine's disk without the deliberate flag.</td><td class="mono">killed · 6 failing</td></tr>
+      <tr><td>S5</td><td>A failed upload puts the provider's error body — which names the bucket, the key and an account id — into the message rendered on the seller's screen.</td><td class="mono">killed · 3 failing</td></tr>
+      <tr><td>D1–D18</td><td>The Phase 5 matrix: public files, another buyer's purchase, unbound grants, unpaid orders, revoked entitlements, ignored limits, resetting counters, mutated purchased versions, licence following the head, unbought library rows, caller-supplied store scope, draft and suspended products, invented placeholder files, version pinning in both directions, and both directions of the refund-revocation rule.</td><td class="mono">all 18 killed</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note info">
+    <span class="n-label">Two things the matrix caught about itself</span>
+    <p><b>A mutation that survives is not automatically a hole in the tests.</b> S2's first form — object storage selected with no bucket — survived because an incomplete <code>s3</code> configuration fell through to the guard that refuses an unrecognised adapter name, which threw anyway. The rule is defended at two independent points, so a single-point mutation proved only that the other one works. S2 now breaks both, which is the only version of that bug that could actually reach a filesystem adapter.</p>
+    <p style="margin-bottom:0"><b>And the matrix must run the whole suite.</b> Narrowing the command to the two directories being mutated looked like a speed-up and let D4 — "an unpaid order grants access" — survive, because the test that kills it lives in <code>src/orders</code>. A matrix run against a subset of the tests measures the subset, not the code. It was restored to the full suite and D4 dies again.</p>
+  </div>
+
+  <p class="mono" style="font-size:0.86em">23 mutations, 23 killed, 0 survivors. Source verified pristine afterwards.</p>
+</section>
+
+<!-- ===================================================================== -->
+<section id="h">
+  <div class="sec-head"><div class="sec-mark">H</div><h2 class="sec-title">Results, boundary, and what is next</h2></div>
+
+  <table class="tbl">
+    <thead><tr><th>Check</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>pnpm lint</code></td><td class="yes">clean</td></tr>
+      <tr><td><code>pnpm typecheck</code></td><td class="yes">clean</td></tr>
+      <tr><td><code>pnpm test</code> (unit + DB integration)</td><td class="yes">668 passed</td></tr>
+      <tr><td><code>pnpm build</code></td><td class="yes">compiled</td></tr>
+      <tr><td><code>pnpm test:e2e</code></td><td class="yes">46 passed</td></tr>
+      <tr><td>Mutations</td><td class="yes">23 / 23</td></tr>
+      <tr><td>Migrations</td><td>none — this milestone adds no schema</td></tr>
+      <tr><td>CI</td><td><span class="yes">3 / 3 green</span> on 2eeb148</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note hold">
+    <span class="n-label">What this milestone did NOT touch</span>
+    <p style="margin-bottom:0">No ledger row, no settlement, no seller payout, no wallet movement, no commission payment, no referral payout, no change to payment capture, no admin console, no seller-dashboard redesign. <b>iPayMoney remains unimplemented and its sandbox remains pending.</b> The refund domain is called by the equivalence test, not extended.</p>
+  </div>
+
+  <div class="note risk">
+    <span class="n-label">Open, and needing a decision from you</span>
+    <p><b>1. No provider is chosen and no bucket exists.</b> The adapter is built and tested; an account, credentials and a bill are an operational decision that is not made here. Cloudflare R2 is the obvious candidate for this workload — zero egress fees, and egress is what a download-heavy catalogue pays for — but that is a recommendation, not a decision taken.</p>
+    <p><b>2. Bytes flow through the application.</b> That is the price of keeping access revocable, and it is the right trade at Afrinext's size. It becomes a cost worth revisiting at a scale that does not exist yet, and revisiting it would mean accepting the rows in section B's table.</p>
+    <p style="margin-bottom:0"><b>3. The Render preview still runs filesystem storage</b> on its mounted disk, deliberately, with <code>ALLOW_LOCAL_CONTENT_STORAGE=yes</code>. It is one instance, so that is correct — and it stops being correct the moment a second instance is added.</p>
+  </div>
+
+  <p><b>Next milestone, if approved:</b> choose an object-storage provider and issue credentials, so the adapter that is already built and tested has a bucket to talk to. Nothing else in this milestone is waiting on anything.</p>
+</section>
+
+</div>

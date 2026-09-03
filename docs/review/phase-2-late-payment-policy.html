@@ -1,0 +1,546 @@
+<title>Late Payment Policy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 2 · financial review gate</p>
+  <h1>Late Payment Policy</h1>
+  <p class="lede">A verified payment can arrive after the checkout expired. The money moved whatever our timer did, so it is never ignored: the order ends as <strong>paid</strong> when fulfilling is still safe, and as <strong>refund_due</strong> when it is not. No confirmed payment is invisible any more.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>Code state <b>4342c06</b></span>
+    <span>Documentation-only since</span>
+    <span>Tests <b class="ok">349 passed · 24 browser</b></span>
+    <span>Mutations <b class="ok">8 of 8 caught</b></span>
+  </div>
+</header>
+
+<section id="provenance" style="margin-top:44px;padding-top:0;border-top:none">
+  <div class="note key">
+    <span class="n-label">Provenance — what this document describes, exactly</span>
+    <p><strong>Branch:</strong> <span class="mono">claude/create-app-repository-1cxsih</span>. Not merged into <span class="mono">main</span>.</p>
+    <p><strong>Code state under review: <span class="mono">4342c06</span></strong> — the last commit that touches implementation. Everything after it on this branch is documentation, and that is checkable in one command:</p>
+    <pre style="margin:10px 0"><code>git diff 4342c06 HEAD -- ':!docs'   <span class="cm"># returns nothing</span></code></pre>
+    <p><strong>Every commit after <span class="mono">4342c06</span> on this branch is documentation.</strong> That is the whole reason this packet leads with a code state rather than a branch tip: the tip moves each time the packet itself is revised, and the code does not. CI has been green on the code state and on every documentation commit since — runs <span class="mono">#23</span>, <span class="mono">#24</span> and <span class="mono">#25</span>.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Commit</th><th>What it is</th><th>Touches code</th><th>CI</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">5d92c8e</td><td>The policy: state machine, grace window, row lock, commerce reconciliation, migration&nbsp;0011, 31 tests, architecture doc</td><td>yes</td><td><span class="chip no">#22 red</span> browser race, §7</td></tr>
+      <tr><td class="mono">4342c06</td><td>The fix for that race. <strong>The last commit touching code.</strong></td><td>yes</td><td><span class="chip yes">#23 green</span></td></tr>
+      <tr><td class="mono">9890cdf</td><td>This review packet, first issue</td><td>no</td><td><span class="chip yes">#24 green</span></td></tr>
+      <tr><td class="mono">ec12792</td><td>Packet reissued with a provenance block</td><td>no</td><td><span class="chip yes">#25 green</span></td></tr>
+      <tr><td class="mono">…and this one</td><td>Packet reissued again so that no future documentation commit can make it read as stale. <strong>The list below the code state may grow; the code state cannot.</strong></td><td>no</td><td>runs on push</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">Why the head shown is the CODE state and not the tip</span>
+    <p>A document cannot contain the hash of the commit that adds it — writing the hash changes the content, which changes the hash. Any packet that names the branch tip is therefore stale by exactly one commit the moment it is committed, and the previous issue of this packet was stale for precisely that reason.</p>
+    <p>So the identifier this packet leads with is the one that <em>stops moving</em>: the code state. It has not changed since <span class="mono">4342c06</span>, the command above proves it in one line, and every commit after it is listed in the table with what it contains. Nothing about the implementation under review is ambiguous.</p>
+    <p><strong>This document names no mutable identifier at all</strong>, so no number of further documentation commits can make it wrong. If a single immutable hash is wanted for the sign-off record, the right instrument is a git tag on the final commit — say so and one will be created; a document cannot be that instrument.</p>
+  </div>
+</section>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#before">1 · What happened before</a>
+  <a href="#policy">2 · The policy</a>
+  <a href="#machine">3 · State machine</a>
+  <a href="#invariants">4 · Financial invariants</a>
+  <a href="#concurrency">5 · Concurrency</a>
+  <a href="#reconciliation">6 · Commerce reconciliation</a>
+  <a href="#evidence">7 · Test and mutation evidence</a>
+  <a href="#risks">8 · Risks and what is NOT built</a>
+</nav>
+
+<section id="before">
+  <div class="sec-head"><div class="sec-mark">1</div><h2 class="sec-title">What happened before, traced rather than remembered</h2></div>
+
+  <p>The investigation ran the real domain code against a real database. This is what it printed:</p>
+
+<pre><code>after initiation   : order=pending_payment payment=pending   entitlements=0 fee_schedules=0
+after expiry       : order=expired         payment=pending   entitlements=0 fee_schedules=0
+webhook outcome    : {"outcome":"applied", "orderStatus":"expired"}
+after late confirm : order=expired         payment=<span class="ok">succeeded</span>  entitlements=0 fee_schedules=0
+reconciliation clean : <span class="ok">true</span>
+ledger entries       : 0</code></pre>
+
+  <div class="note block">
+    <span class="n-label">Three findings, none of them comfortable</span>
+    <p><strong>The money left no commercial trace.</strong> The payment moved because every check passed. The order's guarded <code>UPDATE</code> named <code>pending_payment</code>, matched nothing, and the entitlement and fee-schedule writes sat inside that branch.</p>
+    <p><strong>Nothing surfaced it.</strong> Reconciliation compared ledger balances and reported clean, because it knew nothing about orders and the ledger was empty by design. The only trace was one audit row.</p>
+    <p><strong>The buyer could be charged twice.</strong> Repeat purchase is refused by checking <code>entitlements</code>. A late payment created none, so the second checkout succeeded — reachable, undetected, and the buyer's only remedy was a support ticket.</p>
+  </div>
+
+  <p>The blueprint could not settle it: its order machine is <code>created → awaiting_payment → paid → fulfilled → settled</code> and <strong>has no <code>expired</code> state at all</strong>. The checkout TTL arrived later. So the question went to review, and came back as option D.</p>
+</section>
+
+<section id="policy">
+  <div class="sec-head"><div class="sec-mark">2</div><h2 class="sec-title">The policy, as decided</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>When the payment is verified</th><th>Conditions</th><th>Order becomes</th></tr></thead>
+    <tbody>
+      <tr><td>While the order is <code>pending_payment</code></td><td>the ordinary path, unchanged</td><td><span class="chip yes">paid</span> entitlement + frozen fees</td></tr>
+      <tr><td>After expiry, <strong>at or before</strong> expiry + 24 h</td><td>product published · store published · buyer does not already own it</td><td><span class="chip yes">paid</span> + <code>late_payment_at</code></td></tr>
+      <tr><td>After expiry, <strong>more than</strong> 24 h later</td><td>—</td><td><span class="chip hold">refund_due</span></td></tr>
+      <tr><td>After expiry, inside 24 h, any condition failing</td><td>—</td><td><span class="chip hold">refund_due</span></td></tr>
+      <tr><td>A <strong>failed</strong> payment after expiry</td><td>no money arrived</td><td><span class="chip info">stays expired</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note key">
+    <span class="n-label">What refund_due means, in the words used everywhere</span>
+    <p>“Payment successfully confirmed, but Afrinext did not fulfil the order and must later execute a refund through the appropriate payment provider.”</p>
+    <p>It is a <strong>queue and a state</strong>. It is not an executed refund, not a request sent to anybody, and not a credit. <strong>No refund execution exists in the codebase</strong>, and nothing drains this queue. The buyer's screen says exactly that, in French and English, and stops there.</p>
+  </div>
+
+  <h3>The boundary is inclusive, and tested at the millisecond</h3>
+
+  <p>Grace applies when the payment is verified <strong>at or before</strong> <code>expires_at + 24 h</code>. One millisecond later is <code>refund_due</code>. That is why <code>applyProviderEvent</code> now takes a clock: a boundary nobody can land on is a boundary nobody has checked. Two tests land on it — exactly at, and exactly one millisecond past.</p>
+
+  <h3>Why 24 hours</h3>
+
+  <p>Mobile-money confirmations in Niger travel through a carrier and an aggregator before they reach Afrinext. A delay of seconds is ordinary; a delay of hours happens. Refusing those would take money from people who genuinely paid and hand every one of them to support, for no benefit to anybody. Beyond a day the balance tips: the buyer has moved on, may have bought again, and fulfilment becomes a surprise rather than a service.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>How it is read</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">checkout.ttl_seconds</td><td>1800 · 30 min</td><td>Seeded explicitly. The code constant is now a fallback, not the source.</td></tr>
+      <tr><td class="mono">checkout.late_payment_grace_seconds</td><td>86400 · 24 h</td><td><strong>A ceiling, not a default.</strong> The loader clamps to it, so an operator may narrow the window to zero without asking anyone; widening it is a code change and a review. A malformed value falls back to 24 h — never to zero, never to no limit.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The asymmetry is deliberate and tested: a stored <code>999999999</code> still yields 24 hours, and a stored <code>null</code>, <code>"soon"</code>, <code>-1</code> or an object yields 24 hours rather than the zero a coercing read would have produced.</p>
+</section>
+
+<section id="machine">
+  <div class="sec-head"><div class="sec-mark">3</div><h2 class="sec-title">The state machine</h2></div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 660 316" role="img" aria-label="Order state machine with the two new transitions out of expired.">
+        <defs>
+          <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- the ordinary fan out of pending_payment -->
+        <g fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.7">
+          <path d="M346 52 V86 M70 86 H530"/>
+        </g>
+        <g fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.7" marker-end="url(#ar3)">
+          <path d="M70 86 V108"/>
+          <path d="M214 86 V108"/>
+          <path d="M358 86 V108"/>
+          <path d="M530 86 V108"/>
+        </g>
+
+        <!-- the two new ones, routed BELOW the row so they cross nothing -->
+        <g fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar3)">
+          <path d="M500 146 V210 H70 V148"/>
+          <path d="M560 146 V248"/>
+        </g>
+
+        <g stroke="currentColor" fill="none" stroke-width="1.2">
+          <rect x="276" y="16" width="140" height="36" rx="3"/>
+          <rect x="16" y="110" width="108" height="36" rx="3"/>
+          <rect x="160" y="110" width="108" height="36" rx="3"/>
+          <rect x="304" y="110" width="108" height="36" rx="3"/>
+          <rect x="470" y="110" width="120" height="36" rx="3"/>
+          <rect x="452" y="250" width="140" height="36" rx="3"/>
+        </g>
+
+        <text class="svg-t" x="346" y="39" text-anchor="middle">pending_payment</text>
+        <text class="svg-t" x="70" y="133" text-anchor="middle">paid</text>
+        <text class="svg-t" x="214" y="133" text-anchor="middle">failed</text>
+        <text class="svg-t" x="358" y="133" text-anchor="middle">cancelled</text>
+        <text class="svg-t" x="530" y="133" text-anchor="middle">expired</text>
+        <text class="svg-t" x="522" y="273" text-anchor="middle">refund_due</text>
+
+        <text class="svg-d" x="285" y="226" text-anchor="middle">LATE · INSIDE GRACE · STILL SAFE</text>
+        <text class="svg-u" x="462" y="180" text-anchor="end">LATE · OUTSIDE GRACE</text>
+        <text class="svg-u" x="462" y="194" text-anchor="end">OR NO LONGER SAFE</text>
+
+        <text class="svg-s" x="16" y="308">expired is the ONLY state an order can leave — money can arrive after it. Every other state is terminal.</text>
+      </svg>
+    </div>
+    <figcaption>The two thick arrows are new. <b>Payments are unchanged</b>: <code>initiated → pending → succeeded | failed | cancelled | expired</code>, each terminal.</figcaption>
+  </figure>
+
+  <p>Both new transitions are guarded <code>UPDATE</code>s naming <code>status = 'expired'</code>, and the <code>CHECK</code> constraint on <code>orders.status</code> was widened to include <code>refund_due</code> — a test writes <code>'refunded'</code> and requires the database to refuse it.</p>
+</section>
+
+<section id="invariants">
+  <div class="sec-head"><div class="sec-mark">4</div><h2 class="sec-title">Financial invariants</h2></div>
+
+  <ol class="steps">
+    <li><b>No successful payment is invisible</b>
+      <p>Every <code>succeeded</code> payment leaves its order in <code>paid</code> or <code>refund_due</code>. Nothing else is a legal resting place, and reconciliation looks for violations.</p></li>
+    <li><b>No double fulfilment</b>
+      <p>One entitlement per buyer per product, by unique index. A late payment for something already owned becomes <code>refund_due</code> rather than being absorbed.</p></li>
+    <li><b>No double charge swallowed in silence</b>
+      <p>If a buyer paid twice, the second payment is queued and countable rather than consumed.</p></li>
+    <li><b>Fee snapshots are unchanged</b>
+      <p>A late-accepted order freezes its commission through the <em>same function</em> as an on-time one — the two paths were merged into one <code>fulfil()</code> precisely so they cannot drift apart.</p></li>
+    <li><b>The ledger is untouched</b>
+      <p>Neither acceptance nor <code>refund_due</code> posts a ledger entry. Payment confirmation and financial settlement remain separate, and settlement is still not implemented.</p></li>
+  </ol>
+</section>
+
+<section id="concurrency">
+  <div class="sec-head"><div class="sec-mark">5</div><h2 class="sec-title">Concurrency: the row lock, and the test that needs it</h2></div>
+
+  <p>The confirmation transaction takes <code>SELECT … FOR UPDATE</code> on the order row <strong>before deciding anything</strong>. A confirmation and the expiry sweeper queue rather than interleave: whichever arrives second sees the state the first committed and takes the branch that state deserves.</p>
+
+  <div class="note good">
+    <span class="n-label">Proved deterministically, not by hoping two promises interleave</span>
+    <p>A test opens a <strong>second connection</strong>, takes <code>for update</code> on the order, and holds it. The confirmation arrives and blocks. The holder then expires the order and commits. Only then does the confirmation get to look — and it sees <code>expired</code>, takes the late path, and accepts.</p>
+    <p><strong>Without the lock that test fails</strong>, and it fails in the exact shape this gate exists to abolish: the confirmation reads the pre-expiry snapshot, takes the ordinary path, and its guarded <code>UPDATE</code> then matches nothing — payment succeeded, order expired, orphaned.</p>
+  </div>
+</section>
+
+<section id="reconciliation">
+  <div class="sec-head"><div class="sec-mark">6</div><h2 class="sec-title">Commerce reconciliation</h2></div>
+
+  <p>Ledger reconciliation asks whether the books balance. It could not ask whether a succeeded payment left its order somewhere sensible, because it knows nothing about orders — and that gap is how the original defect stayed silent. <code>reconcileCommerce()</code> is the missing half:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Impossible state</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">succeeded_payment_orphaned</td><td>Money arrived and left no commercial trace. The original defect.</td></tr>
+      <tr><td class="mono">paid_order_without_payment</td><td>Fulfilment without money — the mirror image, and worse for the seller.</td></tr>
+      <tr><td class="mono">multiple_succeeded_payments</td><td>The buyer was charged twice. The partial unique index bounds live attempts, not successful ones over time.</td></tr>
+      <tr><td class="mono">refund_due_without_payment</td><td>Either the queue is wrong or the payment record is.</td></tr>
+      <tr><td class="mono">duplicate_entitlement</td><td>Unreachable today; the check is what notices if that unique index is ever dropped.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="n-label">The gate proves it can still speak</span>
+    <p>CI asserts the result is empty — but a detector that reports “clean” is worth nothing unless it can report something else, and the suite truncates, so on some runs there would be no orders left and the assertion would pass <em>vacuously</em>. That is exactly the failure this gate was opened for.</p>
+    <p>So on every run the script builds one consistent order-and-payment pair, requires silence, breaks one invariant, <strong>requires the detector to name it</strong>, and puts it back. A run that cannot demonstrate detection fails the build.</p>
+  </div>
+</section>
+
+<section id="evidence">
+  <div class="sec-head"><div class="sec-mark">7</div><h2 class="sec-title">Test and mutation evidence</h2></div>
+
+<pre><code>pnpm lint                        <span class="cm">exit 0</span>
+pnpm typecheck                   <span class="cm">exit 0</span>
+pnpm test                        <span class="ok">349 passed | 3 skipped (22 files)</span>   <span class="cm">was 317</span>
+pnpm build                       <span class="cm">exit 0</span>
+playwright test                  <span class="ok">24 passed</span>   <span class="cm">production mode, DB from zero</span>
+ledger concurrency               <span class="ok">6 passed</span>
+reconcile-check                  <span class="ok">ledger clean · commerce clean · detector proved</span>
+pnpm audit --audit-level high    <span class="ok">No known vulnerabilities found</span>
+mutation testing                 <span class="ok">8 of 8 caught</span></code></pre>
+
+  <p><strong>31 new tests</strong> in <code>orders/late-payment.test.ts</code>, covering all fourteen requested scenarios plus the configuration and state-machine cases, and <strong>2 new tests</strong> in the delivery suite for the two halves of the decision.</p>
+
+  <div class="note">
+    <span class="n-label">CI</span>
+    <p><strong>CI:</strong> run&nbsp;<span class="mono">#23</span> (<span class="mono">32414854416</span>) on the code state <span class="mono">4342c06</span> — <span class="chip yes">all three jobs green</span> — and green again on every documentation commit since: <span class="mono">#24</span> (<span class="mono">32415407611</span>) and <span class="mono">#25</span> (<span class="mono">32420898168</span>). Run&nbsp;<span class="mono">#22</span> on <span class="mono">5d92c8e</span> was <span class="chip no">red</span> on the browser job: a pre-existing race in the checkout test, described below and fixed in <span class="mono">4342c06</span>. <code>lint · typecheck · test</code> passed on all three.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Deliberate defect</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>The grace-window check is removed</td><td><span class="chip yes">caught · 8 tests</span></td></tr>
+      <tr><td>The <code>expired → refund_due</code> branch is removed</td><td><span class="chip yes">caught · 10 tests</span></td></tr>
+      <tr><td>The already-owned check is removed</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td><strong><code>SELECT … FOR UPDATE</code> is removed</strong></td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The grace clamp is removed, so settings can widen the policy</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The orphaned-payment reconciliation condition is loosened</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The duplicate-payment reconciliation condition is loosened</td><td><span class="chip yes">caught</span></td></tr>
+      <tr><td>The entitlement <code>on conflict do nothing</code> guard is removed</td><td><span class="chip yes">caught</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">A second commit: CI found a race in a test, not in the policy</span>
+    <p>The browser job failed on the checkout journey while every local run passed. The test waited for <code>pay-waiting</code> — static text inside the form, on screen before the server action has done anything — and then read the payment row, which did not exist yet. Local timing won that race; CI lost it.</p>
+    <p>The race predates this gate and has nothing to do with the late-payment policy. The order page now shows the charge's real status, which appears only once the action has completed, and the test waits for <em>that</em>. It is also better for the buyer: “I have not paid yet” and “the provider has not answered yet” looked identical before.</p>
+  </div>
+
+  <div class="note block">
+    <span class="n-label">The row-lock mutation escaped at first, and the fix is the interesting part</span>
+    <p>Removing <code>FOR UPDATE</code> changed nothing, because the concurrency test used <code>Promise.all</code> and two promises do not reliably interleave two transactions — it created a <em>possible</em> race, not a certain one. A test that passes whether or not the lock exists is not testing the lock.</p>
+    <p>The replacement holds the row lock from a second connection and controls the ordering exactly. It now fails without the lock, every time.</p>
+  </div>
+
+  <h3>Files changed — 21 across the gate</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td colspan="2" style="padding-top:12px"><strong>The policy</strong></td></tr>
+      <tr><td class="mono">core/orders/state.ts</td><td><code>refund_due</code> added; <code>expired</code> gains two exits and stops being terminal.</td></tr>
+      <tr><td class="mono">core/orders/payment.ts</td><td>The row lock, the late decision and its four conditions, the shared <code>fulfil()</code>, the injected clock, the decision written to the audit log.</td></tr>
+      <tr><td class="mono">core/orders/checkout.ts</td><td><code>loadLatePaymentGraceSeconds()</code> — clamped to the reviewed maximum, malformed values fall back rather than widen.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Reconciliation</strong></td></tr>
+      <tr><td class="mono">core/ledger/commerce-reconcile.ts</td><td><strong>New.</strong> The five impossible commerce states.</td></tr>
+      <tr><td class="mono">core/scripts/reconcile-check.ts</td><td>The CI gate, plus the probe that proves the detector can still report a fault.</td></tr>
+      <tr><td class="mono">core/ledger/index.ts</td><td>Export.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Schema and configuration</strong></td></tr>
+      <tr><td class="mono">db/migrations/0011 + meta/_journal.json</td><td>Widened status CHECK, <code>late_payment_at</code> and its constraint, the refund-queue index, both settings.</td></tr>
+      <tr><td class="mono">db/schema/commerce.ts</td><td>The same, in Drizzle.</td></tr>
+      <tr><td class="mono">core/seed/reference.ts</td><td><code>checkout.ttl_seconds</code> and <code>checkout.late_payment_grace_seconds</code> seeded explicitly.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Tests</strong></td></tr>
+      <tr><td class="mono">core/orders/late-payment.test.ts</td><td><strong>New.</strong> 31 tests: all fourteen requested scenarios, the configuration cases, the state machine, and the five reconciliation detections.</td></tr>
+      <tr><td class="mono">core/orders/orders.test.ts</td><td>Two tests updated to the approved policy — named below.</td></tr>
+      <tr><td class="mono">core/content/content.test.ts</td><td>One updated, one added, for the two halves of the decision.</td></tr>
+      <tr><td class="mono">web/e2e/checkout.spec.ts</td><td>Waits for the payment state instead of a static caption — the CI race.</td></tr>
+      <tr><td colspan="2" style="padding-top:12px"><strong>Web and documentation</strong></td></tr>
+      <tr><td class="mono">web/[locale]/orders/[id]/page.tsx</td><td>Shows the charge's real status, and states a refund is owed <em>and not executed</em>.</td></tr>
+      <tr><td class="mono">i18n fr.json · en.json</td><td>4 keys per locale, worded so nothing claims a refund happened.</td></tr>
+      <tr><td class="mono">docs/architecture/late-payment-policy.md</td><td><strong>New.</strong> The decision, the table, the machine, the invariants, the settings, and what is not built.</td></tr>
+      <tr><td class="mono">AGENTS.md</td><td>The rule added to the non-negotiables.</td></tr>
+      <tr><td class="mono">docs/review/… .html · .pdf</td><td>This packet.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><strong>No new dependency</strong>; <code>pnpm-lock.yaml</code> is untouched. <code>ledger/flows.ts</code>, <code>ledger/post.ts</code>, <code>ledger/accounts.ts</code>, <code>money/</code>, <code>authz/</code>, <code>consent/</code>, <code>auth/</code> and <code>payments/</code> have <strong>no diff</strong>.</p>
+
+  <h3>Three existing tests were updated, and why that is not a weakening</h3>
+
+  <div class="note risk">
+    <span class="n-label">Named here rather than left in the diff</span>
+    <p><strong><code>orders.test.ts</code> · “lets an order leave pending_payment exactly once”</strong> asserted every non-pending state was terminal. <code>expired</code> no longer is. It now asserts the new machine <em>exactly</em>: expired reaches <code>paid</code> and <code>refund_due</code> and nothing else, and every other state is still terminal — more specific than before, not less.</p>
+    <p><strong><code>orders.test.ts</code> · “refuses a confirmation arriving after the order expired”</strong> asserted the behaviour this gate replaced. It keeps the invariant that matters — a succeeded payment never leaves its order in limbo — and points at the new suite for the edges.</p>
+    <p><strong><code>content.test.ts</code> · “grants nothing when the order expired”</strong> now uses a payment past the grace window, so it still proves that a <code>refund_due</code> order grants no content. A second test was added for the other half: a payment a minute late <em>does</em> deliver the file.</p>
+  </div>
+</section>
+
+<section id="risks">
+  <div class="sec-head"><div class="sec-mark">8</div><h2 class="sec-title">Risks, and what is deliberately not built</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Confirmation</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>No refund execution, through any provider</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No iPayMoney code, credentials, endpoints, payloads or signatures. The mock remains the only provider, and nothing in this policy is provider-specific</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No settlement, seller wallet or payout</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No ledger architecture change. <code>ledger/flows</code>, <code>ledger/post</code>, <code>ledger/accounts</code> and <code>money/</code> have no diff; entitlement and refund_due post nothing</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>Webhook, payment and entitlement idempotency preserved and re-tested under the new paths</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>Authorization, consent, OTP and pricing behaviour untouched</td><td><span class="chip yes">confirmed</span></td></tr>
+      <tr><td>No new dependency</td><td><span class="chip yes">confirmed</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Open risks</h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Nothing drains the <code>refund_due</code> queue.</strong> The state is correct, countable and visible to the buyer; the money still has to be returned by a human, out of band, until refund execution exists. <strong>That is the next thing I would build.</strong></td><td><span class="chip no">next</span></td></tr>
+      <tr><td><strong>No operator screen lists the queue.</strong> Finding it today is a SQL query or the reconciliation report. Nobody is alerted.</td><td><span class="chip hold">open</span></td></tr>
+      <tr><td><strong>The buyer is not notified.</strong> Their order page says a refund is owed and not yet executed; nothing pushes that to them, because no messaging provider is chosen.</td><td><span class="chip hold">blocked on SMS provider</span></td></tr>
+      <tr><td><strong>Reconciliation is run by CI, not on a schedule.</strong> In production it needs a job and an alarm; neither exists.</td><td><span class="chip hold">before launch</span></td></tr>
+      <tr><td>A late acceptance re-opens a closed order, which is a real change in behaviour a seller may notice as a sale appearing a day later. Deliberate, and the reason the window is a day rather than a week.</td><td><span class="chip info">accepted</span></td></tr>
+      <tr><td>The grace window is measured from <code>expires_at</code>, not from when the buyer left for the provider. An order that expired early for another reason inherits the same window.</td><td><span class="chip info">accepted</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <hr class="soft">
+
+  <p><strong>Is Phase 2 ready for approval?</strong> The financial policy gate is closed: the rule is decided, documented, implemented, enforced by guarded transitions and a row lock, and watched by a reconciliation that proves it can still report a fault. What is <em>not</em> closed is the consequence of that rule — <strong>a refund queue with no drain</strong>. My recommendation is to approve the gate and treat refund execution as the first item of the next milestone, before settlement, because it is the only open item that can leave a real buyer out of pocket.</p>
+
+  <hr class="soft">
+
+  <div class="note key">
+    <span class="n-label">Provenance, repeated — identical to page one</span>
+    <p><strong>Branch:</strong> <span class="mono">claude/create-app-repository-1cxsih</span> · not merged into <span class="mono">main</span>.<br>
+       <strong>Code state under review:</strong> <span class="mono">4342c06</span> · CI run&nbsp;<span class="mono">#23</span> green.<br>
+       <strong>Documentation-only since:</strong> <span class="mono">4342c06</span> · CI green on every commit after it — runs <span class="mono">#24</span>, <span class="mono">#25</span>.<br>
+       <strong>Gate commits:</strong> <span class="mono">5d92c8e</span> → <span class="mono">4342c06</span> → <span class="mono">9890cdf</span> → <span class="mono">ec12792</span> → this reissue.<br>
+       <strong>Proof the packet is not stale:</strong> <code>git diff 4342c06 HEAD -- ':!docs'</code> returns nothing.</p>
+    <p><strong>Final results:</strong> 349 domain tests · 24 browser tests · 8 of 8 mutations caught · ledger and commerce reconciliation clean · dependency audit clean.</p>
+  </div>
+
+  <p style="color:var(--ink-2)">Phase&nbsp;2 · financial review gate · branch <span class="mono">claude/create-app-repository-1cxsih</span> · code state <span class="mono">4342c06</span> · documentation-only since</p>
+</section>
+
+</div>

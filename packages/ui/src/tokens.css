@@ -1,0 +1,429 @@
+/*
+ * Afrinext design tokens — "Sahel".
+ *
+ * ---------------------------------------------------------------------------
+ * The idea in one paragraph
+ * ---------------------------------------------------------------------------
+ *
+ * Sunset light on ivory. The brand is a terracotta ORANGE — the hour before
+ * dusk over the Sahel — and it is what a person touches: the primary button,
+ * the active tab, the price. Under it the page is IVORY, warm and almost
+ * white, so the colour has somewhere to land. Depth comes from one saturated
+ * band at the top of a screen and a great deal of quiet beneath it.
+ *
+ * This replaces "Encre & Cuivre", which was correct about restraint and wrong
+ * about temperature: a near-black ground read as a developer's dashboard
+ * rather than as an African marketplace. The discipline survives the change —
+ * colour still earns its place — but the mood is daylight instead of midnight.
+ *
+ * ---------------------------------------------------------------------------
+ * Every colour has one job, and only one
+ * ---------------------------------------------------------------------------
+ *
+ *   sunset   brand, the primary action, the active tab, a price
+ *   indigo   information and money held to account — the account card
+ *   green    confirmed: paid, owned, available
+ *   gold     highlighted and discoverable
+ *   violet   digital content and the library
+ *   clay     records and history
+ *   danger   a refusal. Never merely "important".
+ *
+ * A screen that needs to stress something reaches for the colour whose JOB it
+ * is, never for whichever is prettiest. That is what stops a six-hue palette
+ * becoming a carnival: the hues are not decoration, they are a vocabulary, and
+ * a reader learns it in two visits.
+ *
+ * ---------------------------------------------------------------------------
+ * Why there are two oranges
+ * ---------------------------------------------------------------------------
+ *
+ * `--copper` fills a surface with white text on it; `--copper-ink` is orange
+ * TEXT on a light ground. One value cannot do both: an orange bright enough to
+ * feel like sunset behind white text is too light to be read as text itself.
+ * Both were measured rather than chosen — 4.75:1 for white on the fill, 5.58:1
+ * for the text tone on ivory. The token name stays `--copper` because the whole
+ * codebase already reaches for it as "the accent", and renaming it across
+ * thirty files would be churn dressed up as design.
+ *
+ * ---------------------------------------------------------------------------
+ * How the primary button knows what colour to be
+ * ---------------------------------------------------------------------------
+ *
+ * `--primary` is now the SUNSET, not the ink. A primary action on Afrinext is
+ * orange, in both themes, because the brand is what invites the tap. Secondary
+ * actions are ivory with a border, and `--ink` survives for the few surfaces
+ * that are genuinely dark by design: a store cover, an immersive panel.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ---- ground and surfaces: ivory, then sand ---- */
+  --background: #fdfaf5;
+  --surface: #ffffff;
+  --surface-muted: #f6f0e7;
+  --surface-sunken: #efe7da;
+
+  /* The few surfaces that stay dark by design: covers, immersive panels. */
+  --ink: #241a14;
+  --ink-raised: #33261d;
+
+  /* ---- text, all measured on the ivory ground ---- */
+  --foreground: #1a1512;   /* 17.39:1 */
+  --muted: #6b5d4f;        /*  6.10:1 */
+  --faint: #7a6b5b;        /*  4.94:1 */
+
+  /* ---- lines ---- */
+  --border: #ece3d6;
+  --border-strong: #dbcdb9;
+
+  /*
+   * Primary = the brand. An Afrinext call to action is sunset orange.
+   * White on it measures 4.75:1, which is why the fill is this tone and not
+   * the brighter one it wants to be.
+   */
+  --primary: #c9481a;
+  --primary-hover: #b33e14;
+  --primary-contrast: #ffffff;
+  --primary-soft: #fdede5;
+
+  /*
+   * The accent, same hue as the brand, kept under its old name so every
+   * screen that already reaches for `copper` keeps working.
+   */
+  --copper: #c9481a;
+  --copper-hover: #b33e14;
+  --copper-contrast: #ffffff;
+  /* Orange as TEXT, which needs to be darker than orange as a SURFACE. */
+  --copper-ink: #b33e14;    /* 5.58:1 on ivory */
+  --copper-on-ink: #f0824d; /* 7.21:1 on the dark panels that remain */
+  --copper-soft: #fdede5;   /* the tint the icon at 5.09:1 sits on */
+  --copper-line: #f3d3c2;
+
+  /* Information, and the account card. Indigo, the oldest dye in the region. */
+  --info: #243a73;
+  --info-soft: #e3e7f6;
+  --info-contrast: #ffffff;
+
+  /* Confirmed: paid, owned, available. */
+  --accent: #15694c;
+  --accent-soft: #dff0e7;
+
+  /* Refusal and destruction. Never used for anything merely important. */
+  --danger: #a6271b;
+  --danger-hover: #8c1f15;
+  --danger-soft: #fae3df;
+
+  /* ---- text ON a dark panel: fixed, because the panel is fixed ---- */
+  --on-ink: #fbf5ee;
+  --on-ink-muted: #c0b0a0;
+  --on-ink-line: rgba(251, 245, 238, 0.16);
+  --on-ink-raised: rgba(251, 245, 238, 0.09);
+
+  /* ---- text ON the sunset band ---- */
+  --on-brand: #ffffff;
+  --on-brand-muted: #ffe6d8;
+  --on-brand-line: rgba(255, 255, 255, 0.24);
+  --on-brand-raised: rgba(255, 255, 255, 0.16);
+
+  /*
+   * Elevation. Warm-tinted — a neutral grey shadow on ivory reads as dirt —
+   * and shallow: depth comes from surface contrast, not from dropping every
+   * card three feet off the page.
+   */
+  --shadow-sm: 0 1px 2px rgba(74, 45, 24, 0.05);
+  --shadow-md: 0 2px 8px -2px rgba(74, 45, 24, 0.10), 0 1px 2px rgba(74, 45, 24, 0.05);
+  --shadow-lg: 0 14px 34px -14px rgba(74, 45, 24, 0.24), 0 2px 6px rgba(74, 45, 24, 0.06);
+  --shadow-ink: 0 20px 50px -20px rgba(36, 26, 20, 0.5);
+  --shadow-brand: 0 14px 30px -14px rgba(201, 72, 26, 0.45);
+
+  /*
+   * Radius, deliberately NOT uniform. Rounding everything equally is what makes
+   * an interface look like a template: the eye reads no intent in it. Cards get
+   * a calm 16px, controls a tighter 12px, and only the things that are
+   * genuinely pill-shaped — tags, avatars, the search field — go fully round.
+   */
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.625rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.125rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1.75rem;
+  --radius-pill: 9999px;
+
+  /* ---- motion: one curve, three durations ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --duration-fast: 130ms;
+  --duration-base: 220ms;
+  --duration-slow: 380ms;
+
+  /*
+   * The service and store identities.
+   *
+   * Six hues, each with a fixed job, each measured as an icon on its own tint.
+   * `-deep` is the version a store cover uses. Under Encre & Cuivre these were
+   * near-black so a grid of covers would not shout; under Sahel that reads as
+   * mud — six brown bands stacked down a page. They are lifted here to
+   * saturated mid-darks that still carry white type, and the cover's own light
+   * source does the rest.
+   */
+  --brand-laterite-deep: #a63a13;  --brand-laterite: #b33e14;  --brand-laterite-soft: #fbe0d2;
+  --brand-indigo-deep:   #2b3d78;  --brand-indigo:   #2a4180;  --brand-indigo-soft:   #e3e7f6;
+  --brand-forest-deep:   #176249;  --brand-forest:   #15694c;  --brand-forest-soft:   #dff0e7;
+  --brand-ochre-deep:    #9a6410;  --brand-ochre:    #8a5a0b;  --brand-ochre-soft:    #fbefd3;
+  --brand-aubergine-deep:#5e2b64;  --brand-aubergine:#6b3070;  --brand-aubergine-soft:#f1e4f3;
+  --brand-clay-deep:     #5d4b3a;  --brand-clay:     #6b5442;  --brand-clay-soft:     #efe7dc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    /* Warm, never neutral: a grey dark theme under a sunset brand looks broken. */
+    --background: #14100e;
+    --surface: #1e1815;
+    --surface-muted: #29211c;
+    --surface-sunken: #100d0b;
+
+    --ink: #1e1815;
+    --ink-raised: #2b231e;
+
+    --foreground: #f7f1e8;   /* 16.85:1 */
+    --muted: #b5a695;        /*  7.97:1 */
+    --faint: #9a8b7b;        /*  5.72:1 */
+
+    --border: #342a24;
+    --border-strong: #4a3c33;
+
+    /*
+     * The primary stays the brand fill with white on it — a fill carries its
+     * own contrast, so it does not need to invert with the theme the way a
+     * black-on-light button system did.
+     */
+    --primary: #c9481a;
+    --primary-hover: #d9531c;
+    --primary-contrast: #ffffff;
+    --primary-soft: #3a1b0e;
+
+    --copper: #f0824d;       /* as TEXT on the dark ground: 7.21:1 */
+    --copper-hover: #f79462;
+    --copper-contrast: #2a1108;
+    --copper-ink: #f0824d;
+    --copper-on-ink: #f0824d;
+    --copper-soft: #3a1b0e;
+    --copper-line: #5c2c16;
+
+    --info: #93a4e6;
+    --info-soft: #1a2141;
+    --info-contrast: #10142b;
+
+    --accent: #5bc79e;
+    --accent-soft: #0e2e23;
+
+    --danger: #f0837a;
+    --danger-hover: #ff9a92;
+    --danger-soft: #3a1714;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 2px 8px -2px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 14px 34px -14px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.45);
+    --shadow-ink: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+    --shadow-brand: 0 14px 30px -14px rgba(0, 0, 0, 0.7);
+
+    /* Lifted for legibility; the deep tones stay deep — a cover is a cover in
+       both themes, and it is the one surface that does not invert. */
+    --brand-laterite: #f0824d;
+    --brand-indigo:   #93a4e6;
+    --brand-forest:   #5bc79e;
+    --brand-ochre:    #e0ae55;
+    --brand-aubergine:#c98fce;
+    --brand-clay:     #c3b2a0;
+    --brand-laterite-soft: #3a1b0e;
+    --brand-indigo-soft:   #1a2141;
+    --brand-forest-soft:   #0e2e23;
+    --brand-ochre-soft:    #2e2410;
+    --brand-aubergine-soft:#2c1830;
+    --brand-clay-soft:     #262019;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-ink-raised: var(--ink-raised);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-contrast: var(--primary-contrast);
+  --color-copper: var(--copper);
+  --color-copper-on-ink: var(--copper-on-ink);
+  --color-copper-soft: var(--copper-soft);
+  --color-copper-line: var(--copper-line);
+  --color-copper-contrast: var(--copper-contrast);
+  --color-copper-ink: var(--copper-ink);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-contrast: var(--info-contrast);
+  --color-on-brand: var(--on-brand);
+  --color-on-brand-muted: var(--on-brand-muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-on-ink: var(--on-ink);
+  --color-on-ink-muted: var(--on-ink-muted);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /*
+   * The type scale, named by role rather than by size.
+   *
+   * `text-h2` survives a decision to make headings a little smaller; a page
+   * built out of `text-[19px]` does not. Tight tracking on the large sizes and
+   * open tracking on the small ones is what makes a scale look drawn rather
+   * than computed.
+   */
+  --text-display: 2.125rem;
+  --text-display--line-height: 1.06;
+  --text-display--letter-spacing: -0.035em;
+  --text-display--font-weight: 600;
+
+  --text-h1: 1.625rem;
+  --text-h1--line-height: 1.14;
+  --text-h1--letter-spacing: -0.028em;
+  --text-h1--font-weight: 600;
+
+  --text-h2: 1.25rem;
+  --text-h2--line-height: 1.22;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+
+  --text-h3: 1rem;
+  --text-h3--line-height: 1.32;
+  --text-h3--letter-spacing: -0.012em;
+  --text-h3--font-weight: 600;
+
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.5;
+
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.45;
+
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.1em;
+  --text-label--font-weight: 600;
+}
+
+/*
+ * A store's identity, applied by setting `data-brand` on any element.
+ * Descendants read `--brand`, `--brand-deep` and `--brand-soft` without knowing
+ * which palette was chosen, so one component renders every store.
+ */
+[data-brand="laterite"]  { --brand: var(--brand-laterite);  --brand-deep: var(--brand-laterite-deep);  --brand-soft: var(--brand-laterite-soft); }
+[data-brand="indigo"]    { --brand: var(--brand-indigo);    --brand-deep: var(--brand-indigo-deep);    --brand-soft: var(--brand-indigo-soft); }
+[data-brand="forest"]    { --brand: var(--brand-forest);    --brand-deep: var(--brand-forest-deep);    --brand-soft: var(--brand-forest-soft); }
+[data-brand="ochre"]     { --brand: var(--brand-ochre);     --brand-deep: var(--brand-ochre-deep);     --brand-soft: var(--brand-ochre-soft); }
+[data-brand="aubergine"] { --brand: var(--brand-aubergine); --brand-deep: var(--brand-aubergine-deep); --brand-soft: var(--brand-aubergine-soft); }
+/* `sable` is the stored value for what is now called clay; both map here so a
+   renamed palette never leaves an existing store unstyled. */
+[data-brand="sable"],
+[data-brand="clay"]      { --brand: var(--brand-clay);      --brand-deep: var(--brand-clay-deep);      --brand-soft: var(--brand-clay-soft); }
+
+/*
+ * A motif per identity, so six stores do not look like one store six times.
+ *
+ * The old covers were a single diagonal weave washed over every palette, which
+ * meant a grid of stores read as one repeated texture in slightly different
+ * reds. Each identity now owns a geometry as well as a hue — strata, weave,
+ * arcs, grain, ribs — drawn at very low opacity over a near-ink ground.
+ *
+ * All six are abstract and material: earth layers, woven cloth, grain. None is
+ * a motif borrowed from a particular people or nation, because a marketplace
+ * serving a continent cannot wear one culture's pattern as decoration.
+ */
+[data-brand="laterite"] {  /* strata: laid-down earth */
+  --brand-motif:
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.055) 0 1px, transparent 1px 10px);
+}
+[data-brand="indigo"] {    /* weave: crossed threads */
+  --brand-motif:
+    repeating-linear-gradient(52deg, rgba(255,255,255,0.055) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-52deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 9px);
+}
+[data-brand="forest"] {    /* arcs: growth rings */
+  --brand-motif:
+    repeating-radial-gradient(circle at 18% 118%, rgba(255,255,255,0.07) 0 1px, transparent 1px 18px);
+}
+[data-brand="ochre"] {     /* grain: a scattered field */
+  --brand-motif:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.10) 0.9px, transparent 1.2px);
+  --brand-motif-size: 14px 14px;
+}
+[data-brand="aubergine"] { /* ribs: vertical */
+  --brand-motif:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.055) 0 1px, transparent 1px 12px);
+}
+[data-brand="sable"],
+[data-brand="clay"] {      /* a single broad diagonal, almost nothing */
+  --brand-motif:
+    repeating-linear-gradient(38deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 24px);
+}
+
+/*
+ * Focus, once, for everything.
+ *
+ * A visible focus ring is not decoration: it is how a keyboard user knows where
+ * they are. Copper, because it is the one colour guaranteed to contrast with
+ * both the sand ground and an ink panel. Defined here so no component can
+ * quietly drop it, and `:focus-visible` so a mouse click leaves nothing behind.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* On an ink panel the copper ring is too dim against the dark; go to paper. */
+:where(.on-ink) :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline-color: var(--on-ink);
+}
+
+/* The loading button's three dots. Defined here so a component never ships
+   its own keyframes and no two loaders breathe at different rates. */
+@keyframes afx-pulse {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+  40%           { opacity: 1;    transform: scale(1); }
+}
+
+/* A section arriving. Used by empty states and skeletons, never by decoration. */
+@keyframes afx-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes afx-shimmer {
+  from { background-position: -160% 0; }
+  to   { background-position: 260% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

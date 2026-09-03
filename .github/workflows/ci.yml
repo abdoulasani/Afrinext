@@ -1,0 +1,194 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  audit:
+    name: dependency scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Fails the job on a high or critical advisory. Moderate and low are
+      # reported but do not block, so the signal stays actionable rather than
+      # becoming noise everyone learns to ignore.
+      - name: Audit dependencies (high and critical block)
+        run: pnpm audit --audit-level high
+      - name: Report all advisories
+        if: always()
+        run: pnpm audit --json > audit.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-audit
+          path: audit.json
+          retention-days: 30
+
+  verify:
+    name: lint · typecheck · test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: afrinext
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/afrinext
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/afrinext_test
+      PAYMENT_PROVIDER: mock
+      # Not a real secret: CI never touches production data. Production reads
+      # this from its own environment.
+      SESSION_SECRET: ci-only-secret-0123456789abcdef0123456789abcdef
+      APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create the test database
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c 'create database afrinext_test'
+
+      - name: Migrate
+        run: pnpm db:migrate
+
+      # Migrations must be reversible in principle: a schema that can only go
+      # forward cannot be rolled back when a release goes wrong. Drizzle has no
+      # down-migrations, so this asserts a clean rebuild from zero instead.
+      - name: Rebuild the schema from scratch
+        run: |
+          pnpm --filter @afrinext/db reset
+          pnpm db:migrate
+
+      - name: Seed reference data
+        run: pnpm --filter @afrinext/core seed
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - name: Build the web app
+        run: pnpm build
+
+      # Called out separately so a regression here is obvious in the run summary:
+      # the ledger's concurrency guarantees are the ones that cannot be argued.
+      - name: Ledger concurrency and idempotency under parallel load
+        run: pnpm --filter @afrinext/core exec vitest run src/ledger/concurrency.test.ts
+
+      - name: Assert the ledger reconciles after the suite
+        run: pnpm --filter @afrinext/core exec tsx scripts/reconcile-check.ts
+
+  browser:
+    name: browser · authorization assertions
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: afrinext
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/afrinext
+      # The browser job never runs the vitest suite, but the guard that these
+      # two must differ is a good one and there is no reason to make this the
+      # exception to it.
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/afrinext_browser_unused
+      PAYMENT_PROVIDER: mock
+      SESSION_SECRET: ci-only-secret-0123456789abcdef0123456789abcdef
+      APP_URL: http://127.0.0.1:3100
+      E2E_PORT: "3100"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Built from zero, not from a cached schema, so the run does not depend on
+      # anything a previous job left behind.
+      - name: Provision the database
+        run: |
+          pnpm db:migrate
+          pnpm --filter @afrinext/core seed
+
+      - name: Install the browser
+        run: pnpm --filter @afrinext/web exec playwright install --with-deps chromium
+
+      # The tests drive a production build, not a dev server: `next start` is
+      # what a deployment runs, and it is also what sets NODE_ENV=production and
+      # therefore the Secure cookie the session depends on.
+      - name: Build the web app
+        run: pnpm build
+
+      # Three assertions, and no more: unauthenticated 401, an ordinary member
+      # refused an admin route with 403, and the real sign-in journey. The 403
+      # is the one that matters — until this job existed it had no automated
+      # proof anywhere.
+      - name: Authorization assertions in a real browser
+        run: pnpm --filter @afrinext/web exec playwright test
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+            apps/web/.e2e/
+          retention-days: 14

@@ -1,0 +1,31 @@
+{
+  "name": "@afrinext/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx src/migrate.ts",
+    "reset": "tsx src/reset.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "test": "echo \"(no tests in @afrinext/db \u2014 schema is exercised by @afrinext/core)\" && exit 0"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@afrinext/config": "workspace:*",
+    "@types/node": "^22",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9.17.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  }
+}

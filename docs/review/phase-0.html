@@ -1,0 +1,822 @@
+<title>Afrinext Phase 0 Review Packet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · Phase 0 · for senior developer review</p>
+  <h1>Phase 0 Review Packet</h1>
+  <p class="lede">The production foundation: monorepo, database, authentication, scoped permissions, versioned consent, audit log, double-entry ledger and the payment abstraction. What was executed, what was not, and what is deliberately absent.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>Commit <b>87743b6</b></span>
+    <span>139 files · +14 468 / −7 049</span>
+    <span>Tests <b class="ok">102 passed, 3 skipped</b></span>
+    <span>Lint <b class="ok">clean</b></span>
+    <span>Build <b class="ok">green</b></span>
+    <span>iPayMoney <b>not integrated</b></span>
+  </div>
+</header>
+
+<div class="jump">
+  <a href="#status">1 · Status at a glance</a>
+  <a href="#verify">2 · Verify it yourself</a>
+  <a href="#results">3 · Results as executed</a>
+  <a href="#arch">4 · Architecture changes</a>
+  <a href="#schema">5 · Schema &amp; migrations</a>
+  <a href="#authn">6 · Authentication</a>
+  <a href="#authz">7 · Authorization</a>
+  <a href="#ledger">8 · Ledger</a>
+  <a href="#payments">9 · Payments</a>
+  <a href="#security">10 · Security</a>
+  <a href="#gaps">11 · Not implemented</a>
+  <a href="#deviations">12 · Deviations needing a decision</a>
+  <a href="#risks">13 · Unresolved risks</a>
+  <a href="#next">14 · Next phase</a>
+  <a href="#signoff">15 · Sign-off checklist</a>
+</div>
+
+<section id="status">
+  <div class="sec-head"><div class="sec-mark">1</div><h2 class="sec-title">Status at a glance</h2></div>
+
+  <div class="note key">
+    <span class="n-label">How to read this packet</span>
+    <p>Three states are kept strictly apart throughout. <strong>Tested</strong> means a test was executed and its result is reproduced below. <strong>Not tested</strong> means the code exists but no automated test covers it. <strong>Not implemented</strong> means the code does not exist. Nothing is called "verified" unless the relevant test actually ran.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Phase 0 item</th><th>State</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>1 · Monorepo foundation</td><td><span class="chip yes">tested</span></td><td>pnpm workspace, 5 packages + 1 app; lint, typecheck, test, build all run across it</td></tr>
+      <tr><td>2 · Application structure</td><td><span class="chip yes">tested</span></td><td>eslint boundary rule forbids <code>packages/*</code> importing Next.js; build green</td></tr>
+      <tr><td>3 · PostgreSQL</td><td><span class="chip yes">tested</span></td><td>PostgreSQL 16.13; integration tests run against a real database</td></tr>
+      <tr><td>4 · Database migrations</td><td><span class="chip yes">tested</span></td><td>2 migrations applied; 22 tables; schema rebuilt from scratch in CI</td></tr>
+      <tr><td>5 · ORM setup</td><td><span class="chip yes">tested</span></td><td>Drizzle; every integration test goes through it</td></tr>
+      <tr><td>6 · Authentication foundation</td><td><span class="chip hold">partly tested</span></td><td>Domain core tested (23 tests). <strong>No HTTP routes, no sign-in screen.</strong></td></tr>
+      <tr><td>7 · Phone OTP architecture</td><td><span class="chip hold">partly tested</span></td><td>Generation, hashing, expiry, attempts, binding tested. <strong>No SMS provider.</strong></td></tr>
+      <tr><td>8 · Email authentication architecture</td><td><span class="chip hold">partly tested</span></td><td>scrypt hashing and verification tested. <strong>No email sending.</strong></td></tr>
+      <tr><td>9 · Secure sessions</td><td><span class="chip hold">partly tested</span></td><td>Token issuance, hashing, expiry, revocation, elevation tested. <strong>No cookie wiring.</strong></td></tr>
+      <tr><td>10 · Scoped RBAC</td><td><span class="chip yes">tested</span></td><td>11 tests including scope confinement and revocation</td></tr>
+      <tr><td>11 · Permission system</td><td><span class="chip yes">tested</span></td><td>22 permissions, 7 roles, seeded and asserted</td></tr>
+      <tr><td>12 · i18n foundation</td><td><span class="chip hold">not tested</span></td><td>fr/en catalogues and resolver exist. <strong>No route-level wiring, no tests.</strong></td></tr>
+      <tr><td>13 · Design system foundation</td><td><span class="chip hold">not tested</span></td><td>Tokens extracted to <code>packages/ui</code>; app consumes them. No component tests.</td></tr>
+      <tr><td>14 · CI</td><td><span class="chip yes">tested</span></td><td>Executed on GitHub and passed. Runs <a href="https://github.com/abdoulasani/Afrinext/actions/runs/32243141943">32243141943</a> and <a href="https://github.com/abdoulasani/Afrinext/actions/runs/32243758387">32243758387</a>, all 15 steps green. <em>Corrected — see below.</em></td></tr>
+      <tr><td>15 · Lint</td><td><span class="chip yes">tested</span></td><td>Exit 0 across all 6 projects</td></tr>
+      <tr><td>16 · Type checking</td><td><span class="chip yes">tested</span></td><td>Exit 0 across all 6 projects, strict mode</td></tr>
+      <tr><td>17 · Automated test framework</td><td><span class="chip yes">tested</span></td><td>Vitest + fast-check; 105 specs</td></tr>
+      <tr><td>18 · Database test environment</td><td><span class="chip yes">tested</span></td><td>Separate <code>TEST_DATABASE_URL</code>; suite refuses to run without it</td></tr>
+      <tr><td>19 · Environment configuration</td><td><span class="chip hold">not tested</span></td><td><code>.env.example</code> committed, <code>.env</code> ignored</td></tr>
+      <tr><td>20 · Secrets handling</td><td><span class="chip yes">tested</span></td><td>Redaction by key name tested; no secrets in the repository</td></tr>
+      <tr><td>21 · Observability / logging</td><td><span class="chip yes">tested</span></td><td>5 tests incl. redaction, levels, child context</td></tr>
+      <tr><td>22 · Audit-log foundation</td><td><span class="chip hold">partly tested</span></td><td>Table and writer exist; append-only enforcement tested. <strong>Writer itself has no direct test.</strong></td></tr>
+      <tr><td>23 · Initial financial schema</td><td><span class="chip yes">tested</span></td><td>14 ledger tests incl. property-based sequences</td></tr>
+      <tr><td>24 · Payment-provider abstraction</td><td><span class="chip yes">tested</span></td><td>13 tests; mock refuses to load in production</td></tr>
+      <tr><td>25 · iPayMoney adapter architecture</td><td><span class="chip no">not implemented</span></td><td>Boundary throws; 3 sandbox specs skipped. Blocked on documentation.</td></tr>
+    </tbody>
+  </table></div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+<section id="verify">
+  <div class="sec-head"><div class="sec-mark">2</div><h2 class="sec-title">Verify it yourself</h2></div>
+
+  <p>Needs Node 22+, pnpm 10+, and a PostgreSQL 16 you can create two databases in. No credentials, no third-party accounts, no network beyond the npm registry.</p>
+
+  <ol class="steps">
+    <li>
+      <b>Check out the commit</b>
+<pre><code>git clone https://github.com/abdoulasani/Afrinext.git
+cd Afrinext
+git checkout 87743b6
+pnpm install</code></pre>
+    </li>
+    <li>
+      <b>Point it at a database</b>
+      <p><code>TEST_DATABASE_URL</code> must differ from <code>DATABASE_URL</code>. The suite truncates every table it touches and refuses to start otherwise.</p>
+<pre><code>createdb afrinext &amp;&amp; createdb afrinext_test
+
+cp .env.example .env
+# then set, for a local server on the default port:
+#   DATABASE_URL=postgres://postgres@127.0.0.1:5432/afrinext
+#   TEST_DATABASE_URL=postgres://postgres@127.0.0.1:5432/afrinext_test</code></pre>
+    </li>
+    <li>
+      <b>Migrate and seed</b>
+<pre><code>pnpm db:migrate
+pnpm --filter @afrinext/core seed</code></pre>
+      <p>Expected: <span class="mono">Migrations complete.</span> then <span class="mono">Seeded 7 currencies, 11 countries, 22 permissions, 7 roles, 9 settings, 7 legal documents (placeholder texts).</span></p>
+    </li>
+    <li>
+      <b>Run the whole verification chain</b>
+<pre><code>pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build</code></pre>
+      <p>All four must exit 0. Actual output is reproduced in section 3.</p>
+    </li>
+    <li>
+      <b>Prove the ledger balances over a real cycle</b>
+      <p>Posts a capture, a provider settlement, a sale settlement with a referral, a payout approval and a payout, then reconciles. This is the gate CI runs.</p>
+<pre><code>pnpm --filter @afrinext/core exec tsx scripts/reconcile-check.ts</code></pre>
+    </li>
+    <li>
+      <b>Check the app still runs, and reaches the database</b>
+<pre><code>pnpm build &amp;&amp; pnpm start &amp;
+curl -s localhost:3000/api/health</code></pre>
+    </li>
+    <li>
+      <b>Try to break the ledger by hand</b>
+      <p>Worth doing yourself rather than trusting the tests. Each of these must be refused by the database, not by application code:</p>
+<pre><code><span class="cm">-- append-only</span>
+update ledger_entries set amount_minor = 1;      <span class="cm">-- ERROR: append-only</span>
+delete from ledger_entries;                      <span class="cm">-- ERROR: append-only</span>
+
+<span class="cm">-- unbalanced transaction, rejected at COMMIT</span>
+begin;
+insert into ledger_transactions (id, kind) values (gen_random_uuid(), 'adjustment');
+<span class="cm">-- ... insert a single entry against that transaction ...</span>
+commit;                                          <span class="cm">-- ERROR: does not balance</span></code></pre>
+    </li>
+  </ol>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="results">
+  <div class="sec-head"><div class="sec-mark">3</div><h2 class="sec-title">Results, as executed</h2></div>
+
+  <div class="note block">
+    <span class="n-label">Correction to the first issue of this packet</span>
+    <p>The first issue of this packet stated that <strong>CI had never executed</strong>, and listed that as a known limitation and an open risk. That was wrong. The workflow had already run on GitHub twice and passed both times — runs <a href="https://github.com/abdoulasani/Afrinext/actions/runs/32243141943">32243141943</a> (commit <span class="mono">87743b6</span>) and <a href="https://github.com/abdoulasani/Afrinext/actions/runs/32243758387">32243758387</a> (commit <span class="mono">ee04b8f</span>) — before the packet was written. I asserted the negative without checking. The rows above and the risk register have been corrected; the real gap is dependency scanning, which CI does not do.</p>
+  </div>
+
+  <p>Copied from the run on commit <span class="mono">87743b6</span> against PostgreSQL 16.13. Nothing here is predicted.</p>
+
+  <h3>Tests — <span class="chip yes">102 passed · 3 skipped</span></h3>
+<pre><code> ✓ src/ledger/ledger.test.ts               (14 tests)  4381ms
+ ✓ src/auth/auth.test.ts                   (23 tests)  1978ms
+ ✓ src/authz/authorize.test.ts             (11 tests)   902ms
+ ✓ src/payments/payments.test.ts           (13 tests)    11ms
+ ✓ src/money/allocate.test.ts               (9 tests)   184ms
+ ✓ src/consent/consent.test.ts              (6 tests)   464ms
+ ✓ src/money/money.test.ts                 (13 tests)   128ms
+ ✓ src/observability/logger.test.ts         (5 tests)     7ms
+ ✓ src/money/currency.test.ts               (7 tests)    10ms
+ ✓ src/payments/ipaymoney.integration.test.ts
+                              (4 tests | 3 skipped)     3ms
+
+ Test Files  10 passed (10)
+      Tests  102 passed | 3 skipped (105)</code></pre>
+  <p>The 3 skipped specs are the iPayMoney sandbox tests. They skip unless <code>IPAYMONEY_BASE_URL</code> and <code>IPAYMONEY_API_KEY</code> are set, so CI stays green without credentials and turns red the moment a real sandbox run regresses.</p>
+
+  <h3>Lint and typecheck — <span class="chip yes">exit 0</span></h3>
+<pre><code>packages/db    lint: Done        packages/db    typecheck: Done
+packages/i18n  lint: Done        packages/i18n  typecheck: Done
+packages/ui    lint: Done        packages/ui    typecheck: Done
+packages/core  lint: Done        packages/core  typecheck: Done
+apps/web       lint: Done        apps/web       typecheck: Done</code></pre>
+  <p>TypeScript runs with <code>strict</code>, <code>noUncheckedIndexedAccess</code>, <code>exactOptionalPropertyTypes</code>, <code>noImplicitOverride</code>, <code>noUnusedLocals</code> and <code>verbatimModuleSyntax</code> — set from the first commit, because retrofitting them into a large codebase is miserable.</p>
+
+  <h3>Build — <span class="chip yes">green</span></h3>
+<pre><code>✓ Compiled successfully
+  Finished TypeScript in 3.0s
+
+Route (app)
+┌ ƒ /                        ├ ƒ /browse
+├ ○ /_not-found              ├ ƒ /listing/[id]
+├ ƒ /api/health              ├ ○ /offline
+├ ƒ /api/listings            ├ ○ /saved
+├ ƒ /api/listings/[id]       └ ○ /submit</code></pre>
+
+  <h3>Ledger reconciliation gate — <span class="chip yes">clean</span></h3>
+  <p>A full capture → provider settlement → sale settlement → payout approval → payout, then reconciliation:</p>
+<pre><code>{
+  "scenario": {
+    "gross": "10000", "seller": "8200",
+    "platform": "1620", "referral": "180"
+  },
+  "checkedAccounts": 8,
+  "drift": 0,
+  "unbalancedTransactions": 0,
+  "netByCurrency": { "XOF": "0" }
+}
+Ledger reconciliation clean over a real capture → settlement → payout cycle.</code></pre>
+  <p>8 200 + 1 620 + 180 = 10 000 exactly. The referral is 10% of Afrinext's 1 800 commission, not of the gross, so it can never exceed what was earned on the sale.</p>
+
+  <h3>Health endpoint — <span class="chip yes">reachable</span></h3>
+<pre><code>$ curl -s localhost:3000/api/health
+{ "status": "ok", "database": "reachable",
+  "migrationsApplied": 2, "currenciesSeeded": 7,
+  "permissionsSeeded": 22, "paymentProvider": "mock", "latencyMs": 2 }</code></pre>
+  <p>This is the end-to-end proof that the monorepo wiring works: the Next.js route calls <code>packages/core</code>, which calls <code>packages/db</code>, which reaches PostgreSQL — and the structured logger emits it.</p>
+
+  <h3>GitHub CI — <span class="chip yes">executed and green</span></h3>
+  <p>Run <span class="mono">32243758387</span> on commit <span class="mono">ee04b8f</span>, 79 seconds, ubuntu-latest with a <span class="mono">postgres:16</span> service. Every step succeeded:</p>
+<pre><code>✓ Initialize containers            ✓ Run pnpm lint
+✓ actions/checkout@v4              ✓ Run pnpm typecheck
+✓ pnpm/action-setup@v4             ✓ Run pnpm test
+✓ actions/setup-node@v4            ✓ Build the web app
+✓ pnpm install --frozen-lockfile   ✓ Assert the ledger reconciles after the suite
+✓ Create the test database
+✓ Migrate
+✓ Rebuild the schema from scratch
+✓ Seed reference data</code></pre>
+  <p>This is the distinction the review asked for: everything above is <strong>GitHub CI verification</strong>, not local verification. The two agree.</p>
+
+  <div class="note">
+    <span class="n-label">On screenshots</span>
+    <p>None are included, deliberately. Phase 0 shipped <strong>no new user-facing screens</strong> — the app served is still the original directory prototype. A screenshot of it would suggest progress that did not happen. The terminal output above is the evidence that matters here.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+<section id="arch">
+  <div class="sec-head"><div class="sec-mark">4</div><h2 class="sec-title">Architecture changes</h2></div>
+
+  <p>The blueprint is now revision 2. Four things changed, all of them reflecting confirmed business decisions rather than engineering opinion.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Change</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>New section 01 — company, contract and regulatory posture.</strong> Records AFRI NEXT TECHNOLOGIE as operator, and separates seven layers that get conflated: company registration (A), contract with users (B), payment-provider relationship (C), internal ledger (D), seller entitlement (E), payout operation (F) and regulatory authorization (G). States plainly that NIF and RCCM establish A only, and that nothing in A–F establishes G.</td>
+        <td class="mono">blueprint §01</td>
+      </tr>
+      <tr>
+        <td><strong>Consent architecture.</strong> Versioned documents, append-only acceptance records, and a server-side gate. Consent establishes B, never G.</td>
+        <td class="mono">blueprint §01</td>
+      </tr>
+      <tr>
+        <td><strong>Confirmations.</strong> Referral single-level, V1/V2/V3 scope, Niger + XOF as launch market — all moved from "recommendation" to "confirmed". V2 and V3 architecture retained deliberately.</td>
+        <td class="mono">§00, §H, §M</td>
+      </tr>
+      <tr>
+        <td><strong>iPayMoney section rewritten.</strong> Confirmed as provider with a merchant account; API unverified and unreachable; 13 documentation items listed.</td>
+        <td class="mono">§P</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note key">
+    <span class="n-label">The consequence in code</span>
+    <p>Because layer G is unresolved, three things are true of the implementation and must stay true: <strong>the ledger records entitlement, not custody</strong> — nothing asserts where money physically sits; <strong>the payout rail is an interface</strong>, so the answer can change without a rewrite; and <strong>no field or screen calls a seller balance a deposit or protected funds</strong>.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="schema">
+  <div class="sec-head"><div class="sec-mark">5</div><h2 class="sec-title">Database schema and migrations</h2></div>
+
+  <p><strong>22 tables, 2 migrations, 6 triggers, 1 view.</strong> Migration <span class="mono">0000</span> is generated from the Drizzle schema; <span class="mono">0001</span> is hand-written and is the one worth reading closely.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Group</th><th>Tables</th></tr></thead>
+    <tbody>
+      <tr><td>Reference</td><td class="mono">currencies, countries, locales</td></tr>
+      <tr><td>Identity</td><td class="mono">users, user_identities, sessions, otp_challenges, rate_limit_counters</td></tr>
+      <tr><td>Authorization</td><td class="mono">permissions, roles, role_permissions, role_assignments</td></tr>
+      <tr><td>Consent</td><td class="mono">legal_documents, legal_document_versions, consent_records</td></tr>
+      <tr><td>Ledger</td><td class="mono">ledger_accounts, ledger_transactions, ledger_entries, account_balances, idempotency_keys</td></tr>
+      <tr><td>Operations</td><td class="mono">audit_logs, platform_settings</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>What migration 0001 adds, and why it is not in application code</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Guarantee</th><th>Mechanism</th><th>Tested</th></tr></thead>
+    <tbody>
+      <tr><td>Every transaction balances, per currency</td><td><code>CONSTRAINT TRIGGER … DEFERRABLE INITIALLY DEFERRED</code> — evaluated at COMMIT, so all entries can be inserted first</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>An entry's currency matches its account</td><td><code>BEFORE INSERT</code> trigger</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>Ledger entries and transactions are append-only</td><td><code>BEFORE UPDATE OR DELETE</code> trigger that raises</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>Consent records and audit logs are append-only</td><td>Same</td><td><span class="chip yes">yes (consent)</span></td></tr>
+      <tr><td>Least-privilege application role</td><td><code>afrinext_app</code> role with UPDATE/DELETE revoked on the immutable tables</td><td><span class="chip no">not tested</span> — dev connects as superuser</td></tr>
+      <tr><td>Authoritative balance for reconciliation</td><td><code>ledger_account_balances_derived</code> view</td><td><span class="chip yes">yes</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>A trigger is used rather than only a <code>REVOKE</code> because a superuser ignores <code>REVOKE</code>, and development connections often are superuser. The revoke is defence in depth behind it.</p>
+
+  <div class="note risk">
+    <span class="n-label">Worth your attention</span>
+    <p>Drizzle has no down-migrations. CI compensates by dropping the schema and rebuilding it from zero on every run, which proves the migrations apply cleanly to an empty database — but it is <strong>not</strong> the same as being able to roll back a release in production. If you want true reversibility, say so and it becomes a Phase 1 task.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="authn">
+  <div class="sec-head"><div class="sec-mark">6</div><h2 class="sec-title">Authentication status</h2></div>
+
+  <div class="note block">
+    <span class="n-label">Read this first</span>
+    <p><strong>Nobody can sign in yet.</strong> Phase 0 built the authentication <em>domain core</em> — the primitives, tested in isolation. There are no HTTP routes, no cookie handling, no SMS or email delivery, and no screens. Wiring lands in Phase 1.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Piece</th><th>State</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Password hashing</td><td><span class="chip yes">tested</span></td><td>scrypt (N=2¹⁶, r=8, p=1). Encoded hash carries its own parameters, so the algorithm can change without invalidating existing hashes. <code>needsRehash()</code> flags weak ones.</td></tr>
+      <tr><td>Session tokens</td><td><span class="chip yes">tested</span></td><td>32 random bytes; only the SHA-256 is stored, so a database leak does not hand over live sessions. Constant-time comparison.</td></tr>
+      <tr><td>Session lifecycle</td><td><span class="chip yes">tested</span></td><td>Expiry, revocation, and a 10-minute elevation window for payout-sensitive actions.</td></tr>
+      <tr><td>OTP</td><td><span class="chip yes">tested</span></td><td>Cryptographically uniform 6 digits, hashed with identifier and purpose as salt, bounded attempts, 5-minute expiry. A code issued for sign-in will not verify for step-up, or for a different phone number.</td></tr>
+      <tr><td>Phone normalisation</td><td><span class="chip yes">tested</span></td><td>E.164 only, calling codes from the <code>countries</code> table, longest-prefix match. Property test: any input either yields valid E.164 or an explicit failure.</td></tr>
+      <tr><td>OTP rate limiting</td><td><span class="chip no">not implemented</span></td><td>The <code>rate_limit_counters</code> table exists; nothing writes to it yet. <strong>Bounding attempts alone does not stop an attacker who can request unlimited fresh codes</strong> — this is a Phase 1 must.</td></tr>
+      <tr><td>SMS / email delivery</td><td><span class="chip no">not implemented</span></td><td>No provider chosen. The OTP core is provider-agnostic.</td></tr>
+      <tr><td>HTTP routes, cookies, screens</td><td><span class="chip no">not implemented</span></td><td>Phase 1.</td></tr>
+    </tbody>
+  </table></div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="authz">
+  <div class="sec-head"><div class="sec-mark">7</div><h2 class="sec-title">Authorization status</h2></div>
+
+  <p>Scoped role assignments, one gate, 22 permissions across 7 roles. <span class="chip yes">11 tests</span></p>
+
+  <p>There is <strong>no <code>role</code> column on <code>users</code></strong>. Roles are rows in <code>role_assignments</code> carrying a scope type and id, so one person being a buyer, an instructor, a rider and staff on someone else's store at the same time costs nothing.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Behaviour</th><th>Tested</th></tr></thead>
+    <tbody>
+      <tr><td>A user with no roles is denied everything</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>A scoped role does not leak into another scope — store owner of A cannot publish to store B</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>A global grant satisfies a scoped check</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>A revoked assignment stops being honoured</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td>Permissions accumulate across several roles</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td><strong>Nobody can approve their own withdrawal</strong>, whatever roles they hold</td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td><code>superadmin</code> deliberately lacks <code>withdrawal.approve</code></td><td><span class="chip yes">yes</span></td></tr>
+      <tr><td><code>support</code> and <code>ops</code> hold no financial capability</td><td><span class="chip yes">yes</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Administering roles and moving money are separate capabilities by design: <code>superadmin</code> can grant roles but cannot approve a payout, and <code>finance</code> can approve payouts but cannot change who holds which role. That split is only meaningful if nobody is granted both — an operational rule the console will need to surface.</p>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+<section id="ledger">
+  <div class="sec-head"><div class="sec-mark">8</div><h2 class="sec-title">The ledger</h2></div>
+
+  <p>The part worth most of your review time. <span class="chip yes">14 ledger tests · 29 money tests</span></p>
+
+  <h3>Money</h3>
+  <p><code>Money</code> is <code>{ amountMinor: bigint, currency: string }</code>. No floats anywhere. The minor-unit exponent is read from the <code>currencies</code> table, never assumed — <strong>XOF and XAF have zero decimal places</strong>, so code that divides by 100 is wrong by a factor of 100 across the whole UEMOA zone. A test asserts this directly.</p>
+
+  <h3>The split rule</h3>
+  <p>Every non-residual line is rounded half-up; the seller's share is <code>gross − Σ(other lines)</code>, never computed independently. So a split always re-sums to the gross and the remainder consistently favours the seller.</p>
+  <p>Referral commission is drawn <strong>from Afrinext's own commission</strong>, not from the gross. Property tests over 2 000 randomised cases assert:</p>
+  <ul>
+    <li>the split re-sums to the gross exactly, whatever the rates;</li>
+    <li>no share is ever negative;</li>
+    <li><strong>the referral never exceeds what the platform earned</strong> — the confirmed guardrail;</li>
+    <li>the rounding remainder lands with the seller, not the platform.</li>
+  </ul>
+
+  <h3>Invariants proved by test</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Invariant</th><th>How it is proved</th></tr></thead>
+    <tbody>
+      <tr><td>Every transaction balances per currency</td><td>Deferred DB trigger; a hand-crafted unbalanced insert is rejected at COMMIT</td></tr>
+      <tr><td>Entries are immutable</td><td>UPDATE and DELETE both raise; asserted directly</td></tr>
+      <tr><td>The whole ledger nets to zero per currency</td><td>Asserted after every operation in the property test</td></tr>
+      <tr><td>Cached balance equals the sum of entries</td><td>Asserted after every operation; drift injected by hand is detected</td></tr>
+      <tr><td>Duplicate operations are harmless</td><td>Same idempotency key replays and returns the original transaction</td></tr>
+      <tr><td>A key reused with different inputs is refused</td><td>Throws <code>IdempotencyConflictError</code> rather than replaying someone else's result</td></tr>
+      <tr><td>Reversals restore state without editing history</td><td>Balances return to zero; the original entries still exist alongside the mirror</td></tr>
+      <tr><td>Money never disappears on a failed payout</td><td>Funds return to the user's available balance</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The property test</h3>
+  <p>25 randomised runs of 4–14 operations each — captures, settlements with and without referral, hold releases, payout approvals and settlements, and reversals — across three sellers and an ambassador. <strong>After every single operation</strong> it asserts: no unbalanced transaction exists, the ledger nets to zero per currency, and every cached balance equals its derived balance.</p>
+  <p>The test distinguishes a deliberate domain refusal from a broken invariant: a refused operation is allowed, anything else re-throws and fails the property.</p>
+
+  <div class="note risk">
+    <span class="n-label">What the ledger tests do not cover</span>
+    <ul>
+      <li><strong>Concurrency.</strong> Every test is single-threaded. The balance cache uses an atomic increment under the row lock taken by <code>ON CONFLICT DO UPDATE</code>, which should serialise concurrent posts — but that reasoning is <strong>not tested</strong>. A concurrent-posting test belongs in Phase 1.</li>
+      <li><strong>Multi-currency transactions.</strong> Every test uses XOF. The schema and code handle several currencies per transaction; nothing exercises it.</li>
+      <li><strong>Scale.</strong> Largest run is a few hundred entries. No behaviour is known at millions of rows.</li>
+    </ul>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="payments">
+  <div class="sec-head"><div class="sec-mark">9</div><h2 class="sec-title">Payments</h2></div>
+
+  <div class="note block">
+    <span class="n-label">iPayMoney is NOT integrated</span>
+    <p>Confirmed as the provider, and Afrinext holds a merchant account — but the official documentation is not in the repository and the provider's domain is <strong>not reachable from the build environment</strong> (egress blocked by policy). So nothing about the API has been verified: not the authentication scheme, not an endpoint, not a payload, not a webhook signature.</p>
+    <p><code>IPayMoneyProvider</code> exists as a boundary and <strong>every method throws</strong> <code>ProviderNotConfiguredError</code>, naming what is missing. A stub returning plausible data would let the system appear to work and fail in production, on money.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Piece</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><code>PaymentProvider</code> interface</td><td><span class="chip yes">tested</span> Provider-agnostic. <code>createPayout</code> is optional because whether iPayMoney offers disbursement is unknown; <code>supportsPayouts()</code> is how callers check.</td></tr>
+      <tr><td><code>MockPaymentProvider</code></td><td><span class="chip yes">tested</span> Charges, idempotency, refunds, payouts, and HMAC webhook verification against the raw body with constant-time comparison. Tampered bodies and bad signatures both rejected.</td></tr>
+      <tr><td>Production safety</td><td><span class="chip yes">tested</span> The mock throws if constructed when <code>NODE_ENV=production</code>, and the registry refuses to hand it out. A misconfigured environment stops the process rather than quietly accepting payments that never happened.</td></tr>
+      <tr><td>Unknown provider id</td><td><span class="chip yes">tested</span> Refused rather than silently falling back</td></tr>
+      <tr><td>iPayMoney adapter</td><td><span class="chip no">not implemented</span> Boundary only</td></tr>
+      <tr><td>Sandbox integration specs</td><td><span class="chip hold">skipped</span> 3 specs, gated on credentials in the environment</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><strong>The single most useful thing you can send</strong> is iPayMoney's official documentation — the 13 items are listed in <code>docs/providers/ipaymoney/README.md</code>. Items 6 (webhook signature), 7 (whether XOF is sent as whole francs) and 8 (whether a payout API exists) most often invalidate an assumed design.</p>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="security">
+  <div class="sec-head"><div class="sec-mark">10</div><h2 class="sec-title">Security checks</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Control</th><th>State</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Passwords never stored in the clear</td><td><span class="chip yes">tested</span></td><td>scrypt with per-hash salt; parameters encoded in the hash</td></tr>
+      <tr><td>Session tokens never stored in the clear</td><td><span class="chip yes">tested</span></td><td>SHA-256 only; constant-time comparison</td></tr>
+      <tr><td>OTP codes never stored in the clear</td><td><span class="chip yes">tested</span></td><td>Salted by identifier and purpose, so one rainbow table of six-digit strings does not work</td></tr>
+      <tr><td>Secrets never reach the logs</td><td><span class="chip yes">tested</span></td><td>Redaction by key name, case- and punctuation-insensitive, recursive</td></tr>
+      <tr><td>No secrets in the repository</td><td><span class="chip yes">tested</span></td><td><code>.env</code> git-ignored; <code>.env.example</code> holds no values</td></tr>
+      <tr><td>Separation of duty on payouts</td><td><span class="chip yes">tested</span></td><td>Self-approval blocked in code</td></tr>
+      <tr><td>IDOR prevention</td><td><span class="chip hold">partly</span></td><td>Authorization scopes queries in SQL rather than checking after fetch. <strong>Untested at the HTTP layer, because there are no protected routes yet.</strong></td></tr>
+      <tr><td>Webhook signature verification</td><td><span class="chip hold">mock only</span></td><td>The pattern is correct — verify the raw body before parsing, constant time. The real scheme is unknown.</td></tr>
+      <tr><td>Idempotency on money operations</td><td><span class="chip yes">tested</span></td><td>Request hash stored; key reuse with different inputs refused</td></tr>
+      <tr><td>Audit log</td><td><span class="chip hold">partly</span></td><td>Table and writer exist and the table is append-only. <strong>No call sites yet</strong> — nothing is being audited in practice.</td></tr>
+      <tr><td>Rate limiting</td><td><span class="chip no">not implemented</span></td><td>Table exists, nothing writes to it</td></tr>
+      <tr><td>CSRF, security headers, CSP</td><td><span class="chip no">not implemented</span></td><td>No authenticated routes yet to protect</td></tr>
+      <tr><td>Dependency vulnerability scanning</td><td><span class="chip no">not implemented</span></td><td>Not in CI. Worth adding in Phase 1.</td></tr>
+      <tr><td>Penetration test</td><td><span class="chip no">not done</span></td><td>Schedule before public launch, not after</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">Still true from Phase 1, and unchanged</span>
+    <p>The prototype's <code>POST /api/listings</code> remains open to anyone — it predates authentication and is scheduled for replacement. It writes only to an in-memory store, so nothing persists, but it should not survive into anything public.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+<section id="gaps">
+  <div class="sec-head"><div class="sec-mark">11</div><h2 class="sec-title">What is NOT implemented</h2></div>
+
+  <p>Complete list. Anything not here either works or is named as untested elsewhere in this packet.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Area</th><th>Not implemented</th></tr></thead>
+    <tbody>
+      <tr><td>Authentication</td><td>Sign-in, sign-up and sign-out routes; cookie handling; SMS and email delivery; OTP issuance rate limiting; any screen. <strong>Nobody can sign in.</strong></td></tr>
+      <tr><td>Payments</td><td>The iPayMoney adapter. Blocked on documentation.</td></tr>
+      <tr><td>Commerce</td><td>Stores, products, courses, cart, checkout, orders, fee-line snapshots. No commerce tables exist yet — deliberately, they belong to Phase 1.</td></tr>
+      <tr><td>Wallet and payouts</td><td>Withdrawal requests, KYC, payout batches, the finance console. The ledger movements exist; the workflow around them does not.</td></tr>
+      <tr><td>Referral</td><td>Attribution, qualification, commission records. The split arithmetic exists and is tested; the programme is not built.</td></tr>
+      <tr><td>Learn</td><td>Courses, lessons, entitlement, video, progress.</td></tr>
+      <tr><td>Delivery</td><td>Everything. V2.</td></tr>
+      <tr><td>Admin console</td><td>No screens. Each phase ships its own admin surface.</td></tr>
+      <tr><td>i18n</td><td>Route-level integration (<code>/fr/…</code>, <code>/en/…</code>) and the provider wiring. Catalogues and the resolver exist; nothing consumes them yet.</td></tr>
+      <tr><td>Legal document texts</td><td>Placeholders only, with content hashes recording them as such. The machinery works with any text; drafting is a legal deliverable.</td></tr>
+      <tr><td>Audit call sites</td><td>The writer exists but nothing calls it. Nothing is being audited yet.</td></tr>
+      <tr><td>Turborepo</td><td>Not added. Plain pnpm scripts are sufficient at 6 projects; revisit when build times justify it.</td></tr>
+      <tr><td>Deployment</td><td>No hosting, no environments, no deploy pipeline. Awaiting the hosting decision.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Known limitations of what <em>is</em> built</h3>
+  <ul>
+    <li><strong>Dependency vulnerability scanning is absent from CI.</strong> The workflow runs lint, typecheck, tests, a schema rebuild and the reconciliation gate, but nothing scans dependencies. Added in Phase 1.</li>
+    <li><strong>No concurrency testing</strong> anywhere, including the ledger's balance cache.</li>
+    <li><strong>No down-migrations.</strong> CI rebuilds from scratch instead; that is not the same as rolling back a release.</li>
+    <li><strong>The least-privilege role is untested</strong> — local development connects as superuser, so the <code>REVOKE</code>s are not exercised. The append-only triggers are, and they bind superusers too.</li>
+    <li><strong>Single currency in practice.</strong> All tests use XOF.</li>
+    <li><strong>The web app is still the prototype.</strong> Its in-memory store is untouched by Phase 0 and still resets on restart.</li>
+    <li><strong>Latency assumption unverified.</strong> <code>eu-west-3</code> over <code>af-south-1</code> is still routing intuition, not measurement.</li>
+  </ul>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="deviations">
+  <div class="sec-head"><div class="sec-mark">12</div><h2 class="sec-title">Deviations from the blueprint — your call</h2></div>
+
+  <p>Four places where the implementation differs from what the blueprint proposed. Each was a judgement call made to keep Phase 0 moving; each is cheap to reverse now and expensive later.</p>
+
+  <div class="decision">
+    <span class="d-label">Deviation 1</span>
+    <h3>Auth core written in-house instead of adopting Better Auth</h3>
+    <dl>
+      <dt>Why</dt>
+      <dd>What Phase 0 needed was session lifecycle, OTP lifecycle and password hashing — roughly 300 lines of framework-free, fully testable code with no dependency to keep patched. Better Auth brings its own session tables that would have to be reconciled with the scoped RBAC and audit design, and its phone-OTP path cannot be exercised without an SMS provider we have not chosen.</dd>
+      <dt>What was not written</dt>
+      <dd>No cryptography was invented. scrypt and SHA-256 come from <code>node:crypto</code>; randomness from <code>randomBytes</code> and <code>randomInt</code>.</dd>
+      <dt>Risk</dt>
+      <dd>Rolling your own auth is a classic mistake. The mitigation is that this is session <em>management</em>, not cryptography, and it is behind an interface — adopting Better Auth later replaces one module.</dd>
+      <dt>Your call</dt>
+      <dd>Accept, or direct me to adopt Better Auth in Phase 1 before the HTTP layer is built on top.</dd>
+    </dl>
+  </div>
+
+  <div class="decision">
+    <span class="d-label">Deviation 2</span>
+    <h3>scrypt rather than Argon2id</h3>
+    <dl>
+      <dt>Why</dt>
+      <dd>OWASP accepts both. scrypt is in <code>node:crypto</code> with no native binding to build or audit, and phone OTP — not a password — is the primary credential in this market.</dd>
+      <dt>Cost of changing</dt>
+      <dd>Low. The encoded hash carries its own parameters, so existing hashes keep verifying while new ones use Argon2id, and <code>needsRehash()</code> already flags the old ones.</dd>
+      <dt>Note</dt>
+      <dd>Parameters are N=2¹⁶ (~64 MiB per hash) rather than OWASP's suggested 2¹⁷. 2¹⁷ doubles the memory per login and with concurrency becomes a denial-of-service surface. Say the word and it moves.</dd>
+    </dl>
+  </div>
+
+  <div class="decision">
+    <span class="d-label">Deviation 3</span>
+    <h3>Drizzle adopted while the ORM question is still open</h3>
+    <dl>
+      <dt>Why</dt>
+      <dd>Phase 0 could not start without an ORM, and the blueprint's stated recommendation was Drizzle. The decision genuinely depends on team composition, which is still unanswered.</dd>
+      <dt>Cost of changing now</dt>
+      <dd>Moderate: the schema definitions and roughly a dozen query sites. The SQL, the migrations and every invariant in migration 0001 are ORM-independent and would carry over unchanged.</dd>
+      <dt>Cost of changing after Phase 1</dt>
+      <dd>Considerably higher.</dd>
+      <dt>Your call</dt>
+      <dd>Tell me the team's Prisma versus raw-SQL experience and I will either confirm or switch — now, not later.</dd>
+    </dl>
+  </div>
+
+  <div class="decision">
+    <span class="d-label">Deviation 4</span>
+    <h3>i18n foundation without route-level wiring</h3>
+    <dl>
+      <dt>Why</dt>
+      <dd>Wiring <code>/fr/…</code> and <code>/en/…</code> means restructuring every route — and every current route is prototype code scheduled for replacement. Doing it now would be churn against pages that are about to be deleted.</dd>
+      <dt>What exists</dt>
+      <dd>fr and en catalogues, locale resolution, placeholder interpolation, and the <code>locales</code> table. French is the default.</dd>
+      <dt>Consequence</dt>
+      <dd>Phase 1's first real screens must land with the route wiring, not after it. Flagged so it does not slip.</dd>
+    </dl>
+  </div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+<section id="risks">
+  <div class="sec-head"><div class="sec-mark">13</div><h2 class="sec-title">Unresolved risks</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>Sev</th><th>Where it stands</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Regulatory authorization (layer G).</strong> Afrinext receiving customer money and paying sellers may be a regulated activity under BCEAO rules. NIF and RCCM establish company registration only.</td><td><span class="chip no">high</span></td><td>Unresolved and outside engineering. The architecture reduces exposure the only way it can — the ledger records entitlement rather than asserting custody, and the payout rail is an interface. <strong>Gates Phase 6, not Phase 1.</strong> Long lead time; worth starting now.</td></tr>
+      <tr><td><strong>iPayMoney API unknown.</strong> Documentation absent and the domain unreachable from the build environment.</td><td><span class="chip hold">high</span></td><td>Contained: the abstraction is built and the mock exercises the whole cycle. Nothing else is blocked. 13 items listed in <code>docs/providers/ipaymoney/README.md</code>.</td></tr>
+      <tr><td><strong>CI has no dependency scanning.</strong> The workflow itself is proven — it ran on GitHub and passed twice.</td><td><span class="chip hold">med</span></td><td>Scanning added in Phase 1.</td></tr>
+      <tr><td><strong>Ledger concurrency untested.</strong> The balance cache relies on row-lock serialisation that has been reasoned about, not tested.</td><td><span class="chip hold">med</span></td><td>Add a concurrent-posting test in Phase 1, before real traffic exists.</td></tr>
+      <tr><td><strong>Nothing is audited yet.</strong> The writer exists but has no call sites.</td><td><span class="chip hold">med</span></td><td>Must land with the first financial and administrative actions in Phase 1, not after.</td></tr>
+      <tr><td><strong>OTP issuance is unlimited.</strong> Attempts are bounded; requests are not.</td><td><span class="chip hold">med</span></td><td>Each SMS costs money, so this is a billing risk as well as a security one. Phase 1 must.</td></tr>
+      <tr><td><strong>No rollback path for migrations.</strong></td><td><span class="chip hold">med</span></td><td>CI rebuilds from scratch. Decide whether true down-migrations are required.</td></tr>
+      <tr><td><strong>Legal texts do not exist.</strong> Consent machinery works; the documents are placeholders.</td><td><span class="chip hold">med</span></td><td>Blocks nothing technical. Blocks going live.</td></tr>
+      <tr><td><strong>No dependency scanning or penetration test.</strong></td><td><span class="chip hold">med</span></td><td>Add scanning to CI in Phase 1; schedule the test before public launch.</td></tr>
+      <tr><td><strong>Latency assumption unverified.</strong></td><td><span class="chip info">low</span></td><td>Measure from Niamey before committing to a region.</td></tr>
+    </tbody>
+  </table></div>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="next">
+  <div class="sec-head"><div class="sec-mark">14</div><h2 class="sec-title">Next phase proposal</h2></div>
+
+  <div class="note key">
+    <span class="n-label">Not started</span>
+    <p>Phase 1 has not begun and will not begin without your explicit approval. This is a proposal.</p>
+  </div>
+
+  <h3>Phase 1 — identity in use, and the commerce spine · ~3 weeks</h3>
+  <p>Phase 0 built primitives nobody can reach. Phase 1 makes them reachable and puts the first real data behind them.</p>
+  <ol>
+    <li><strong>Authentication over HTTP.</strong> Sign-in, sign-up, sign-out and step-up routes; secure cookie handling; an SMS provider behind an interface; <strong>OTP issuance rate limiting</strong>; the first real screens, with i18n routing wired in from the start.</li>
+    <li><strong>Audit call sites.</strong> Every authentication event, role change and ledger post writes an audit row in the same transaction.</li>
+    <li><strong>Consent in the flow.</strong> The gate applied at sign-up and seller onboarding, with real (or at least drafted) document texts.</li>
+    <li><strong>Stores and the catalogue.</strong> Store creation, digital products and courses as products, categories, media upload.</li>
+    <li><strong>Commerce tables.</strong> Cart, orders, order items and <code>order_fee_lines</code> — the frozen commission snapshot, so a rate change never rewrites history.</li>
+    <li><strong>Concurrency test</strong> for the ledger, and a dependency scan in CI.</li>
+  </ol>
+  <p><strong>Exit criterion:</strong> a real person registers by phone, accepts the terms, creates a store, publishes a paid digital product, and it appears at a public URL — with every step audited and the ledger untouched because nothing has been bought yet.</p>
+
+  <p>Payment integration stays gated on the iPayMoney documentation. If it has not arrived by the end of Phase 1, the manual transfer rail from the roadmap's P3 becomes the launch payment method and we should plan for that openly rather than waiting.</p>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+
+<section id="signoff">
+  <div class="sec-head"><div class="sec-mark">15</div><h2 class="sec-title">Senior developer sign-off checklist</h2></div>
+
+  <p>Suggested order. The first four are where a wrong answer is most expensive to discover later.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Check</th><th>Where</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td>Are the ledger invariants the right set, and is a deferred constraint trigger the right enforcement point? Anything missing?</td><td class="mono">packages/db/migrations/0001_ledger_invariants.sql</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">2</td><td>Does the property test actually prove what this packet claims? Read it adversarially — could it pass while the ledger is broken?</td><td class="mono">packages/core/src/ledger/ledger.test.ts</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">3</td><td>Is the residual rule sound, and is drawing referral from platform commission implemented as intended?</td><td class="mono">packages/core/src/money/allocate.ts</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">4</td><td>Is the posting path correct — idempotency, balance-cache increment, transaction boundaries?</td><td class="mono">packages/core/src/ledger/post.ts</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">5</td><td>Is <code>authorize()</code> a sufficient gate, and is scope confinement right?</td><td class="mono">packages/core/src/authz/authorize.ts</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">6</td><td>Is the in-house auth core acceptable, or should Better Auth be adopted before the HTTP layer? <strong>(Deviation 1)</strong></td><td class="mono">packages/core/src/auth/</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">7</td><td>scrypt at N=2¹⁶, or move to Argon2id? <strong>(Deviation 2)</strong></td><td class="mono">packages/core/src/auth/password.ts</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">8</td><td>Confirm or switch the ORM — decide now, not after Phase 1. <strong>(Deviation 3)</strong></td><td class="mono">packages/db/src/schema/</td><td>☐ confirm Drizzle ☐ switch to Prisma</td></tr>
+      <tr><td class="mono">9</td><td>Is the schema right? Anything missing that Phase 1 will need, or present that it will not?</td><td class="mono">packages/db/src/schema/</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">10</td><td>Is the payment abstraction sound, and is throwing the right behaviour for an unverified provider?</td><td class="mono">packages/core/src/payments/</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">11</td><td>Is the framework boundary drawn in the right place, and worth enforcing by lint?</td><td class="mono">packages/config/eslint.base.mjs</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">12</td><td>Does the CI workflow cover what it should? It runs green on GitHub; dependency scanning is the known gap.</td><td class="mono">.github/workflows/ci.yml</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+      <tr><td class="mono">13</td><td>Are down-migrations required before production?</td><td class="mono">packages/db/migrations/</td><td>☐ required ☐ not required</td></tr>
+      <tr><td class="mono">14</td><td>Is the Phase 1 proposal the right next step, and its exit criterion the right bar?</td><td class="mono">section 14</td><td>☐ approve ☐ changes ☐ reject</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="n-label">Also needed, and not from engineering</span>
+    <ul>
+      <li><strong>iPayMoney documentation</strong> — the 13 items. Sandbox credentials are the most useful single thing.</li>
+      <li><strong>Who is advising on layer G</strong> (regulatory authorization), and what is being pursued.</li>
+      <li><strong>Team composition</strong> — settles checklist item 8.</li>
+      <li><strong>Hosting</strong> — managed or containers.</li>
+      <li><strong>SMS provider for Niger</strong> — needed before OTP can actually be delivered in Phase 1.</li>
+    </ul>
+  </div>
+
+  <hr class="soft">
+
+  <p style="color:var(--ink-2)">Phase 0 complete · branch <span class="mono">claude/create-app-repository-1cxsih</span> · commit <span class="mono">87743b6</span> · Phase 1 will not begin without explicit approval.</p>
+
+  <a class="totop" href="#">↑ Top</a>
+</section>
+</div>

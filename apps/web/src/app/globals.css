@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@import "@afrinext/ui/tokens.css";
+
+/*
+ * Scan the shared component package too.
+ *
+ * Tailwind v4 auto-detects sources from this app's own tree, so every class
+ * living in `packages/ui` — the buttons, the cards, the store covers — was
+ * being compiled to nothing. The symptom was subtle and awful: components
+ * rendered with structure but no colour, so store covers came out white and
+ * every brand identity was invisible. Naming the package explicitly is what
+ * makes the design system real rather than decorative.
+ */
+@source "../../../../packages/ui/src";
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overscroll-behavior-y: none;
+}
+
+/* Room for the fixed bottom tab bar plus the home indicator. */
+.app-scroll {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}

@@ -1,0 +1,495 @@
+<title>Checkout Wiring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  :root {
+    --ground:#F3F5F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+    --ink:#0F1822; --ink-2:#55616E; --rule:#D5DCE4; --rule-strong:#B9C4CF;
+    --indigo:#24356E; --indigo-soft:#E2E7F4;
+    --ledger:#0E6B4F; --ledger-soft:#DBEFE6;
+    --ochre:#8F5C12;  --ochre-soft:#F5E9D2;
+    --crimson:#9E2B2B; --crimson-soft:#F6E1DF;
+    --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+      --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+      --indigo:#92AAE9; --indigo-soft:#1A2440;
+      --ledger:#48C79A; --ledger-soft:#0F2E24;
+      --ochre:#E2A852;  --ochre-soft:#32270F;
+      --crimson:#E8817A; --crimson-soft:#351A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0C1117; --surface:#131B23; --surface-2:#1B2530;
+    --ink:#E6ECF2; --ink-2:#93A2B1; --rule:#253039; --rule-strong:#38454F;
+    --indigo:#92AAE9; --indigo-soft:#1A2440;
+    --ledger:#48C79A; --ledger-soft:#0F2E24;
+    --ochre:#E2A852;  --ochre-soft:#32270F;
+    --crimson:#E8817A; --crimson-soft:#351A1A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:52px 0 30px; margin-bottom:0; }
+  .eyebrow {
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--indigo); margin:0 0 16px;
+  }
+  h1 {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(2rem,5vw,3.05rem); line-height:1.03;
+    letter-spacing:-0.022em; text-wrap:balance; margin:0 0 18px;
+  }
+  .lede { font-size:clamp(1.02rem,2.1vw,1.18rem); line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0 0 24px; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.04em;
+    padding:5px 10px; border:1px solid var(--rule); background:var(--surface);
+    color:var(--ink-2); border-radius:2px;
+  }
+  .meta span b { color:var(--ink); font-weight:600; }
+
+  .jump { display:flex; flex-wrap:wrap; gap:6px; padding:20px 0 0; border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:44px; }
+  .jump a {
+    font-family:var(--f-mono); font-size:11px; letter-spacing:0.05em;
+    padding:5px 10px; border:1px solid var(--rule); border-radius:2px;
+    color:var(--ink-2); text-decoration:none; background:var(--surface);
+  }
+  .jump a:hover { color:var(--indigo); border-color:var(--indigo); }
+  .jump a:focus-visible, a:focus-visible { outline:2px solid var(--indigo); outline-offset:2px; }
+
+  section { scroll-margin-top:20px; }
+  section + section { margin-top:56px; padding-top:42px; border-top:1px solid var(--rule); }
+  .sec-head { display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start; margin-bottom:22px; }
+  .sec-mark {
+    font-family:var(--f-mono); font-size:13px; font-weight:600;
+    width:34px; height:34px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  h2.sec-title {
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.14;
+    letter-spacing:-0.017em; text-wrap:balance; margin:2px 0 0;
+  }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.08rem; letter-spacing:-0.008em; margin:32px 0 11px; text-wrap:balance; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul, ol { max-width:70ch; margin:0 0 15px; padding-left:21px; }
+  li { margin-bottom:6px; }
+  li::marker { color:var(--ink-2); }
+  code { font-family:var(--f-mono); font-size:0.85em; background:var(--surface-2); padding:1px 5px; border-radius:2px; overflow-wrap:anywhere; }
+  a { color:var(--indigo); }
+  strong { font-weight:600; }
+
+  pre {
+    font-family:var(--f-mono); font-size:12.5px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--rule);
+    padding:15px 17px; border-radius:3px; overflow-x:auto; margin:0 0 16px;
+  }
+  pre code { background:none; padding:0; font-size:inherit; overflow-wrap:normal; }
+  .cm { color:var(--ink-2); }
+  .ok { color:var(--ledger); }
+
+  .tbl { overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.5; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th {
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:0.11em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td { border-bottom:none; }
+  td.mono, .mono { font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  td.q { max-width:38ch; }
+
+  .note { border:1px solid var(--rule); background:var(--surface); padding:15px 19px; margin:0 0 20px; border-radius:3px; border-left:3px solid var(--ink-2); }
+  .note.risk  { border-left-color:var(--ochre);  background:var(--ochre-soft); }
+  .note.block { border-left-color:var(--crimson); background:var(--crimson-soft); }
+  .note.good  { border-left-color:var(--ledger); background:var(--ledger-soft); }
+  .note.key   { border-left-color:var(--indigo); background:var(--indigo-soft); }
+  .note p:last-child, .note ul:last-child { margin-bottom:0; }
+  .note .n-label { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2); }
+  .note.risk  .n-label { color:var(--ochre); }
+  .note.block .n-label { color:var(--crimson); }
+  .note.good  .n-label { color:var(--ledger); }
+  .note.key   .n-label { color:var(--indigo); }
+
+  .chip {
+    display:inline-block; font-family:var(--f-mono); font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px;
+    border-radius:2px; white-space:nowrap; border:1px solid transparent;
+  }
+  .chip.no   { background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
+  .chip.yes  { background:var(--ledger-soft);  color:var(--ledger);  border-color:var(--ledger); }
+  .chip.hold { background:var(--ochre-soft);   color:var(--ochre);   border-color:var(--ochre); }
+  .chip.info { background:var(--indigo-soft);  color:var(--indigo);  border-color:var(--indigo); }
+
+  /* review-weight bar */
+  .weight { display:flex; height:34px; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; margin:0 0 10px; }
+  .weight div { display:grid; place-items:center; font-family:var(--f-mono); font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+  .weight .w-a { flex:88; background:var(--indigo-soft); color:var(--indigo); border-right:1px solid var(--rule-strong); }
+  .weight .w-b { flex:12; background:var(--surface-2); color:var(--ink-2); }
+  .weight-key { font-family:var(--f-mono); font-size:11px; color:var(--ink-2); margin:0 0 24px; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; max-width:none; }
+  .steps > li { counter-increment:step; position:relative; padding-left:44px; margin-bottom:26px; max-width:none; }
+  .steps > li::before {
+    content:counter(step); position:absolute; left:0; top:1px;
+    font-family:var(--f-mono); font-size:12px; font-weight:600;
+    width:28px; height:28px; display:grid; place-items:center;
+    border:1px solid var(--rule-strong); color:var(--indigo);
+    background:var(--surface); border-radius:2px;
+  }
+  .steps > li > b { display:block; font-family:var(--f-display); font-weight:600; font-size:1rem; margin-bottom:8px; padding-top:3px; }
+  .steps > li p { max-width:70ch; }
+
+  figure { margin:24px 0 26px; }
+  .figbox { border:1px solid var(--rule); background:var(--surface); border-radius:3px; padding:20px 18px; overflow-x:auto; }
+  figure svg { display:block; width:100%; min-width:620px; height:auto; color:var(--ink); }
+  figcaption { font-size:13.5px; line-height:1.5; color:var(--ink-2); margin-top:11px; max-width:70ch; }
+  figcaption b { color:var(--ink); font-weight:600; }
+  .svg-t { font-family:var(--f-display); font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .svg-s { font-family:var(--f-mono); font-size:10px; fill:var(--ink-2); }
+  .svg-u { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--indigo); }
+  .svg-d { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; fill:var(--ledger); }
+
+  hr.soft { border:none; border-top:1px solid var(--rule); margin:30px 0; }
+  .totop { display:inline-block; font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); text-decoration:none; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .totop:hover { color:var(--indigo); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+  /* screenshot gallery — phone-shaped frames, so the mobile-first claim is visible */
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:20px; margin:0 0 8px; }
+  .shots figure.shot { margin:0; }
+  .shots figure.shot img {
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:6px; background:var(--surface);
+  }
+  .shots figcaption { font-size:12.5px; line-height:1.45; margin-top:9px; max-width:none; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Afrinext · phase 3 · checkout → iPayMoney wiring</p>
+  <h1>Three Fields Arrive, One Does Not Exist</h1>
+  <p class="lede">The blocker the last report closed on is fixed as far as Afrinext's own data allows. The payer's number and country now reach the provider from the buyer's own account. <strong>A real iPayMoney charge still refuses</strong> — and it now refuses naming <code>customer_name</code>, which is a field no part of Afrinext has ever collected.</p>
+  <div class="meta">
+    <span>Branch <b>claude/create-app-repository-1cxsih</b></span>
+    <span>HEAD <b>49c043f</b></span>
+    <span>Unit tests <b class="ok">491 passed</b></span>
+    <span>Browser tests <b class="ok">31 passed</b></span>
+    <span>Mutations killed <b class="ok">24 / 26</b></span>
+    <span>Real sandbox calls <b>0</b></span>
+  </div>
+</header>
+
+<div class="note key" style="margin-top:34px">
+  <span class="n-label">The one-paragraph answer</span>
+  <p>iPayMoney requires four things Afrinext was not sending. <b>Three now arrive</b>: the payer's verified phone, the buyer's country when we hold one, and the payment channel when the caller chose one. <b>The fourth — <code>customer_name</code> — cannot be sent, because Afrinext has never asked a buyer for a name.</b> What sits in the name columns are placeholders written at signup to satisfy a NOT NULL: a synthetic address and the phone string.</p>
+  <p style="margin-bottom:0">Sending either would be inventing a value for a provider-required field, so the adapter still refuses. That refusal is the correct outcome and the honest end of this milestone. Closing the gap is a product decision — <b>decision 1 in section L</b>.</p>
+</div>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#a">A · Commit and scope</a>
+  <a href="#b">B · The data path</a>
+  <a href="#c">C · Field by field</a>
+  <a href="#d">D · Missing-field behaviour</a>
+  <a href="#e">E · Unknown is not failure</a>
+  <a href="#f">F · Security invariants</a>
+  <a href="#g">G · Tests and results</a>
+  <a href="#h">H · Provider assumptions</a>
+  <a href="#i">I · Remaining blockers</a>
+  <a href="#l">L · Decisions needed</a>
+</nav>
+
+<section id="a">
+  <div class="sec-head"><div class="sec-mark">A</div><h2 class="sec-title">Commit and scope</h2></div>
+
+  <p>One commit, <code>49c043f</code>, on <code>claude/create-app-repository-1cxsih</code>. Not merged to <code>main</code>.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th class="num">Δ</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">packages/core/src/orders/payment.ts</td><td class="num">+166 −10</td><td>The wiring: a buyer-identity loader, the fields it contributes to <code>ChargeInput</code>, and the classification of a throw from <code>createCharge</code></td></tr>
+      <tr><td class="mono">.../orders/checkout-provider-wiring.test.ts</td><td class="num">+415 new</td><td>13 tests driving the real <code>createCheckout → initiatePayment</code> path against a real database</td></tr>
+      <tr><td class="mono">packages/core/src/test/harness.ts</td><td class="num">+34 −3</td><td><code>createTestUser</code> can now create the Better Auth credential row that phone-OTP signup creates, so tests exercise the same join production uses</td></tr>
+      <tr><td class="mono">apps/web/e2e/checkout.spec.ts</td><td class="num">+16 −1</td><td>Asserts a real OTP signup produces the identity link a charge depends on</td></tr>
+      <tr><td class="mono">docs/providers/ipaymoney/README.md</td><td class="num">+18</td><td>Assumption A11, and what the checkout path supplies</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note good">
+    <span class="n-label">Not touched, and confirmed not touched</span>
+    <p style="margin-bottom:0"><b>Settlement was not started.</b> No ledger file, no <code>ledger/flows.ts</code>, no <code>ledger/post.ts</code>, no settlement hold, no payout logic. OTP and signup are unchanged — nothing was added to the sign-up flow. The refund state machine, the late-payment policy, the webhook boundary, the refund execution ordering and the reconciliation detectors are all byte-identical. Nothing merged to <code>main</code>.</p>
+  </div>
+</section>
+
+<section id="b">
+  <div class="sec-head"><div class="sec-mark">B</div><h2 class="sec-title">The data path, buyer to provider</h2></div>
+
+  <pre><code>buyer signs in (phone OTP)
+  └─ Better Auth  user.phoneNumber          <span class="cm">verified by the OTP</span>
+     user.name = the phone string           <span class="cm">placeholder, NOT NULL</span>
+  └─ users.auth_user_id  ──────────────────  <span class="cm">the link</span>
+     users.display_name = 22790…@phone.afrinext.local   <span class="cm">placeholder</span>
+     users.country_code = NULL              <span class="cm">no signup path writes it</span>
+
+checkout            createCheckout()        <span class="cm">prices the order server-side</span>
+  └─ order row      total_minor, currency
+
+pay                 payOrderAction()        <span class="cm">posts orderId only</span>
+  └─ initiatePayment()
+       ├─ reads the ORDER for the amount            <span class="cm">unchanged</span>
+       ├─ reads the BUYER for their details         <span class="cm">NEW</span>
+       │    select u.country_code, a."phoneNumber"
+       │      from users u
+       │      left join "user" a on a.id = u.auth_user_id
+       │     where u.id = actor.userId
+       ├─ writes the payment row  (initiated)       <span class="cm">before the call</span>
+       └─ provider.createCharge({
+              customer: { userId, phone },
+              channel,
+              metadata: { country, buyerCountry },
+          })</code></pre>
+
+  <p><b>Every field is read server-side from the buyer's own account.</b> None is accepted from the caller, and that is the same rule the amount already follows: a field a caller can set is a field a caller can change. A buyer must not be able to tell the provider that somebody else's number is paying.</p>
+
+  <p>The phone comes from Better Auth's table because that is where sign-in verified it. Using the verified number matters — it is the one that answered an OTP, not one typed into a form.</p>
+</section>
+
+<section id="c">
+  <div class="sec-head"><div class="sec-mark">C</div><h2 class="sec-title">Field by field</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Provider field</th><th>Source</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">msisdn</td><td class="mono">user."phoneNumber"</td><td><span class="chip yes">supplied</span> The verified sign-in number</td></tr>
+      <tr><td class="mono">country</td><td class="mono">users.country_code</td><td><span class="chip hold">supplied when present</span> No signup path writes it, so in practice absent</td></tr>
+      <tr><td class="mono">Ipay-Payment-Type</td><td>the caller's <code>channel</code></td><td><span class="chip hold">supplied when chosen</span> Never defaulted</td></tr>
+      <tr><td class="mono">customer_name</td><td>—</td><td><span class="chip no">not available</span> Afrinext has never collected one</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Why no name is sent</h3>
+
+  <p>Two columns look like they hold a name and neither does:</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Column</th><th>What it actually holds</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">users.display_name</td><td><code>22790123456@phone.afrinext.local</code> — the synthetic address signup mints so Better Auth's NOT NULL email is satisfied</td></tr>
+      <tr><td class="mono">user.name</td><td>The phone string itself, written for the same reason</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Passing either would be inventing a value for a provider-required field, which this milestone is explicitly not allowed to do. The second would additionally hand a payment provider an internal hostname. A test asserts that nothing matching <code>phone.afrinext.local</code> ever appears in the metadata.</p>
+
+  <p>There is also nowhere a buyer could supply a name: the application has no profile or account-settings screen at all.</p>
+
+  <h3>Why the country travels twice</h3>
+
+  <p>iPayMoney documents <code>country</code> only as <i>« le code du pays de la transaction »</i> and does not say whose country that is. That is question <b>K17</b>, and it is unanswered.</p>
+
+  <p>The order layer must send something or send nothing, and it holds two countries: the buyer's and the store's. It sends the <b>buyer's</b>, because the buyer is the payer — and it sends the same value a second time under <code>buyerCountry</code>, which states unambiguously what the value is.</p>
+
+  <p><b>This does not answer K17.</b> When iPayMoney answers, the fix is to change which of our facts fills <code>country</code>; nobody has to reconstruct what the value once meant. The choice is recorded as assumption <b>A11</b>.</p>
+
+  <p>A test makes the buyer Nigerien and the seller Ivorian, so "the buyer's country was passed" is a real assertion rather than a coincidence of both being <code>NE</code>.</p>
+</section>
+
+<section id="d">
+  <div class="sec-head"><div class="sec-mark">D</div><h2 class="sec-title">What happens when a field is missing</h2></div>
+
+  <p>The adapter refuses, naming what is absent, and <b>no request is constructed</b>. Four tests assert the refusal and count the calls into the injected transport; the count is zero in every case.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Missing</th><th>Message names</th><th>Requests built</th></tr></thead>
+    <tbody>
+      <tr><td>Phone</td><td class="mono">msisdn</td><td class="num">0</td></tr>
+      <tr><td>Country</td><td class="mono">metadata.country</td><td class="num">0</td></tr>
+      <tr><td>Channel</td><td class="mono">payment type</td><td class="num">0</td></tr>
+      <tr><td>Name</td><td class="mono">customer_name</td><td class="num">0</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note risk">
+    <span class="n-label">A defect this milestone had to fix to make "refused safely" true</span>
+    <p>Before this change, a throw from <code>createCharge</code> left the payment row at <code>initiated</code> forever. <code>payments_one_live_per_order</code> means <code>initiatePayment</code> returns any live row instead of calling the provider — so every later attempt on that order returned the stuck row and did nothing. <b>The buyer would have clicked pay forever.</b></p>
+    <p style="margin-bottom:0">It never showed under the mock, which does not throw. It would have shown on the first real iPayMoney charge. A refusal now closes the payment and the order, so the buyer gets a clear failure and can start a fresh checkout — the same outcome the existing "provider refuses at initiation" path already produced.</p>
+  </div>
+</section>
+
+<section id="e">
+  <div class="sec-head"><div class="sec-mark">E</div><h2 class="sec-title">A throw is not a failed charge</h2></div>
+
+  <p>Closing the payment on a refusal is safe only because the refusal is <b>classified</b>, not assumed. This is the approved Phase 3 correction applied one layer up: <b>unknown must never become failed</b>.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>What was thrown</th><th>Treated as</th><th>Payment</th></tr></thead>
+    <tbody>
+      <tr><td><code>ProviderNotConfiguredError</code> — the adapter declined to build a request, or the provider answered a documented refusal stating no payment was created</td><td><span class="chip yes">no charge exists</span></td><td><code>failed</code>, order closed</td></tr>
+      <tr><td>Transport failure at stage <code>not_transmitted</code> — DNS, connection refused, unreachable host</td><td><span class="chip yes">no charge exists</span></td><td><code>failed</code>, order closed</td></tr>
+      <tr><td>Timeout, connection reset, <b>HTTP 5xx</b>, unparseable answer</td><td><span class="chip hold">unknown</span></td><td><b>left <code>initiated</code></b>, order left <code>pending_payment</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>A 5xx arrives <i>after</i> the request reached iPayMoney, so the charge may exist under our idempotency key. Marking it failed would assert that no money moved, which nobody can support. A test drives a real 502 through the adapter and asserts the payment stays <code>initiated</code> and the order stays open.</p>
+
+  <p>The adapter owns the classification of what its own errors mean; this layer honours it rather than re-deciding from an HTTP status. That is the same division the refund path already uses.</p>
+</section>
+
+<section id="f">
+  <div class="sec-head"><div class="sec-mark">F</div><h2 class="sec-title">Security invariants, all preserved</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Invariant</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td>Provider verification — a webhook is confirmed only by a provider lookup</td><td><span class="chip yes">unchanged</span></td></tr>
+      <tr><td>Idempotency — the key is derived, one live payment per order</td><td><span class="chip yes">unchanged</span>, and newly asserted</td></tr>
+      <tr><td><code>transaction_id</code> protections</td><td><span class="chip yes">unchanged</span></td></tr>
+      <tr><td><code>unknown</code> / <code>in_doubt</code> classification</td><td><span class="chip yes">extended</span> to charges, section E</td></tr>
+      <tr><td>Late-payment policy and the grace window</td><td><span class="chip yes">unchanged</span> · 31 tests green</td></tr>
+      <tr><td><code>refund_due</code> as a terminal order state</td><td><span class="chip yes">unchanged</span></td></tr>
+      <tr><td>Reconciliation and its detectors</td><td><span class="chip yes">unchanged</span> · clean, both probes firing</td></tr>
+      <tr><td>Row locking and deterministic lock order</td><td><span class="chip yes">unchanged</span></td></tr>
+      <tr><td><code>providerEventId</code> derivation and the replay index</td><td><span class="chip yes">unchanged</span> · 5 tests green</td></tr>
+      <tr><td><code>statesChargeAmount = false</code> for iPayMoney</td><td><span class="chip yes">unchanged</span></td></tr>
+      <tr><td>The amount is read from the order, never from a caller</td><td><span class="chip yes">unchanged</span> — and the new fields follow the same rule</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Specifically, and by test: our own order amount is never copied into <code>ChargeStatus.amount</code>; an HTTP 5xx is never proof of failure; a webhook status is never authoritative without the provider lookup; and no customer refund API exists anywhere in the codebase.</p>
+</section>
+
+<section id="g">
+  <div class="sec-head"><div class="sec-mark">G</div><h2 class="sec-title">Tests added, and the full results</h2></div>
+
+  <p>Thirteen tests in one new file, all driving the real <code>createCheckout → initiatePayment</code> path against a real database with real users, real consent and a real published product.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>What it proves</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>A buyer with a verified number reaches the provider with that exact msisdn</td></tr>
+      <tr><td class="num">2</td><td>The <b>buyer's</b> country is passed — the seller is in a different country, so a substitution would fail here</td></tr>
+      <tr><td class="num">3</td><td>The chosen channel is passed, and when none is chosen none is sent</td></tr>
+      <tr><td class="num">4</td><td>No customer name is sent, and nothing matching <code>phone.afrinext.local</code> appears in the metadata</td></tr>
+      <tr><td class="num">5</td><td>A buyer with no country sends no country, rather than a guess</td></tr>
+      <tr><td class="num">6</td><td>An account with no verified number sends no phone, and still identifies the buyer by user id</td></tr>
+      <tr><td class="num">7</td><td>The real adapter refuses naming <code>customer_name</code>, and no longer names the payer or the country</td></tr>
+      <tr><td class="num">8–10</td><td>Missing channel, phone and country each refuse with zero requests constructed</td></tr>
+      <tr><td class="num">11</td><td>A proven refusal closes the payment and the order — no row stuck at <code>initiated</code></td></tr>
+      <tr><td class="num">12</td><td>A 502 leaves the payment <code>initiated</code> and the order open — unknown must never become failed</td></tr>
+      <tr><td class="num">13</td><td>Two initiations return one payment and call the provider once</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Test 7 asserts the <b>current</b> truth. When a name becomes available it will fail, and that failure is the signal that the last field landed.</p>
+
+  <div class="note key">
+    <span class="n-label">Local provider-transport test, not a sandbox test</span>
+    <p style="margin-bottom:0">Tests 7–12 use the <b>real iPayMoney adapter over an injected <code>fetch</code></b>. Nothing reaches iPayMoney. <b>No sandbox credentials exist and no request has ever been made to iPayMoney from this repository.</b> <code>ipaymoney.integration.test.ts</code> remains the only file that talks to the real provider, and its 16 real tests remain skipped.</p>
+  </div>
+
+  <h3>Results at <code>49c043f</code></h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Check</th><th>Result</th><th>Against the previous baseline</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">pnpm lint</td><td><span class="chip yes">clean</span></td><td>unchanged</td></tr>
+      <tr><td class="mono">pnpm typecheck</td><td><span class="chip yes">clean</span></td><td>unchanged</td></tr>
+      <tr><td class="mono">pnpm test</td><td><span class="chip yes">491 passed · 16 skipped</span> (26 files)</td><td>was 478 / 16 / 25 files. <b>+13 is exactly the new file</b>; no existing count moved</td></tr>
+      <tr><td class="mono">pnpm build</td><td><span class="chip yes">compiled</span></td><td>unchanged</td></tr>
+      <tr><td class="mono">playwright</td><td><span class="chip yes">31 passed</span></td><td>unchanged</td></tr>
+      <tr><td class="mono">reconcile-check</td><td><span class="chip yes">clean</span></td><td>drift 0 · 0 unbalanced · net XOF 0 · both probes firing</td></tr>
+      <tr><td>CI run #44 · 32488771572</td><td><span class="chip yes">success</span></td><td>lint · typecheck · test, dependency scan, and browser — all three green</td></tr>
+      <tr><td>mutation matrix</td><td><span class="chip yes">24 / 26 killed</span></td><td>identical to the previous baseline — same 24 killed, the same 2 survivors, and <b>every failure count unchanged</b></td></tr>
+    </tbody>
+  </table></div>
+
+  <p><b>No Phase 3 test changed.</b> The refund, late-payment, webhook and replay suites are untouched and green: 80 refund tests, 31 late-payment, 44 iPayMoney adapter, 5 replay, 46 orders.</p>
+
+  <p>One existing file changed shape without changing behaviour: <code>createTestUser</code> gained an optional <code>phone</code> that creates the Better Auth credential row real signup creates. Existing callers pass nothing and get exactly what they got before. The browser journey gained one assertion — that a real phone-OTP signup produces the identity link a charge depends on, which is the half no unit test can prove.</p>
+
+  <p>The matrix was re-run in full against <code>49c043f</code> in the isolated worktree. R7 and R8 survive for the reason they always have: three independent mechanisms serialise a refund dispatch, so removing any one changes no behaviour. R26 removes all three at once and is killed. Because every individual failure count matches the previous run exactly, this milestone weakened nothing the matrix can see.</p>
+
+</section>
+
+<section id="h">
+  <div class="sec-head"><div class="sec-mark">H</div><h2 class="sec-title">Provider assumptions made</h2></div>
+
+  <p><b>One</b>, recorded as A11 in the assumptions register rather than left in code.</p>
+
+  <div class="note risk">
+    <span class="n-label">A11</span>
+    <p>Afrinext's checkout provisionally sends the <b>buyer's</b> country in <code>country</code>. The order layer holds two countries and must choose or send nothing; the buyer is the payer, so the buyer's country is sent.</p>
+    <p style="margin-bottom:0">It is provisional and it does <b>not</b> answer K17. The same value travels as <code>buyerCountry</code>, which names what it actually is, so answering K17 changes which fact fills <code>country</code> rather than requiring anyone to work out what was meant.</p>
+  </div>
+
+  <p>No other assumption was made. In particular: no default channel was chosen, no name was synthesised, no country was inferred from a phone prefix or from the store, and no provider behaviour was invented. Nothing was added to <code>support-questions.md</code> — the code raised no new question that K1–K18 did not already cover.</p>
+</section>
+
+<section id="i">
+  <div class="sec-head"><div class="sec-mark">I</div><h2 class="sec-title">Remaining blockers</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Blocker</th><th>Whose</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">S7</td><td>Checkout does not pass the buyer's details</td><td>Afrinext</td><td><span class="chip yes">mostly closed</span> — phone, country and channel now flow; <code>customer_name</code> remains</td></tr>
+      <tr><td class="mono">S1</td><td>Phase 3 has not been approved</td><td>You</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S2</td><td>Settlement timing T+N undocumented — K16</td><td>iPayMoney</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S3</td><td>The amount is not verifiable from the provider — K8</td><td>iPayMoney</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S4</td><td>The 3 % fee's treatment on refund — K11</td><td>iPayMoney</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S5</td><td>No customer-refund execution to reverse — K1, K5</td><td>iPayMoney</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S6</td><td>No real payment has ever been made</td><td>Credentials</td><td><span class="chip no">open</span></td></tr>
+      <tr><td class="mono">S8</td><td><b>New.</b> No buyer name is collected anywhere, so <code>customer_name</code> cannot be sent</td><td>Product decision</td><td><span class="chip hold">needs you</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p><b>Real sandbox testing is still blocked by credentials.</b> Sixteen real-network tests stay skipped, gated on <code>IPAYMONEY_BASE_URL</code>, <code>IPAYMONEY_API_KEY</code> and an explicit <code>IPAYMONEY_ENVIRONMENT=sandbox</code>. A missing or mistyped environment skips rather than proceeding, and it can never fall back to Live: the variable has no default at all.</p>
+
+  <p><b>K1–K18 remain awaiting iPayMoney.</b> None was modified and none was answered.</p>
+</section>
+
+<section id="l">
+  <div class="sec-head"><div class="sec-mark">L</div><h2 class="sec-title">Decisions needed from you</h2></div>
+
+  <ol class="steps">
+    <li><b>Where does a buyer's name come from?</b>
+      <p>This is the last field, and it is a product question rather than a wiring one. Three routes, and I am not taking any of them without you:</p>
+      <ul>
+        <li><b>Ask at checkout.</b> One field on the payment step, stored on the order or the account. Touches no authentication and is the smallest change — but it adds friction exactly where a buyer is about to pay.</li>
+        <li><b>Ask once, after signup.</b> A profile step that fills <code>users.display_name</code> with a real name. Better data, and it needs a screen the application does not have.</li>
+        <li><b>Ask at signup.</b> Best data, and it changes the OTP flow — which I will not touch without explicit approval.</li>
+      </ul>
+      <p>The same screen could collect the buyer's country, which would close <b>S8</b> and make <code>country</code> reliably present at the same time.</p>
+    </li>
+    <li><b>Should checkout offer a payment channel?</b>
+      <p>iPayMoney documents <code>mobile</code> and <code>card</code> with <b>no default</b>, so the adapter refuses without one and nothing defaults it. Today no screen asks. The smallest change is a two-option control on the payment step; whether Afrinext offers cards at launch at all is your call, not an implementation detail.</p>
+    </li>
+    <li><b>Sandbox credentials.</b>
+      <p>Unchanged from the last report and still the thing that turns hypotheses into facts. Sixteen tests are written and waiting.</p>
+    </li>
+  </ol>
+
+  <div class="note good">
+    <span class="n-label">Nothing here needs retroactive approval</span>
+    <p style="margin-bottom:0">No approved state machine or business rule was changed. The one assumption made is A11, and it is provisional, documented, and reversible in one line. Settlement was not touched, nothing is merged to <code>main</code>, no sandbox readiness is claimed, and no provider behaviour was invented.</p>
+  </div>
+
+  <a class="totop" href="#">↑ Back to top</a>
+</section>
+
+</div>

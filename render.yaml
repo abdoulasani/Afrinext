@@ -1,0 +1,249 @@
+# Afrinext — PREVIEW environment (Render Blueprint)
+#
+# THIS IS NOT PRODUCTION AND MUST NEVER BECOME PRODUCTION.
+#
+# What this file describes is a deliberately fake shop: mock payments, no SMS
+# provider, disposable data, its own database. It exists so Afrinext can be
+# opened on a phone and used, and for nothing else. Two variables below say so
+# out loud — ALLOW_MOCK_PAYMENTS and ALLOW_CONSOLE_SENDER — and the application
+# refuses to start the mock provider or the console sender without them. That
+# refusal is a feature: a real deployment that forgot to configure a payment
+# provider fails loudly instead of quietly confirming payments nobody made.
+#
+# Not present here, and never to be added:
+#   - IPAYMONEY_BASE_URL / IPAYMONEY_API_KEY / IPAYMONEY_WEBHOOK_SECRET / IPAYMONEY_ENVIRONMENT
+#   - any real customer, real order or real money
+#   - any secret VALUE (Render generates or stores those; Git holds none)
+#
+# One variable here has no production counterpart at all: ALLOW_PREVIEW_SELLERS.
+# Read its note below before copying this file for any other environment.
+#
+# See docs/deployment/render-preview.md for the full procedure.
+
+databases:
+  # Its own database instance, created by this blueprint and referenced by name
+  # below. Nothing here can be pointed at another database by editing a URL,
+  # because no URL is written down: DATABASE_URL is wired from this resource.
+  # A future production database is a different instance in a different
+  # blueprint, and the two cannot be confused.
+  - name: afrinext-preview-db
+    databaseName: afrinext_preview
+    user: afrinext_preview
+    postgresMajorVersion: "16"
+    # Frankfurt is the closest region Render offers to Niger. The web service
+    # below MUST stay in the same region: a cross-region database call is a
+    # slow application and, on Render, a public one.
+    region: frankfurt
+    plan: basic-256mb
+    ipAllowList: []   # No external connections. Reach it through psql on the
+                      # service shell, or temporarily add your own IP.
+
+services:
+  - type: web
+    name: afrinext-preview
+    runtime: node
+    region: frankfurt
+    # A paid instance type, and not for performance. A free instance is spun
+    # down when idle and cold-starts on the next request, which makes every
+    # timing-sensitive check — OTP expiry, grant expiry, a webhook arriving —
+    # read as a failure of the thing being tested rather than of the host.
+    plan: starter
+    branch: claude/create-app-repository-1cxsih
+    autoDeploy: true
+
+    # `--prod=false` is deliberate. Render sets NODE_ENV=production for Node
+    # services, and pnpm honours that by skipping devDependencies — which are
+    # not optional here: `next build` needs typescript and tailwind, and the
+    # migration runner is tsx. Without this flag the build fails at install.
+    #
+    # NODE_ENV itself is never set in this file. Every command already sets the
+    # right value for itself, and overriding it has broken this build before;
+    # see the note in .env.example.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm build
+
+    # Runs after the build and BEFORE the new version receives traffic, so the
+    # schema and the reference data are in place the first time anybody loads a
+    # page. Seeding is not optional: authorization reads permissions and roles
+    # from these tables, so an unseeded deployment refuses everything.
+    # Both commands are idempotent and safe to run on every deploy.
+    preDeployCommand: pnpm db:migrate && pnpm --filter @afrinext/core seed
+
+    startCommand: pnpm start
+
+    # Reports database reachability, migrations applied and reference data
+    # seeded — the three things that are wrong first. It names no versions,
+    # hosts or credentials.
+    healthCheckPath: /api/health
+
+    # No disk, deliberately. Uploaded files live in R2 now, and a Render
+    # service with a mounted disk cannot run more than one instance — which
+    # would make the multi-instance guarantee untestable on the very deployment
+    # meant to demonstrate it.
+    #
+    # Removing it deletes the existing volume and anything on it. That is
+    # correct here: it holds preview uploads only, and they do not survive the
+    # move to a bucket. A production service with real files would migrate the
+    # objects first.
+
+    envVars:
+      # ---- database ----------------------------------------------------
+      # Wired from the resource above; never typed, never in Git. This is
+      # Render's internal connection string, so it stays on their private
+      # network.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: afrinext-preview-db
+          property: connectionString
+
+      # A small database. Ten pooled connections per instance would be most of
+      # its allowance spent on idle sockets.
+      - key: DATABASE_POOL_MAX
+        value: "5"
+
+      # TEST_DATABASE_URL is deliberately ABSENT. Nothing in the running server
+      # reads it; the vitest suite does, and it truncates every table it
+      # touches. It must never be set on a deployment.
+
+      # ---- secrets: generated by Render, stored by Render, never in Git ----
+      # Signs sessions AND derives the HMAC key that signs download grants
+      # (see apps/web/src/lib/content.ts). Rotating it signs everybody out and
+      # invalidates every outstanding download token.
+      - key: SESSION_SECRET
+        generateValue: true
+
+      # What the mock provider signs its webhooks with. Generated rather than
+      # left at its default, because the default is a literal string published
+      # in this repository — and anyone who knows it can confirm a payment.
+      - key: MOCK_WEBHOOK_SECRET
+        generateValue: true
+
+      # ---- the two statements that make this a preview -------------------
+      # PAYMENT_PROVIDER alone is NOT enough to select the mock under a
+      # production build. That is the variable a misconfigured deployment gets
+      # wrong, so taking fake money requires a second, deliberate sentence.
+      - key: PAYMENT_PROVIDER
+        value: mock
+      - key: ALLOW_MOCK_PAYMENTS
+        value: "yes"
+
+      # No SMS provider is chosen for Niger yet, so PHONE verification codes are
+      # written to this service's log and delivered nowhere. Anyone who can
+      # read the log can sign in as any preview account — which is exactly why
+      # ConsoleSender refuses to run without this being said explicitly.
+      #
+      # Still required even once EMAIL_PROVIDER=brevo sends real email: the two
+      # channels are chosen separately, and the SMS half is still the console.
+      # The day an SMS provider is chosen, this comes out.
+      - key: ALLOW_CONSOLE_SENDER
+        value: "yes"
+
+      # ---- transactional email --------------------------------------------
+      # Brevo. `console` writes codes to the log and is what runs locally and
+      # in CI; an unrecognised value is refused at startup rather than falling
+      # back, because a fallback here means every verification code in
+      # production going to a log file while the deployment looks healthy.
+      - key: EMAIL_PROVIDER
+        value: brevo
+
+      # The API key, from Brevo's Settings > SMTP & API. `sync: false` means
+      # Render asks for it instead of reading it from this file — it must never
+      # be committed. This is the SMTP/API *API key*, not the SMTP relay
+      # password: they are different credentials and only one works here.
+      - key: EMAIL_BREVO_API_KEY
+        sync: false
+
+      # The sender, which must be an address on a domain VERIFIED in Brevo
+      # (SPF, DKIM, DMARC). An unverified sender is the failure that looks
+      # exactly like a broken adapter: the API accepts the call and the mailbox
+      # provider silently files the code as spam.
+      - key: EMAIL_FROM
+        sync: false
+
+      # Display name, 70 characters maximum — Brevo's limit, checked at startup
+      # so a too-long name cannot fail every send at run time instead.
+      - key: EMAIL_FROM_NAME
+        value: Afrinext
+
+      # Optional. Left unset, the replyTo field is omitted from the request
+      # entirely rather than sent empty, which Brevo would refuse.
+      - key: EMAIL_REPLY_TO
+        sync: false
+
+      # Every account created here is granted the `seller` role at signup, so a
+      # test account can open a shop without an operator running SQL.
+      #
+      # It is a GRANT, not a bypass: a real role_assignments row, revocable like
+      # any other, and `authorize()` is not involved. The `seller` role holds
+      # exactly one permission, `store.create` — no moderation, no admin, no
+      # money — and per-store ownership is still granted by createStore to the
+      # person who opened the store. Seller terms are still required.
+      #
+      # In production this would hand a shop to anybody who can receive an SMS.
+      # It belongs to this preview service and nowhere else. See
+      # packages/core/src/auth/preview-sellers.ts.
+      - key: ALLOW_PREVIEW_SELLERS
+        value: "yes"
+
+      # ---- application ---------------------------------------------------
+      # Must be the service's own public HTTPS URL, and it is not knowable
+      # until Render has created the service. `sync: false` means Render asks
+      # for it instead of assuming; set it after the first deploy and redeploy.
+      #
+      # This is not cosmetic. It becomes Better Auth's `baseURL`, and Better
+      # Auth refuses any request whose Origin does not match it. Until it is
+      # right, every email sign-in and every signup is rejected with
+      # INVALID_ORIGIN before the handler runs — the phone flow keeps working,
+      # because it goes through Afrinext's own endpoints, which is exactly what
+      # makes the breakage look partial and confusing.
+      - key: APP_URL
+        sync: false
+
+      # ---- digital content ------------------------------------------------
+      # Object storage, Cloudflare R2. Local disk is no longer an option here:
+      # a file uploaded by one instance is not on another's disk, so the
+      # download fails depending on which machine answered — and this service
+      # is meant to be able to run more than one.
+      #
+      # `ALLOW_LOCAL_CONTENT_STORAGE` is deliberately ABSENT. Without it a
+      # production build refuses filesystem storage outright, so there is no
+      # path from a broken bucket configuration back to a disk.
+      #
+      # THIS SERVICE WILL NOT START until the three `sync: false` values below
+      # are set in the Render dashboard. That is the intended behaviour: a
+      # deployment that cannot reach its bucket must fail loudly at startup
+      # rather than serve a storefront that loses files days later.
+      # See docs/providers/r2/README.md.
+      - key: CONTENT_STORAGE
+        value: s3
+      - key: CONTENT_S3_REGION
+        # R2 has no AWS-style regions. The signature carries this literal.
+        value: auto
+      - key: CONTENT_S3_FORCE_PATH_STYLE
+        # Bucket in the path, not the hostname. R2 supports both; this is the
+        # form every S3-compatible provider accepts.
+        value: "yes"
+
+      # https://<ACCOUNT_ID>.r2.cloudflarestorage.com — account-scoped, no
+      # bucket in the host. Not a credential, but not published either.
+      - key: CONTENT_S3_ENDPOINT
+        sync: false
+      # One bucket per environment, never shared. Not a credential — useless
+      # without a token — and pinned here rather than typed into a dashboard so
+      # that which bucket this service writes to is reviewable in the diff.
+      - key: CONTENT_S3_BUCKET
+        value: afrinext-content-preview
+      # ---- the two actual credentials -------------------------------------
+      # An R2 API token, permission "Object Read & Write", SCOPED TO THIS
+      # BUCKET ONLY. Set in Render → Environment and rotated there. A value
+      # written into this file would be committed, pushed, and readable in git
+      # history forever, including after the line is deleted.
+      - key: CONTENT_S3_ACCESS_KEY_ID
+        sync: false
+      - key: CONTENT_S3_SECRET_ACCESS_KEY
+        sync: false
+
+      - key: LOG_LEVEL
+        value: info
+
+      - key: NODE_VERSION
+        value: "22"
