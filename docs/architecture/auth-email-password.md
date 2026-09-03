@@ -710,3 +710,115 @@ waits the cooldown out and resends for real.
 No migration. No provider connected. No limit relaxed. No Origin or CSRF
 protection touched. `APP_URL` unchanged. Ledger, wallets, payments, iPayMoney
 and referral untouched.
+
+---
+
+## 19. Brevo, and the interface split it forced
+
+### 19.1 Where the contract came from
+
+`developers.brevo.com` **and** `api.brevo.com` are both blocked by this
+environment's egress proxy (`CONNECT … 403`, verified). So the endpoint, the
+header name, every body field and the retry semantics were read out of Brevo's
+own published PHP SDK — `github.com/getbrevo/brevo-php`, SDK **5.0.2**, commit
+`1b371f9` — code Brevo generates from its own specification:
+
+| Fact | File in the SDK |
+| --- | --- |
+| `https://api.brevo.com/v3` | `src/Environments.php` |
+| `POST smtp/email` | `src/TransactionalEmails/TransactionalEmailsClient.php` |
+| header `api-key` | `src/Brevo.php` |
+| `sender`, `to`, `subject`, `textContent`, `htmlContent`, `replyTo`, `headers` | `…/Requests/SendTransacEmailRequest.php` |
+| `messageId`, `messageIds` | `…/Types/SendTransacEmailResponse.php` |
+| `{ code?, message }` | `src/Types/ErrorModel.php` |
+| retries on 408/429/5xx; **no default timeout** | `README.md` |
+
+A web search suggested `/v3/smtp/emails` for sending. It is not: that path is
+the **GET** that lists sent mail. Reading the source is what settled it, and it
+is exactly the ambiguity that guessing would have shipped.
+
+**What the SDK does not state is not guessed here.** The exact success status is
+not asserted — the SDK treats 2xx and 3xx alike, and so does the adapter — and
+neither is the body of a 401. **No request has ever been sent to Brevo from
+this codebase.**
+
+### 19.2 The interface splits by channel
+
+`MessageSender` carried `sendSms` and `sendEmail`, and one instance served both
+the email flow and — through `createAuth` — the **phone OTP flow, which is the
+launch path in Niger.** A single Brevo sender would have had to answer for
+`sendSms`, and the only honest answer is a throw, which takes phone sign-in
+down in production.
+
+```
+EmailSender { sendEmail }        ← BrevoSender, ConsoleSender
+SmsSender   { sendSms }          ← ConsoleSender only; no provider chosen
+MessageSender extends both       ← unchanged for every existing call site
+CompositeSender                  ← pairs them; id "email:brevo/sms:console"
+```
+
+`EmailAuthDeps.sender` narrowed to `EmailSender`: that module has never sent an
+SMS, and asking for the ability would be asking for something it must not use.
+
+### 19.3 Decisions inside the adapter
+
+- **The timeout is required, not optional.** The SDK configures none and says
+  so; an unbounded call sits inside the signup path holding somebody on a
+  spinner for as long as the socket stays open. Default 10 s.
+- **The 70-character sender name is checked at construction.** The limit is
+  Brevo's. Discovering it at send time means every code silently failing, for
+  every account, until somebody reads a log — so it stops the process starting.
+- **`Idempotency-Key` carries the challenge id.** `issueChallenge` retires any
+  live code and inserts exactly one row, so one id means one code means one
+  message. A retry after a lost response then delivers one email rather than
+  two working codes minutes apart.
+- **`textContent` and `htmlContent` both.** One line of text either way; the
+  HTML part exists because a multipart message is treated better by spam
+  filters, and a code in a spam folder is indistinguishable from one never sent.
+- **Nothing sensitive leaves.** The thing being sent IS a secret. The error
+  message is fixed text; only Brevo's `code` and `message` are read from a
+  failure, so an unexpected field cannot smuggle anything into a log; the
+  address is masked; and a transport failure is reduced to its error *name*
+  before it is written, because a fetch failure can carry the request and the
+  request carries the code.
+
+### 19.4 Verified locally, in the production configuration
+
+`NODE_ENV=production`, `EMAIL_PROVIDER=brevo`, a placeholder key, one process:
+
+```
+{"level":"error","msg":"brevo refused the message","component":"auth.email.brevo",
+ "status":403,"brevoCode":null,"brevoMessage":null,"to":"b*********@example.com"}
+
+[ConsoleSender] NOT DELIVERED — would send to +22795835464: Afrinext: 944867
+```
+
+The first line is the adapter meeting the egress proxy's 403 and handling a
+non-JSON error body without inventing one. The second is **the phone channel
+still working in the same process** — the whole reason the interface split.
+
+Grepped over the entire log: the API key appears **0** times, the full address
+**0** times, and no verification code at all.
+
+The screen answers `400 email.delivery_failed` with the fixed message. The
+challenge row survives, deliberately: a failure after the bytes left the
+process is not proof that nothing was delivered — the same reasoning the refund
+policy applies to money — so the code stays valid and the neutral wording from
+§18.3 stays true either way.
+
+### 19.5 Results
+
+| Suite | Result |
+| --- | --- |
+| `packages/core` | **41 files, 778 passed, 20 skipped** (31 new) |
+| `pnpm test:e2e` | **57 passed** — phone sign-in unaffected |
+| lint / typecheck / build | clean |
+
+No migration. No real credential in the repository — the only `xkeysib-` strings
+are the test server's fixed placeholder and the wrong-key case.
+
+### 19.6 What only a real account can prove
+
+The success status code, the 401 body, the account's rate limits, and what
+happens when the sender's domain is not verified. None of it is reachable from
+here, and none of it is asserted.
