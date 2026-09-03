@@ -1,6 +1,9 @@
 # Email + password authentication, and the programme choice
 
-**Status: PROPOSAL. Nothing is implemented. Awaiting validation.**
+**Status: VALIDATED AND IMPLEMENTED.** Sections 1–16 are the proposal as it was
+approved and are left as written, so a reviewer can compare what was proposed
+against what was built. **Section 17, at the end, records what was actually
+built and the two places the proposal was wrong about Better Auth.**
 
 This document audits what authentication is today, states what breaks if we
 change it naively, and proposes a migration. It is written to be argued with:
@@ -469,3 +472,112 @@ Steps 1–5 are domain and touch no screen. Steps 6–10 touch only auth screens
 2. **Referral programme** — confirm it is a separate milestone.
 3. **Email provider** — which one, or proceed with console-only and add the
    adapter later?
+
+---
+
+## 17. Implementation record
+
+Written after the code, from the code. Where this section and an earlier one
+disagree, this one is what runs.
+
+### 17.1 What shipped
+
+| Layer | Files |
+| --- | --- |
+| Migration | `packages/db/migrations/0016_email_password_auth.sql` |
+| Schema | `packages/db/src/schema/identity.ts` (`users.programme`, `programme_subscriptions`, widened `otp_purpose_valid`) |
+| Domain — codes | `packages/core/src/auth/email-identity.ts` |
+| Domain — programmes | `packages/core/src/programme/index.ts` |
+| Limits | `packages/core/src/ratelimit/index.ts` (`perEmailPerHour`, `emailSendRules`) |
+| Routes | `apps/web/src/app/api/v1/auth/{email/verify,password/forgot,password/reset,programme}/route.ts` |
+| Route helpers | `apps/web/src/lib/email-auth.ts` |
+| Screens | `sign-up`, `sign-in`, `password-reset`, `verify-email`, `programme` |
+| Components | `SignUpForm`, `SignInForm`, `PasswordResetForm`, `VerifyEmailForm`, `ProgrammeChoice`, `ProgrammeSettings`, `EmailVerificationBanner`, `SignOutButton` |
+
+The migration is additive only. No existing row is rewritten, no account is
+deleted, no synthetic `@phone.afrinext.local` address becomes a real one, and
+no session is revoked by the change itself.
+
+### 17.2 Two things the proposal got wrong about Better Auth
+
+Both were found by writing the integration test against the real instance
+rather than against my reading of the configuration, and both would have
+shipped a broken signup.
+
+**Signup does not sign anybody in.** `emailAndPassword.autoSignIn` is `false`,
+deliberately — consent has not been given at that point, so a session issued by
+signup would be a session for an account that resolves to no actor. The
+proposal's flow assumed a session existed after `signUp.email` and had the
+screen call the programme endpoint next; that call would have answered 401, and
+so would the consent fetch after it. The screen now signs in explicitly.
+
+**A duplicate address does not raise an error.** `signUpEmail` on an address
+that already exists returns a *success* shape — a user object with
+`token: null` — and creates nothing. A caller reading "no error" as "account
+created" sails straight past it. The screen now tells the two cases apart the
+only way available from outside: it tries the credentials, and reports the
+address as taken when they do not work. `email-password.test.ts` pins that the
+row count stays at one, that no session is issued, and that the original
+password is not overwritten by the second attempt.
+
+### 17.3 Decisions taken during implementation
+
+**Issuance limits are policy, not literals.** The first draft carried
+`limit: 5` inline. That is the defect review decision 7 already ruled on for
+SMS, so the email rules moved into `ratelimit` as `emailSendRules()` reading a
+new `perEmailPerHour` field on the stored OTP policy. Changing a limit stays an
+`UPDATE`, not a deploy. The field is separate from `perPhonePerHour` because an
+SMS costs money per send and an email spends the sending domain's reputation —
+same order of magnitude, different reason to move.
+
+**The limit is consumed before the address is judged.** Limiting only real,
+reachable addresses would make the limiter the oracle that the identical
+answers exist to close: an attacker learns which addresses exist by seeing
+which ones eventually answer 429. Unparseable and synthetic addresses burn
+budget too.
+
+**There is no `activateSubscription()`.** `active` is declared in the state
+machine and is unreachable from application code. No payment provider is
+implemented — iPayMoney is confirmed and its adapter throws rather than
+pretending — so anything that could set `active` today would set it because a
+button was pressed. `programme.test.ts` asserts that nothing this milestone
+exposes can reach it, which is the guard against a later change adding one
+quietly.
+
+**`audit.targetId` is `users.id`, never Better Auth's text id.** A log where
+the same person is two different identifiers depending on which module wrote
+the row is a log nobody can follow. `domainUserId()` does that join, and
+returns an empty object rather than dropping the audit entry when the link is
+missing.
+
+### 17.4 Test results
+
+| Suite | Result |
+| --- | --- |
+| `packages/core` (whole suite) | **39 files, 734 passed, 20 skipped, 0 failed** |
+| `email-identity.test.ts` | 26 passed |
+| `programme.test.ts` | 20 passed |
+| `email-password.test.ts` | 16 passed |
+| `packages/i18n` | 14 passed (catalogue parity, placeholders, plurals) |
+| `pnpm lint` | clean, `--max-warnings 0`, all six packages |
+| `pnpm typecheck` / `pnpm build` | clean |
+
+Note for anyone re-running these: the suite truncates the tables it touches, so
+two `vitest` runs against the same `TEST_DATABASE_URL` at once deadlock each
+other and produce failures in `ledger/concurrency`, `content/storage-
+equivalence` and `payments/ipaymoney-replay` that have nothing to do with the
+code. Run one at a time.
+
+### 17.5 What is still missing before production
+
+1. **No email provider.** `ConsoleSender` is what runs, and it refuses
+   `NODE_ENV=production` without `ALLOW_CONSOLE_SENDER=yes`. Verification and
+   reset codes are exercised end to end in development, CI and preview by
+   reading the server log; **they reach no real inbox**. Decision 3 in section
+   13 is still open, and nothing here should be described as "email working"
+   until an adapter exists against a provider's real API.
+2. **No payment for the Entrepreneur programme.** A subscription can only be
+   `pending_payment`. Section 11 stands.
+3. **Existing phone accounts still have no address.** Nothing backfills one,
+   deliberately. Adding one is a screen those people use when they choose to,
+   not a migration.

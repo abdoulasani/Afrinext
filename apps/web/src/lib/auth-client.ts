@@ -17,7 +17,16 @@ import { createAuthClient } from "better-auth/react";
 export const authClient = createAuthClient();
 
 export interface OtpResult {
-  readonly error?: { readonly message?: string | undefined } | null;
+  readonly error?: {
+    readonly message?: string | undefined;
+    /**
+     * Carried so a caller can tell a refusal apart from a refusal.
+     *
+     * A 429 rendered as "wrong password" tells somebody to try harder, which is
+     * the one thing that makes a rate limit worse. The screens branch on this.
+     */
+    readonly status?: number | undefined;
+  } | null;
 }
 
 export async function sendPhoneOtp(phoneNumber: string): Promise<OtpResult> {

@@ -52,8 +52,17 @@ export default function VerifyEmailForm({
         setError(result.code === "auth.otp_invalid" ? labels.otpInvalid : (result.message ?? labels.generic));
         return;
       }
+      /*
+       * Deliberately no `router.refresh()` here.
+       *
+       * This page redirects an already-verified account to the home screen, so
+       * refreshing on success re-runs that server component, it sees the flag
+       * we have just set, and the person is bounced away before they can read
+       * the confirmation — landing on the home screen with no idea whether it
+       * worked. The button below does the navigation, and refreshes then, which
+       * is what clears the banner.
+       */
       setDone(true);
-      router.refresh();
     } catch {
       setError(labels.generic);
     } finally {

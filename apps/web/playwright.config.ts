@@ -153,6 +153,23 @@ const SHARED_ENV =
   `PAYMENT_PROVIDER=mock ALLOW_MOCK_PAYMENTS=yes ` +
   `MOCK_WEBHOOK_SECRET=${MOCK_WEBHOOK_SECRET} `;
 
+/**
+ * `APP_URL`, per server, and it is load-bearing rather than cosmetic.
+ *
+ * It becomes Better Auth's `baseURL`, and Better Auth refuses any request whose
+ * Origin header does not match it — `{"code":"INVALID_ORIGIN"}`, before the
+ * handler runs. Without this every server here answered on 127.0.0.1:31xx while
+ * claiming to be localhost:3000, so `signUp.email` and `signIn.email` were
+ * rejected outright.
+ *
+ * Nothing caught it until this suite exercised them, because the phone flow
+ * goes through Afrinext's own plugin endpoints and never met that check. The
+ * same misconfiguration in production refuses every email sign-in, which is why
+ * `render.yaml` now says so in those words rather than "links point at
+ * localhost".
+ */
+const appUrl = (port: number): string => `APP_URL=http://127.0.0.1:${port} `;
+
 export default defineConfig({
   testDir: "./e2e",
   // Raises only the per-IP OTP ceiling for the test database, because every
@@ -192,7 +209,7 @@ export default defineConfig({
        * single server was deliberate. This suite IS a single server, and says so.
        */
       command:
-        `mkdir -p .e2e && rm -f ${SERVER_LOG} && ` + SHARED_ENV +
+        `mkdir -p .e2e && rm -f ${SERVER_LOG} && ` + SHARED_ENV + appUrl(PORT) +
         `ALLOW_LOCAL_CONTENT_STORAGE=yes CONTENT_STORAGE_DIR=.e2e/content ` +
         `pnpm exec next start -p ${PORT} > ${SERVER_LOG} 2>&1`,
       url: BASE_URL,
@@ -212,7 +229,7 @@ export default defineConfig({
     {
       // Instance A of the object-storage pair. No disk is configured for it at
       // all, so anything it serves came out of the bucket.
-      command: `mkdir -p .e2e && rm -f .e2e/server-s3-a.log && ` + SHARED_ENV + S3_ENV +
+      command: `mkdir -p .e2e && rm -f .e2e/server-s3-a.log && ` + SHARED_ENV + S3_ENV + appUrl(PORT_A) +
         `pnpm exec next start -p ${PORT_A} > .e2e/server-s3-a.log 2>&1`,
       url: BASE_URL_A,
       reuseExistingServer: false,
@@ -225,7 +242,7 @@ export default defineConfig({
     {
       // Instance B. A different process, on a different port, sharing only the
       // database and the bucket.
-      command: `mkdir -p .e2e && rm -f .e2e/server-s3-b.log && ` + SHARED_ENV + S3_ENV +
+      command: `mkdir -p .e2e && rm -f .e2e/server-s3-b.log && ` + SHARED_ENV + S3_ENV + appUrl(PORT_B) +
         `pnpm exec next start -p ${PORT_B} > .e2e/server-s3-b.log 2>&1`,
       url: BASE_URL_B,
       reuseExistingServer: false,

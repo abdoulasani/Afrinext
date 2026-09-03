@@ -133,7 +133,8 @@ test.describe("signing up with an email address", () => {
     )).toBe("0");
     expect(sqlOne(`select count(*) from orders where buyer_user_id = '${userId}'::uuid`)).toBe("0");
     expect(sqlOne(
-      `select count(*) from ledger_accounts where owner_user_id = '${userId}'::uuid`,
+      `select count(*) from ledger_accounts
+        where owner_type = 'user' and owner_id = '${userId}'::uuid`,
     )).toBe("0");
   });
 
@@ -157,12 +158,20 @@ test.describe("signing up with an email address", () => {
 
   test("verifying changes the flag and nothing else", async ({ page }) => {
     const email = freshEmail();
+    /*
+     * Marked BEFORE signing up, because that is when the code is sent.
+     *
+     * Signup fires the verification itself — the point of it being a banner
+     * rather than a step — so a mark taken afterwards starts reading the log
+     * past the only line that carries the code, and the resend button would
+     * meet the one-a-minute cooldown rather than issue a second one.
+     */
+    const before = logLength();
     const userId = await signUp(page, email);
     const rolesBefore = sqlOne(
       `select count(*) from role_assignments where user_id = '${userId}'::uuid`,
     );
 
-    const before = logLength();
     await page.getByTestId("email-verify-link").click();
     await page.waitForURL(/\/verify-email$/);
     await page.locator('input[inputmode="numeric"]').fill(await codeSentTo(email, before));
@@ -245,7 +254,15 @@ test.describe("forgotten password", () => {
     await page.locator('input[type="email"]').fill(email);
     await page.locator('input[type="password"]').fill(PASSWORD);
     await page.locator('button[type="submit"]').click();
-    await expect(page.getByTestId("signin-step-email")).toBeVisible();
+    /*
+     * Wait for the refusal itself, not for the step to still be the step it
+     * already was. `signin-step-email` is visible before the request has even
+     * been sent, so asserting on it passes instantly and the next fill races
+     * the response — which is how this read as "the new password does not
+     * work" when what actually happened was two submits in flight at once.
+     */
+    await expect(page.getByTestId("signin-error"))
+      .toHaveText("Adresse e-mail ou mot de passe incorrect.");
 
     await page.locator('input[type="password"]').fill("a brand new password");
     await page.locator('button[type="submit"]').click();

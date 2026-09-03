@@ -152,7 +152,13 @@ services:
       # Must be the service's own public HTTPS URL, and it is not knowable
       # until Render has created the service. `sync: false` means Render asks
       # for it instead of assuming; set it after the first deploy and redeploy.
-      # Until it is right, Better Auth builds links against localhost.
+      #
+      # This is not cosmetic. It becomes Better Auth's `baseURL`, and Better
+      # Auth refuses any request whose Origin does not match it. Until it is
+      # right, every email sign-in and every signup is rejected with
+      # INVALID_ORIGIN before the handler runs — the phone flow keeps working,
+      # because it goes through Afrinext's own endpoints, which is exactly what
+      # makes the breakage look partial and confusing.
       - key: APP_URL
         sync: false
 

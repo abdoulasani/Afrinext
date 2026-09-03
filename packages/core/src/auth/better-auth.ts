@@ -191,6 +191,28 @@ export function createAuth(deps: AuthDeps) {
       customRules: {
         "/phone-otp/send": async () => ({ window: 60, max: (await policy()).perIpPerHour * 2 }),
         "/phone-otp/verify": async () => ({ window: 60, max: (await policy()).perIpPerHour * 2 }),
+        /*
+         * The credential endpoints, for the reason the verify rule already
+         * records rather than a new one.
+         *
+         * Better Auth's defaults for these are a small fixed number per IP in a
+         * short window — three in ten seconds — and that is precisely the shape
+         * the phone rules were changed to avoid: a literal cap that pre-empts
+         * the configured policy and refuses legitimate traffic from one
+         * address. Carrier NAT in Niamey is many distinct people behind one IP,
+         * and a cybercafé signing four people up in a minute is not an attack.
+         *
+         * So these are derived from the same stored policy and sit above it,
+         * as a flood backstop only. Guessing is bounded elsewhere and properly:
+         * the password itself is scrypt at N=65536, which makes a fast online
+         * guessing loop a CPU bill rather than a threat.
+         *
+         * The browser suite is what found this. Eight signups from 127.0.0.1
+         * met the fixed default partway through, which is the same lesson the
+         * per-IP OTP limit taught, arriving in our own tests first.
+         */
+        "/sign-up/email": async () => ({ window: 60, max: (await policy()).perIpPerHour * 2 }),
+        "/sign-in/email": async () => ({ window: 60, max: (await policy()).perIpPerHour * 2 }),
       },
     },
 

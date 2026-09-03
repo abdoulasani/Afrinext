@@ -103,7 +103,14 @@ export default function SignUpForm({
        */
       const session = await signInWithEmail({ email, password });
       if (session.error) {
-        setError(labels.addressTaken);
+        // A 429 here means the server asked us to wait, not that the address is
+        // taken. Saying "taken" would send somebody to recover an account that
+        // does not exist.
+        setError(
+          session.error.status === 429
+            ? (session.error.message ?? labels.generic)
+            : labels.addressTaken,
+        );
         return;
       }
 

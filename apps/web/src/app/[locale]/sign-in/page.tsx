@@ -30,6 +30,7 @@ export default async function SignInPage({
           password: translate(locale, "auth.passwordLabel"),
           signIn: translate(locale, "auth.signIn"),
           invalidCredentials: translate(locale, "auth.invalidCredentials"),
+          tooManyRequests: translate(locale, "auth.tooManyRequests", { minutes: 1 }),
           forgotPassword: translate(locale, "auth.forgotPassword"),
           usePhone: translate(locale, "auth.usePhone"),
           useEmail: translate(locale, "auth.useEmail"),

@@ -20,6 +20,7 @@ type Labels = {
   password: string;
   signIn: string;
   invalidCredentials: string;
+  tooManyRequests: string;
   forgotPassword: string;
   usePhone: string;
   useEmail: string;
@@ -69,8 +70,16 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
          * One message for a wrong password and for an address with no account.
          * Better Auth already answers both the same way; this keeps the screen
          * from re-introducing the difference in the words it shows.
+         *
+         * A rate limit is NOT one of those two and must not be dressed as one:
+         * telling somebody their password is wrong when the server is asking
+         * them to wait sends them to change a password that was correct.
          */
-        setError(labels.invalidCredentials);
+        setError(
+          result.error.status === 429
+            ? (result.error.message ?? labels.tooManyRequests)
+            : labels.invalidCredentials,
+        );
         return;
       }
       await afterSession();
@@ -188,6 +197,7 @@ export default function SignInForm({ locale, labels }: { locale: string; labels:
       {error !== null && (
         <p
           role="alert"
+          data-testid="signin-error"
           className="rounded-[var(--radius-md)] border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3.5 py-2.5 text-small font-medium text-[var(--danger)]"
         >
           {error}
