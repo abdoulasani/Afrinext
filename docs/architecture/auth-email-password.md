@@ -554,11 +554,12 @@ missing.
 
 | Suite | Result |
 | --- | --- |
-| `packages/core` (whole suite) | **39 files, 735 passed, 20 skipped, 0 failed** |
-| `email-identity.test.ts` | 27 passed |
+| `packages/core` (whole suite) | **39 files, 736 passed, 20 skipped, 0 failed** |
+| `email-identity.test.ts` | 28 passed |
 | `programme.test.ts` | 20 passed |
 | `email-password.test.ts` | 16 passed |
 | `packages/i18n` | 14 passed (catalogue parity, placeholders, plurals) |
+| Mutation matrix (19 designed) | **19 caught, 0 escaped** — three survived the first pass and are documented in the review packet |
 | `pnpm lint` | clean, `--max-warnings 0`, all six packages |
 | `e2e/email-auth.spec.ts` | 8 passed |
 | `pnpm test:e2e` (whole browser suite) | **54 passed** |
