@@ -65,6 +65,34 @@ export async function issueChallenge(
   return { challengeId, code: otp.code, expiresAt: otp.expiresAt };
 }
 
+/**
+ * Is there a live, unconsumed code for this identifier and purpose?
+ *
+ * Exists so a screen can say something true. `/verify-email` used to announce
+ * "we sent a code to you" on every render, whether or not anything had been
+ * sent — a claim about an event that happened on another screen, which the
+ * page had no way to know about and could not have been right about after a
+ * refused send. Now it asks.
+ *
+ * Deliberately says nothing about the code: not its value, not its hash, not
+ * how many attempts remain. Only that one is outstanding.
+ */
+export async function hasLiveChallenge(
+  db: Database,
+  input: { readonly kind: "phone" | "email"; readonly identifier: string; readonly purpose: OtpPurpose },
+): Promise<boolean> {
+  const rows = await db.execute(sql`
+    select 1 from otp_challenges
+     where kind = ${input.kind}
+       and identifier = ${input.identifier}
+       and purpose = ${input.purpose}
+       and consumed_at is null
+       and expires_at > now()
+     limit 1
+  `);
+  return rows.rows.length > 0;
+}
+
 export type ConsumeResult =
   | { readonly ok: true; readonly challengeId: string }
   | { readonly ok: false; readonly reason: OtpFailure | "no_challenge" };

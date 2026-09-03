@@ -129,10 +129,32 @@ export async function signOut(): Promise<OtpResult> {
   return { error };
 }
 
+/**
+ * How long the server said to wait, from wherever it said it.
+ *
+ * The body's `retryAfterMs` is the precise figure and the header is the
+ * standard one; both are sent, and a client that reads neither is the reason
+ * "Trop de demandes. Réessayez plus tard." was all anybody ever saw. The body
+ * wins when present because it is milliseconds rather than rounded seconds.
+ */
+function retryAfterMs(
+  response: Response,
+  error: { retryAfterMs?: unknown } | undefined,
+): number | undefined {
+  const fromBody = error?.retryAfterMs;
+  if (typeof fromBody === "number" && Number.isFinite(fromBody) && fromBody > 0) return fromBody;
+
+  const header = response.headers.get("retry-after");
+  if (header === null) return undefined;
+  const seconds = Number(header);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : undefined;
+}
+
 async function postJson(path: string, body?: unknown): Promise<{
   ok: boolean;
   code?: string;
   message?: string;
+  retryAfterMs?: number;
   data?: Record<string, unknown>;
 }> {
   const response = await fetch(path, {
@@ -143,13 +165,16 @@ async function postJson(path: string, body?: unknown): Promise<{
   });
   const payload = (await response.json().catch(() => null)) as {
     data?: Record<string, unknown>;
-    error?: { code?: string; message?: string };
+    error?: { code?: string; message?: string; retryAfterMs?: number };
   } | null;
   if (response.ok) return { ok: true, ...(payload?.data !== undefined ? { data: payload.data } : {}) };
+
+  const wait = retryAfterMs(response, payload?.error);
   return {
     ok: false,
     ...(payload?.error?.code !== undefined ? { code: payload.error.code } : {}),
     ...(payload?.error?.message !== undefined ? { message: payload.error.message } : {}),
+    ...(wait !== undefined ? { retryAfterMs: wait } : {}),
   };
 }
 

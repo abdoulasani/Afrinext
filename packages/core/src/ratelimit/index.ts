@@ -236,12 +236,46 @@ export function emailSendRules(
   purpose: string,
   policy: OtpPolicy = OTP_POLICY,
 ): RateLimitRule[] {
-  const rules: RateLimitRule[] = [
-    { bucket: `email:send:${purpose}:addr:${address}`, limit: policy.perEmailPerHour, windowMs: 3_600_000 },
-    { bucket: `email:cooldown:${purpose}:addr:${address}`, limit: 1, windowMs: policy.cooldownMs },
-  ];
+  /*
+   * The ORDER is the security decision here, not the numbers.
+   *
+   * `consumeAll` counts each rule in turn and stops at the first refusal, and
+   * `consume` counts a request even when it exceeds the limit — deliberately,
+   * so hammering a blocked bucket does not let it drain early. Put together,
+   * whichever rule sits first decides what a refused request costs.
+   *
+   * The first arrangement put the hourly per-address cap first. That made a
+   * refusal from the one-a-minute cooldown ALSO spend one of the five hourly
+   * sends, so somebody who pressed "resend" five times — the natural response
+   * to an email that has not arrived — spent their whole hour without a single
+   * code being issued. Five presses, five refusals, no code, and a 45-minute
+   * wait. That is a limiter punishing the person it was meant to protect.
+   *
+   * So:
+   *
+   *   1. per IP, hourly     — outermost, and it counts EVERY attempt including
+   *                           the ones later rules would refuse. This is the
+   *                           flood gate, and putting it first makes it
+   *                           strictly stronger than before: previously an
+   *                           address-level refusal returned before the IP
+   *                           bucket was ever touched, so a flood against one
+   *                           address cost an attacker nothing per-IP.
+   *   2. cooldown, one per window per address — refuses a too-early resend
+   *                           WITHOUT reaching rule 3.
+   *   3. per address, hourly — reached only by a request that is actually
+   *                           going to issue a code, so the five are five
+   *                           codes rather than five button presses.
+   *
+   * No limit was raised. What changed is which bucket a refused request is
+   * charged to.
+   */
+  const rules: RateLimitRule[] = [];
   if (ipAddress !== undefined && ipAddress !== "") {
     rules.push({ bucket: `email:send:ip:${ipAddress}`, limit: policy.perIpPerHour, windowMs: 3_600_000 });
   }
+  rules.push(
+    { bucket: `email:cooldown:${purpose}:addr:${address}`, limit: 1, windowMs: policy.cooldownMs },
+    { bucket: `email:send:${purpose}:addr:${address}`, limit: policy.perEmailPerHour, windowMs: 3_600_000 },
+  );
   return rules;
 }

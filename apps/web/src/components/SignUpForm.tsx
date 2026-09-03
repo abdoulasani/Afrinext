@@ -123,8 +123,29 @@ export default function SignUpForm({
       const chosen = await chooseProgramme(programme);
       if (!chosen.ok) setError(chosen.message ?? labels.generic);
 
-      // Sent, not waited on. Verification blocks nothing.
-      void requestEmailVerification();
+      /*
+       * Awaited, and its answer kept.
+       *
+       * This was `void requestEmailVerification()` — fire and forget, on the
+       * grounds that verification blocks nothing. Blocking nothing and telling
+       * nobody are different things: a refused or failed send left the person
+       * on a screen that announced a code had been sent, with no code and no
+       * way to know why. Verification still blocks nothing — the account is
+       * created, the dashboard is reachable, and a failure here is not a
+       * failure of signup — but the outcome is now a fact somebody can act on
+       * rather than a promise nobody checked.
+       *
+       * The verification screen reads the real state from the server, so there
+       * is nothing to carry across: a send that did not happen simply leaves no
+       * pending code, and that screen says so and offers the button.
+       */
+      const verification = await requestEmailVerification();
+      if (!verification.ok) {
+        // Not an error the person must fix, and not a reason to hold up the
+        // account. Recorded for the console so a preview run shows it, and
+        // audited server-side either way.
+        console.warn("[afrinext] initial verification code not sent", verification.code ?? "");
+      }
 
       const consent = await fetch("/api/v1/consent/account", {
         credentials: "same-origin",

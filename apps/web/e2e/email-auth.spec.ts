@@ -156,6 +156,117 @@ test.describe("signing up with an email address", () => {
     expect(sqlOne(`select status from users where id = '${userId}'::uuid`)).toBe("active");
   });
 
+  test("opening the verification screen sends nothing and claims nothing", async ({ page }) => {
+    const email = freshEmail();
+    const before = logLength();
+    await signUp(page, email);
+
+    /*
+     * Every request the page makes on load, recorded. The screen must not send
+     * a code just because somebody looked at it: an automatic send here spends
+     * one of the five an hour every time the screen is re-read, and the
+     * cooldown then refuses the resend they actually meant to make.
+     */
+    const calls: string[] = [];
+    page.on("request", (r) => {
+      if (new URL(r.url()).pathname === "/api/v1/auth/email/verify") calls.push(r.method());
+    });
+
+    await page.getByTestId("email-verify-link").click();
+    await page.waitForURL(/verify-email$/);
+    await expect(page.getByTestId("verify-email-form")).toBeVisible();
+    await page.waitForTimeout(1500);
+
+    expect(calls, "the page must not send on load").toEqual([]);
+
+    // And it does not announce a send. It names the address and asks for the
+    // code; the claim that one was sent belongs to the server's own state.
+    const intro = await page.getByTestId("verify-intro").textContent();
+    expect(intro).not.toContain("Nous avons envoyé");
+    expect(intro).toContain(email);
+
+    // Signup did issue one, so the screen reports a code as pending.
+    await expect(page.getByTestId("verify-email-form")).toHaveAttribute("data-pending", "true");
+    await expect(page.getByTestId("verify-no-pending")).toHaveCount(0);
+    expect(await codeSentTo(email, before)).toMatch(/^\d{6}$/);
+  });
+
+  test("says so plainly when no code is pending", async ({ page }) => {
+    const email = freshEmail();
+    await signUp(page, email);
+
+    /*
+     * The state signup's send would leave behind if it had failed, reproduced
+     * by consuming the challenge out from under the screen. Before this the
+     * page still opened with "we sent you a code", which is the sentence that
+     * sent somebody hunting through their inbox for an email that was never
+     * going to be there.
+     */
+    sqlOne(`update otp_challenges set consumed_at = now()
+             where identifier = '${email}' and purpose = 'email_verification'`);
+
+    await page.goto("/fr/verify-email");
+    await expect(page.getByTestId("verify-no-pending")).toBeVisible();
+    await expect(page.getByTestId("verify-email-form")).toHaveAttribute("data-pending", "false");
+    // The way out is the button, which is enabled and is the only thing that sends.
+    await expect(page.getByTestId("verify-resend")).toBeEnabled();
+  });
+
+  test("a resend refused by the cooldown says how long, and lets you through after", async ({ page }) => {
+    /*
+     * The real journey, at the real limits.
+     *
+     * `globalSetup` raises only the per-IP ceiling, because every browser test
+     * comes from 127.0.0.1. The cooldown and the hourly per-address cap here
+     * are the reviewed production numbers, and the point of this test is that
+     * somebody who does the obvious thing — press "resend" the moment the
+     * screen appears — is told what to do rather than locked out of their hour.
+     */
+    test.setTimeout(180_000);
+    const email = freshEmail();
+    await signUp(page, email);
+    await page.goto("/fr/verify-email");
+
+    await page.getByTestId("verify-resend").click();
+
+    // Refused, with a countdown rather than "réessayez plus tard".
+    await expect(page.getByTestId("verify-cooldown")).toBeVisible();
+    const message = await page.getByTestId("verify-cooldown").textContent();
+    expect(message).toMatch(/Réessayez dans \d+ seconde/);
+    await expect(page.getByTestId("verify-resend")).toBeDisabled();
+
+    const waitSeconds = Number(/(\d+)/.exec(message ?? "")?.[1] ?? "60");
+    expect(waitSeconds).toBeGreaterThan(0);
+    expect(waitSeconds, "the wait is the cooldown, not the rest of the hour")
+      .toBeLessThanOrEqual(60);
+
+    /*
+     * Four more presses would have been enough, before the reorder, to spend
+     * the whole hour on refusals. They cannot be pressed at all now, which is
+     * the fix working at the level a person meets it.
+     */
+    const hourlyBucket =
+      `email:send:email_verification:addr:${email}`;
+    expect(sqlOne(
+      `select coalesce(sum(count), 0) from rate_limit_counters where bucket = '${hourlyBucket}'`,
+    ), "one code issued, one credit spent").toBe("1");
+
+    // Wait the cooldown out, and the button comes back on its own.
+    await expect(page.getByTestId("verify-resend"))
+      .toBeEnabled({ timeout: (waitSeconds + 10) * 1000 });
+    await expect(page.getByTestId("verify-cooldown")).toHaveCount(0);
+
+    const before = logLength();
+    await page.getByTestId("verify-resend").click();
+    await expect(page.getByTestId("verify-sent")).toBeVisible();
+
+    // A second real code, and a second credit — the hour is spent on codes.
+    expect(await codeSentTo(email, before)).toMatch(/^\d{6}$/);
+    expect(sqlOne(
+      `select coalesce(sum(count), 0) from rate_limit_counters where bucket = '${hourlyBucket}'`,
+    )).toBe("2");
+  });
+
   test("verifying changes the flag and nothing else", async ({ page }) => {
     const email = freshEmail();
     /*

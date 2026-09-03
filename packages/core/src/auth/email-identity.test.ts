@@ -1,14 +1,14 @@
 import { sql } from "drizzle-orm";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@afrinext/db";
 import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
 import { OTP_POLICY, OTP_POLICY_SETTING_KEY } from "../ratelimit";
 import { deriveOtpKey } from "./otp";
-import { issueChallenge } from "./otp-store";
+import { hasLiveChallenge, issueChallenge } from "./otp-store";
 import { ConsoleSender } from "./messaging";
 import { hashPassword, verifyPassword } from "./password";
 import {
-  MIN_PASSWORD_LENGTH, SYNTHETIC_EMAIL_DOMAIN,
+  MIN_PASSWORD_LENGTH, SYNTHETIC_EMAIL_DOMAIN, maskEmail,
   confirmEmailVerification, isReachableEmail, isSyntheticEmail,
   requestEmailVerification, requestPasswordReset, resetPassword,
   type EmailAuthDeps,
@@ -96,6 +96,30 @@ async function isVerified(email: string): Promise<boolean> {
     select "emailVerified" as v from "user" where lower(email) = ${email.toLowerCase()}
   `);
   return rows.rows[0]?.v === true;
+}
+
+/**
+ * Captures what the structured logger actually writes.
+ *
+ * The module's logger is built at import time with the default sink, so there
+ * is no seam to inject one through — and that is fine: what needs proving is
+ * that the line reaches stdout, which is what Render shows. Spying on the
+ * write is closer to the thing under test than a fake sink would be.
+ */
+function captureStdout(): { lines: string[]; stop: () => void } {
+  const lines: string[] = [];
+  const spy = vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
+    lines.push(String(chunk));
+    return true;
+  });
+  return { lines, stop: () => { spy.mockRestore(); } };
+}
+
+async function auditRows(action: string): Promise<Record<string, unknown>[]> {
+  const rows = await db.execute<{ context: Record<string, unknown> }>(sql`
+    select context from audit_logs where action = ${action} order by occurred_at
+  `);
+  return rows.rows.map((r) => r.context);
 }
 
 async function auditActions(): Promise<string[]> {
@@ -596,5 +620,228 @@ describe("password reset", () => {
 
     expect(await confirmEmailVerification(db, deps, { email, code: verificationCode }))
       .toEqual({ ok: true, email });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A refusal has to be observable, or a rate limit looks like a broken sender
+// ---------------------------------------------------------------------------
+
+describe("a refused issuance is observable", () => {
+  let capture: { lines: string[]; stop: () => void } | undefined;
+
+  afterEach(() => {
+    capture?.stop();
+    capture = undefined;
+  });
+
+  it("writes a structured log line carrying the reason, the counters and the wait", async () => {
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    // First send: allowed. Second, inside the cooldown: refused.
+    await requestEmailVerification(db, deps, { email });
+
+    capture = captureStdout();
+    const refused = await requestEmailVerification(db, deps, { email });
+    capture.stop();
+    expect(refused.outcome).toBe("rate_limited");
+
+    const entry = capture.lines
+      .map((l) => JSON.parse(l) as Record<string, unknown>)
+      .find((l) => l["msg"] === "email code not issued");
+
+    expect(entry, "a refusal must reach stdout").toBeDefined();
+    expect(entry).toMatchObject({
+      level: "warn",
+      component: "auth.email",
+      reason: "rate_limited",
+      channel: "email",
+      purpose: "email_verification",
+    });
+    expect(typeof entry?.["used"]).toBe("number");
+    expect(typeof entry?.["limit"]).toBe("number");
+    expect(entry?.["retryAfterMs"]).toBeGreaterThan(0);
+  });
+
+  it("writes an audit row for the refusal", async () => {
+    const email = "aicha@example.com";
+    const { userId } = await createEmailAccount(email);
+    await requestEmailVerification(db, deps, { email, userId });
+    await requestEmailVerification(db, deps, { email, userId });
+
+    const contexts = await auditRows("auth.email.rate_limited");
+    expect(contexts).toHaveLength(1);
+    expect(contexts[0]).toMatchObject({
+      reason: "rate_limited",
+      channel: "email",
+      purpose: "email_verification",
+    });
+
+    const rows = await db.execute<{ target_id: string | null }>(sql`
+      select target_id from audit_logs where action = 'auth.email.rate_limited'
+    `);
+    expect(rows.rows[0]?.target_id).toBe(userId);
+  });
+
+  it("puts neither the code nor the whole address into the log or the audit", async () => {
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    await requestEmailVerification(db, deps, { email });
+    const code = codeTo(email);
+
+    capture = captureStdout();
+    await requestEmailVerification(db, deps, { email });
+    capture.stop();
+
+    const logged = capture.lines.join("\n");
+    const audited = JSON.stringify(await auditRows("auth.email.rate_limited"));
+
+    for (const [where, text] of [["log", logged], ["audit", audited]] as const) {
+      expect(text, `the ${where} must not carry the code`).not.toContain(code);
+      /*
+       * A log line is a copy of the data with different access rules and a
+       * different retention. "aicha@example.com asked for a code at 07:04" is
+       * a fact about a person that operations does not need; the domain is
+       * kept because it says whether one mail provider is being hammered.
+       */
+      expect(text, `the ${where} must not carry the whole address`).not.toContain(email);
+      expect(text, `the ${where} should keep the domain`).toContain("example.com");
+      expect(text).toContain("a****@example.com");
+    }
+  });
+
+  it("masks an address without inventing one that could be read back", () => {
+    expect(maskEmail("aicha@example.com")).toBe("a****@example.com");
+    expect(maskEmail("a@example.com")).toBe("a*@example.com");
+    // No local part to mask, and nothing that looks like an address either.
+    expect(maskEmail("@example.com")).toBe("***");
+    expect(maskEmail("not-an-address")).toBe("***");
+    // The length is preserved, which is what makes a line recognisable to its
+    // owner; the characters are not, which is what makes it useless to anybody
+    // else.
+    expect(maskEmail("aicha.abdou@yahoo.fr")).toBe("a**********@yahoo.fr");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// What a refused request is charged to
+// ---------------------------------------------------------------------------
+
+describe("a cooldown refusal does not spend the hourly allowance", () => {
+  it("leaves the hour intact however many times the button is pressed", async () => {
+    /*
+     * The defect this exists to stop, exactly as it behaved.
+     *
+     * Somebody whose email has not arrived presses "resend". The cooldown
+     * refuses them — correctly. But with the hourly cap consumed FIRST, that
+     * refusal also spent one of their five sends, so five presses inside a
+     * minute burned the whole hour without a single code being issued, and the
+     * screen then told them to wait forty-five minutes.
+     */
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+
+    // One real send. This is the only one that should cost an hourly credit.
+    expect(await requestEmailVerification(db, deps, { email })).toEqual({ outcome: "sent" });
+
+    for (let press = 1; press <= 8; press += 1) {
+      const refused = await requestEmailVerification(db, deps, { email });
+      expect(refused.outcome, `press ${press}`).toBe("rate_limited");
+      if (refused.outcome === "rate_limited") {
+        /*
+         * The wait stays the cooldown's, seconds rather than the rest of the
+         * hour. Before the reorder, press 5 answered with 45 minutes.
+         */
+        expect(refused.retryAfterMs, `press ${press} wait`)
+          .toBeLessThanOrEqual(OTP_POLICY.cooldownMs);
+      }
+    }
+
+    const hourly = await db.execute<{ count: number }>(sql`
+      select count from rate_limit_counters
+       where bucket like 'email:send:email_verification:addr:%'
+    `);
+    expect(Number(hourly.rows[0]?.count ?? 0), "nine presses, one code issued").toBe(1);
+  });
+
+  it("still lets the hourly ceiling bind once the cooldown is out of the way", async () => {
+    // The reorder must not weaken the cap it moved behind. With the cooldown
+    // relaxed, the fifth send is still the last one of the hour.
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    const policy = { ...OTP_POLICY, cooldownMs: 1 };
+    const scoped: EmailAuthDeps = { ...deps, policy };
+
+    for (let i = 0; i < policy.perEmailPerHour; i += 1) {
+      expect((await requestEmailVerification(db, scoped, { email })).outcome, `send ${i + 1}`)
+        .toBe("sent");
+    }
+    expect((await requestEmailVerification(db, scoped, { email })).outcome).toBe("rate_limited");
+  });
+
+  it("still charges every attempt to the IP, including the refused ones", async () => {
+    /*
+     * The other half of the reorder, and the reason the IP rule went first
+     * rather than last. Previously an address-level refusal returned before the
+     * IP bucket was ever touched, so flooding one address from one connection
+     * cost an attacker nothing per-IP. Now every attempt is counted there.
+     */
+    const withIp: EmailAuthDeps = { ...deps, ipAddress: "10.9.9.9" };
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+
+    await requestEmailVerification(db, withIp, { email });
+    for (let i = 0; i < 4; i += 1) await requestEmailVerification(db, withIp, { email });
+
+    const ip = await db.execute<{ count: number }>(sql`
+      select count from rate_limit_counters where bucket = 'email:send:ip:10.9.9.9'
+    `);
+    expect(Number(ip.rows[0]?.count ?? 0), "five attempts, five IP tokens").toBe(5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// What the verification screen is allowed to claim
+// ---------------------------------------------------------------------------
+
+describe("hasLiveChallenge", () => {
+  const pending = (email: string): Promise<boolean> =>
+    hasLiveChallenge(db, { kind: "email", identifier: email, purpose: "email_verification" });
+
+  it("is false before anything is issued", async () => {
+    expect(await pending("aicha@example.com")).toBe(false);
+  });
+
+  it("is true while a code is outstanding, and false once it is used", async () => {
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    await requestEmailVerification(db, deps, { email });
+    expect(await pending(email)).toBe(true);
+
+    await confirmEmailVerification(db, deps, { email, code: codeTo(email) });
+    expect(await pending(email)).toBe(false);
+  });
+
+  it("is false once the code has expired", async () => {
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    await requestEmailVerification(db, deps, { email });
+    await db.execute(sql`
+      update otp_challenges set expires_at = now() - interval '1 minute'
+       where identifier = ${email}
+    `);
+    // An expired code is not a pending one. A screen that said otherwise would
+    // send somebody looking for something that can no longer work.
+    expect(await pending(email)).toBe(false);
+  });
+
+  it("does not confuse one purpose with another", async () => {
+    const email = "aicha@example.com";
+    await createEmailAccount(email);
+    await requestPasswordReset(db, deps, { email });
+    expect(await pending(email)).toBe(false);
+    expect(await hasLiveChallenge(db, {
+      kind: "email", identifier: email, purpose: "password_reset",
+    })).toBe(true);
   });
 });

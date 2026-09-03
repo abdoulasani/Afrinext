@@ -82,6 +82,76 @@ export type IssueOutcome =
 const limited = (v: RateLimitVerdict): IssueOutcome =>
   ({ outcome: "rate_limited", retryAfterMs: v.retryAfterMs });
 
+/**
+ * An address an operator can act on, that is not the address.
+ *
+ * A refusal has to be visible in the log or nobody can tell a rate limit from
+ * an outage — that is what this whole change is for. But a log line is a copy
+ * of the data, kept somewhere with different access rules and a different
+ * retention, and "aicha@yahoo.com asked for a code at 07:04" is a fact about a
+ * person that operations does not need.
+ *
+ * The domain is kept whole, because that IS operational: it says whether one
+ * mail provider is being hammered. The local part keeps its first character
+ * and its length, which is enough for a person holding the address to confirm
+ * a line is theirs, and not enough to reconstruct one that is not.
+ *
+ * The phone path logs its identifier in full. That is not a precedent to copy;
+ * it is the next thing to fix, and it is out of scope here.
+ */
+export function maskEmail(address: string): string {
+  const at = address.lastIndexOf("@");
+  if (at <= 0) return "***";
+  const local = address.slice(0, at);
+  const domain = address.slice(at + 1);
+  const head = local[0] ?? "";
+  return `${head}${"*".repeat(Math.max(1, local.length - 1))}@${domain}`;
+}
+
+/**
+ * Records a refusal, in the log and in the audit trail.
+ *
+ * Modelled on `guardedSend` in the phone path, which has done both since Phase
+ * 1. The email path shipped with neither, and the cost was exactly what you
+ * would predict: an operator watching the Render log while somebody pressed
+ * "resend" saw nothing at all, because every refusal in this module returned
+ * without a word. A limiter nobody can observe is indistinguishable from a
+ * broken sender.
+ *
+ * The code is not here, the address is masked, and the reason, the counters
+ * and the wait are — the four things an operator actually needs.
+ */
+async function recordRefusal(
+  db: Database,
+  input: {
+    readonly address: string | null;
+    readonly purpose: string;
+    readonly verdict: RateLimitVerdict;
+    readonly userId?: string | undefined;
+  },
+): Promise<void> {
+  const masked = input.address === null ? "***" : maskEmail(input.address);
+  const context = {
+    reason: "rate_limited",
+    channel: "email",
+    purpose: input.purpose,
+    address: masked,
+    used: input.verdict.used,
+    limit: input.verdict.limit,
+    retryAfterMs: input.verdict.retryAfterMs,
+  };
+
+  log.warn("email code not issued", context);
+  await audit(db, {
+    actorKind: input.userId === undefined ? "system" : "user",
+    ...(input.userId !== undefined ? { actorUserId: input.userId } : {}),
+    action: "auth.email.rate_limited",
+    targetType: "user",
+    ...(input.userId !== undefined ? { targetId: input.userId } : {}),
+    context,
+  });
+}
+
 async function issueAndSend(
   db: Database,
   deps: EmailAuthDeps,
@@ -117,13 +187,24 @@ async function issueAndSend(
       deps.policy,
     ),
   );
-  if (!verdict.allowed) return limited(verdict);
+  if (!verdict.allowed) {
+    await recordRefusal(db, {
+      address,
+      purpose: input.purpose,
+      verdict,
+      userId: input.userId,
+    });
+    return limited(verdict);
+  }
 
   // Unparseable, or the placeholder the phone path invents. Nothing is sent,
   // and the caller is told the same thing as everybody else.
   if (address === null || isSyntheticEmail(address)) {
     log.warn("email code not issued", {
       reason: address === null ? "unparseable" : "synthetic_address",
+      channel: "email",
+      purpose: input.purpose,
+      address: address === null ? "***" : maskEmail(address),
     });
     return { outcome: "sent" };
   }
