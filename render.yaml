@@ -126,12 +126,48 @@ services:
       - key: ALLOW_MOCK_PAYMENTS
         value: "yes"
 
-      # No SMS provider is chosen for Niger yet, so verification codes are
+      # No SMS provider is chosen for Niger yet, so PHONE verification codes are
       # written to this service's log and delivered nowhere. Anyone who can
       # read the log can sign in as any preview account — which is exactly why
       # ConsoleSender refuses to run without this being said explicitly.
+      #
+      # Still required even once EMAIL_PROVIDER=brevo sends real email: the two
+      # channels are chosen separately, and the SMS half is still the console.
+      # The day an SMS provider is chosen, this comes out.
       - key: ALLOW_CONSOLE_SENDER
         value: "yes"
+
+      # ---- transactional email --------------------------------------------
+      # Brevo. `console` writes codes to the log and is what runs locally and
+      # in CI; an unrecognised value is refused at startup rather than falling
+      # back, because a fallback here means every verification code in
+      # production going to a log file while the deployment looks healthy.
+      - key: EMAIL_PROVIDER
+        value: brevo
+
+      # The API key, from Brevo's Settings > SMTP & API. `sync: false` means
+      # Render asks for it instead of reading it from this file — it must never
+      # be committed. This is the SMTP/API *API key*, not the SMTP relay
+      # password: they are different credentials and only one works here.
+      - key: EMAIL_BREVO_API_KEY
+        sync: false
+
+      # The sender, which must be an address on a domain VERIFIED in Brevo
+      # (SPF, DKIM, DMARC). An unverified sender is the failure that looks
+      # exactly like a broken adapter: the API accepts the call and the mailbox
+      # provider silently files the code as spam.
+      - key: EMAIL_FROM
+        sync: false
+
+      # Display name, 70 characters maximum — Brevo's limit, checked at startup
+      # so a too-long name cannot fail every send at run time instead.
+      - key: EMAIL_FROM_NAME
+        value: Afrinext
+
+      # Optional. Left unset, the replyTo field is omitted from the request
+      # entirely rather than sent empty, which Brevo would refuse.
+      - key: EMAIL_REPLY_TO
+        sync: false
 
       # Every account created here is granted the `seller` role at signup, so a
       # test account can open a shop without an operator running SQL.

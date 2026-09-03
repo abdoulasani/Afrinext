@@ -22,10 +22,9 @@ function requiredEnv(name: string): string {
 export async function emailAuthDeps(): Promise<core.EmailAuthDeps> {
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim();
   return {
-    // No email provider has been chosen. ConsoleSender refuses to run under
-    // NODE_ENV=production without an explicit opt-out, so a missing provider
-    // fails loudly instead of silently dropping every verification code.
-    sender: new core.ConsoleSender(),
+    // Chosen from configuration, not constructed here. See `selectEmailSender`
+    // for why an unknown provider name throws rather than falling back.
+    sender: core.selectEmailSender(process.env),
     key: core.deriveOtpKey(requiredEnv("SESSION_SECRET")),
     policy: await ratelimit.loadOtpPolicy(getDb()),
     ...(ip !== undefined && ip !== "" ? { ipAddress: ip } : {}),

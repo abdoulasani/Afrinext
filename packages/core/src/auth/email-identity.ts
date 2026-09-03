@@ -6,7 +6,7 @@ import {
   consumeAll, emailSendRules,
   type OtpPolicy, type RateLimitVerdict,
 } from "../ratelimit";
-import type { MessageSender } from "./messaging";
+import type { EmailSender } from "./messaging";
 import { normaliseEmail } from "./phone";
 import { hashPassword } from "./password";
 import { issueChallenge, consumeChallenge } from "./otp-store";
@@ -56,7 +56,16 @@ export function isReachableEmail(email: string | null | undefined): boolean {
 }
 
 export interface EmailAuthDeps {
-  readonly sender: MessageSender;
+  /*
+   * An `EmailSender`, not a `MessageSender`.
+   *
+   * Narrowed on purpose now that the interface splits by channel: this module
+   * has never sent an SMS and asking for the ability to would be asking for
+   * something it must not use. It also means the web layer can hand it the
+   * email half alone, so a route that only sends email cannot be the thing
+   * that breaks when the SMS channel changes.
+   */
+  readonly sender: EmailSender;
   readonly key: Buffer;
   readonly timing?: OtpTiming | undefined;
   readonly ipAddress?: string | undefined;
@@ -222,6 +231,17 @@ async function issueAndSend(
     to: address,
     subject: input.subject,
     body: input.body(challenge.code),
+    /*
+     * The challenge id, which is the natural identifier and already unique.
+     *
+     * `issueChallenge` retires any live code for this identifier and purpose
+     * and inserts exactly one row, so one id means one code means one message.
+     * If the provider call is retried after its response is lost, the retry
+     * carries the same key and the person gets one email rather than two —
+     * two working codes for one account is confusing, and the second arriving
+     * minutes later reads as a code somebody else requested.
+     */
+    idempotencyKey: challenge.challengeId,
   });
 
   /*

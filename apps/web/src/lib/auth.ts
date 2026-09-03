@@ -22,11 +22,18 @@ export function getAuth(): core.AfrinextAuth {
   globalForAuth.afrinextAuth ??= core.createAuth({
     pool: getPool(),
     db: getDb(),
-    // No SMS or email provider has been chosen for Niger yet. ConsoleSender
-    // refuses to run under NODE_ENV=production unless ALLOW_CONSOLE_SENDER is
-    // set explicitly, so a missing provider fails loudly rather than silently
-    // dropping every verification code in front of real users.
-    sender: new core.ConsoleSender(),
+    /*
+     * Both channels, each chosen from configuration.
+     *
+     * `EMAIL_PROVIDER` selects the email half — Brevo in production. The SMS
+     * half is still `ConsoleSender`, because no SMS provider has been chosen,
+     * and `ConsoleSender` refuses `NODE_ENV=production` without
+     * `ALLOW_CONSOLE_SENDER=yes`. So a deployment that wants real email AND
+     * phone sign-in must still say out loud that its SMS codes go to a log.
+     * That is not a silent fallback; it is the same explicit statement that
+     * has guarded this since Phase 1.
+     */
+    sender: core.selectMessageSender(process.env),
     baseUrl: process.env["APP_URL"] ?? "http://localhost:3000",
     secret: requiredEnv("SESSION_SECRET"),
     /**
