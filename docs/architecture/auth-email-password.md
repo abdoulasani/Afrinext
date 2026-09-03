@@ -584,3 +584,129 @@ code. Run one at a time.
 3. **Existing phone accounts still have no address.** Nothing backfills one,
    deliberately. Adding one is a screen those people use when they choose to,
    not a migration.
+
+---
+
+## 18. The preview bug report, and what it exposed
+
+Reported from `afrinext-preview.onrender.com`: signup works, the verification
+screen appears, no code arrives, and the Render log between 07:04:51 and
+07:05:31 shows nothing but health checks.
+
+### 18.1 What was actually happening
+
+Reproduced locally under Render's exact configuration — production build,
+`NODE_ENV=production`, `ALLOW_CONSOLE_SENDER=yes` — and measured rather than
+reasoned about:
+
+```
+POST /api/v1/auth/email/verify -> 200  {"sent":true}     ← at SIGNUP
+   (no API call at all when /verify-email loads)
+POST /api/v1/auth/email/verify -> 429  retryAfterMs 46176 ← the RESEND
+```
+
+Server log for the whole session, in full:
+
+```
+{"level":"info","msg":"domain user provisioned",...}
+[ConsoleSender] NOT DELIVERED — would send to diag@example.com: … : 495050
+```
+
+**No email will ever arrive: no provider is configured.** That part is section
+17.5 item 1, working as documented. The code is written to the log — *at
+signup*, which is not the moment the log was being watched.
+
+Two things made that indistinguishable from a broken sender, and two more were
+found alongside them.
+
+### 18.2 D1 — every refusal in this module was silent
+
+`issueAndSend` returned `limited(verdict)` with no log and no audit; so did the
+route's 401, already-verified and unreachable-address exits. Six consecutive
+429s produced **zero** log lines. Meanwhile `guardedSend` on the phone path has
+logged *and* audited refusals since Phase 1 — I wrote two refusal paths and
+instrumented one.
+
+Fixed by `recordRefusal()`: a structured `warn` and an
+`auth.email.rate_limited` audit row carrying `reason`, `used`, `limit` and
+`retryAfterMs`. The address is masked (`a****@example.com`) — a log line is a
+copy of the data under different access rules and a different retention, and
+the domain is the only part operations needs. The code is never recorded.
+
+### 18.3 D2 — the screen claimed a send it had not made
+
+`/verify-email` opened with *"Nous avons envoyé un code à X"* unconditionally.
+The page issues nothing; that was a claim about an event on another screen,
+which it could not know had happened and would have been wrong about after a
+refused send. It now names the address, asks for the code, and reports whether
+one is genuinely outstanding — `hasLiveChallenge()` asks the database.
+
+It still sends nothing on load, deliberately. An automatic send would spend one
+of the five an hour every time somebody re-read the screen, and the cooldown
+would then refuse the resend they actually meant to make.
+
+### 18.4 D3 — five presses spent the hour and issued nothing
+
+Measured, before the fix:
+
+```
+press 1: 429 Retry-After 8      press 4: 429 Retry-After 4
+press 2: 429 Retry-After 6      press 5: 429 Retry-After 2703  ← 45 minutes
+press 3: 429 Retry-After 5
+```
+
+`consumeAll` stops at the first refusal and `consume` counts refused requests
+too — deliberate, so hammering a blocked bucket cannot drain it early. With the
+hourly per-address cap ordered *first*, a cooldown refusal therefore also spent
+one of the five sends. Signup (1) plus five presses (5) exhausted the hour
+without a single code being issued.
+
+The order is now **IP → cooldown → hourly**:
+
+| Rule | Why it sits there |
+| --- | --- |
+| per IP, hourly | The flood gate, and it now counts every attempt including ones the later rules refuse. **Strictly stronger than before**, when an address-level refusal returned before the IP bucket was ever touched — so flooding one address from one connection used to cost nothing per-IP. |
+| cooldown, 1 per window | Refuses a too-early resend *without reaching the hourly rule*. |
+| per address, hourly | Reached only by a request that will actually issue a code, so the five are five codes rather than five button presses. |
+
+**No limit was raised.** What changed is which bucket a refused request pays.
+
+The wait now reaches the person: `postJson` keeps `retryAfterMs` and falls back
+to the `Retry-After` header, the resend button is disabled while it runs down,
+and a `aria-live="polite"` region counts the seconds off a wall-clock deadline
+rather than a decremented counter — a backgrounded mobile tab does not receive
+its intervals on time, and drift there means telling somebody to keep waiting
+after the server has stopped refusing.
+
+### 18.5 D4 — the signup send was fire-and-forget
+
+`void requestEmailVerification()`. Blocking nothing and telling nobody are
+different things. It is awaited now; a failure no longer leaves somebody on a
+screen announcing a code that was never sent, because that screen reads the
+real state. Verification still gates nothing.
+
+### 18.6 Why the existing tests missed all four
+
+The unit test `holds a resend cooldown between consecutive sends` asserts the
+429 arrives — so the *behaviour* was tested and the *observability* was not; a
+guarantee about logging cannot be checked by looking at a return value.
+
+The browser test was worse: it takes its log mark **before** signup precisely
+because the code is sent there and the resend would meet the cooldown, and the
+comment in `email-auth.spec.ts` says so. It **encoded** the trap instead of
+questioning it, and never pressed the resend button at all. The three new
+browser tests do press it, at the reviewed production limits, and one of them
+waits the cooldown out and resends for real.
+
+### 18.7 Results at this head
+
+| Suite | Result |
+| --- | --- |
+| `packages/core` | **39 files, 747 passed, 20 skipped** (12 new) |
+| `pnpm test:e2e` | **57 passed** (3 new) |
+| Mutation matrix D1–D4 | 13 designed, see the review packet |
+| lint / typecheck / build | clean |
+
+No migration. No provider connected. No limit relaxed. No Origin or CSRF
+protection touched. `APP_URL` unchanged. Ledger, wallets, payments, iPayMoney
+and referral untouched.
