@@ -433,6 +433,43 @@ describe("password reset", () => {
     expect(rows.rows[0]?.target_id).toBe(userId);
   });
 
+  it("writes only the credential row, not every provider the account has", async () => {
+    /*
+     * An account can hold more than one row in `account` — one per provider.
+     * With a single row, scoping the update to `providerId = 'credential'`
+     * makes no observable difference, which is why a mutation that removed the
+     * scope survived the first matrix: every test here had exactly one row.
+     *
+     * It matters in both directions. Unscoped, the write lands on rows that are
+     * not credentials — putting a password hash into a field an OAuth provider
+     * owns — and on a future account with several rows it would be luck rather
+     * than logic which one Better Auth then verifies against.
+     */
+    const email = "aicha@example.com";
+    const { authUserId } = await createEmailAccount(email, "the old password");
+    await db.execute(sql`
+      insert into account (id, issuer, "accountId", "providerId", "userId", password, "updatedAt")
+      values (${`oauth-${authUserId}`}, 'some-provider', ${email}, 'some-provider',
+              ${authUserId}, 'not-a-password-hash', now())
+    `);
+
+    await requestPasswordReset(db, deps, { email });
+    expect(await resetPassword(db, deps, {
+      email, code: codeTo(email), newPassword: "a brand new password",
+    })).toEqual({ ok: true });
+
+    const rows = await db.execute<{ provider: string; password: string }>(sql`
+      select "providerId" as provider, password from account
+       where "userId" = ${authUserId} order by "providerId"
+    `);
+    const byProvider = new Map(rows.rows.map((r) => [r.provider, r.password]));
+
+    expect(await verifyPassword("a brand new password", byProvider.get("credential") as string))
+      .toBe(true);
+    // The other provider's row is exactly as it was.
+    expect(byProvider.get("some-provider")).toBe("not-a-password-hash");
+  });
+
   it("refuses a wrong code and leaves the old password working", async () => {
     const email = "aicha@example.com";
     const { authUserId } = await createEmailAccount(email, "the old password");
