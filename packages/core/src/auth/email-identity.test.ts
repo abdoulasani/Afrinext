@@ -4,6 +4,7 @@ import type { Database } from "@afrinext/db";
 import { createTestUser, ensureReferenceData, resetData, testDb } from "../test/harness";
 import { OTP_POLICY, OTP_POLICY_SETTING_KEY } from "../ratelimit";
 import { deriveOtpKey } from "./otp";
+import { issueChallenge } from "./otp-store";
 import { ConsoleSender } from "./messaging";
 import { hashPassword, verifyPassword } from "./password";
 import {
@@ -57,6 +58,22 @@ async function createEmailAccount(
             ${await hashPassword(password)}, now())
   `);
   await db.execute(sql`update users set auth_user_id = ${authUserId} where id = ${userId}`);
+  return { userId, authUserId };
+}
+
+/**
+ * A phone account exactly as the phone path leaves one: a synthetic address, a
+ * verified number, no credential row, and a live session.
+ */
+async function createPhoneAccount(
+  phone: string,
+): Promise<{ userId: string; authUserId: string }> {
+  const userId = await createTestUser(db, { phone });
+  const rows = await db.execute<{ auth_user_id: string }>(sql`
+    select auth_user_id from users where id = ${userId}
+  `);
+  const authUserId = rows.rows[0]?.auth_user_id as string;
+  await openSession(authUserId, `phone-${userId}`);
   return { userId, authUserId };
 }
 
@@ -249,10 +266,33 @@ describe("email verification", () => {
   });
 
   it("refuses to verify a synthetic address even with a code in hand", async () => {
-    // Belt and braces: nothing can issue one, and nothing would accept one.
+    /*
+     * Same shape as the reset case, and the code is real this time.
+     *
+     * Verifying a synthetic address would stamp `emailVerified` on a mailbox
+     * that does not exist and cannot exist, turning "this person can be reached
+     * here" into a claim nothing supports — and the flag is the thing every
+     * later recovery decision will lean on.
+     */
+    const phone = "+22790000001";
+    const { authUserId } = await createPhoneAccount(phone);
     const synthetic = `22790000001@${SYNTHETIC_EMAIL_DOMAIN}`;
-    expect(await confirmEmailVerification(db, deps, { email: synthetic, code: "123456" }))
-      .toEqual({ ok: false });
+
+    const challenge = await issueChallenge(db, {
+      kind: "email",
+      identifier: synthetic,
+      purpose: "email_verification",
+      key,
+    });
+
+    expect(await confirmEmailVerification(db, deps, {
+      email: synthetic, code: challenge.code,
+    })).toEqual({ ok: false });
+
+    const flag = await db.execute<{ v: boolean }>(sql`
+      select "emailVerified" as v from "user" where id = ${authUserId}
+    `);
+    expect(flag.rows[0]?.v).toBe(false);
   });
 
   it("answers 'sent' for an unparseable address without touching the database", async () => {
@@ -453,6 +493,48 @@ describe("password reset", () => {
     expect(await resetPassword(db, deps, {
       email: synthetic, code: "123456", newPassword: "a brand new password",
     })).toEqual({ ok: false, reason: "invalid" });
+  });
+
+  it("refuses a synthetic address even when a live code exists for it", async () => {
+    /*
+     * The second layer, tested on its own.
+     *
+     * The test above passes whether or not `resetPassword` checks the address,
+     * because with issuance quarantined there is never a code to present and
+     * the refusal comes from "no challenge" either way — an assertion satisfied
+     * by a later failure, which is no assertion at all. A mutation that deleted
+     * the check from `resetPassword` survived it.
+     *
+     * So the challenge is written HERE, one layer below `issueAndSend`, which
+     * is exactly the state a future code path or a hand-run migration could
+     * produce. With a valid code in hand, only the address check stands between
+     * an attacker who controls `phone.afrinext.local` — a domain that does not
+     * exist and that anybody may register — and somebody's seller account.
+     */
+    const phone = "+22790000001";
+    const { userId, authUserId } = await createPhoneAccount(phone);
+    const synthetic = `22790000001@${SYNTHETIC_EMAIL_DOMAIN}`;
+
+    const challenge = await issueChallenge(db, {
+      kind: "email",
+      identifier: synthetic,
+      purpose: "password_reset",
+      key,
+    });
+
+    expect(await resetPassword(db, deps, {
+      email: synthetic,
+      code: challenge.code,
+      newPassword: "an attacker's password",
+    })).toEqual({ ok: false, reason: "invalid" });
+
+    // No credential was written, and the account keeps its sessions.
+    const account = await db.execute(sql`
+      select 1 from account where "userId" = ${authUserId} and "providerId" = 'credential'
+    `);
+    expect(account.rows).toHaveLength(0);
+    expect(await sessionCount(authUserId)).toBe(1);
+    expect(userId).not.toBe("");
   });
 
   it("uses a separate challenge from email verification", async () => {

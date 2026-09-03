@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Route } from "next";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 /**
@@ -27,7 +28,17 @@ export function EmailVerificationBanner({
   href: string;
 }) {
   const [hidden, setHidden] = useState(false);
+  const pathname = usePathname();
+
   if (hidden) return null;
+  /*
+   * Not on the verification screen itself.
+   *
+   * A banner whose action links to the page you are already reading is noise,
+   * and it put a second "Plus tard" directly above the one that page offers —
+   * two controls, same words, different meanings.
+   */
+  if (pathname === href) return null;
 
   return (
     <div
@@ -39,7 +50,9 @@ export function EmailVerificationBanner({
       style={{ paddingTop: "calc(0.625rem + env(safe-area-inset-top))" }}
     >
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-1.5">
-        <p className="min-w-0 flex-1 text-caption text-[var(--info)]">
+        {/* `break-words`: an address can be long, and a banner that pushes the
+            page sideways is worse than one that wraps. */}
+        <p className="min-w-0 flex-1 break-words text-caption text-[var(--info)]">
           {message.replace("{email}", email)}
         </p>
         <Link
@@ -52,7 +65,10 @@ export function EmailVerificationBanner({
         <button
           type="button"
           onClick={() => { setHidden(true); }}
-          className="shrink-0 rounded-[var(--radius-sm)] px-1.5 py-0.5 text-caption text-[var(--info)]/70 hover:text-[var(--info)]"
+          /* Full opacity, not 70%. A dismiss control faded to the edge of
+             legibility is a control people cannot find, and the hierarchy is
+             already carried by the link's weight beside it. */
+          className="shrink-0 rounded-[var(--radius-sm)] px-1.5 py-0.5 text-caption text-[var(--info)] hover:underline"
         >
           {dismiss}
         </button>
