@@ -25,6 +25,7 @@ s'appuie sur trois sources analysées en profondeur :
 | **[03 · Plateforme](03-plateforme.md)** | Backend · Frontend · Schéma de données · API · Jobs · Abstraction providers · Storage · Sécurité · Coûts · Facturation · Multi-tenant · Analytics · Observabilité · Déploiement · Arborescence | L → Z |
 | **[04 · Diagrammes](04-diagrammes.md)** | Les 8 diagrammes ASCII demandés | 29 |
 | **[05 · Roadmap & décision finale](05-roadmap-et-decision-finale.md)** | MVP · V1 · V2 · Moat · Différenciation · THE RECOMMENDED ARCHITECTURE · BUILD ORDER · Risques | 15, 23, 30 |
+| **[06 · M02 — Stress test](06-m02-stress-test.md)** | Passe critique sur tout ce qui précède : 16 findings, vérification du marché, gate humain, WOW moment, MVP et build order révisés, question de positionnement | M02 |
 
 ---
 
@@ -50,6 +51,11 @@ s'appuie sur trois sources analysées en profondeur :
     seule partie qui ne sera pas commoditisée.
 
 ---
+
+> **⚠ Le M02 amende ce blueprint.** Les fichiers 00 à 05 restent la baseline architecturale,
+> mais six décisions y sont amendées ou remplacées — dont l'architecture vidéo (§H) et le
+> gate humain (§D, §G). **Lire le [06 · Stress test](06-m02-stress-test.md) avant de
+> construire quoi que ce soit.**
 
 ## Conventions de ce blueprint
 

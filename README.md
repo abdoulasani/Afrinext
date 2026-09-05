@@ -18,6 +18,7 @@ applicatif n'a encore été écrit.
 | [03 · Plateforme](docs/blueprint/03-plateforme.md) | backend, données, API, sécurité, coûts, déploiement |
 | [04 · Diagrammes](docs/blueprint/04-diagrammes.md) | 8 diagrammes d'architecture |
 | [05 · Roadmap](docs/blueprint/05-roadmap-et-decision-finale.md) | MVP → V2, stack finale, ordre de construction |
+| [06 · M02 — Stress test](docs/blueprint/06-m02-stress-test.md) | passe critique : 16 findings, MVP et build order révisés |
 
 ## Rapports de jalon
 
@@ -25,9 +26,15 @@ applicatif n'a encore été écrit.
 décisions engageantes, points à valider, hypothèses à vérifier, formulaire de revue.
 
 📄 **[M01 — Architecture & Product Blueprint](docs/reports/M01-blueprint-architecture.pdf)** ·
+📄 **[M02 — Product & Architecture Stress Test](docs/reports/M02-stress-test.pdf)** ·
 [convention et journal des jalons](docs/reports/README.md)
 
 ## Prochaine étape
 
-Phase 01 du build order — *Foundation* : monorepo, multi-tenant avec RLS, files de jobs et
-observabilité. Voir [le build order](docs/blueprint/05-roadmap-et-decision-finale.md#6--build-order).
+**Phase P0 — tranche verticale jetable** (build order révisé par le M02) : une publicité de
+bout en bout sur un produit de test, pour mesurer coût réel, latence, facteur de régénération
+et qualité perçue avant toute construction durable.
+
+Bloquée jusqu'à arbitrage des points V8 à V15 du
+[rapport M02](docs/reports/M02-stress-test.pdf), en particulier **V14 — positionnement
+marché**, qui conditionne la langue et le CTA du produit.
