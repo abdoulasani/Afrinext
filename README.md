@@ -18,7 +18,10 @@ applicatif n'a encore été écrit.
 | [03 · Plateforme](docs/blueprint/03-plateforme.md) | backend, données, API, sécurité, coûts, déploiement |
 | [04 · Diagrammes](docs/blueprint/04-diagrammes.md) | 8 diagrammes d'architecture |
 | [05 · Roadmap](docs/blueprint/05-roadmap-et-decision-finale.md) | MVP → V2, stack finale, ordre de construction |
-| [06 · M02 — Stress test](docs/blueprint/06-m02-stress-test.md) | passe critique : 16 findings, MVP et build order révisés |
+| [06 · M02 — Stress test](docs/blueprint/06-m02-stress-test.md) | 16 findings, marché, one-click, gate, WOW |
+| [07 · M02 — Systèmes créatifs](docs/blueprint/07-m02-systemes-createurs.md) | score créatif, Creative DNA, Brand Memory, produit, scènes, coûts |
+| [08 · M02 — Produit et marché](docs/blueprint/08-m02-produit-marche.md) | MVP A/B/C, playbooks, Market Context, agences, UX, moat, pricing |
+| [09 · M02 — Décision](docs/blueprint/09-m02-exploitation-et-decision.md) | failure modes, versioning, MVP final, **GO/NO-GO** |
 
 ## Rapports de jalon
 
@@ -31,10 +34,12 @@ décisions engageantes, points à valider, hypothèses à vérifier, formulaire 
 
 ## Prochaine étape
 
-**Phase P0 — tranche verticale jetable** (build order révisé par le M02) : une publicité de
-bout en bout sur un produit de test, pour mesurer coût réel, latence, facteur de régénération
-et qualité perçue avant toute construction durable.
+**GO WITH CHANGES · PHASE 01 BLOCKED · PHASE 00 AUTHORIZED.**
 
-Bloquée jusqu'à arbitrage des points V8 à V15 du
-[rapport M02](docs/reports/M02-stress-test.pdf), en particulier **V14 — positionnement
-marché**, qui conditionne la langue et le CTA du produit.
+**Phase P0 — tranche verticale jetable** : une publicité de bout en bout sur un produit de
+test, non déployée, destinée à être jetée, pour mesurer coût réel, latence, facteur de
+régénération et surtout **la qualité perçue du chemin C** — l'hypothèse dont tout dépend.
+
+Elle démarre dès l'arbitrage de **B3 (marché de tête)** et **B4 (verticale de tête)**, qui
+déterminent la langue, le CTA et le personnage de la tranche. Voir le
+[rapport M02](docs/reports/M02-stress-test.pdf).

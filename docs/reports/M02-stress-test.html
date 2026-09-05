@@ -10,7 +10,7 @@
 <div class="cover">
   <div class="eyebrow">Afrinext · Rapport de jalon · pour revue</div>
   <h1>M02 — Product &amp; Architecture Stress Test</h1>
-  <p class="sub">Deuxième passe critique sur le M01 · aucun code écrit · Phase 01 toujours bloquée</p>
+  <p class="sub">Passe critique complète sur le M01 · 38 sections traitées · aucun code écrit</p>
   <div class="meta">
     <div><div class="k">Jalon</div><div class="v">M02 · Stress test</div></div>
     <div><div class="k">Statut</div><div class="v">Terminé — à arbitrer</div></div>
@@ -19,266 +19,230 @@
     <div><div class="k">Dépôt</div><div class="v mono">abdoulasani/Afrinext</div></div>
     <div><div class="k">Branche</div><div class="v mono">claude/new-session-igslex</div></div>
     <div><div class="k">Baseline</div><div class="v mono">M01 · commit 12b61a6</div></div>
-    <div><div class="k">Analyse</div><div class="v">16 findings · 589 lignes</div></div>
+    <div><div class="k">Analyse</div><div class="v">4 docs · 2 365 lignes</div></div>
   </div>
 </div>
 
-<h2><span class="num">1.</span>Objet du jalon</h2>
-
-<p>Le M01 avait posé l'architecture. Le M02 avait pour consigne explicite de <strong>tenter de
-la casser</strong> avant d'autoriser la Phase 01 de développement, en simulant un comité :
-Principal SaaS Architect, AI Systems Architect, AI Video Engineer, Product Manager, UX
-Designer, Growth Strategist, FinOps/AI Cost Engineer, Security Architect, CTO, Venture
-Strategist.</p>
+<h2><span class="num">1.</span>Verdict</h2>
 
 <div class="callout danger">
-  <span class="lbl">Verdict global</span>
-  <strong>Le M01 est une bonne architecture logicielle et un produit insuffisamment confronté
-  au marché.</strong> Les décisions d'ingénierie résistent au stress test — je n'ai pas trouvé
-  d'argument sérieux pour défaire le DAG explicite, les sorties typées, le contrôle financier
-  avant dépense ni la RLS. <strong>En revanche, cinq décisions produit et une décision
-  d'architecture vidéo ne tiennent pas.</strong>
+  <span class="lbl">Décision</span>
+  <strong style="font-size:12pt">GO WITH CHANGES · PHASE 01 BLOCKED · PHASE 00 AUTHORIZED</strong><br><br>
+  Le M01 est une <strong>bonne architecture logicielle et un produit insuffisamment confronté
+  au marché</strong>. Les décisions d'ingénierie résistent au stress test. En revanche
+  <strong>20 révisions sont nécessaires</strong>, dont trois touchent le cœur du produit.
+  La Phase 01 ne peut pas être autorisée : <strong>cinq décisions manquent</strong>, dont
+  deux se lèvent par une mesure (phase P0, autorisée) et trois vous appartiennent.
 </div>
 
-<p>La faille centrale : le M01 a conçu un produit <strong>générique et mondial</strong>,
-positionné frontalement contre des acteurs installés, avec une <strong>architecture vidéo 3 à
-8 fois plus chère que la leur</strong>, sans la fonctionnalité que leur marché considère comme
-acquise (<em>le produit dans la main</em>), et en plaçant son moment magique
-<strong>à la minute 9</strong> alors qu'il est disponible pour 0,08 $ à la minute 1.</p>
+<p><strong>Pourquoi GO :</strong> le problème est réel et cher — une PME paie 150 à 400 € et
+attend dix jours pour une vidéo UGC. La chaîne technique existe. Le M02 identifie une
+architecture dont le coût de revient est compatible avec le marché, et une position défendable
+que personne n'occupe.</p>
+
+<p><strong>Pourquoi pas GO sec :</strong> le M01 tel quel aurait produit un produit non
+commercialisable (le produit du client n'apparaît jamais à l'écran) à un coût non viable
+(8× le prix du marché), avec un entonnoir inversé.</p>
+
+<p><strong>Ce qui provoquerait un NO-GO :</strong> si la phase P0 démontre que la qualité du
+chemin C n'atteint pas le seuil du « diffusable sans gêne », le coût de revient remonte à
+6-30 $ et <strong>c'est le projet entier qu'il faut reconsidérer</strong>, pas seulement
+l'architecture. C'est l'unique hypothèse dont tout dépend — et c'est la raison d'être de P0.</p>
 
 <h2><span class="num">2.</span>Le fait nouveau : vérification du marché</h2>
 
 <p>Le M01 affirmait « le marché est saturé de générateurs, tous commencent au milieu du
-problème ». <strong>C'est partiellement faux, et c'était vérifiable.</strong> Vérification
-faite pour ce jalon :</p>
+problème ». <strong>C'est partiellement faux, et c'était vérifiable.</strong></p>
 
 <table>
-<thead><tr><th style="width:20%">Concurrent</th><th style="width:44%">Ce qu'il fait déjà</th><th>Conséquence</th></tr></thead>
+<thead><tr><th style="width:19%">Concurrent</th><th style="width:45%">Ce qu'il fait déjà</th><th>Conséquence</th></tr></thead>
 <tbody>
 <tr><td><strong>Creatify</strong></td>
-    <td>URL produit → scripts → avatars → <strong>variantes en lot</strong>. Tableau de bord de performance <em>AdMax</em> avec suivi ROAS. Ratios 9:16, 16:9, 1:1.<br><strong>39 $/mois ≈ 5 vidéos · 99 $/mois ≈ 15 vidéos.</strong> Coût observé par pub finie : <strong>1,65 – 3,90 $</strong>.</td>
-    <td>Notre « URL → pub » n'est pas nouveau. Notre boucle de performance non plus. Et notre grille M01 (99 $ pour 2-3 pubs, 299 $ pour 8-10) est <strong>3× plus chère pour moitié moins</strong>.</td></tr>
+    <td>URL produit → scripts → avatars → <strong>variantes en lot</strong>, tableau de bord ROAS <em>AdMax</em>, ratios 9:16 / 16:9 / 1:1.<br><strong>39 $/mois ≈ 5 vidéos · 99 $/mois ≈ 15 vidéos</strong> · <strong>1,65 – 3,90 $</strong> la pub finie.</td>
+    <td>Notre « URL → pub » n'est pas nouveau, notre boucle de performance non plus. Grille M01 : <strong>3× plus chère pour moitié moins</strong>.</td></tr>
 <tr><td><strong>Arcads</strong></td>
-    <td><strong>300+ acteurs IA</strong>, différenciation revendiquée sur le réalisme. 110 – 410 $/mois.</td>
-    <td>Une bibliothèque de 16 personnages n'impressionne personne. Le nombre n'est pas le terrain de jeu.</td></tr>
+    <td><strong>300+ acteurs IA</strong>, différenciation sur le réalisme. 110 – 410 $/mois.</td>
+    <td>16 personnages n'impressionnent personne. Le nombre n'est pas le terrain de jeu.</td></tr>
 <tr><td><strong>MakeUGC<br>Newface<br>Viralinn</strong></td>
-    <td><strong>« Product in hand »</strong> : l'avatar tient et présente le produit réel à partir d'une photo. Newface commercialise même des « templates auto-apprenants ».</td>
+    <td><strong>« Product in hand »</strong> : l'avatar tient et présente le produit réel du client.</td>
     <td>La fonctionnalité que le M01 n'a pas est celle que le marché considère comme acquise.</td></tr>
 </tbody>
 </table>
 
 <div class="callout warn">
-  <span class="lbl">Source et fiabilité</span>
-  Ces chiffres proviennent de <strong>comparatifs secondaires</strong>, pas des pages
-  officielles. Les ordres de grandeur concordent entre sources indépendantes, mais
-  <strong>ils doivent être revérifiés directement avant toute décision tarifaire</strong>.
+  <span class="lbl">Fiabilité de ces chiffres</span>
+  Issus de <strong>comparatifs secondaires</strong>, pas des pages officielles. Les ordres de
+  grandeur concordent entre sources indépendantes, mais ils doivent être revérifiés
+  directement avant toute décision tarifaire.
 </div>
 
 <p><strong>Ce n'est pas un problème de prix, c'est un problème d'architecture.</strong> Ils
-vendent une publicité à 2 $ parce qu'ils ne génèrent pas six clips vidéo génératifs premium
-par publicité. Le M01 a choisi le chemin technique le plus cher <em>comme chemin par
-défaut</em>.</p>
+vendent à 2 $ parce qu'ils ne génèrent pas six clips vidéo génératifs premium par publicité.
+Le M01 avait choisi le chemin le plus cher comme chemin <em>par défaut</em>.</p>
 
-<h2><span class="num">3.</span>Findings prioritaires</h2>
+<h2><span class="num">3.</span>Les six findings bloquants</h2>
 
-<p>16 problèmes documentés au format demandé (problème · impact · probabilité · sévérité ·
-solution · priorité) dans <code>docs/blueprint/06-m02-stress-test.md</code>. Les six
-bloquants :</p>
+<p>Seize problèmes sont documentés au format demandé dans
+<code>docs/blueprint/06-m02-stress-test.md</code>. Les six P0 :</p>
 
-<div class="decision">
-  <div class="hd"><span class="ttl">F01 · Le produit ne peut pas montrer le produit</span><span class="tag bloquant">P0</span></div>
-  <dl>
-    <dt>Problème</dt><dd>Le M01 hérite du skill source la règle « chaque clip est l'avatar qui parle ; le produit est un overlay au montage ». Il n'existe <strong>aucun chemin technique</strong> pour que le personnage tienne ou démontre le produit réel du client.</dd>
-    <dt>Impact</dt><dd>Le segment prioritaire du MVP (PME e-commerce) ne peut pas produire ses publicités les plus efficaces. Trois concurrents livrent déjà la fonctionnalité sous un nom commercial.</dd>
-    <dt>Solution</dt><dd>Pipeline produit de première classe : photos → détourage → génération de plans « produit en main » <strong>par produit</strong> (une génération premium amortie sur toutes ses publicités) → réutilisation. Le <code>Script</code> porte un champ <code>productPresence</code>.</dd>
-  </dl>
-</div>
-
-<div class="decision">
-  <div class="hd"><span class="ttl">F02 · L'architecture vidéo est hors marché</span><span class="tag bloquant">P0</span></div>
-  <dl>
-    <dt>Problème</dt><dd>Les deux chemins du M01 sont génératifs par clip : 6 à 30 $ par publicité, 6 à 9 min de latence, dérive d'identité à compenser. Le marché vend la pub finie 1,65 à 3,90 $ en ~1 min.</dd>
-    <dt>Solution</dt><dd><strong>Ajouter un chemin C</strong> : banque de plans pré-générés par personnage (tournée une fois, en premium) + TTS + lip-sync + compositing produit. <strong>≈ 0,30 – 0,80 $ la publicité, &lt; 90 s, cohérence de personnage résolue par construction</strong> — c'est littéralement le même tournage.</dd>
-    <dt>Portée</dt><dd>Le chemin C devient <strong>le défaut du MVP</strong>. Les chemins génératifs du M01 deviennent le <strong>tier premium</strong> vendu comme tel, pas le mode normal. <em>Inversion de la décision H6 du M01.</em></dd>
-  </dl>
-</div>
-
-<div class="decision">
-  <div class="hd"><span class="ttl">F03 · Le WOW est à la minute 9 alors qu'il est gratuit à la minute 1</span><span class="tag bloquant">P0</span></div>
-  <dl>
-    <dt>Problème</dt><dd>Le M01 place l'inscription en étape 0 et le premier moment impressionnant en étape 6, après 6-9 min d'attente et 6-30 $ de COGS. Le moment le plus fort du produit coûte <strong>0,08 $</strong> et arrive en <strong>40 s</strong>.</dd>
-    <dt>Solution</dt><dd>Inverser l'entonnoir : <code>URL → restitution du business + 3 concepts (0,23 $, sans compte) → inscription → première vidéo → paiement</code>. On demande l'inscription <strong>après</strong> avoir démontré la valeur, et on dépense la vidéo <strong>après</strong> avoir converti.</dd>
-  </dl>
-</div>
-
-<div class="decision">
-  <div class="hd"><span class="ttl">F04 · La différenciation revendiquée n'est pas vérifiée</span><span class="tag bloquant">P0</span></div>
-  <dl>
-    <dt>Problème</dt><dd>Le pitch du M01 (« nous commençons par la stratégie ») ne survit pas à dix minutes de comparaison par un prospect. Le moat n°1 annoncé — le graphe angle→performance — est précisément ce que vend <em>AdMax</em>.</dd>
-    <dt>Solution</dt><dd>Retirer cette revendication de tout document, et trancher la question de positionnement (section 6 de ce rapport).</dd>
-  </dl>
-</div>
-
-<div class="decision">
-  <div class="hd"><span class="ttl">F05 · Six phases avant qu'un utilisateur voie quoi que ce soit</span><span class="tag bloquant">P0</span></div>
-  <dl>
-    <dt>Problème</dt><dd>Le build order M01 est horizontal : le premier utilisateur voit une publicité à la fin de la Phase 06. Des mois sans aucun signal sur les quatre inconnues qui conditionnent tout : coût réel, latence réelle, facteur de régénération, qualité perçue.</dd>
-    <dt>Solution</dt><dd>Une <strong>tranche verticale P0</strong> d'abord : une publicité de bout en bout, produit de test codé en dur, un personnage, un angle, montage minimal. <strong>Jetable, non déployée, non multi-tenant.</strong> Une à deux semaines qui répondent à la question dont dépend le reste.</dd>
-  </dl>
-</div>
-
-<div class="decision">
-  <div class="hd"><span class="ttl">F06 · Le gate humain est au mauvais endroit</span><span class="tag bloquant">P0</span></div>
-  <dl>
-    <dt>Problème</dt><dd>Le M01 demande à un utilisateur froid d'arbitrer entre trois angles publicitaires — c'est-à-dire d'exercer <em>la compétence même qu'il vient acheter</em>. Or le risque réel n'est pas « mauvais angle », c'est « l'IA a mal compris ce que je vends » — que lui, en revanche, détecte en cinq secondes.</dd>
-    <dt>Solution</dt><dd><strong>Deux gates</strong> : (1) confirmation de la compréhension du business, obligatoire, gratuite, un clic, avant toute dépense ; (2) concept <strong>auto-sélectionné et annoncé</strong>, les autres à un clic.</dd>
-    <dt>Remarque</dt><dd>Le gate du M01 n'était pas une erreur d'UX : c'était une <em>conséquence</em> de l'architecture vidéo coûteuse. <strong>Corriger F02 libère F06</strong> — quand se tromper coûte 0,50 $ et 90 s, l'auto-choix devient responsable.</dd>
-  </dl>
-</div>
-
-<p>Dix autres findings sont documentés : F07 (16 personnages → 4, en profondeur) · F08 (aucun
-pont pendant l'attente, TTFP non défini) · F09 (essai gratuit = vecteur d'abus non couvert) ·
-F10 (blocages de politique providers non anticipés) · F11 (crédit indexé sur le COGS =
-erreur de packaging) · F12 (montage sous-estimé) · F13 (fonctionnalités à retirer) ·
-F14 (responsabilité sur les allégations publiées) · F15 (aucune boucle de vérité dans le MVP) ·
-F16 (personne ne possède les actifs créatifs — rôle Creative Ops à prévoir).</p>
-
-<h2><span class="num">4.</span>Verdict sur les décisions M01</h2>
-
-<table class="tight">
-<thead><tr><th style="width:7%">Réf.</th><th style="width:31%">Décision M01</th><th style="width:16%">Verdict</th><th>Motif</th></tr></thead>
+<table>
+<thead><tr><th style="width:6%">#</th><th style="width:40%">Problème</th><th>Correction</th></tr></thead>
 <tbody>
-<tr><td><strong>D1</strong></td><td>DAG explicite, pas d'agent</td><td><strong>Maintenu</strong></td><td>Aucune contestation ne tient ; renforcé par le chemin C</td></tr>
-<tr><td><strong>D2</strong></td><td>Sorties IA typées et validées</td><td><strong>Maintenu</strong></td><td>Décision la plus solide du M01</td></tr>
-<tr><td><strong>D3</strong></td><td>Routage providers par capabilities</td><td><strong>Amendé</strong></td><td>Principe juste, mais il manquait un chemin de production entier (F02)</td></tr>
-<tr><td><strong>D4</strong></td><td>Personnages propriétaires ou consentis</td><td><strong>Amendé</strong></td><td>Politique maintenue ; volume 16 → 4, profondeur augmentée. La bibliothèque n'est pas un moat — la banque de plans, si</td></tr>
-<tr><td><strong>D5</strong></td><td>Contrôle financier avant dépense</td><td><strong>Maintenu</strong></td><td>À étendre à l'entonnoir d'inscription (F09)</td></tr>
-<tr><td><strong>D6</strong></td><td>Un seul gate : le concept</td><td><strong>Remplacé</strong></td><td>Deux gates, dont un déplacé sur la compréhension du business</td></tr>
-<tr><td><strong>V1</strong></td><td>Stratégie avant vidéo</td><td><strong>Reformulé</strong></td><td>Intention juste, traduction en build order fausse : tranche verticale, pas couche horizontale</td></tr>
-<tr><td><strong>V2</strong></td><td>Monolithe modulaire + workers</td><td><strong>Maintenu</strong></td><td></td></tr>
-<tr><td><strong>V3</strong></td><td>Cloudflare R2</td><td><strong>Maintenu</strong></td><td>Renforcé : le chemin C multiplie la relecture d'assets</td></tr>
-<tr><td><strong>V4</strong></td><td>Clerk au MVP</td><td><strong>Réserve</strong></td><td>Correct, mais F03 impose un parcours <em>avant inscription</em> — vérifier le fonctionnement en session anonyme</td></tr>
-<tr><td><strong>V5</strong></td><td>RLS dès la Phase 01</td><td><strong>Maintenu</strong></td><td></td></tr>
-<tr><td><strong>V6</strong></td><td>Périmètre du MVP</td><td><strong>Réécrit</strong></td><td>Voir section 5</td></tr>
-<tr><td><strong>V7</strong></td><td>Coût de la bibliothèque propriétaire</td><td><strong>Renforcé</strong></td><td>Le chemin C en fait un actif de production amorti, plus seulement une contrainte de conformité</td></tr>
+<tr><td><strong>F01</strong></td>
+    <td><strong>Le produit ne peut pas montrer le produit.</strong> Le M01 hérite du skill source la règle « le produit est un overlay au montage ». Aucun chemin technique pour que le personnage tienne l'objet du client.</td>
+    <td>Product Consistency Engine, <strong>compositing par défaut</strong>. Les modèles génératifs ne reproduisent pas fidèlement un packaging portant texte et logo — l'espérer, c'est mentir au client.</td></tr>
+<tr><td><strong>F02</strong></td>
+    <td><strong>L'architecture vidéo est hors marché.</strong> 6-30 $ et 6-9 min par publicité, contre 2 $ et ~1 min chez les concurrents.</td>
+    <td><strong>Chemin C</strong> : banque de plans tournée une fois en premium + TTS + lip-sync + compositing. <strong>≈ 0,50 $, &lt; 90 s</strong>, et la cohérence du personnage est résolue par construction — c'est le même tournage.</td></tr>
+<tr><td><strong>F03</strong></td>
+    <td><strong>Le WOW est à la minute 9 alors qu'il est gratuit à la minute 1.</strong> Inscription en étape 0, premier moment impressionnant en étape 6, après 6-30 $ de dépense.</td>
+    <td>Entonnoir inversé : analyse gratuite <strong>sans compte</strong> (0,23 $) → inscription → vidéo → paiement.</td></tr>
+<tr><td><strong>F04</strong></td>
+    <td><strong>La différenciation revendiquée n'est pas vérifiée.</strong> Le moat n°1 annoncé est ce que vend <em>AdMax</em>.</td>
+    <td>Revendication retirée. Différenciation reconstruite sur Brand Memory, banque localisée et flywheel.</td></tr>
+<tr><td><strong>F05</strong></td>
+    <td><strong>Six phases avant qu'un utilisateur voie quoi que ce soit.</strong> Build order horizontal.</td>
+    <td><strong>Tranche verticale P0 jetable</strong> : une pub de bout en bout, produit de test codé en dur, pour mesurer les quatre inconnues.</td></tr>
+<tr><td><strong>F06</strong></td>
+    <td><strong>Le gate est au mauvais endroit.</strong> On demande à un utilisateur froid d'arbitrer entre trois angles — la compétence même qu'il vient acheter.</td>
+    <td>Gate déplacé sur <strong>la confirmation de la compréhension du business</strong> ; concept auto-choisi et annoncé. <em>Corriger F02 libère F06</em> : quand se tromper coûte 0,50 $, l'auto-choix devient responsable.</td></tr>
 </tbody>
 </table>
 
-<h2><span class="num">5.</span>MVP et build order révisés</h2>
+<h2><span class="num">4.</span>Les 20 révisions M01 → M02</h2>
 
 <table class="tight">
-<thead><tr><th style="width:26%">Point</th><th style="width:33%">M01</th><th>M02</th></tr></thead>
+<thead><tr><th style="width:4%">#</th><th style="width:30%">M01</th><th style="width:33%">M02</th><th>Raison</th></tr></thead>
 <tbody>
-<tr><td>Chemin de production</td><td>Génératif par clip · 6-30 $/pub</td><td><strong>Banque de plans + TTS + lip-sync · 0,30-0,80 $/pub</strong></td></tr>
-<tr><td>Produit en scène</td><td>absent</td><td><strong>plans « produit en main » par produit</strong></td></tr>
-<tr><td>Personnages</td><td>16 en surface</td><td><strong>4 en profondeur</strong> + banque de plans</tr>
-<tr><td>Gate</td><td>choix du concept</td><td><strong>confirmation business</strong> + concept auto-choisi</td></tr>
-<tr><td>Entonnoir</td><td>inscription en étape 0, WOW en étape 6</td><td><strong>WOW gratuit sans compte, inscription après</strong></td></tr>
-<tr><td>Modes no-face</td><td>8</td><td>1</td></tr>
-<tr><td>Facturation</td><td>crédits indexés sur la seconde générée</td><td><strong>crédits par publicité finie</strong>, découplés du COGS</td></tr>
-<tr><td>Variations</td><td>V1</td><td><strong>MVP</strong> — c'est un WOW, et c'est ce que vend le marché</td></tr>
-<tr><td>Retour terrain</td><td>absent</td><td>une question à J+7 : « diffusée ? résultat ? »</td></tr>
-<tr><td>Latence</td><td>6-9 min</td><td><strong>&lt; 4 min · TTFP &lt; 90 s</strong></td></tr>
+<tr><td>1</td><td>Génératif par clip, par défaut</td><td><strong>Chemin C par défaut</strong> ; génératif = premium</td><td>COGS ÷ 10, latence ÷ 5, cohérence résolue</td></tr>
+<tr><td>2</td><td>Produit = overlay au montage</td><td><strong>Product Consistency Engine</strong>, compositing</td><td>Table stakes du marché ; les modèles déforment les packagings</td></tr>
+<tr><td>3</td><td>Brand DNA : instantané</td><td><strong>Brand Memory event-sourcée</strong></td><td>Chaque correction utilisateur est du signal propriétaire — le M01 le jetait</td></tr>
+<tr><td>4</td><td><code>CharacterSheet</code></td><td><strong>Character DNA + banque de plans</strong></td><td>Support du chemin C, actif capitalisé</td></tr>
+<tr><td>5</td><td><code>Clip</code></td><td><strong><code>SceneSpecification</code></strong> auto-réparable</td><td>Porte ses critères d'acceptation et sa politique de réparation</td></tr>
+<tr><td>6</td><td>QC correctif en 4 familles</td><td><strong>Score créatif pré-génération, bloquant</strong></td><td>Corriger pour 0,04 $ au lieu de 6 $</td></tr>
+<tr><td>7</td><td>Régénération « du clip »</td><td><strong>Échelle de réparation à 6 niveaux</strong></td><td>&gt; 60 % des réparations deviennent gratuites</td></tr>
+<tr><td>8</td><td>Cost Controller réactif</td><td><strong>Generation Budget Planner</strong></td><td>Planifier au lieu de plafonner</td></tr>
+<tr><td>9</td><td>Routage par capabilities</td><td><strong>statique → adaptatif → apprenant</strong> + évaluation fantôme</td><td>Un routeur apprenant sous quelques milliers de générations apprend du bruit</td></tr>
+<tr><td>10</td><td>Gate sur le concept</td><td><strong>Gate sur la compréhension</strong></td><td>Demander ce que l'utilisateur seul sait</td></tr>
+<tr><td>11</td><td>Inscription puis génération</td><td><strong>WOW gratuit avant inscription</strong></td><td>L'entonnoir était à l'envers</td></tr>
+<tr><td>12</td><td>Marché implicite US/EN</td><td><strong><code>MarketContext</code> de premier ordre</strong></td><td>« Une pub pour le Niger ne ressemble pas à une pub pour les États-Unis »</td></tr>
+<tr><td>13</td><td>Workflow unique</td><td><strong>Vertical Playbooks</strong> (données, pas code)</td><td>Une stratégie unique n'est optimale pour aucune verticale</td></tr>
+<tr><td>14</td><td><code>Workspace → Brands</code></td><td><strong><code>Organization → Workspaces</code></strong> + équité de file</td><td>L'architecture M01 ne supportait pas le scénario agence</td></tr>
+<tr><td>15</td><td>Crédits à la seconde générée</td><td><strong>Abonnement + quota en publicités finies</strong></td><td>Un compteur qui tourne freine l'itération, qui est ce qui produit la qualité</td></tr>
+<tr><td>16</td><td>Versioning partiel</td><td><strong><code>AdManifest</code> immuable</strong></td><td>Reproductibilité, régression, preuve</td></tr>
+<tr><td>17</td><td>Observabilité générale</td><td><strong>Creative Execution Trace</strong> + cascade de coût</td><td>Savoir pourquoi une pub coûte 8 $ au lieu de 2 $</td></tr>
+<tr><td>18</td><td>16 personnages</td><td><strong>4, en profondeur</strong></td><td>La variété n'est pas le terrain de jeu ; la profondeur est l'actif</td></tr>
+<tr><td>19</td><td>Build order horizontal ×10</td><td><strong>Tranche verticale P0 d'abord</strong></td><td>Mesurer les 4 inconnues avant de construire</td></tr>
+<tr><td>20</td><td>« Nous faisons la stratégie »</td><td><strong>Brand Memory + banque localisée + flywheel</strong></td><td>La revendication M01 est déjà servie par un concurrent</td></tr>
 </tbody>
 </table>
-
-<p><strong>Build order révisé :</strong> <code>P0 tranche verticale jetable</code> →
-<code>P1 fondations</code> → <code>P2 banque de plans + chemin C + pipeline produit</code> →
-<code>P3 compréhension + stratégie</code> → <code>P4 montage</code> →
-<code>P5 entonnoir et WOW</code> → <code>P6 facturation</code> →
-<code>P7 agences/API</code> → <code>P8 premium génératif</code> →
-<code>P9 creative intelligence</code>.</p>
 
 <div class="callout">
-  <span class="lbl">Inchangé du M01, et confirmé par le stress test</span>
-  RLS et multi-tenant dès le premier jour · grand livre de crédits et verrous anti-emballement ·
-  validation déterministe du script · vérification audio par ASR · politique de personnages ·
+  <span class="lbl">Conservé du M01, intact</span>
+  DAG explicite · sorties IA typées · validation déterministe du script · vérification audio
+  par ASR · contrôle financier avant dépense · RLS et multi-tenant · abstraction provider ·
+  politique de personnages consentis · monolithe modulaire + workers · Cloudflare R2 ·
   observabilité et funnel produit.
 </div>
 
-<h2><span class="num">6.</span>La question de positionnement</h2>
+<h2><span class="num">5.</span>MVP final et build order</h2>
 
-<p>C'est la conclusion la plus importante du M02, et <strong>elle appelle une décision qui
-n'appartient pas à l'architecte.</strong></p>
-
-<p>Face à Creatify (39-99 $/mois, URL → pub, variantes, ROAS) et Arcads (300 acteurs), un
-nouvel entrant générique doit être meilleur sur leur terrain, avec moins de moyens et un an
-de retard. Deux signaux pointent ailleurs : <strong>le dépôt s'appelle <em>Afrinext</em></strong>,
-et <strong>le marché ouest-africain francophone a une structure publicitaire différente</strong> —
-plus de 200 millions d'internautes, plus de 90 % du trafic publicitaire sur mobile, et un
-parcours d'achat dominant absent des produits américains : découverte sur les réseaux,
-conversation et conversion sur <strong>WhatsApp</strong>, paiement en <strong>mobile
-money</strong>.</p>
+<p><strong>Trois MVP ont été comparés</strong> (ultra-minimal / complet raisonnable /
+WOW-first étroit). <strong>Retenu : le WOW-first étroit</strong> — 8 à 11 semaines,
+une verticale, un marché, un format, quatre personnages. Il est <em>plus étroit</em> et
+<em>plus impressionnant</em> que la version complète, parce que l'effort retiré de la largeur
+est remis dans la profondeur.</p>
 
 <table class="tight">
-<thead><tr><th style="width:22%">Élément</th><th style="width:36%">Produit générique (M01)</th><th>Produit positionné</th></tr></thead>
+<thead><tr><th style="width:30%">Dans le MVP</th><th>Hors MVP</th></tr></thead>
 <tbody>
-<tr><td>CTA par défaut</td><td>« lien en bio », « visitez le site »</td><td><strong>« écrivez-moi sur WhatsApp »</strong>, avec deep link</td></tr>
-<tr><td>Objectif principal</td><td>vendre en ligne</td><td><strong>générer des conversations</strong></td></tr>
-<tr><td>Langues</td><td>anglais, multilingue en V1</td><td><strong>français dès le MVP</strong>, langues locales ensuite</td></tr>
-<tr><td>Personnages</td><td>représentativité générique</td><td>représentatifs du marché servi — enjeu de <strong>conversion</strong>, pas seulement d'équité</td></tr>
-<tr><td>Preuve de résultat</td><td>ROAS via API publicitaire</td><td><strong>messages reçus</strong> — mesurable sans API</td></tr>
-<tr><td>Concurrence directe</td><td>Creatify, Arcads, MakeUGC…</td><td><strong>aucun acteur localisé identifié</strong></td></tr>
+<tr><td>Ingestion URL / Facebook / photos · Brand Memory v1 · 1 gate · 12 angles → 3 concepts · script validé · 4 personnages + banque de plans · 1 <code>MarketContext</code> · compositing produit + validation OCR · chemin C · réparation niveaux 0-3 · montage 9:16 · 3 variations · entonnoir anonyme · retour J+7 · RLS + organizations + grand livre + trace + manifeste</td>
+<td>Chemins génératifs A/B · tier premium · timeline · multi-ratio · multi-verticale · multi-marché · clonage de voix et de visage · 8 modes no-face · Creative Intelligence · connecteurs Meta/TikTok · API publique · marque blanche · routeur apprenant · embeddings produit · scores model-based · SSO · analytics client</td></tr>
 </tbody>
 </table>
 
-<p>Détail notable : <strong>le M01 avait déjà « Get WhatsApp messages » dans sa liste
-d'objectifs</strong> — l'intuition était présente, mais rien n'a été construit dessus.</p>
+<p><strong>Build order :</strong> <code>P0 tranche verticale jetable</code> →
+<code>P1 fondations</code> → <code>P2 banque de plans + chemin C + produit</code> →
+<code>P3 compréhension + stratégie</code> → <code>P4 montage</code> →
+<code>P5 entonnoir et WOW</code> → <code>P6 facturation</code> →
+<code>P7 organisations et agences</code> → <code>P8 premium génératif</code> →
+<code>P9 creative intelligence</code>.</p>
 
-<div class="callout danger">
-  <span class="lbl">Recommandation du comité</span>
-  Trancher cette question <strong>avant la Phase 01</strong>, car elle modifie le MVP lui-même
-  (langue, CTA, personnages, mesure de succès) et pas seulement le marketing. Un produit
-  positionné sur un marché mal servi avec une architecture à 0,50 $ la publicité est
-  défendable. Un produit générique à 3 $ la publicité face à Creatify à 2 $ ne l'est pas.
-</div>
+<p><strong>Objectifs économiques du MVP :</strong> COGS médian <strong>&lt; 1,00 $</strong> par
+publicité · facteur de régénération <strong>&lt; 1,4</strong> · réparations sans dépense
+<strong>&gt; 60 %</strong> · variation de hook <strong>&lt; 0,15 $</strong> · latence médiane
+<strong>&lt; 4 min</strong> · premier pixel <strong>&lt; 90 s</strong>.</p>
 
-<h2><span class="num">7.</span>Points nécessitant une validation explicite</h2>
+<h2><span class="num">6.</span>Les cinq décisions bloquantes</h2>
 
 <table>
-<thead><tr><th style="width:5%">#</th><th style="width:30%">Question</th><th style="width:36%">Recommandation</th><th>Si le choix diffère</th></tr></thead>
+<thead><tr><th style="width:5%">#</th><th style="width:29%">Décision</th><th style="width:13%">Qui tranche</th><th>Comment / recommandation</th></tr></thead>
 <tbody>
-<tr><td><strong>V8</strong></td><td>Ajouter le <strong>chemin C</strong> (banque de plans + lip-sync) et en faire le défaut du MVP ?</td><td><strong>Oui.</strong> Résout simultanément le coût, la latence et la cohérence de personnage.</td><td>Rester en génératif pur maintient un COGS 8× supérieur au marché et une latence de 6-9 min. Le modèle économique du M01 ne tient pas.</td></tr>
-<tr><td><strong>V9</strong></td><td>Intégrer le <strong>pipeline produit-en-scène</strong> au MVP ?</td><td><strong>Oui.</strong> C'est table stakes sur le segment prioritaire.</td><td>Sans lui, le MVP n'est pas commercialisable auprès des PME e-commerce, sa cible n°1.</td></tr>
-<tr><td><strong>V10</strong></td><td><strong>Déplacer le gate</strong> vers la confirmation business, et auto-choisir le concept ?</td><td><strong>Oui</strong>, conditionné à V8 : l'auto-choix n'est responsable que si se tromper coûte &lt; 1 $.</td><td>Garder le gate M01 est défendable, mais coûte de la conversion en première visite.</td></tr>
-<tr><td><strong>V11</strong></td><td><strong>Inverser l'entonnoir</strong> : WOW gratuit sans compte, inscription après ?</td><td><strong>Oui.</strong> 0,23 $ de démonstration avant de demander quoi que ce soit.</td><td>Impose de vérifier que Clerk (V4) supporte proprement une session anonyme convertie ensuite.</td></tr>
-<tr><td><strong>V12</strong></td><td><strong>Tranche verticale P0</strong> jetable avant les fondations ?</td><td><strong>Oui.</strong> 1-2 semaines pour mesurer coût, latence, régénération et qualité perçue.</td><td>Sans elle, les quatre inconnues restent ouvertes pendant des mois et V8 reste une hypothèse.</td></tr>
-<tr><td><strong>V13</strong></td><td>Facturer <strong>à la publicité finie</strong> plutôt qu'à la seconde générée ?</td><td><strong>Oui.</strong> Le choix du chemin technique devient notre levier de marge, invisible du client.</td><td>Facturer à la seconde expose la grille aux variations de prix providers et se compare mal.</td></tr>
-<tr><td><strong>V14</strong></td><td><strong>Positionnement</strong> : générique mondial, ou marché francophone / africain WhatsApp-first ?</td><td><strong>Décision à prendre par vous.</strong> L'analyse penche nettement vers le second, mais c'est un choix d'entreprise, pas d'architecture.</td><td>Le choix modifie le MVP (langue, CTA, personnages, mesure). Le repousser, c'est construire un produit qu'il faudra repositionner.</td></tr>
-<tr><td><strong>V15</strong></td><td>Réduire la bibliothèque de <strong>16 à 4 personnages</strong>, en profondeur ?</td><td><strong>Oui.</strong> Arcads en a 300 ; le nombre n'est pas le terrain de jeu. La banque de plans par personnage est ce qui devient un actif.</td><td>Seize personnages superficiels coûtent plus cher et n'impressionnent personne.</td></tr>
+<tr><td><strong>B1</strong></td><td><strong>La qualité du chemin C est-elle suffisante ?</strong> Le lip-sync sur plan pré-généré atteint-il le « diffusable sans gêne » ?</td><td>mesure</td><td><strong>Phase P0.</strong> Comparaison à l'aveugle chemin C vs génératif, par ≥ 3 personnes, sur ≥ 10 publicités. <strong>C'est l'hypothèse dont tout le M02 dépend.</strong></td></tr>
+<tr><td><strong>B2</strong></td><td><strong>Quel est le coût de revient réel ?</strong></td><td>mesure</td><td><strong>Phase P0.</strong> Sur ≥ 10 publicités complètes. Conditionne toute la grille tarifaire.</td></tr>
+<tr><td><strong>B3</strong></td><td><strong>Quel marché de tête ?</strong> (<code>MarketContext</code> initial)</td><td><strong>vous</strong></td><td>Détermine la langue, le canal de CTA (lien ou WhatsApp), la banque de plans et les profils de voix. Le brief §20 — « une publicité destinée au Niger » — penche nettement vers le francophone ouest-africain.</td></tr>
+<tr><td><strong>B4</strong></td><td><strong>Quelle verticale de tête ?</strong> (playbook initial)</td><td><strong>vous</strong></td><td>Recommandation : e-commerce (meilleur taux d'extraction depuis une URL, présence produit naturelle). <strong>Sauf si B3 l'impose autrement</strong> : sur le marché visé, beaucoup de PME sont en commerce local ou en service, sans site web — le parcours principal devient alors « page Facebook / 3 photos → publicité ».</td></tr>
+<tr><td><strong>B5</strong></td><td><strong>Budget de constitution de la banque de plans</strong></td><td><strong>vous</strong></td><td>C'est un <strong>capex</strong>, pas un coût d'ingénierie : 4 personnages × ~40 plans en génération premium, par marché. À chiffrer précisément en P0.</td></tr>
 </tbody>
 </table>
 
-<h2><span class="num">8.</span>Ce qui n'a pas été fait — limites de l'analyse</h2>
+<p><strong>B1 et B2 sont levées par la phase P0</strong>, qui est autorisée et ne construit
+rien de durable. <strong>B3, B4 et B5 sont des décisions d'entreprise</strong> qui doivent
+être prises avant la Phase 01, parce qu'elles déterminent <em>ce qui est construit</em> — pas
+seulement comment.</p>
+
+<h2><span class="num">7.</span>Métriques de succès</h2>
+
+<div class="callout">
+  <span class="lbl">North Star</span>
+  <strong>Le nombre de publicités effectivement PUBLIÉES par les clients chaque semaine.</strong>
+  Pas générées — publiées. C'est la seule métrique qui aligne notre intérêt et celui du
+  client : nous ne gagnons que s'il ose diffuser ce que nous produisons.
+</div>
 
 <table class="tight">
-<thead><tr><th style="width:34%">Limite</th><th>Conséquence et traitement</th></tr></thead>
+<thead><tr><th style="width:34%">Métrique</th><th style="width:14%">Cible MVP</th><th>Nature</th></tr></thead>
 <tbody>
-<tr><td>Prix et fonctionnalités concurrents issus de <strong>comparatifs secondaires</strong></td><td>Ordres de grandeur concordants entre sources indépendantes, mais à revérifier sur les pages officielles avant toute décision tarifaire.</td></tr>
-<tr><td><strong>Le coût du chemin C (0,30-0,80 $) est une estimation</strong></td><td>C'est précisément ce que la phase P0 doit établir. Si le lip-sync de qualité coûte plus cher que prévu, l'arbitrage V8 change.</td></tr>
-<tr><td><strong>La qualité perçue du chemin C n'est pas démontrée</strong></td><td>Risque n°1 de cette recommandation. Le lip-sync sur plan pré-généré peut être excellent ou visiblement artificiel. <strong>P0 doit trancher avant de construire P2.</strong></td></tr>
-<tr><td>Données marché ouest-africain issues d'<strong>analyses sectorielles</strong>, pas de terrain</td><td>Direction plausible. Validation = dix entretiens avec des PME cibles : une semaine, contre six mois d'erreur potentielle.</td></tr>
-<tr><td><strong>Aucun modèle vidéo n'a été testé</strong></td><td>Fidélité d'identité, respect d'une référence produit et taux de blocage de politique relèvent du raisonnement, pas de la mesure.</td></tr>
-<tr><td>Consigne respectée : <strong>aucun code écrit</strong></td><td>La Phase 01 reste bloquée jusqu'à arbitrage de V8 à V15.</td></tr>
+<tr><td><strong>Repeat Generation Rate à 14 j</strong></td><td>&gt; 50 %</td><td><strong>Le meilleur prédicteur du PMF.</strong> La 1ʳᵉ pub mesure la curiosité, la 2ᵉ mesure la valeur</td></tr>
+<tr><td><strong>Publish Rate</strong></td><td>&gt; 40 %</td><td><strong>Le juge ultime.</strong> Export fort + publication faible = le produit impressionne mais le résultat n'est pas assumable — le pire diagnostic, invisible sans la question J+7</td></tr>
+<tr><td><strong>Creative Acceptance Rate</strong></td><td>&gt; 70 %</td><td>Qualité du pipeline entier, sans retouche</td></tr>
+<tr><td>Coût par publicité · régénération · latence · TTFP</td><td>&lt; 1 $ · &lt; 1,4 · &lt; 4 min · &lt; 90 s</td><td>Santé économique et hygiène — <em>pas</em> des indicateurs de PMF</td></tr>
 </tbody>
 </table>
 
-<h2><span class="num">9.</span>Prochaine étape proposée</h2>
+<p><strong>Métriques trompeuses à ne pas mettre en avant :</strong> inscriptions, publicités
+générées, temps de génération. Elles montent toutes quand on fait de la publicité et ne
+disent rien du produit.</p>
 
-<p><strong>M03 — Phase P0, tranche verticale jetable.</strong> Une publicité complète, produit
-de test codé en dur, un personnage, un angle, montage minimal, sortie 9:16. Non déployée, non
+<h2><span class="num">8.</span>Limites de l'analyse</h2>
+
+<table class="tight">
+<thead><tr><th style="width:36%">Limite</th><th>Conséquence</th></tr></thead>
+<tbody>
+<tr><td>Prix et fonctionnalités concurrents issus de <strong>comparatifs secondaires</strong></td><td>À revérifier sur les pages officielles avant toute décision tarifaire</td></tr>
+<tr><td><strong>Le coût du chemin C (0,30-0,80 $) est une estimation</strong></td><td>C'est ce que P0 doit établir. Si le lip-sync coûte plus cher que prévu, l'arbitrage change</td></tr>
+<tr><td><strong>La qualité perçue du chemin C n'est pas démontrée</strong></td><td><strong>Risque n°1 de tout le M02.</strong> P0 doit trancher avant de construire P2</td></tr>
+<tr><td>Données marché ouest-africain issues d'<strong>analyses sectorielles</strong></td><td>Direction plausible. Validation = dix entretiens avec des PME cibles : une semaine, contre six mois d'erreur potentielle</td></tr>
+<tr><td><strong>Aucun modèle vidéo n'a été testé</strong></td><td>Fidélité d'identité, respect d'une référence produit et taux de blocage relèvent du raisonnement, pas de la mesure</td></tr>
+<tr><td>Consigne respectée : <strong>aucun code écrit</strong></td><td>La Phase 01 reste bloquée</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">9.</span>Prochaine étape</h2>
+
+<p><strong>M03 — Phase P0, tranche verticale jetable.</strong> Une publicité complète sur un
+produit de test, un personnage, un angle, montage minimal, sortie 9:16. Non déployée, non
 multi-tenant, destinée à être jetée.</p>
 
-<p><strong>Ce qu'elle doit produire :</strong> quatre mesures — coût réel par publicité,
-latence réelle de bout en bout, facteur de régénération observé, et un jugement humain sur la
-qualité perçue du chemin C comparé au chemin génératif.</p>
+<p><strong>Ce qu'elle produit :</strong> les quatre mesures (coût réel, latence, facteur de
+régénération, qualité perçue du chemin C comparée au génératif), le chiffrage de B5, et une
+décision documentée sur B1.</p>
 
-<p><strong>Définition de « done » :</strong> les quatre chiffres sont mesurés sur au moins
-10 publicités, et une comparaison à l'aveugle entre chemin C et chemin génératif est tranchée
-par au moins trois personnes.</p>
+<p><strong>Définition de « done » :</strong> quatre chiffres mesurés sur ≥ 10 publicités, et
+une comparaison à l'aveugle tranchée par ≥ 3 personnes.</p>
 
-<p><strong>Condition de démarrage :</strong> arbitrage des points V8 à V15, en particulier
-<strong>V14</strong> (positionnement), qui conditionne la langue et le CTA de la tranche
+<p><strong>Condition de démarrage :</strong> arbitrage de <strong>B3</strong> et
+<strong>B4</strong> — ils déterminent la langue, le CTA et le personnage de la tranche
 verticale elle-même.</p>
 
 <h2><span class="num">10.</span>Formulaire de revue</h2>
@@ -286,27 +250,30 @@ verticale elle-même.</p>
 <table class="review">
 <thead><tr><th>Réf.</th><th>Validé</th><th>À&nbsp;corriger</th><th>Commentaire / correction demandée</th></tr></thead>
 <tbody>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Révisions d'architecture</strong></td></tr>
 <tr><td><strong>V8</strong> Chemin C par défaut</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
 <tr><td><strong>V9</strong> Produit en scène au MVP</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
 <tr><td><strong>V10</strong> Gate déplacé + auto-choix</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
 <tr><td><strong>V11</strong> Entonnoir inversé</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
 <tr><td><strong>V12</strong> Tranche verticale P0</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
 <tr><td><strong>V13</strong> Facturation à la pub finie</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
-<tr><td><strong>V14</strong> Positionnement marché</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
 <tr><td><strong>V15</strong> 16 → 4 personnages</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
-<tr><td colspan="4" style="background:#eef2f4"><strong>Verdicts sur le M01 (section 4)</strong></td></tr>
-<tr><td><strong>D3</strong> amendé</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
-<tr><td><strong>D4</strong> amendé</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
-<tr><td><strong>D6</strong> remplacé</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
-<tr><td><strong>V1</strong> reformulé</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
-<tr><td><strong>V6</strong> réécrit</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V16</strong> Compositing produit par défaut</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V17</strong> <code>MarketContext</code> de 1ᵉʳ ordre</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V18</strong> Brand Memory event-sourcée</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V19</strong> <code>organizations</code> + équité de file dès le MVP</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V20</strong> MVP « WOW-first étroit »</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Décisions bloquantes</strong></td></tr>
+<tr><td><strong>B3</strong> Marché de tête</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>B4</strong> Verticale de tête</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>B5</strong> Budget banque de plans</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
 </tbody>
 </table>
 
 <div class="nobreak">
 <h3>Verdict global</h3>
 <p style="margin-bottom:14px">
-  <span class="box"></span> Stress test validé — démarrage de la phase P0 autorisé &nbsp;&nbsp;
+  <span class="box"></span> Stress test validé — phase P0 autorisée &nbsp;&nbsp;
   <span class="box"></span> Validé sous réserve des corrections ci-dessus &nbsp;&nbsp;
   <span class="box"></span> À reprendre
 </p>

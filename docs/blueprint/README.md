@@ -25,7 +25,10 @@ s'appuie sur trois sources analysées en profondeur :
 | **[03 · Plateforme](03-plateforme.md)** | Backend · Frontend · Schéma de données · API · Jobs · Abstraction providers · Storage · Sécurité · Coûts · Facturation · Multi-tenant · Analytics · Observabilité · Déploiement · Arborescence | L → Z |
 | **[04 · Diagrammes](04-diagrammes.md)** | Les 8 diagrammes ASCII demandés | 29 |
 | **[05 · Roadmap & décision finale](05-roadmap-et-decision-finale.md)** | MVP · V1 · V2 · Moat · Différenciation · THE RECOMMENDED ARCHITECTURE · BUILD ORDER · Risques | 15, 23, 30 |
-| **[06 · M02 — Stress test](06-m02-stress-test.md)** | Passe critique sur tout ce qui précède : 16 findings, vérification du marché, gate humain, WOW moment, MVP et build order révisés, question de positionnement | M02 |
+| **[06 · M02 — Stress test](06-m02-stress-test.md)** | 16 findings, vérification du marché, one-click, gate humain, WOW moment | M02 · 01→07 |
+| **[07 · M02 — Systèmes créatifs](07-m02-systemes-createurs.md)** | Score créatif, Creative DNA, Brand Memory, Character DNA, Product Consistency, SceneSpecification, régénération ciblée, routage, budget planner | M02 · 08→16 |
+| **[08 · M02 — Produit et marché](08-m02-produit-marche.md)** | MVP A/B/C, test URL→pub, vertical playbooks, Market Context Engine, agences, UX premium, magic vs control, moat map, business model | M02 · 17→25 |
+| **[09 · M02 — Exploitation et décision](09-m02-exploitation-et-decision.md)** | 42 failure modes, escalade humaine, execution trace, versioning, flywheel, sécurité, simplification, **MVP final, GO/NO-GO, autorisation de phase** | M02 · 26→38 |
 
 ---
 
@@ -52,10 +55,13 @@ s'appuie sur trois sources analysées en profondeur :
 
 ---
 
-> **⚠ Le M02 amende ce blueprint.** Les fichiers 00 à 05 restent la baseline architecturale,
-> mais six décisions y sont amendées ou remplacées — dont l'architecture vidéo (§H) et le
-> gate humain (§D, §G). **Lire le [06 · Stress test](06-m02-stress-test.md) avant de
-> construire quoi que ce soit.**
+> **⚠ Le M02 amende ce blueprint sur 20 points.** Les fichiers 00 à 05 restent la baseline,
+> mais l'architecture vidéo, le produit en scène, le gate humain, l'entonnoir, la
+> facturation et le build order sont révisés. **Lire les fichiers 06 à 09 avant de
+> construire quoi que ce soit** — la décision finale et l'autorisation de phase sont en
+> [09 §33-38](09-m02-exploitation-et-decision.md).
+>
+> **État : GO WITH CHANGES · PHASE 01 BLOCKED · PHASE 00 AUTHORIZED.**
 
 ## Conventions de ce blueprint
 

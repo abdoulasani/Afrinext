@@ -8,7 +8,7 @@ revue. Il valide, ou renvoie des corrections.
 | Jalon | Objet | Date | Commit | Statut |
 |---|---|---|---|---|
 | **M01** | [Architecture & Product Blueprint](M01-blueprint-architecture.pdf) | 2026-09-05 | `12b61a6` | Terminé — en attente de revue |
-| **M02** | [Product & Architecture Stress Test](M02-stress-test.pdf) | 2026-09-05 | `1e6fc4a`+ | Terminé — en attente d'arbitrage (V8→V15) |
+| **M02** | [Product & Architecture Stress Test](M02-stress-test.pdf) | 2026-09-05 | `bae26f3`+ | Terminé — GO WITH CHANGES · Phase 01 bloquée sur B1→B5 |
 
 ## Contenu obligatoire d'un rapport
 
