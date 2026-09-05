@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Afrinext · Rapport de jalon M01</title>
+<link rel="stylesheet" href="_style.css">
+</head>
+<body>
+
+<div class="cover">
+  <div class="eyebrow">Afrinext · Rapport de jalon · pour revue</div>
+  <h1>M01 — Architecture &amp; Product Blueprint</h1>
+  <p class="sub">AI UGC Advertising SaaS · Phase 1 : conception, aucun code applicatif</p>
+  <div class="meta">
+    <div><div class="k">Jalon</div><div class="v">M01 · Blueprint</div></div>
+    <div><div class="k">Statut</div><div class="v">Terminé — à valider</div></div>
+    <div><div class="k">Date</div><div class="v">5 septembre 2026</div></div>
+    <div><div class="k">Destinataire</div><div class="v">Senior Developer</div></div>
+    <div><div class="k">Dépôt</div><div class="v mono">abdoulasani/Afrinext</div></div>
+    <div><div class="k">Branche</div><div class="v mono">claude/new-session-igslex</div></div>
+    <div><div class="k">Commit</div><div class="v mono">12b61a6</div></div>
+    <div><div class="k">Volume</div><div class="v">7 fichiers · 3 083 lignes</div></div>
+  </div>
+</div>
+
+<h2><span class="num">1.</span>Objet du jalon</h2>
+
+<p>Le jalon M01 couvre la <strong>Phase 1 du master prompt</strong> : produire une architecture
+et un blueprint produit complets pour un SaaS de publicité UGC générée par IA, à partir de
+trois sources fournies. La consigne explicite était de <strong>ne pas écrire de code</strong>
+avant que l'architecture ne soit posée et validée. Cette consigne a été respectée : le dépôt
+ne contient à ce stade que de la documentation.</p>
+
+<p>Ce rapport n'est pas un résumé du blueprint. Il est conçu comme un <strong>document de
+revue</strong> : il liste les décisions structurantes prises, celles qui engagent la suite du
+projet, les hypothèses chiffrées à vérifier, et les points sur lesquels une validation ou une
+correction est explicitement demandée avant de démarrer la Phase 01 du build order.</p>
+
+<h2><span class="num">2.</span>Sources analysées</h2>
+
+<table>
+<thead><tr><th style="width:24%">Source</th><th style="width:30%">Traitement effectué</th><th>Ce qui en a été retenu</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Vidéo tutorielle</strong><br><code>How To Create Ultra Real AI Avatar</code><br>15 min 28 s</td>
+  <td>Décomposition image par image (échantillonnage 1 image / 12 s, 77 images analysées).
+      La piste audio n'a pas pu être transcrite (téléchargement du modèle ASR bloqué par le
+      proxy sortant) — l'analyse repose donc sur les visuels et les sous-titres incrustés,
+      qui couvrent l'intégralité du workflow.</td>
+  <td>Le workflow réel en 6 étapes, les outils employés, la structure des prompts, le point
+      de décision humaine unique, et les limites du procédé.</td>
+</tr>
+<tr>
+  <td><strong><code>avatar-6c-prompt-engine</code></strong><br>1 fichier</td>
+  <td>Lecture intégrale.</td>
+  <td>La méthode 6C (Character, Camera, Clothing, Context, Cinematic light, Consistency)
+      et le vocabulaire « iPhone realism ».</td>
+</tr>
+<tr>
+  <td><strong><code>ugc-ad-engine</code></strong><br>8 fichiers, ~1 290 lignes</td>
+  <td>Lecture intégrale, références comprises.</td>
+  <td>Le pipeline angles → script → prompts vidéo, la bibliothèque de prompts caméra/voix,
+      la table durée→nombre de mots, et surtout <code>ads-method.md</code> — la base de
+      connaissance créative en 12 sections.</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <span class="lbl">Le workflow reconstitué depuis la vidéo</span>
+  Pinterest (capture d'une créatrice réelle) → ChatGPT&nbsp;Work + skill 6C → Adobe Firefly
+  (GPT&nbsp;Image&nbsp;2, 9:16) → skill <code>ugc-ad-engine</code> sur une URL → 12 angles →
+  <em>choix humain d'un angle</em> → script 6 clips / 38 s + feuille de prompts →
+  Firefly <em>Generate video</em> (Gemini Omni Flash, 720p, 9:16) × 6 copier-coller →
+  éditeur vidéo agentique → publicité finale de 25 s.
+  <br><strong>Durée : 45 à 60 minutes, dont une seule véritable décision humaine.</strong>
+</div>
+
+<h2><span class="num">3.</span>Livrables</h2>
+
+<table class="tight">
+<thead><tr><th style="width:38%">Fichier</th><th style="width:9%">Lignes</th><th>Contenu</th></tr></thead>
+<tbody>
+<tr><td><code>docs/blueprint/README.md</code></td><td>61</td><td>Index, résumé en 10 points, conventions</td></tr>
+<tr><td><code>docs/blueprint/00-analyse-sources.md</code></td><td>203</td><td>Analyse de la vidéo, critique des deux skills, risque juridique</td></tr>
+<tr><td><code>docs/blueprint/01-produit.md</code></td><td>330</td><td>Sections A→E : executive summary, vision, utilisateurs, parcours, modules</td></tr>
+<tr><td><code>docs/blueprint/02-moteur-ia.md</code></td><td>769</td><td>Sections F→K : architecture IA, orchestrateur, vidéo, personnages, éditeur, intelligence</td></tr>
+<tr><td><code>docs/blueprint/03-plateforme.md</code></td><td>892</td><td>Sections L→Z : backend, front, schéma SQL, API, jobs, providers, sécurité, coûts, déploiement</td></tr>
+<tr><td><code>docs/blueprint/04-diagrammes.md</code></td><td>439</td><td>Les 8 diagrammes ASCII demandés</td></tr>
+<tr><td><code>docs/blueprint/05-roadmap-et-decision-finale.md</code></td><td>364</td><td>MVP/V1/V2, moat, stack finale, build order en 10 phases, risques</td></tr>
+<tr><td><code>README.md</code></td><td>25</td><td>Point d'entrée du dépôt</td></tr>
+</tbody>
+</table>
+
+<p>Couverture des exigences du master prompt : les 26 sections A→Z sont traitées, les 4 volets
+MVP / V1 / V2 / Future&nbsp;Moat sont définis, les 8 diagrammes ASCII sont fournis, la stack
+finale (« THE RECOMMENDED ARCHITECTURE ») et le BUILD&nbsp;ORDER en 10 phases sont livrés avec,
+pour chaque phase, objectif, contenu, dépendances, risques et définition de « done ».</p>
+
+<h2><span class="num">4.</span>Décisions d'architecture engageantes</h2>
+
+<p>Les six décisions ci-dessous conditionnent tout le reste du projet. Elles sont celles dont
+la remise en cause ultérieure coûterait le plus cher.</p>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">D1 · Le pipeline est un DAG explicite, pas un agent LLM</span><span class="tag bloquant">Bloquant</span></div>
+  <dl>
+    <dt>Retenu</dt><dd>Graphe de nœuds persisté en PostgreSQL, exécuté par des workers BullMQ, avec états, dépendances, reprise partielle et compensation.</dd>
+    <dt>Alternatives</dt><dd>Temporal · AWS Step Functions · chaînage naïf de jobs · agent LLM autonome.</dd>
+    <dt>Raison</dt><dd>Le pipeline est un graphe fixe à branches connues, pas un problème d'agent. Un agent qui « décide » d'appeler trois fois un modèle vidéo dépense 12&nbsp;$ sans prévenir. Le DAG en base est inspectable en SQL par le support et rend la reprise partielle triviale.</dd>
+    <dt>Réversibilité</dt><dd>Bonne — Temporal reste envisageable en V2 si le graphe dépasse ~20 nœuds.</dd>
+  </dl>
+</div>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">D2 · Toute sortie IA est un objet typé et validé, jamais du markdown re-parsé</span><span class="tag bloquant">Bloquant</span></div>
+  <dl>
+    <dt>Retenu</dt><dd>Contrats d'entrée et de sortie typés (Zod / JSON Schema) sur chaque nœud IA. Le markdown devient une vue dérivée.</dd>
+    <dt>Alternatives</dt><dd>Conserver le format markdown des skills existants et parser le texte.</dd>
+    <dt>Raison</dt><dd>C'est la différence structurelle entre un skill conversationnel et un produit. Un parseur sur texte libre casse à la première variation de formatage du modèle.</dd>
+    <dt>Réversibilité</dt><dd>Faible — c'est une décision de fondation.</dd>
+  </dl>
+</div>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">D3 · Providers routés par « capabilities » déclarées en base de données</span><span class="tag majeur">Majeur</span></div>
+  <dl>
+    <dt>Retenu</dt><dd>Chaque provider publie un descripteur (durées, audio natif, fidélité d'identité, coût/s, latence, politique de contenu, régions). Un routeur choisit par filtres + score. Chaque provider compile son propre prompt.</dd>
+    <dt>Alternatives</dt><dd>Provider unique · interface uniforme <code>generate(prompt, duration)</code>.</dd>
+    <dt>Raison</dt><dd>Une interface uniforme nivelle par le bas et interdit d'exploiter le lip-sync natif ou la fidélité d'identité — précisément nos critères de qualité. Critère d'acceptation associé : ajouter un provider = 1 adaptateur (~200 lignes) + 1 ligne SQL, sans déploiement du cœur.</dd>
+    <dt>Réversibilité</dt><dd>Moyenne.</dd>
+  </dl>
+</div>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">D4 · Personnages propriétaires ou consentis — jamais de sosie non consenti</span><span class="tag bloquant">Bloquant</span></div>
+  <dl>
+    <dt>Retenu</dt><dd>Bibliothèque générée en interne (16 personnages au MVP) + clonage sur consentement horodaté et auditable. Détection de visage à l'ingestion, refus des correspondances de célébrités, provenance C2PA sur les sorties.</dd>
+    <dt>Alternatives</dt><dd>Reproduire l'étape 1 de la vidéo (capture d'une personne réelle sur Pinterest).</dd>
+    <dt>Raison</dt><dd>Droit à l'image (art. 9 C. civ.), RGPD, <em>right of publicity</em> (AB&nbsp;602, ELVIS Act), EU AI Act art. 50, politiques Meta/TikTok. Rétrofitter la conformité sur une base d'avatars illicites est impossible.</dd>
+    <dt>Réversibilité</dt><dd>Nulle — décision de conception.</dd>
+  </dl>
+</div>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">D5 · L'argent est estimé, réservé, attribué et plafonné avant d'être dépensé</span><span class="tag bloquant">Bloquant</span></div>
+  <dl>
+    <dt>Retenu</dt><dd>Grand livre de crédits en ajout seul, réservation atomique avant le premier appel payant, et quatre verrous indépendants : réservation, plafond par job, plafond par workspace et fenêtre glissante, kill switch par provider.</dd>
+    <dt>Alternatives</dt><dd>Metering Stripe natif · facturation a posteriori.</dd>
+    <dt>Raison</dt><dd>La latence de synchronisation Stripe empêche de refuser une génération <em>avant</em> la dépense. Sans ces verrous, un bug de retry coûte des milliers d'euros avant détection.</dd>
+    <dt>Réversibilité</dt><dd>Faible.</dd>
+  </dl>
+</div>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">D6 · Un seul gate humain : le choix du concept créatif</span><span class="tag majeur">Majeur</span></div>
+  <dl>
+    <dt>Retenu</dt><dd>Le job passe en <code>WAITING_INPUT</code> après la génération des concepts, avec un TTL de 7 jours. Tout le reste est asynchrone.</dd>
+    <dt>Alternatives</dt><dd>Validation du script en plus · automatisation totale sans gate.</dd>
+    <dt>Raison</dt><dd>Le workflow analysé n'a qu'une seule décision humaine réelle : l'angle. On la conserve — c'est la décision qu'une machine ne devrait pas prendre — et on supprime les 45 minutes de travail mécanique.</dd>
+    <dt>Réversibilité</dt><dd>Bonne.</dd>
+  </dl>
+</div>
+
+<h2><span class="num">5.</span>Points nécessitant une validation explicite</h2>
+
+<p>Ce sont les sept points sur lesquels une réponse est attendue avant de démarrer la Phase 01.
+Une recommandation est formulée pour chacun ; le désaccord est prévu et documenté.</p>
+
+<table>
+<thead><tr><th style="width:4%">#</th><th style="width:29%">Question posée</th><th style="width:37%">Recommandation</th><th>Conséquence si le choix est différent</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>V1</strong></td>
+  <td><strong>Ordre de construction</strong> — construit-on la stratégie (Phase 03) avant la génération vidéo (Phase 05) ?</td>
+  <td><strong>Oui.</strong> La stratégie est la seule couche non commoditisable ; la génération vidéo est louée par tout le monde. C'est aussi la partie démontrable sans dépenser un euro de génération.</td>
+  <td>Inverser donne une démo plus spectaculaire plus tôt, mais fabrique un générateur de plus et fait dépenser du COGS avant d'avoir validé la qualité créative.</td>
+</tr>
+<tr>
+  <td><strong>V2</strong></td>
+  <td><strong>Monolithe modulaire</strong> + workers séparés, plutôt que des microservices ?</td>
+  <td><strong>Oui</strong>, avec des frontières de modules strictes (règles de dépendance vérifiées en CI) pour permettre une extraction ultérieure.</td>
+  <td>Des microservices dès le départ coûtent, pour une équipe de 3 à 8 personnes, un temps d'ingénierie disproportionné avant le product-market fit.</td>
+</tr>
+<tr>
+  <td><strong>V3</strong></td>
+  <td><strong>Cloudflare R2</strong> plutôt que S3 pour le stockage objet ?</td>
+  <td><strong>Oui.</strong> L'egress est nul chez R2 ; sur un produit vidéo servi plusieurs fois par publicité, S3 facturerait la sortie plus cher que le stockage.</td>
+  <td>S3 reste supérieur si l'on prévoit une intégration profonde à l'écosystème AWS — ce que l'architecture proposée n'utilise pas.</td>
+</tr>
+<tr>
+  <td><strong>V4</strong></td>
+  <td><strong>Clerk</strong> pour l'authentification au MVP, malgré son coût par utilisateur actif ?</td>
+  <td><strong>Oui</strong>, derrière une interface <code>AuthProvider</code>. Économiser 0,02&nbsp;$/MAU quand le COGS variable est de 10 à 30&nbsp;$ par publicité est une erreur de priorité.</td>
+  <td>Better Auth ou WorkOS sont les cibles de migration au-delà de ~20 000 MAU ou à l'arrivée d'exigences SSO entreprise.</td>
+</tr>
+<tr>
+  <td><strong>V5</strong></td>
+  <td><strong>RLS PostgreSQL dès la Phase 01</strong>, en plus du contrôle applicatif ?</td>
+  <td><strong>Oui.</strong> Ceinture et bretelles assumées : la fuite inter-tenant est le seul incident qui tue un SaaS B2B, et rétrofitter la RLS est une migration douloureuse.</td>
+  <td>Sans RLS, un oubli de <code>WHERE workspace_id = ?</code> devient une fuite de données. Non recommandé.</td>
+</tr>
+<tr>
+  <td><strong>V6</strong></td>
+  <td><strong>Périmètre du MVP</strong> — un seul format (9:16), 15 et 30 s, 16 personnages, 1 provider + 1 fallback ?</td>
+  <td><strong>Oui.</strong> Le MVP doit prouver « URL → publicité diffusable en moins de 15 min » et rien d'autre.</td>
+  <td>Tout élargissement du périmètre repousse la mesure du facteur de régénération, dont dépend la grille tarifaire.</td>
+</tr>
+<tr>
+  <td><strong>V7</strong></td>
+  <td><strong>Politique de personnages</strong> (D4) — acceptez-vous le surcoût de la bibliothèque propriétaire et du workflow de consentement ?</td>
+  <td><strong>Oui.</strong> Quelques semaines d'ingénierie contre l'accès aux marchés entreprise, agence et UE.</td>
+  <td>Reproduire le procédé de la vidéo rend le produit invendable aux entreprises et expose à un risque juridique direct.</td>
+</tr>
+</tbody>
+</table>
+
+<h2><span class="num">6.</span>Hypothèses chiffrées à vérifier</h2>
+
+<div class="callout warn">
+  <span class="lbl">Attention — chiffres non vérifiés</span>
+  Les coûts ci-dessous sont des <strong>ordres de grandeur établis à la date de rédaction</strong>.
+  Ils fondent la grille tarifaire proposée. Ils doivent être re-benchmarkés sur les providers
+  réels <strong>avant tout engagement de prix</strong>. Ils sont signalés comme tels dans le blueprint.
+</div>
+
+<table class="tight">
+<thead><tr><th style="width:42%">Hypothèse</th><th style="width:20%">Valeur retenue</th><th>Comment la vérifier</th></tr></thead>
+<tbody>
+<tr><td>Coût de génération vidéo</td><td>0,10 – 0,50 $ / seconde selon le tier</td><td>Benchmark direct sur Veo, Omni Flash et Kling, tarifs API en vigueur</td></tr>
+<tr><td><strong>Facteur de régénération réel</strong></td><td>1,6 – 2,2×</td><td><strong>Mesure sur 50 publicités de test.</strong> C'est la variable la plus sensible du modèle économique</td></tr>
+<tr><td>COGS d'une publicité de 30 s (tier standard)</td><td>10 – 14 $</td><td>Découle des deux lignes précédentes</td></tr>
+<tr><td>Coût IA texte par publicité</td><td>0,20 – 0,60 $</td><td>Mesurable dès la Phase 03, sans génération vidéo</td></tr>
+<tr><td>Marge brute cible</td><td>65 % au lancement → 75 % à maturité</td><td>Vérifiée en Phase 08 sur 100 publicités réelles</td></tr>
+<tr><td>Taux d'extraction Brand DNA réussie</td><td>≥ 80 % des sites</td><td>Test sur 30 sites réels de verticales différentes (définition de done de la Phase 02)</td></tr>
+</tbody>
+</table>
+
+<div class="callout danger">
+  <span class="lbl">Seuil d'alerte</span>
+  Si le facteur de régénération mesuré <strong>dépasse 2,2</strong>, la grille tarifaire proposée
+  ne tient pas. La réponse correcte est alors de <strong>retravailler le contrôle qualité, pas
+  d'ajuster les prix</strong> — d'où la dépendance explicite de la Phase 08 (facturation) à la
+  Phase 05 (génération vidéo).
+</div>
+
+<h2><span class="num">7.</span>Points de désaccord avec les sources fournies</h2>
+
+<p>Le master prompt demandait de ne pas chercher à faire plaisir et de signaler ce qui est
+mauvais. Quatre points ont été relevés, tous argumentés dans le blueprint.</p>
+
+<table>
+<thead><tr><th style="width:26%">Point</th><th style="width:37%">Problème identifié</th><th>Position retenue</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Sourcing des avatars</strong><br><em>étape 1 de la vidéo</em></td>
+  <td>Capturer l'image d'une créatrice réelle sur Pinterest pour générer son sosie n'est pas une zone grise juridique.</td>
+  <td>Supprimé du produit. Remplacé par bibliothèque propriétaire + clonage consenti (D4). §00.3 du blueprint.</td>
+</tr>
+<tr>
+  <td><strong>Biais esthétique codé en dur</strong><br><em>skill 6C</em></td>
+  <td>« European model-level beauty » figure dans les règles <em>et</em> dans l'exemple de référence.</td>
+  <td>Retiré. La sélection du personnage dérive de <code>BrandDNA.audience</code>. Argument commercial autant qu'éthique : le levier <em>liking</em> de Cialdini dit qu'on achète à des gens qui nous ressemblent.</td>
+</tr>
+<tr>
+  <td><strong>« Ne jamais mentionner l'IA »</strong><br><em>skill 6C</em></td>
+  <td>Bonne règle de qualité de prompt, mais en collision frontale avec l'EU AI Act art. 50 et les politiques Meta/TikTok.</td>
+  <td>Conservée au niveau du prompt ; le disclosure devient une couche de sortie (C2PA + mention optionnelle), pas une décision du prompt.</td>
+</tr>
+<tr>
+  <td><strong>Montage par agent conversationnel</strong><br><em>étape 6 de la vidéo</em></td>
+  <td>Séduisant en démo, intenable en production : non reproductible, non versionnable, non testable ; chaque modification relance un LLM.</td>
+  <td>Remplacé par un <code>EditPlan</code> déclaratif rendu par un moteur déterministe. L'utilisateur garde l'ergonomie conversationnelle — mais le LLM édite le plan, pas la vidéo.</td>
+</tr>
+</tbody>
+</table>
+
+<h2><span class="num">8.</span>Ce qui n'a pas été fait — et pourquoi</h2>
+
+<table class="tight">
+<thead><tr><th style="width:34%">Non livré</th><th>Justification</th></tr></thead>
+<tbody>
+<tr><td>Tout code applicatif</td><td>Consigne explicite des sections 28 et 31 du master prompt : ne pas commencer à coder avant validation de l'architecture.</td></tr>
+<tr><td>Transcription audio de la vidéo</td><td>Téléchargement du modèle ASR bloqué par le proxy sortant (403). Compensé par l'analyse image par image et les sous-titres incrustés, qui couvrent l'intégralité du workflow. <strong>Aucun impact identifié sur les conclusions</strong>, mais le point est signalé par honnêteté.</td></tr>
+<tr><td>Prix fermes</td><td>Le master prompt demandait de ne pas fixer les prix arbitrairement. Une <em>méthode</em> de calcul et une grille indicative sont fournies ; les prix définitifs dépendent du benchmark de la section 6.</td></tr>
+<tr><td>Choix définitif des providers</td><td>Le tableau fourni sera périmé sous six mois — c'est précisément l'argument de l'abstraction par capabilities (D3). La liste est une position de départ, pas un engagement.</td></tr>
+<tr><td>Maquettes d'interface</td><td>Hors périmètre de la Phase 1. Les parcours et les principes d'UI sont spécifiés (§B, §D, §M) ; le design visuel viendra avec la Phase 01.</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">9.</span>Prochaine étape proposée</h2>
+
+<p><strong>Phase 01 du build order — <em>Foundation</em>.</strong> Un squelette déployable,
+multi-tenant et sûr, sans aucune IA : monorepo pnpm/Turborepo, applications
+<code>api</code> / <code>web</code> / <code>worker</code> / <code>render</code>,
+PostgreSQL + Drizzle avec <strong>RLS dès le premier jour</strong>, Clerk, workspaces et
+memberships, R2 et uploads signés, Redis + BullMQ avec un job factice, OpenTelemetry + Sentry
++ PostHog, CI/CD et environnements de preview.</p>
+
+<p><strong>Définition de « done » proposée :</strong> deux workspaces coexistent ; un test
+d'isolation cross-tenant échoue correctement pour <em>chaque</em> table ; un job traverse la
+file de bout en bout ; une trace complète est visible dans l'outil d'observabilité.</p>
+
+<p><strong>Condition de démarrage :</strong> validation des points V1 à V7 de la section 5, ou
+formulation des corrections attendues.</p>
+
+<h2><span class="num">10.</span>Formulaire de revue</h2>
+
+<p>À compléter par le relecteur. Chaque ligne correspond à un point de la section 5.</p>
+
+<table class="review">
+<thead><tr><th>Réf.</th><th>Validé</th><th>À&nbsp;corriger</th><th>Commentaire / correction demandée</th></tr></thead>
+<tbody>
+<tr><td><strong>V1</strong> Stratégie avant vidéo</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V2</strong> Monolithe modulaire</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V3</strong> Cloudflare R2</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V4</strong> Clerk au MVP</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V5</strong> RLS dès la Phase 01</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V6</strong> Périmètre du MVP</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>V7</strong> Politique de personnages</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Décisions structurantes (section 4)</strong></td></tr>
+<tr><td><strong>D1</strong> DAG explicite</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>D2</strong> Sorties IA typées</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>D3</strong> Routage par capabilities</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>D4</strong> Personnages consentis</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>D5</strong> Contrôle des dépenses</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>D6</strong> Gate humain unique</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+</tbody>
+</table>
+
+<div class="nobreak">
+<h3>Verdict global</h3>
+<p style="margin-bottom:14px">
+  <span class="box"></span> Jalon validé — démarrage de la Phase 01 autorisé &nbsp;&nbsp;
+  <span class="box"></span> Validé sous réserve des corrections ci-dessus &nbsp;&nbsp;
+  <span class="box"></span> À reprendre
+</p>
+
+<div class="sign">
+  <div>Nom du relecteur</div>
+  <div>Date</div>
+  <div>Signature</div>
+</div>
+</div>
+
+<div class="footer">
+  <span>Afrinext · Rapport de jalon M01 · Architecture &amp; Product Blueprint</span>
+  <span>Document interne · pour revue</span>
+</div>
+
+</body>
+</html>

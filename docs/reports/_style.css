@@ -1,0 +1,90 @@
+/* Feuille de style commune aux rapports de jalon Afrinext — impression A4 */
+
+@page { size: A4; margin: 16mm 14mm 16mm 14mm; }
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 9.6pt; line-height: 1.5; color: #1a1d21;
+  margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+
+/* ── En-tête de couverture ─────────────────────────────────────────── */
+.cover { border-bottom: 3px solid #0f6b52; padding-bottom: 14px; margin-bottom: 22px; }
+.cover .eyebrow { font-size: 8pt; letter-spacing: .16em; text-transform: uppercase;
+                  color: #0f6b52; font-weight: 700; }
+.cover h1 { font-size: 20pt; margin: 6px 0 2px; letter-spacing: -.01em; }
+.cover .sub { font-size: 11pt; color: #4a5157; margin: 0 0 14px; }
+
+.meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 18px; }
+.meta div { border-left: 2px solid #dfe3e6; padding-left: 8px; }
+.meta .k { font-size: 7.2pt; text-transform: uppercase; letter-spacing: .1em;
+           color: #7a828a; font-weight: 700; }
+.meta .v { font-size: 9pt; font-weight: 600; }
+.meta .v.mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.2pt; }
+
+/* ── Titres ────────────────────────────────────────────────────────── */
+h2 { font-size: 12.5pt; margin: 22px 0 8px; padding-bottom: 5px;
+     border-bottom: 1.5px solid #0f6b52; color: #0f2b23; break-after: avoid; }
+h2 .num { color: #0f6b52; font-variant-numeric: tabular-nums; margin-right: 7px; }
+h3 { font-size: 10.2pt; margin: 14px 0 5px; color: #26303a; break-after: avoid; }
+
+p { margin: 0 0 8px; }
+ul, ol { margin: 0 0 8px; padding-left: 17px; }
+li { margin-bottom: 3px; }
+strong { color: #0f2b23; }
+code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.4pt;
+       background: #f1f3f4; padding: 1px 4px; border-radius: 3px; }
+
+/* ── Tableaux ──────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 8.8pt; }
+th { background: #0f2b23; color: #fff; text-align: left; padding: 6px 8px;
+     font-size: 7.8pt; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+td { padding: 6px 8px; border-bottom: 1px solid #e4e8ea; vertical-align: top; }
+tr:nth-child(even) td { background: #f8f9fa; }
+tr { break-inside: avoid; }
+thead { break-after: avoid; }
+table.tight td, table.tight th { padding: 4px 7px; }
+
+/* ── Blocs d'accent ────────────────────────────────────────────────── */
+.callout { border-left: 3px solid #0f6b52; background: #f2f8f6;
+           padding: 9px 12px; margin: 10px 0 12px; break-inside: avoid; }
+.callout.warn   { border-color: #b8860b; background: #fdf8ec; }
+.callout.danger { border-color: #a92e2e; background: #fdf1f1; }
+.callout .lbl { font-size: 7.4pt; text-transform: uppercase; letter-spacing: .1em;
+                font-weight: 700; color: #0f6b52; display: block; margin-bottom: 3px; }
+.callout.warn .lbl   { color: #8a6508; }
+.callout.danger .lbl { color: #8f2424; }
+
+/* ── Fiches « point à valider » ────────────────────────────────────── */
+.decision { border: 1px solid #d8dee2; border-radius: 4px; padding: 10px 12px;
+            margin: 0 0 10px; break-inside: avoid; }
+.decision .hd { display: flex; justify-content: space-between; align-items: baseline;
+                gap: 10px; margin-bottom: 5px; }
+.decision .ttl { font-weight: 700; font-size: 9.8pt; color: #0f2b23; }
+.decision .tag { font-size: 7pt; text-transform: uppercase; letter-spacing: .08em;
+                 font-weight: 700; padding: 2px 7px; border-radius: 10px;
+                 white-space: nowrap; }
+.tag.bloquant { background: #a92e2e; color: #fff; }
+.tag.majeur   { background: #b8860b; color: #fff; }
+.tag.normal   { background: #dfe3e6; color: #4a5157; }
+.decision dl { margin: 0; display: grid; grid-template-columns: 92px 1fr; gap: 2px 10px; }
+.decision dt { font-size: 7.4pt; text-transform: uppercase; letter-spacing: .07em;
+               color: #7a828a; font-weight: 700; padding-top: 1px; }
+.decision dd { margin: 0; }
+
+/* ── Cases à cocher de revue ───────────────────────────────────────── */
+.review th:first-child, .review td:first-child { width: 32%; }
+.review th:nth-child(2), .review th:nth-child(3),
+.review td:nth-child(2), .review td:nth-child(3) { width: 62px; text-align: center; }
+.box { display: inline-block; width: 11px; height: 11px; border: 1.3px solid #6b7379;
+       border-radius: 2px; vertical-align: -1px; margin-right: 3px; }
+.sign { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; }
+.sign div { border-top: 1px solid #9aa2a8; padding-top: 5px; font-size: 8pt; color: #7a828a; }
+
+.footer { margin-top: 26px; padding-top: 9px; border-top: 1px solid #dfe3e6;
+          font-size: 7.6pt; color: #7a828a; display: flex; justify-content: space-between; }
+
+.break { break-before: page; }
+.nobreak { break-inside: avoid; }

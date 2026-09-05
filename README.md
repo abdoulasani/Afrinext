@@ -19,6 +19,14 @@ applicatif n'a encore été écrit.
 | [04 · Diagrammes](docs/blueprint/04-diagrammes.md) | 8 diagrammes d'architecture |
 | [05 · Roadmap](docs/blueprint/05-roadmap-et-decision-finale.md) | MVP → V2, stack finale, ordre de construction |
 
+## Rapports de jalon
+
+À la fin de chaque jalon, un rapport PDF est produit pour revue par le senior developer :
+décisions engageantes, points à valider, hypothèses à vérifier, formulaire de revue.
+
+📄 **[M01 — Architecture & Product Blueprint](docs/reports/M01-blueprint-architecture.pdf)** ·
+[convention et journal des jalons](docs/reports/README.md)
+
 ## Prochaine étape
 
 Phase 01 du build order — *Foundation* : monorepo, multi-tenant avec RLS, files de jobs et
