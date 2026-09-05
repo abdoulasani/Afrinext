@@ -1,0 +1,6 @@
+out/**/*.mp4
+out/**/*.m4a
+out/**/*.png
+out/**/work/
+out/**/qcframes/
+data/shots/*.mp4

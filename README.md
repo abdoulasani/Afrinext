@@ -22,6 +22,7 @@ applicatif n'a encore été écrit.
 | [07 · M02 — Systèmes créatifs](docs/blueprint/07-m02-systemes-createurs.md) | score créatif, Creative DNA, Brand Memory, produit, scènes, coûts |
 | [08 · M02 — Produit et marché](docs/blueprint/08-m02-produit-marche.md) | MVP A/B/C, playbooks, Market Context, agences, UX, moat, pricing |
 | [09 · M02 — Décision](docs/blueprint/09-m02-exploitation-et-decision.md) | failure modes, versioning, MVP final, **GO/NO-GO** |
+| [10 · M03 — P0 résultats](docs/blueprint/10-m03-p0-results.md) | tranche verticale exécutée, mesures réelles, **P0 FAIL** |
 
 ## Rapports de jalon
 
@@ -30,16 +31,18 @@ décisions engageantes, points à valider, hypothèses à vérifier, formulaire 
 
 📄 **[M01 — Architecture & Product Blueprint](docs/reports/M01-blueprint-architecture.pdf)** ·
 📄 **[M02 — Product & Architecture Stress Test](docs/reports/M02-stress-test.pdf)** ·
+📄 **[M03 — P0 Proof of Concept](docs/reports/M03-p0-proof.pdf)** ·
 [convention et journal des jalons](docs/reports/README.md)
 
 ## Prochaine étape
 
-**GO WITH CHANGES · PHASE 01 BLOCKED · PHASE 00 AUTHORIZED.**
+**P0 exécuté partiellement · P0 STATUS: FAIL · PHASE 01: BLOCKED.**
 
-**Phase P0 — tranche verticale jetable** : une publicité de bout en bout sur un produit de
-test, non déployée, destinée à être jetée, pour mesurer coût réel, latence, facteur de
-régénération et surtout **la qualité perçue du chemin C** — l'hypothèse dont tout dépend.
+Le harnais [`p0/`](p0/README.md) produit dix publicités 9:16 de bout en bout et mesure
+la fidélité produit (0,785 · 24,6 dB), la latence déterministe (7,96 s) et les coûts sur
+volumes réels. Mais **H1 — la qualité perçue du chemin C — n'a pas pu être mesurée** :
+aucun provider TTS, lip-sync ou vidéo n'était accessible.
 
-Elle démarre dès l'arbitrage de **B3 (marché de tête)** et **B4 (verticale de tête)**, qui
-déterminent la langue, le CTA et le personnage de la tranche. Voir le
-[rapport M02](docs/reports/M02-stress-test.pdf).
+**Débloquer la Phase 01 demande les expériences E1→E7** — environ 135 à 390 $ et une
+semaine. Il ne manque que trois clés d'API, un personnage réel et trois évaluateurs.
+Voir le [rapport M03](docs/reports/M03-p0-proof.pdf).

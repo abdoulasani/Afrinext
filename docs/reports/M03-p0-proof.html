@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Afrinext · Rapport de jalon M03</title>
+<link rel="stylesheet" href="_style.css"></head><body>
+
+<div class="cover">
+  <div class="eyebrow">Afrinext · Rapport de jalon · pour revue</div>
+  <h1>M03 — P0 Proof of Concept</h1>
+  <p class="sub">Tranche verticale jetable · 10 publicités produites et mesurées · code Python volontairement non réutilisable</p>
+  <div class="meta">
+    <div><div class="k">Jalon</div><div class="v">M03 · P0</div></div>
+    <div><div class="k">Statut</div><div class="v">Exécuté partiellement</div></div>
+    <div><div class="k">Date</div><div class="v">5 septembre 2026</div></div>
+    <div><div class="k">Destinataire</div><div class="v">Senior Developer</div></div>
+    <div><div class="k">Dépôt</div><div class="v mono">abdoulasani/Afrinext</div></div>
+    <div><div class="k">Harnais</div><div class="v mono">p0/ · ~1 500 lignes</div></div>
+    <div><div class="k">Mesures</div><div class="v">168 opérations tracées</div></div>
+    <div><div class="k">Coût facturé</div><div class="v">0,00 $</div></div>
+  </div>
+</div>
+
+<h2><span class="num">1.</span>Verdict</h2>
+
+<div class="callout danger">
+  <span class="lbl">Décision</span>
+  <strong style="font-size:12.5pt">P0 STATUS : FAIL &nbsp;·&nbsp; PHASE 01 : BLOCKED</strong><br><br>
+  <strong>Ce n'est pas le pipeline qui a échoué.</strong> Il a tourné de bout en bout,
+  dix fois, et produit dix publicités 9:16 valides. Ce qui a échoué, c'est <strong>P0
+  en tant que preuve</strong> : l'hypothèse décisive — <strong>H1, la qualité perçue du
+  chemin C</strong> — n'a pas pu être mesurée, faute de provider lip-sync et de banque
+  de plans réelle dans l'environnement d'exécution.
+  <br><br>
+  Annoncer « CONDITIONAL PASS » impliquerait que H1 est répondue. Elle ne l'est pas, et
+  M03 §27 interdit de faire paraître l'expérience meilleure qu'elle n'est.
+</div>
+
+<p><strong>Mais P0 a établi beaucoup, et tout va dans le bon sens.</strong> Il a aussi
+trouvé cinq défauts réels qu'aucune des 2 365 lignes d'architecture du M02 n'avait
+révélés — ce qui est précisément l'argument en faveur de la tranche verticale.</p>
+
+<h2><span class="num">2.</span>Ce qui a tourné, ce qui n'a pas tourné</h2>
+
+<table class="tight">
+<thead><tr><th style="width:44%">Étage</th><th style="width:12%">Exécuté</th><th>Preuve / raison</th></tr></thead>
+<tbody>
+<tr><td>Script + contrôle de factualité</td><td><strong>oui</strong></td><td>10 scripts · 2 violations intentionnelles bloquées à chaque run</td></tr>
+<tr><td>Compositing produit (stratégie S1)</td><td><strong>oui</strong></td><td>similarité 0,785 · PSNR logo 24,6 dB</td></tr>
+<tr><td>Montage, sous-titres ASS, CTA, loudnorm, rendu 1080×1920</td><td><strong>oui</strong></td><td>10 MP4 de 9,7 à 15,1 s</td></tr>
+<tr><td>QC rule-based · 8 contrôles</td><td><strong>oui</strong></td><td>8/10 publicités entièrement au vert</td></tr>
+<tr><td>Réparation ciblée · 6 niveaux</td><td><strong>oui</strong></td><td>3 réparations, 4 contrôles remis au vert</td></tr>
+<tr><td>Cost ledger + trace T0→T8</td><td><strong>oui</strong></td><td>168 opérations</td></tr>
+<tr><td><strong>TTS</strong></td><td>non</td><td>aucune clé — silence de durée réaliste, marqué SYNTHETIC</td></tr>
+<tr><td><strong>Lip-sync</strong></td><td>non</td><td>aucune clé — audio muxé sans synchronisation</td></tr>
+<tr><td><strong>Banque de plans réelle</strong></td><td>non</td><td>substituts géométriques, filigrane « SYNTHETIC SHOT » sur chaque frame</td></tr>
+<tr><td><strong>ASR</strong> (<code>audio_transcription</code>)</td><td>non</td><td>téléchargement du modèle bloqué par le proxy (403)</td></tr>
+<tr><td><strong>Chemin génératif de contrôle</strong></td><td>non</td><td>aucune clé — le provider lève une erreur explicite, il ne simule pas</td></tr>
+<tr><td><strong>Évaluation par 3 personnes</strong></td><td>non</td><td>noter des formes géométriques ne mesurerait rien</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <span class="lbl">Garantie anti-fabrication</span>
+  Un provider sans clé <strong>ne renvoie jamais un résultat plausible</strong> : il lève
+  <code>MissingCredentials</code>, ou — en <code>--offline</code> explicite — un substitut
+  marqué <code>synthetic=True</code>, propagé jusqu'au manifeste. Un contrôle QC non
+  exécutable est <code>SKIPPED</code>, jamais « passé ». Le filigrane est visible sur
+  chaque frame des dix publicités.
+</div>
+
+<h2><span class="num">3.</span>Les quatre hypothèses</h2>
+
+<table>
+<thead><tr><th style="width:6%">#</th><th style="width:24%">Hypothèse</th><th style="width:14%">Objectif M02</th><th>Résultat P0</th></tr></thead>
+<tbody>
+<tr><td><strong>H1</strong></td><td>Qualité « diffusable sans gêne »</td><td>—</td><td><strong>NON MESURÉE.</strong> L'hypothèse dont dépend tout le M02 reste ouverte</td></tr>
+<tr><td><strong>H2</strong></td><td>Coût de revient</td><td>&lt; 1,00 $</td><td><strong>Modélisé 0,11 – 0,85 $</strong> sur volumes réels. Sous le seuil dans les trois scénarios, avec <strong>3,9× de marge</strong> avant rupture</td></tr>
+<tr><td><strong>H3</strong></td><td>Latence</td><td>&lt; 4 min · TTFP &lt; 90 s</td><td><strong>Plancher déterministe mesuré : 7,96 s.</strong> Il reste ~3 min 50 s de budget réseau. Confortable, mais la latence provider est inconnue</td></tr>
+<tr><td><strong>H4</strong></td><td>Facteur de régénération</td><td>&lt; 1,4</td><td><strong>Non concluant.</strong> Mesuré à 1,02, mais sur des étages déterministes qui ne défaillent pas aléatoirement</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">4.</span>Fidélité produit — le résultat le plus solide</h2>
+
+<p>C'est le point que le M02 identifiait comme <em>table stakes</em> et que le M01
+n'avait pas du tout.</p>
+
+<table class="tight">
+<thead><tr><th style="width:42%">Mesure</th><th style="width:14%">Médiane</th><th style="width:12%">Min</th><th style="width:12%">Seuil</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>Similarité produit (corrélation croisée, recherche locale ±16 px)</td><td><strong>0,785</strong></td><td>0,783</td><td>0,60</td><td>large marge</td></tr>
+<tr><td>Préservation logo / texte (PSNR sur la boîte du logo)</td><td><strong>24,6 dB</strong></td><td>24,5</td><td>22</td><td>OK</td></tr>
+<tr><td>Publicité avec emplacement erroné <em>injecté volontairement</em></td><td>0,660</td><td>—</td><td>0,60</td><td><strong>détectée puis réparée</strong></td></tr>
+</tbody>
+</table>
+
+<p>Le packaging (« KARITÉ D'OR », « BEURRE DE KARITÉ PUR », « 200 g ») est lisible sur
+la vidéo finale <strong>parce qu'il n'a jamais été redessiné</strong> : l'actif réel est
+masqué, mis à l'échelle, incrusté. <strong>La stratégie S1 du M02 est validée
+mécaniquement.</strong> La question ouverte n'est plus « le produit est-il fidèle ? »
+mais « l'incrustation est-elle crédible dans un vrai plan ? » — c'est-à-dire H1.</p>
+
+<h2><span class="num">5.</span>Coûts</h2>
+
+<div class="callout warn">
+  <span class="lbl">Coût réellement facturé : 0,00 $</span>
+  Aucun provider payant n'a été appelé. Tous les chiffres ci-dessous sont
+  <strong>modélisés</strong> : prix catalogue non vérifiés appliqués aux
+  <strong>volumes réellement mesurés</strong> (182 caractères TTS · 5 clips lip-sync ·
+  13,0 s de vidéo · 22 s CPU par publicité).
+</div>
+
+<table class="tight">
+<thead><tr><th style="width:38%">Poste ($/publicité)</th><th style="width:14%">Bas</th><th style="width:14%">Base</th><th>Haut</th></tr></thead>
+<tbody>
+<tr><td><strong>Chemin C · total</strong></td><td>0,113</td><td><strong>0,286</strong></td><td>0,847</td></tr>
+<tr><td>dont lip-sync</td><td>0,100</td><td>0,250</td><td>0,750</td></tr>
+<tr><td>dont LLM (stratégie + script + QC)</td><td>0,010</td><td>0,030</td><td>0,080</td></tr>
+<tr><td>dont TTS</td><td>0,003</td><td>0,006</td><td>0,016</td></tr>
+<tr><td>dont CPU + stockage <em>(mesuré)</em></td><td>0,0001</td><td><strong>0,00025</strong></td><td>0,0004</td></tr>
+<tr><td><strong>Contrôle génératif · total</strong> <em>(non mesuré)</em></td><td>1,050</td><td><strong>2,630</strong></td><td>6,580</td></tr>
+<tr><td><strong>Rapport génératif / chemin C</strong></td><td>9,3×</td><td><strong>9,2×</strong></td><td>7,8×</td></tr>
+</tbody>
+</table>
+
+<p><strong>Deux enseignements.</strong> (1) Le coût du chemin C est à 87 % du lip-sync ;
+tout le reste — compositing, montage, rendu, CPU, stockage — coûte
+<strong>0,00025 $</strong>, un quart de millième de dollar. La moitié déterministe du
+pipeline est économiquement gratuite, et c'est mesuré. (2) <strong>Seuil de rupture : le
+lip-sync peut coûter 0,193 $/clip, soit 3,9× le prix de base, avant que la publicité ne
+dépasse 1,00 $.</strong></p>
+
+<p><strong>Infrastructure :</strong> 88 $/mois à 100 publicités · 466 $ à 1 000 ·
+3 757 $ à 10 000. À 10 000 publicités, cela représente 61 heures CPU et 4,9 Go.
+L'infrastructure n'est pas un sujet ; les providers sont tout le sujet.</p>
+
+<h2><span class="num">6.</span>Latence et régénération</h2>
+
+<table class="tight">
+<thead><tr><th style="width:44%">Jalon</th><th style="width:16%">Médiane</th><th>p90</th></tr></thead>
+<tbody>
+<tr><td><strong>TTFP</strong> — première scène disponible</td><td><strong>0,45 s</strong></td><td>0,51 s</td></tr>
+<tr><td>Rendu final</td><td>6,75 s</td><td>8,06 s</td></tr>
+<tr><td><strong>Publiable (QC inclus)</strong></td><td><strong>7,96 s</strong></td><td>9,28 s</td></tr>
+</tbody>
+</table>
+
+<p>Temps <strong>déterministes uniquement</strong> — hors latence réseau TTS et
+lip-sync. Ils fixent un plancher, et ce plancher laisse ~3 min 50 s de budget pour
+tenir la cible de 4 minutes.</p>
+
+<p><strong>Réparation ciblée :</strong> 3 réparations sur 10 publicités, dont
+<strong>2 sans dépense (67 %)</strong>, 4 contrôles remis au vert, 6 à 7 s par
+réparation. Les deux fautes injectées volontairement ont été détectées et corrigées —
+l'emplacement produit erroné par une réincrustation gratuite (niveau 3), l'audio
+tronqué par une resynthèse d'une seule ligne (niveau 1).</p>
+
+<div class="callout warn">
+  <span class="lbl">Mise en garde</span>
+  67 % de réparations gratuites <strong>n'est pas comparable</strong> à l'objectif de
+  60 % du M02, qui porte sur des échecs stochastiques de modèles génératifs — lesquels
+  n'ont pas tourné. Ce que P0 démontre est plus modeste : le mécanisme fonctionne,
+  diagnostique la cause racine, et applique le niveau le moins cher qui la traite.
+</div>
+
+<h2><span class="num">7.</span>Ce que P0 a découvert</h2>
+
+<p>Dix défauts consignés dans <code>p0/FAILURE-LOG.md</code>. <strong>Cinq ont été
+trouvés par le QC lui-même en exécutant la chaîne</strong>, et deux d'entre eux étaient
+des défauts <strong>du QC</strong>, pas de la production :</p>
+
+<table class="tight">
+<thead><tr><th style="width:9%">ID</th><th style="width:36%">Défaut</th><th>Enseignement</th></tr></thead>
+<tbody>
+<tr><td><strong>F-001</strong></td><td>Toute scène contenant le produit durait 0,04 s ; publicité de 9 s au lieu de 14,6 s</td><td>Une entrée image fixe sans <code>-loop 1</code> détruit la scène. Invisible sur un schéma</td></tr>
+<tr><td><strong>F-002</strong></td><td>Deux formules de durée coexistaient (planificateur / synthétiseur)</td><td>Exactement la désynchronisation redoutée par le M02 — apparue en 200 lignes de code</td></tr>
+<tr><td><strong>F-003</strong></td><td>Le QC mesurait l'ancien emplacement après réparation</td><td>La vérité de contrôle se reconstruit, elle ne se patche pas</td></tr>
+<tr><td><strong>F-004</strong></td><td>Faux positif sur les plans animés</td><td><strong>Un contrôle qui mesure une région figée devient faux dès que l'overlay bouge.</strong> Corrigé par recherche locale</td></tr>
+<tr><td><strong>F-005</strong></td><td>Les réparations s'exécutaient mais ne corrigeaient rien</td><td><strong>Le niveau de réparation se choisit par cause racine, pas par nom de contrôle.</strong> Un audio tronqué déclenchait une réparation de montage</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">8.</span>B5 — budget de la banque de plans, mesuré</h2>
+
+<table class="tight">
+<thead><tr><th style="width:22%">Scénario</th><th style="width:20%">1 marché</th><th style="width:20%">3 marchés</th><th>Maintenance / an</th></tr></thead>
+<tbody>
+<tr><td>Bas</td><td>60 $</td><td>180 $</td><td>24 $</td></tr>
+<tr><td><strong>Base</strong></td><td><strong>160 $</strong></td><td><strong>480 $</strong></td><td><strong>64 $</strong></td></tr>
+<tr><td>Haut</td><td>400 $</td><td>1 200 $</td><td>160 $</td></tr>
+</tbody>
+</table>
+
+<div class="callout danger">
+  <span class="lbl">Correction au M02 §24 — le moat</span>
+  Ce chiffre est <strong>10 à 30 fois inférieur</strong> à ce que le M02 laissait
+  craindre. Excellente nouvelle pour la construction, <strong>mauvaise nouvelle pour la
+  thèse du moat</strong> : le M02 présentait la banque de plans localisée comme
+  « le seul actif capitalisé ». À 160 $ le marché, ce n'est pas une barrière — un
+  concurrent la reconstitue en un week-end. <strong>Ce qui reste défendable n'est pas le
+  coût de génération, c'est ce que l'argent n'achète pas</strong> : le casting et le
+  consentement de vrais visages représentatifs, la curation qualité, et la donnée
+  accumulée. Le classement des moats doit être révisé.
+</div>
+
+<h2><span class="num">9.</span>Les expériences qui débloquent la Phase 01</h2>
+
+<table>
+<thead><tr><th style="width:5%">#</th><th style="width:31%">Expérience</th><th style="width:26%">Ce qu'elle lève</th><th style="width:14%">Coût</th><th>Durée</th></tr></thead>
+<tbody>
+<tr><td><strong>E1</strong></td><td>Banque de plans réelle : 1 personnage, 10 plans, marché francophone ouest-africain, emplacements produit filmés</td><td>La condition d'existence de tout le reste</td><td>40 – 100 $</td><td>1-2 j</td></tr>
+<tr><td><strong>E2</strong></td><td>TTS français réel sur les 10 scripts</td><td>Qualité audio, prononciation, rythme</td><td>&lt; 5 $</td><td>0,5 j</td></tr>
+<tr><td><strong>E3</strong></td><td><strong>Lip-sync réel</strong> sur les 50 clips</td><td><strong>H1</strong> · coût réel · latence réelle</td><td>3 – 15 $</td><td>1 j</td></tr>
+<tr><td><strong>E4</strong></td><td>ASR pour activer <code>audio_transcription</code></td><td>Le contrôle le plus rentable, aujourd'hui SKIPPED</td><td>&lt; 2 $</td><td>0,5 j</td></tr>
+<tr><td><strong>E5</strong></td><td>Chemin génératif de contrôle sur les mêmes 10 publicités</td><td>La comparaison §16, pour de vrai</td><td>25 – 65 $</td><td>1 j</td></tr>
+<tr><td><strong>E6</strong></td><td>Évaluation aveugle par 3 personnes (<code>p0/eval/grid.csv</code>)</td><td><strong>PUBLISHABILITY RATE</strong> — le critère qui décide</td><td>0 $</td><td>0,5 j</td></tr>
+<tr><td><strong>E7</strong></td><td>Rejouer les 10 publicités 20 fois</td><td>Le vrai facteur de régénération</td><td>60 – 200 $</td><td>1 j</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <span class="lbl">Total : environ 135 à 390 $ et une semaine</span>
+  Le harnais est écrit, les 10 scripts sont écrits, les 8 spécifications sont écrites,
+  la grille d'évaluation aveugle est prête. <strong>Il ne manque que trois clés d'API,
+  un personnage et trois personnes.</strong>
+</div>
+
+<h2><span class="num">10.</span>Ce qu'il faut et ne faut pas conclure</h2>
+
+<table class="tight">
+<thead><tr><th style="width:50%">Légitime de conclure</th><th>À ne surtout pas conclure</th></tr></thead>
+<tbody>
+<tr>
+<td>
+Le <strong>compositing produit préserve le packaging</strong>, avec un détecteur qui discrimine.<br><br>
+La <strong>moitié déterministe du pipeline est économiquement gratuite</strong> (0,00025 $/pub) et rapide (7,96 s).<br><br>
+Le <strong>contrôle de factualité bloque réellement</strong> — 2 violations interceptées à chaque run.<br><br>
+La <strong>réparation ciblée fonctionne</strong> quand elle diagnostique la cause racine.<br><br>
+La <strong>banque de plans coûte 160 $ par marché</strong> — ce qui invalide un argument de moat du M02.<br><br>
+Le <strong>risque économique tient entièrement au prix du lip-sync</strong>, avec 3,9× de marge.
+</td>
+<td>
+Que <strong>le chemin C fonctionne</strong> — sa qualité n'a pas été vue.<br><br>
+Que le <strong>COGS est de 0,29 $</strong> — rien n'a été facturé.<br><br>
+Que le <strong>facteur de régénération est de 1,02</strong> — les étages qui défaillent n'ont pas tourné.<br><br>
+Que la <strong>comparaison avec le génératif est tranchée</strong> — un seul des deux chemins a tourné.
+</td>
+</tr>
+</tbody>
+</table>
+
+<h2><span class="num">11.</span>Formulaire de revue</h2>
+
+<table class="review">
+<thead><tr><th>Réf.</th><th>Validé</th><th>À&nbsp;corriger</th><th>Commentaire</th></tr></thead>
+<tbody>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Conduite de P0</strong></td></tr>
+<tr><td><strong>P1</strong> Verdict FAIL plutôt que CONDITIONAL PASS</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>P2</strong> Refus de simuler les providers absents</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>P3</strong> Harnais jetable en Python (hors stack cible)</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>P4</strong> Violations de factualité injectées comme témoin</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Conséquences sur le M02</strong></td></tr>
+<tr><td><strong>P5</strong> Révision du moat n°2 (banque de plans à 160 $)</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>P6</strong> Stratégie S1 (compositing) confirmée</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Décisions à prendre</strong></td></tr>
+<tr><td><strong>E-GO</strong> Autoriser E1→E7 (135-390 $, 1 semaine)</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>KEYS</strong> Fournir TTS / lip-sync / vidéo</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>CAST</strong> Personnage réel + consentement</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>EVAL</strong> 3 évaluateurs francophones</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+</tbody>
+</table>
+
+<div class="nobreak">
+<h3>Verdict global</h3>
+<p style="margin-bottom:14px">
+  <span class="box"></span> P0 validé dans sa conduite — lancer E1→E7 &nbsp;&nbsp;
+  <span class="box"></span> Validé sous réserve des corrections ci-dessus &nbsp;&nbsp;
+  <span class="box"></span> À reprendre
+</p>
+<div class="sign"><div>Nom du relecteur</div><div>Date</div><div>Signature</div></div>
+</div>
+
+<div class="footer">
+  <span>Afrinext · Rapport de jalon M03 · P0 Proof of Concept</span>
+  <span>Document interne · pour revue</span>
+</div>
+</body></html>

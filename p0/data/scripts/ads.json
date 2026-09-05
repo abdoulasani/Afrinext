@@ -1,0 +1,87 @@
+{
+  "market": "NE-fr",
+  "language": "fr",
+  "cta_channel": "whatsapp",
+  "facts": {
+    "brand": "KARITÉ D'OR",
+    "product": "Beurre de karité pur",
+    "net": "200 g",
+    "composition": "100% karité, sans parfum",
+    "origin": "Niger",
+    "price": "3 500 FCFA",
+    "delivery": "livraison à Niamey",
+    "contact": "WhatsApp"
+  },
+  "_note_experimental": "AD05 et AD09 contiennent VOLONTAIREMENT une allégation non sourcée et un superlatif interdit, afin de vérifier que le QC de factualité bloque réellement. Voir rapport §11.",
+  "ads": [
+    {"ad_id":"AD01","hook_type":"curiosity","lines":[
+      {"role":"hook","text":"Ta peau tire encore après la douche ?","shot":"talking_close","product":"none","ost":"Ça tire ?"},
+      {"role":"problem","text":"C'est pas la douche. C'est ce que tu mets après.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"product","text":"Beurre de karité pur. Rien d'autre dedans.","shot":"holding_product","product":"held","ost":"100% karité"},
+      {"role":"proof","text":"Sans parfum. Tu sens le karité, c'est tout.","shot":"showing_product","product":"shown","ost":null},
+      {"role":"cta","text":"Écris-moi sur WhatsApp, je t'explique.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD02","hook_type":"pain_point","lines":[
+      {"role":"hook","text":"Trois crèmes différentes. Ta peau tire toujours.","shot":"talking_close","product":"none","ost":"3 crèmes. Zéro résultat."},
+      {"role":"problem","text":"Tu paies du parfum et de l'eau, pas du soin.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"product","text":"Ici c'est du karité pur. Deux cents grammes.","shot":"holding_product","product":"held","ost":"200 g"},
+      {"role":"proof","text":"Une seule chose dedans. Regarde l'étiquette.","shot":"showing_product","product":"shown","ost":null},
+      {"role":"cta","text":"WhatsApp, et je te le garde.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD03","hook_type":"benefit","lines":[
+      {"role":"hook","text":"Une peau souple le matin, sans y penser.","shot":"talking_close","product":"none","ost":"Souple au réveil"},
+      {"role":"problem","text":"Tu mets ça le soir. Tu dors. C'est tout.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"product","text":"Beurre de karité pur, sans parfum.","shot":"holding_product","product":"held","ost":null},
+      {"role":"proof","text":"Un pot de deux cents grammes, ça dure.","shot":"showing_product","product":"shown","ost":"200 g"},
+      {"role":"cta","text":"Écris-moi sur WhatsApp.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD04","hook_type":"problem_solution","lines":[
+      {"role":"hook","text":"Le problème c'est pas ta peau.","shot":"talking_close","product":"none","ost":"C'est pas ta peau"},
+      {"role":"problem","text":"C'est le parfum dans ta crème qui l'assèche.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"product","text":"Enlève le parfum. Garde le karité.","shot":"holding_product","product":"held","ost":"Sans parfum"},
+      {"role":"proof","text":"Un seul ingrédient. C'est écrit dessus.","shot":"showing_product","product":"shown","ost":null},
+      {"role":"cta","text":"WhatsApp si tu veux essayer.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD05","hook_type":"social_proof","_intentional_violation":"allégation chiffrée non sourcée","lines":[
+      {"role":"hook","text":"Plus de 2000 femmes à Niamey l'utilisent déjà.","shot":"talking_close","product":"none","ost":"2000 clientes"},
+      {"role":"problem","text":"Elles cherchaient toutes la même chose.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"product","text":"Du karité pur, sans parfum ajouté.","shot":"holding_product","product":"held","ost":null},
+      {"role":"proof","text":"Deux cents grammes, trois mille cinq cents francs.","shot":"showing_product","product":"shown","ost":"3 500 FCFA"},
+      {"role":"cta","text":"WhatsApp, je réponds vite.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD06","hook_type":"product_demo","lines":[
+      {"role":"hook","text":"Regarde ce qu'il y a dedans.","shot":"talking_close","product":"none","ost":"Regarde"},
+      {"role":"product","text":"Du karité. Et c'est fini, il n'y a rien d'autre.","shot":"showing_product","product":"shown","ost":"100% karité"},
+      {"role":"proof","text":"Pas de parfum, pas d'eau, pas de liste longue.","shot":"looking_product","product":"held","ost":null},
+      {"role":"benefit","text":"C'est pour ça que ça tient toute la journée.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"cta","text":"Écris-moi sur WhatsApp.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD07","hook_type":"objection","lines":[
+      {"role":"hook","text":"Trois mille cinq cents, tu trouves ça cher ?","shot":"talking_close","product":"none","ost":"Trop cher ?"},
+      {"role":"problem","text":"Compte ce que tu dépenses en crèmes chaque mois.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"product","text":"Un pot de deux cents grammes tient longtemps.","shot":"holding_product","product":"held","ost":"200 g"},
+      {"role":"proof","text":"Et dedans, c'est du karité pur. Rien d'autre.","shot":"showing_product","product":"shown","ost":null},
+      {"role":"cta","text":"WhatsApp, je te dis tout.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD08","hook_type":"comparison","lines":[
+      {"role":"hook","text":"Deux pots. Un seul soigne vraiment.","shot":"talking_close","product":"none","ost":"Lequel ?"},
+      {"role":"problem","text":"L'un est plein de parfum. L'autre non.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"product","text":"Celui-ci, c'est du karité pur.","shot":"holding_product","product":"held","ost":"Sans parfum"},
+      {"role":"proof","text":"Retourne le pot et lis la liste.","shot":"showing_product","product":"shown","ost":null},
+      {"role":"cta","text":"WhatsApp pour commander.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD09","hook_type":"urgency","_intentional_violation":"superlatif interdit","lines":[
+      {"role":"hook","text":"C'est le meilleur karité du Niger, garanti.","shot":"talking_close","product":"none","ost":"Le meilleur"},
+      {"role":"problem","text":"Et il part vite en fin de mois.","shot":"talking_medium","product":"none","ost":null},
+      {"role":"product","text":"Deux cents grammes de karité pur.","shot":"holding_product","product":"held","ost":"200 g"},
+      {"role":"proof","text":"Sans parfum, c'est écrit sur le pot.","shot":"showing_product","product":"shown","ost":null},
+      {"role":"cta","text":"WhatsApp maintenant.","shot":"cta","product":"none","ost":"WhatsApp"}]},
+
+    {"ad_id":"AD10","hook_type":"direct_offer","lines":[
+      {"role":"hook","text":"Beurre de karité pur, trois mille cinq cents francs.","shot":"talking_close","product":"none","ost":"3 500 FCFA"},
+      {"role":"product","text":"Deux cents grammes, sans parfum.","shot":"holding_product","product":"held","ost":"200 g"},
+      {"role":"proof","text":"Un seul ingrédient. Le karité.","shot":"showing_product","product":"shown","ost":null},
+      {"role":"benefit","text":"Livraison à Niamey.","shot":"talking_medium","product":"none","ost":"Livraison Niamey"},
+      {"role":"cta","text":"Écris-moi sur WhatsApp.","shot":"cta","product":"none","ost":"WhatsApp"}]}
+  ]
+}

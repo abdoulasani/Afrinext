@@ -9,6 +9,7 @@ revue. Il valide, ou renvoie des corrections.
 |---|---|---|---|---|
 | **M01** | [Architecture & Product Blueprint](M01-blueprint-architecture.pdf) | 2026-09-05 | `12b61a6` | Terminé — en attente de revue |
 | **M02** | [Product & Architecture Stress Test](M02-stress-test.pdf) | 2026-09-05 | `bae26f3`+ | Terminé — GO WITH CHANGES · Phase 01 bloquée sur B1→B5 |
+| **M03** | [P0 Proof of Concept](M03-p0-proof.pdf) | 2026-09-05 | `d671d3b`+ | **P0 FAIL · Phase 01 BLOCKED** — H1 non mesurée, expériences E1→E7 requises |
 
 ## Contenu obligatoire d'un rapport
 

@@ -29,6 +29,7 @@ s'appuie sur trois sources analysées en profondeur :
 | **[07 · M02 — Systèmes créatifs](07-m02-systemes-createurs.md)** | Score créatif, Creative DNA, Brand Memory, Character DNA, Product Consistency, SceneSpecification, régénération ciblée, routage, budget planner | M02 · 08→16 |
 | **[08 · M02 — Produit et marché](08-m02-produit-marche.md)** | MVP A/B/C, test URL→pub, vertical playbooks, Market Context Engine, agences, UX premium, magic vs control, moat map, business model | M02 · 17→25 |
 | **[09 · M02 — Exploitation et décision](09-m02-exploitation-et-decision.md)** | 42 failure modes, escalade humaine, execution trace, versioning, flywheel, sécurité, simplification, **MVP final, GO/NO-GO, autorisation de phase** | M02 · 26→38 |
+| **[10 · M03 — P0 : résultats mesurés](10-m03-p0-results.md)** | Tranche verticale exécutée : 10 publicités produites, fidélité produit mesurée, coûts modélisés sur volumes réels, latence, réparation ciblée, 10 défauts, **P0 FAIL · Phase 01 BLOCKED** | M03 |
 
 ---
 
@@ -61,7 +62,10 @@ s'appuie sur trois sources analysées en profondeur :
 > construire quoi que ce soit** — la décision finale et l'autorisation de phase sont en
 > [09 §33-38](09-m02-exploitation-et-decision.md).
 >
-> **État : GO WITH CHANGES · PHASE 01 BLOCKED · PHASE 00 AUTHORIZED.**
+> **État après M03 : P0 FAIL · PHASE 01 BLOCKED.** Le pipeline tourne de bout en bout
+> et le compositing produit est validé mécaniquement, mais **H1 — la qualité perçue du
+> chemin C — n'a pas pu être mesurée** (aucun provider lip-sync). Voir
+> [10 · résultats P0](10-m03-p0-results.md) et le harnais [`p0/`](../../p0/README.md).
 
 ## Conventions de ce blueprint
 

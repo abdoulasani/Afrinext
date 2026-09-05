@@ -1,0 +1,191 @@
+{
+  "ad_id": "AD07",
+  "produced_at": "2026-09-05T07:58:11.929377+00:00",
+  "script_hash": "7a7beac4f4e9f6f4",
+  "product_id": "prd_test_karite",
+  "character_id": "char_p0_synthetic",
+  "shots_used": [
+    "s02_talking_close",
+    "s01_talking_medium",
+    "s03_holding_product",
+    "s04_showing_product",
+    "s10_cta"
+  ],
+  "providers": {
+    "tts": "elevenlabs",
+    "lipsync": "lipsync-generic",
+    "render": "ffmpeg"
+  },
+  "synthetic_stages": [
+    "lipsync",
+    "product",
+    "shot_bank",
+    "tts"
+  ],
+  "outputs": {
+    "final": "/home/user/Afrinext/p0/out/AD07/AD07.mp4",
+    "duration_s": 15.1
+  },
+  "total_cost_usd": 0.0,
+  "qc": [
+    {
+      "check": "script_factuality",
+      "kind": "rule",
+      "passed": true,
+      "value": [],
+      "threshold": "0 violation",
+      "severity": "P0",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "render_validity",
+      "kind": "rule",
+      "passed": true,
+      "value": {
+        "video_codec": "h264",
+        "width": 1080,
+        "height": 1920,
+        "audio_codec": "aac",
+        "fps": 25.0,
+        "duration_s": 15.1
+      },
+      "threshold": null,
+      "severity": "P0",
+      "repair": 5,
+      "detail": ""
+    },
+    {
+      "check": "aspect_ratio",
+      "kind": "rule",
+      "passed": true,
+      "value": "1080x1920",
+      "threshold": "1080x1920",
+      "severity": "P1",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "total_duration",
+      "kind": "rule",
+      "passed": true,
+      "value": 15.1,
+      "threshold": "15.0s ±15%",
+      "severity": "P2",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "scene_duration",
+      "kind": "rule",
+      "passed": true,
+      "value": [],
+      "threshold": "±25%",
+      "severity": "P2",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "black_frames",
+      "kind": "rule",
+      "passed": true,
+      "value": [],
+      "threshold": "aucune",
+      "severity": "P1",
+      "repair": 5,
+      "detail": ""
+    },
+    {
+      "check": "subtitle_validity",
+      "kind": "rule",
+      "passed": true,
+      "value": {
+        "events": 4,
+        "problems": []
+      },
+      "threshold": "≤84 car.",
+      "severity": "P2",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "cta_presence",
+      "kind": "rule",
+      "passed": true,
+      "value": "WhatsApp",
+      "threshold": "présent",
+      "severity": "P1",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "audio_transcription",
+      "kind": "rule",
+      "passed": false,
+      "value": null,
+      "threshold": "ASR",
+      "severity": "P1",
+      "repair": 1,
+      "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
+    },
+    {
+      "check": "lip_sync",
+      "kind": "model",
+      "passed": false,
+      "value": null,
+      "threshold": null,
+      "severity": "P1",
+      "repair": 2,
+      "detail": "SKIPPED — aucun provider lip-sync branché"
+    },
+    {
+      "check": "visual_quality",
+      "kind": "model",
+      "passed": false,
+      "value": null,
+      "threshold": null,
+      "severity": "P2",
+      "repair": 4,
+      "detail": "SKIPPED — évaluation model-based non exécutée"
+    },
+    {
+      "check": "product_presence",
+      "kind": "rule",
+      "passed": true,
+      "value": {
+        "frames_checked": 2,
+        "similarity": 0.7853
+      },
+      "threshold": "≥0.60 sur ≥2 frames",
+      "severity": "P0",
+      "repair": 3,
+      "detail": ""
+    },
+    {
+      "check": "logo_text_preservation",
+      "kind": "rule",
+      "passed": true,
+      "value": {
+        "psnr_db": 24.55
+      },
+      "threshold": "≥22 dB",
+      "severity": "P0",
+      "repair": 3,
+      "detail": ""
+    }
+  ],
+  "timings_ms": {
+    "T0_start": 0,
+    "T1_strategy": 0,
+    "T2_script": 0,
+    "T3_audio": 41,
+    "T4_lipsync": 41,
+    "T5_composite": 511,
+    "T6_first_pixel": 511,
+    "T7_final_render": 7218,
+    "T8_qc_done": 8541,
+    "TTFP_ms": 511,
+    "time_to_final_ms": 7218,
+    "time_to_publishable_ms": 8541
+  }
+}

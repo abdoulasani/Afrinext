@@ -1,0 +1,132 @@
+{
+  "measured_volumes": {
+    "tts_chars": 182.0,
+    "lip_clips": 5.0,
+    "video_seconds": 13.0,
+    "cpu_s": 22.0,
+    "duration_s": 13.1,
+    "mb_per_ad": 0.5
+  },
+  "prices_unverified": {
+    "tts_per_1k_chars": [
+      0.015,
+      0.03,
+      0.09
+    ],
+    "lipsync_per_clip": [
+      0.02,
+      0.05,
+      0.15
+    ],
+    "generative_per_sec": [
+      0.08,
+      0.2,
+      0.5
+    ],
+    "vcpu_hour": [
+      0.02,
+      0.04,
+      0.06
+    ],
+    "storage_gb_month": [
+      0.01,
+      0.015,
+      0.023
+    ],
+    "llm_per_ad": [
+      0.01,
+      0.03,
+      0.08
+    ]
+  },
+  "path_c": {
+    "low": {
+      "tts": 0.00273,
+      "lipsync": 0.1,
+      "cpu": 0.00012222222222222224,
+      "storage": 4.8828125e-06,
+      "llm": 0.01,
+      "total": 0.1129
+    },
+    "base": {
+      "tts": 0.00546,
+      "lipsync": 0.25,
+      "cpu": 0.0002444444444444445,
+      "storage": 7.32421875e-06,
+      "llm": 0.03,
+      "total": 0.2857
+    },
+    "high": {
+      "tts": 0.01638,
+      "lipsync": 0.75,
+      "cpu": 0.00036666666666666667,
+      "storage": 1.123046875e-05,
+      "llm": 0.08,
+      "total": 0.8468
+    }
+  },
+  "generative": {
+    "low": {
+      "generative": 1.04,
+      "llm": 0.01,
+      "cpu": 0.00012222222222222224,
+      "total": 1.0501
+    },
+    "base": {
+      "generative": 2.6,
+      "llm": 0.03,
+      "cpu": 0.0002444444444444445,
+      "total": 2.6302
+    },
+    "high": {
+      "generative": 6.5,
+      "llm": 0.08,
+      "cpu": 0.00036666666666666667,
+      "total": 6.5804
+    }
+  },
+  "breakeven_lipsync_per_clip": 0.1929,
+  "infra": {
+    "100": {
+      "ads": 100,
+      "variable_usd": 28.57,
+      "cpu_hours": 0.6,
+      "storage_gb_new": 0.0,
+      "baseline_infra_usd": 60,
+      "total_usd": 88.57
+    },
+    "1000": {
+      "ads": 1000,
+      "variable_usd": 285.7,
+      "cpu_hours": 6.1,
+      "storage_gb_new": 0.5,
+      "baseline_infra_usd": 180,
+      "total_usd": 465.7
+    },
+    "10000": {
+      "ads": 10000,
+      "variable_usd": 2857.0,
+      "cpu_hours": 61.1,
+      "storage_gb_new": 4.9,
+      "baseline_infra_usd": 900,
+      "total_usd": 3757.0
+    }
+  },
+  "b5": {
+    "low": {
+      "capex_1_marche": 60.0,
+      "capex_3_marches": 180.0,
+      "maintenance_annuelle": 24.0
+    },
+    "base": {
+      "capex_1_marche": 160.0,
+      "capex_3_marches": 480.0,
+      "maintenance_annuelle": 64.0
+    },
+    "high": {
+      "capex_1_marche": 400.0,
+      "capex_3_marches": 1200.0,
+      "maintenance_annuelle": 160.0
+    }
+  }
+}

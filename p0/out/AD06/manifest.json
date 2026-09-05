@@ -1,0 +1,191 @@
+{
+  "ad_id": "AD06",
+  "produced_at": "2026-09-05T07:57:48.970125+00:00",
+  "script_hash": "2a4746ad7daf1f74",
+  "product_id": "prd_test_karite",
+  "character_id": "char_p0_synthetic",
+  "shots_used": [
+    "s02_talking_close",
+    "s04_showing_product",
+    "s05_looking_product",
+    "s01_talking_medium",
+    "s10_cta"
+  ],
+  "providers": {
+    "tts": "elevenlabs",
+    "lipsync": "lipsync-generic",
+    "render": "ffmpeg"
+  },
+  "synthetic_stages": [
+    "lipsync",
+    "product",
+    "shot_bank",
+    "tts"
+  ],
+  "outputs": {
+    "final": "/home/user/Afrinext/p0/out/AD06/AD06.mp4",
+    "duration_s": 14.8
+  },
+  "total_cost_usd": 0.0,
+  "qc": [
+    {
+      "check": "script_factuality",
+      "kind": "rule",
+      "passed": true,
+      "value": [],
+      "threshold": "0 violation",
+      "severity": "P0",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "render_validity",
+      "kind": "rule",
+      "passed": true,
+      "value": {
+        "video_codec": "h264",
+        "width": 1080,
+        "height": 1920,
+        "audio_codec": "aac",
+        "fps": 25.0,
+        "duration_s": 14.8
+      },
+      "threshold": null,
+      "severity": "P0",
+      "repair": 5,
+      "detail": ""
+    },
+    {
+      "check": "aspect_ratio",
+      "kind": "rule",
+      "passed": true,
+      "value": "1080x1920",
+      "threshold": "1080x1920",
+      "severity": "P1",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "total_duration",
+      "kind": "rule",
+      "passed": true,
+      "value": 14.8,
+      "threshold": "14.680000000000001s ±15%",
+      "severity": "P2",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "scene_duration",
+      "kind": "rule",
+      "passed": true,
+      "value": [],
+      "threshold": "±25%",
+      "severity": "P2",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "black_frames",
+      "kind": "rule",
+      "passed": true,
+      "value": [],
+      "threshold": "aucune",
+      "severity": "P1",
+      "repair": 5,
+      "detail": ""
+    },
+    {
+      "check": "subtitle_validity",
+      "kind": "rule",
+      "passed": true,
+      "value": {
+        "events": 4,
+        "problems": []
+      },
+      "threshold": "≤84 car.",
+      "severity": "P2",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "cta_presence",
+      "kind": "rule",
+      "passed": true,
+      "value": "WhatsApp",
+      "threshold": "présent",
+      "severity": "P1",
+      "repair": 0,
+      "detail": ""
+    },
+    {
+      "check": "audio_transcription",
+      "kind": "rule",
+      "passed": false,
+      "value": null,
+      "threshold": "ASR",
+      "severity": "P1",
+      "repair": 1,
+      "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
+    },
+    {
+      "check": "lip_sync",
+      "kind": "model",
+      "passed": false,
+      "value": null,
+      "threshold": null,
+      "severity": "P1",
+      "repair": 2,
+      "detail": "SKIPPED — aucun provider lip-sync branché"
+    },
+    {
+      "check": "visual_quality",
+      "kind": "model",
+      "passed": false,
+      "value": null,
+      "threshold": null,
+      "severity": "P2",
+      "repair": 4,
+      "detail": "SKIPPED — évaluation model-based non exécutée"
+    },
+    {
+      "check": "product_presence",
+      "kind": "rule",
+      "passed": true,
+      "value": {
+        "frames_checked": 2,
+        "similarity": 0.7826
+      },
+      "threshold": "≥0.60 sur ≥2 frames",
+      "severity": "P0",
+      "repair": 3,
+      "detail": ""
+    },
+    {
+      "check": "logo_text_preservation",
+      "kind": "rule",
+      "passed": true,
+      "value": {
+        "psnr_db": 28.78
+      },
+      "threshold": "≥22 dB",
+      "severity": "P0",
+      "repair": 3,
+      "detail": ""
+    }
+  ],
+  "timings_ms": {
+    "T0_start": 0,
+    "T1_strategy": 0,
+    "T2_script": 0,
+    "T3_audio": 35,
+    "T4_lipsync": 35,
+    "T5_composite": 378,
+    "T6_first_pixel": 378,
+    "T7_final_render": 8056,
+    "T8_qc_done": 9278,
+    "TTFP_ms": 378,
+    "time_to_final_ms": 8056,
+    "time_to_publishable_ms": 9278
+  }
+}
