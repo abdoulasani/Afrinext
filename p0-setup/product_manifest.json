@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "experiment_id": "P0-E1-002",
+  "status": "READY",
+  "strategy": "S1 — REAL PRODUCT ASSET + MASKING + COMPOSITING. Le packaging n'est JAMAIS redessiné par un modèle génératif.",
+  "product": {
+    "product_id": "prd_test_karite",
+    "name": "Beurre de karité pur 200 g",
+    "brand": "KARITÉ D'OR",
+    "synthetic": true,
+    "synthetic_note": "produit de test généré en interne, AVEC branding (logo + texte de packaging) — M03 §04 interdit de tricher avec un produit sans marque",
+    "views": {
+      "front": "p0/data/product/product_front.png",
+      "side":  "p0/data/product/product_side.png",
+      "back":  "p0/data/product/product_back.png"
+    },
+    "masks": {
+      "front": "p0/data/product/mask_front.png",
+      "side":  "p0/data/product/mask_side.png",
+      "back":  "p0/data/product/mask_back.png"
+    },
+    "packaging_text": ["KARITÉ D'OR", "BEURRE DE KARITÉ PUR", "200 g"],
+    "logo_box": [226, 285, 68, 74],
+    "format": "PNG RGBA, canal alpha = masque de détourage"
+  },
+  "validated_in": {
+    "milestone": "M03 et M04",
+    "ads_produced": 20,
+    "product_similarity_median": 0.785,
+    "product_similarity_min": 0.783,
+    "logo_psnr_median_db": 24.6,
+    "threshold_similarity": 0.60,
+    "threshold_psnr_db": 22,
+    "detector_discriminates": "oui — faute d'emplacement injectée → 0,660 / 19,5 dB, détectée puis réparée"
+  },
+  "rights": {
+    "owner": "Afrinext", "license": "propriétaire", "commercial_use": true,
+    "consent_required": false, "consent_status": "n/a",
+    "evidence_location": "généré par p0/src/p0/assets.py:make_product"
+  },
+  "next_action_for_real_experiment": "Remplacer par un produit CLIENT réel (3 vues détourées, packaging haute résolution) pour que la fidélité mesurée porte sur un vrai packaging."
+}

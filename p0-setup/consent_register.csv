@@ -1,0 +1,7 @@
+asset,owner_source,license,commercial_use,consent_required,consent_status,expiration,evidence_location
+produit de test "KARITÉ D'OR",Afrinext (généré),propriétaire,YES,NO,n/a,aucune,p0/src/p0/assets.py:make_product
+banque de plans (substituts géométriques),Afrinext (généré),propriétaire,YES,NO,n/a,aucune,p0/src/p0/assets.py:make_shot_bank
+personnage P0 (à générer via Veo),Afrinext,à définir selon CGU fournisseur,PENDING,NO — aucun visage réel en référence,n/a,n/a,PENDING
+voix TTS (Google fr-FR),Google Cloud,CGU Google Cloud,PENDING_verifier,NO,n/a,n/a,PENDING lecture des CGU
+musique de fond,NON UTILISÉE en P0,n/a,n/a,n/a,n/a,n/a,n/a
+police DejaVu Sans (sous-titres),DejaVu project,licence libre,YES,NO,n/a,aucune,/usr/share/fonts/truetype/dejavu

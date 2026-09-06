@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "experiment_id": "P0-E1-001",
+  "status": "SPEC_READY_ASSETS_BLOCKED",
+  "blocked_reason": "Aucun asset produit : la génération exige une clé Google (Veo joignable mais non authentifié). Les 10 plans actuels de p0/data/shots/ sont des substituts géométriques marqués SYNTHETIC.",
+  "character": {
+    "character_id": "char_p0_fr_ne_01",
+    "name": "PENDING",
+    "origin": "generated",
+    "origin_detail": "à générer via Veo 3.1 Lite — aucun visage de personne réelle, donc aucun consentement de tiers requis",
+    "market_context": "NE-fr",
+    "language": "fr",
+    "demographics": {
+      "apparent_age_range": [28, 38],
+      "gender": "PENDING_choix_produit",
+      "representation": "représentatif du marché ouest-africain francophone — critère de CONVERSION (levier liking), pas seulement d'équité"
+    },
+    "identity_anchors": {
+      "face": "PENDING", "hair": "PENDING", "skin": "PENDING",
+      "body": "PENDING", "distinctive_features": [],
+      "note": "ces descripteurs doivent être recopiés VERBATIM par le code dans chaque prompt de plan, jamais reformulés par un LLM"
+    },
+    "wardrobe": { "default": "PENDING", "variants": {} },
+    "setting":  { "default": "PENDING", "variants": {} },
+    "voice_profile": {
+      "provider": "google", "language_code": "fr-FR",
+      "voice_name": "PENDING_selection_E2",
+      "note": "voix unique pour les 10 publicités ; le descripteur est recopié caractère pour caractère"
+    },
+    "reference_image_asset_id": "PENDING",
+    "face_embedding": null,
+    "consistency_verification": {
+      "method": "distance d'embedding facial entre chaque plan et l'image de référence",
+      "threshold": "à calibrer sur les 10 premiers plans",
+      "status": "NOT_RUN"
+    },
+    "rights": {
+      "owner": "Afrinext",
+      "commercial_use": true,
+      "third_party_consent_required": false,
+      "consent_evidence": "n/a — personnage entièrement généré, aucune personne réelle en référence",
+      "provider_terms_reviewed": false,
+      "note": "les CGU du fournisseur vidéo doivent être lues avant usage commercial des sorties"
+    }
+  }
+}

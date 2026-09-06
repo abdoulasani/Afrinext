@@ -33,6 +33,7 @@ décisions engageantes, points à valider, hypothèses à vérifier, formulaire 
 📄 **[M02 — Product & Architecture Stress Test](docs/reports/M02-stress-test.pdf)** ·
 📄 **[M03 — P0 Proof of Concept](docs/reports/M03-p0-proof.pdf)** ·
 📄 **[M04 — P0 Validation Execution](docs/reports/M04-validation-execution.pdf)** ·
+📄 **[M05 — Provider Procurement](docs/reports/M05-provider-procurement.pdf)** ·
 [convention et journal des jalons](docs/reports/README.md)
 
 ## Prochaine étape
@@ -46,6 +47,16 @@ Le readiness check de M04 identifie **6 dépendances bloquantes absentes** : ni
 credentials, ni accès sortant vers les API de génération. E1, E3, E4, E5, E6, E7 n'ont
 pas pu être exécutées.
 
-**Ce qui débloque tout** : un environnement avec réseau sortant, trois comptes provider
-(135–390 $), un personnage réel et trois évaluateurs francophones. Données complètes
-dans [`p0-validation/`](p0-validation/final_report.md) · [rapport M04](docs/reports/M04-validation-execution.pdf).
+**M05** a préparé l'expérience : [19 livrables](p0-setup/README.md) — matrice de 18
+providers, contrats de pipeline, schémas, taxonomie de panne, protocole d'évaluation avec
+seuils H1 fixés d'avance, budget séquencé et smoke tests exécutables.
+
+**Les trois bloqueurs restants**, mesurés et non supposés :
+
+1. **Aucune clé Google Cloud** → une seule clé débloque E1, E2, E4 et E5.
+2. **Le lip-sync est refusé au `CONNECT` du proxy** (`403 policy denial`) — c'est une
+   politique réseau, pas un manque de budget. Seul bloqueur que l'argent ne résout pas.
+3. **Aucun évaluateur** → 3 à 5 francophones tranchent H1.
+
+Enveloppe : **≈ 205 $**, dont **60 $ jusqu'à la décision H1**.
+Données : [`p0-validation/`](p0-validation/final_report.md) · [`p0-setup/`](p0-setup/readiness_report.md).

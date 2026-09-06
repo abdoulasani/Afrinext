@@ -1,0 +1,218 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>Afrinext · Rapport de jalon M05</title>
+<link rel="stylesheet" href="_style.css"></head><body>
+
+<div class="cover">
+  <div class="eyebrow">Afrinext · Rapport de jalon · pour revue</div>
+  <h1>M05 — Provider Procurement &amp; Experiment Setup</h1>
+  <p class="sub">Préparation de E1 → E7 · 19 livrables · aucun SaaS construit</p>
+  <div class="meta">
+    <div><div class="k">Jalon</div><div class="v">M05 · setup</div></div>
+    <div><div class="k">Statut</div><div class="v">BLOCKED</div></div>
+    <div><div class="k">Date</div><div class="v">6 septembre 2026</div></div>
+    <div><div class="k">Destinataire</div><div class="v">Senior Developer</div></div>
+    <div><div class="k">Livrables</div><div class="v">19 / 19 écrits</div></div>
+    <div><div class="k">Providers évalués</div><div class="v">18 candidats</div></div>
+    <div><div class="k">Paquet</div><div class="v mono">p0-setup/</div></div>
+    <div><div class="k">Coût facturé</div><div class="v">0,00 $</div></div>
+  </div>
+</div>
+
+<h2><span class="num">1.</span>Verdict</h2>
+
+<div class="callout danger">
+  <span class="lbl">Décision</span>
+  <strong style="font-size:12.5pt">M05 STATUS : BLOCKED · P0 EXECUTION : BLOCKED</strong><br><br>
+  <strong>19 livrables sur 19 sont écrits.</strong> Ce qui manque n'est pas la préparation,
+  c'est l'<strong>accès</strong>. Et M05 a produit un diagnostic bien plus précis que
+  « pas de clés » :
+  <br><br>
+  <strong>Le proxy sortant de cet environnement refuse le CONNECT vers 11 hôtes fournisseurs
+  sur 13. Une seule famille passe : Google Cloud.</strong>
+</div>
+
+<table class="tight">
+<thead><tr><th style="width:30%">Expérience</th><th style="width:22%">État</th><th>Ce qu'il manque exactement</th></tr></thead>
+<tbody>
+<tr><td>E1 · banque de plans</td><td><strong>READY_ON_KEY</strong></td><td>une clé Google — Veo est joignable</td></tr>
+<tr><td>E2 · TTS français</td><td><strong>READY_ON_KEY</strong></td><td>la même clé Google</td></tr>
+<tr><td>E4 · ASR français</td><td><strong>READY_ON_KEY</strong></td><td>la même clé Google</td></tr>
+<tr><td>E5 · contrôle génératif</td><td><strong>READY_ON_KEY</strong></td><td>la même clé Google</td></tr>
+<tr><td><strong>E3 · lip-sync</strong></td><td><strong>BLOCKED</strong></td><td><strong>politique réseau — aucun credential ne le débloque</strong></td></tr>
+<tr><td>E6 · évaluation humaine</td><td>READY_ON_PEOPLE</td><td>3 à 5 francophones</td></tr>
+<tr><td>E7 · régénération</td><td>dépendant</td><td>E1 et E3</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">2.</span>Le fait qui structure tout M05</h2>
+
+<p>Le readiness check ne s'est pas contenté de constater l'absence de clés. Il a mesuré
+<strong>la connectivité réelle</strong> vers 14 endpoints, et interrogé l'état du proxy.</p>
+
+<div class="callout">
+  <span class="lbl">Preuve · proxy_status_evidence.json</span>
+  <code>gateway answered 403 to CONNECT (policy denial or upstream failure)</code><br>
+  pour <code>api.elevenlabs.io</code> · <code>api.cartesia.ai</code> ·
+  <code>api.openai.com</code> · <code>api.deepgram.com</code> ·
+  <code>api.assemblyai.com</code> · <code>api.sync.so</code> ·
+  <code>api.hedra.com</code> · <code>fal.run</code> · <code>api.replicate.com</code> ·
+  <code>cloudflarestorage.com</code> · <code>francecentral.tts.speech.microsoft.com</code>
+  <br><br>
+  <strong>Les hôtes Google répondent, eux, applicativement :</strong><br>
+  <code>{"error":{"code":403,"message":"Method doesn't allow unregistered callers …
+  Please use API Key","status":"PERMISSION_DENIED"}}</code>
+</div>
+
+<p><strong>La distinction est décisive.</strong> Le DNS résout pour les 14 hôtes. Les
+fournisseurs bloqués sont coupés <em>avant la poignée de main TLS</em> ; Google répond une
+erreur d'API. Ce n'est donc pas un problème de credentials — c'est une politique réseau, et
+elle laisse passer exactement un fournisseur.</p>
+
+<h2><span class="num">3.</span>Sélection des providers</h2>
+
+<p>La contrainte, et non la qualité, décide de la sélection. Google Cloud couvre
+<strong>TTS + ASR + vidéo + personnage + stockage avec un seul credential</strong>.</p>
+
+<table class="tight">
+<thead><tr><th style="width:20%">Catégorie</th><th style="width:28%">PRIMARY</th><th style="width:26%">SECONDARY</th><th>Raison</th></tr></thead>
+<tbody>
+<tr><td>TTS</td><td><strong>Google Cloud TTS</strong> <code>fr-FR</code></td><td>ElevenLabs · Azure</td><td>seul TTS joignable</td></tr>
+<tr><td>ASR</td><td><strong>Google Cloud STT</strong> <code>fr-FR</code></td><td>Deepgram · AssemblyAI</td><td>joignable ; horodatages mot à mot</td></tr>
+<tr><td>Vidéo (contrôle E5)</td><td><strong>Veo 3.1 Lite</strong></td><td>fal.ai · Replicate</td><td>E5 est un contrôle équitable, pas une quête du meilleur générateur</td></tr>
+<tr><td>Personnage / plans</td><td><strong>Veo 3.1 Lite</strong></td><td>—</td><td>produit les 10 plans <strong>sans acteur humain</strong>, donc sans consentement de tiers</td></tr>
+<tr><td><strong>Lip-sync</strong></td><td>sync.so <em>(candidat)</em></td><td>Hedra · LatentSync</td><td><strong>aucun joignable — et Google n'en propose aucun</strong></td></tr>
+<tr><td>Stockage / rendu</td><td>disque local · ffmpeg 7.0.2</td><td>GCS</td><td>déjà validés sur 20 publicités</td></tr>
+</tbody>
+</table>
+
+<div class="callout warn">
+  <span class="lbl">Réserve assumée sur les prix</span>
+  Tous les tarifs de <code>provider_matrix.csv</code> proviennent de <strong>comparatifs
+  secondaires</strong> consultés en septembre 2026 — jamais d'une page officielle ni d'une
+  facture. Ils portent la mention <em>(source secondaire)</em>. Les prix Google sont marqués
+  <code>UNKNOWN_verify_official</code>. <strong>Aucun champ n'a été inventé :
+  inconnu = UNKNOWN.</strong>
+</div>
+
+<h2><span class="num">4.</span>La dépendance la plus dangereuse</h2>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">Le lip-sync</span><span class="tag bloquant">Critique</span></div>
+  <dl>
+    <dt>Pourquoi</dt><dd>Elle est <strong>unique</strong> (aucune redondance joignable), <strong>bloquante pour H1</strong> (sans elle, P0 ne peut pas conclure) et <strong>dominante économiquement</strong> — ~87 % du coût variable mesuré en M03.</dd>
+    <dt>Options</dt><dd><strong>API tierce</strong> : bloquée par la politique réseau. <strong>Auto-hébergé</strong> (LatentSync, Wav2Lip) : aucun GPU dans cet environnement (<code>/dev/nvidia*</code> absent) et hôtes de poids injoignables. <strong>Équivalent Google</strong> : n'existe pas.</dd>
+    <dt>Levée</dt><dd>Autoriser l'hôte dans la politique du proxy, <strong>ou</strong> exécuter le harnais sur une machine à réseau ouvert.</dd>
+    <dt>Note</dt><dd><strong>C'est le seul bloqueur du projet qui ne se résout pas avec de l'argent.</strong></dd>
+  </dl>
+</div>
+
+<h2><span class="num">5.</span>Budget et plan d'exécution</h2>
+
+<table class="tight">
+<thead><tr><th style="width:34%">Poste</th><th style="width:14%">LOW</th><th style="width:14%">BASE</th><th style="width:14%">HIGH</th><th>Payant ?</th></tr></thead>
+<tbody>
+<tr><td>E1 · banque de plans (25 générations)</td><td>25 $</td><td><strong>50 $</strong></td><td>100 $</td><td>oui</td></tr>
+<tr><td>E2 · TTS (~9 100 caractères)</td><td>&lt; 1 $</td><td><strong>&lt; 1 $</strong></td><td>2 $</td><td>palier gratuit probable</td></tr>
+<tr><td>E3 · lip-sync (50 clips)</td><td>3 $</td><td><strong>8 $</strong></td><td>25 $</td><td>oui</td></tr>
+<tr><td>E4 · ASR (~140 s)</td><td>&lt; 1 $</td><td><strong>&lt; 1 $</strong></td><td>1 $</td><td>quasi gratuit</td></tr>
+<tr><td>E5 · contrôle génératif</td><td>7 $</td><td><strong>20 $</strong></td><td>60 $</td><td>oui</td></tr>
+<tr><td>E6 · évaluation humaine</td><td>0 $</td><td><strong>0 $</strong></td><td>0 $</td><td>non</td></tr>
+<tr><td>E7 · régénération (100-200 runs)</td><td>40 $</td><td><strong>90 $</strong></td><td>200 $</td><td>oui</td></tr>
+<tr><td>Stockage / calcul · contingence 20 %</td><td>16 $</td><td><strong>35 $</strong></td><td>82 $</td><td>—</td></tr>
+<tr><td><strong>TOTAL</strong></td><td><strong>≈ 92 $</strong></td><td><strong>≈ 205 $</strong></td><td><strong>≈ 470 $</strong></td><td></td></tr>
+</tbody>
+</table>
+
+<p><strong>Séquencement recommandé — ne pas tout lancer.</strong> E2 et E4 d'abord (quasi
+gratuits, valident la chaîne audio) → <strong>E1 (50 $) avec point d'arrêt</strong> : si la
+cohérence du personnage échoue, l'hypothèse « banque de plans » du M02 tombe et E3, E5, E7
+n'ont plus d'objet → E3 → <strong>E6 qui tranche H1</strong> → E5 et E7
+<strong>seulement si H1 passe</strong>.</p>
+
+<div class="callout">
+  <span class="lbl">Coût jusqu'à la décision H1 : environ 60 $</span>
+  Mesurer le facteur de régénération d'un pipeline dont la qualité est rejetée serait de
+  l'argent perdu. Le garde-fou le plus important est <code>DRY_RUN=true</code> par défaut :
+  aucune dépense accidentelle possible au premier lancement.
+</div>
+
+<h2><span class="num">6.</span>Seuils H1, fixés maintenant</h2>
+
+<p>Posés <strong>avant</strong> l'expérience, précisément pour qu'ils ne puissent pas être
+choisis après coup afin d'obtenir un PASS.</p>
+
+<table class="tight">
+<thead><tr><th style="width:22%">Verdict</th><th>Condition</th></tr></thead>
+<tbody>
+<tr><td><strong>H1 = PASS</strong></td><td>Publishability Rate <strong>≥ 60 %</strong> ET Blind Mean Score <strong>≥ 3,5/5</strong> ET aucun critère médian &lt; 3,0</td></tr>
+<tr><td><strong>H1 = FAIL</strong></td><td>Publishability Rate &lt; 35 % <strong>ou</strong> Product Fidelity médiane &lt; 3,0</td></tr>
+<tr><td>H1 = INCONCLUSIVE</td><td>entre les deux, ou accord inter-juges insuffisant (écart-type &gt; 1,2)</td></tr>
+</tbody>
+</table>
+
+<p><strong>Biais déclaré :</strong> un panel de 3 à 5 personnes est un signal fort, pas une
+mesure statistique. Il tranche H1 parce qu'aucune alternative moins coûteuse n'existe.</p>
+
+<h2><span class="num">7.</span>Les trois bloqueurs et leur action minimale</h2>
+
+<table>
+<thead><tr><th style="width:5%">#</th><th style="width:28%">Bloqueur</th><th style="width:37%">Action minimale</th><th>Effet</th></tr></thead>
+<tbody>
+<tr><td><strong>1</strong></td><td>Aucune clé Google Cloud</td><td>créer un projet, activer Text-to-Speech, Speech-to-Text et l'API Gemini, poser <code>GOOGLE_API_KEY</code></td><td><strong>débloque E1, E2, E4, E5 — 4 expériences sur 7</strong></td></tr>
+<tr><td><strong>2</strong></td><td>Hôtes lip-sync refusés au <code>CONNECT</code> du proxy</td><td>autoriser l'hôte dans la politique réseau, <strong>ou</strong> exécuter le harnais sur une machine à réseau ouvert</td><td><strong>débloque E3, donc H1, donc E7</strong></td></tr>
+<tr><td><strong>3</strong></td><td>Aucun évaluateur</td><td>recruter 3 à 5 francophones du marché visé</td><td>débloque E6, qui tranche H1</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">8.</span>Ce que M05 a produit</h2>
+
+<table class="tight">
+<thead><tr><th style="width:36%">Livrable</th><th>Contenu</th></tr></thead>
+<tbody>
+<tr><td>Matrice + sélection providers</td><td>18 candidats, sources citées, champs <code>UNKNOWN</code> assumés ; PRIMARY/SECONDARY justifiés par la contrainte réelle</td></tr>
+<tr><td>Environnement + connectivité</td><td><strong>mesurés</strong> : 4 vCPU, 16 Go, aucun GPU, 14 endpoints testés, preuve du refus proxy</td></tr>
+<tr><td>Smoke tests</td><td>harnais exécutable ; déclare <code>SKIPPED</code> et <strong>jamais <code>PASS</code></strong> sans credential. Rendu local : <strong>PASS</strong></td></tr>
+<tr><td>Contrat de pipeline</td><td>porte l'invariant M04 : <strong>la durée vient du synthétiseur</strong>, jamais du nombre de mots</td></tr>
+<tr><td>Schémas, taxonomie, observabilité</td><td>13 types d'artefacts · 15 classes de panne · logs JSONL sans secrets</td></tr>
+<tr><td>Manifestes + consentement</td><td>personnage, plans, produit, registre de droits — aucun visage réel, donc aucun consentement de tiers requis</td></tr>
+<tr><td>Sécurité</td><td>12 points ; 2 marqués <code>UNKNOWN</code> (DPA fournisseur non lus)</td></tr>
+<tr><td>Protocole d'évaluation</td><td>seuils H1 <strong>fixés avant l'expérience</strong></td></tr>
+<tr><td>Budget + plan</td><td>LOW/BASE/HIGH, séquencé avec points d'arrêt, garde-fous actifs</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">9.</span>Formulaire de revue</h2>
+
+<table class="review">
+<thead><tr><th>Réf.</th><th>Validé</th><th>À&nbsp;corriger</th><th>Commentaire</th></tr></thead>
+<tbody>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Conduite de M05</strong></td></tr>
+<tr><td><strong>N1</strong> Verdict BLOCKED malgré 19/19 livrables</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>N2</strong> Google Cloud en PRIMARY sur 4 catégories (mono-fournisseur assumé pour P0)</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>N3</strong> Personnage généré plutôt qu'acteur réel (évite le consentement de tiers)</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>N4</strong> Seuils H1 fixés avant l'expérience</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>N5</strong> Séquencement avec arrêt après E1 si l'identité dérive</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Décisions à prendre</strong></td></tr>
+<tr><td><strong>A1</strong> Créer le projet Google Cloud et fournir la clé</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>A2</strong> Lever le blocage réseau lip-sync (allowlist ou autre machine)</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>A3</strong> Recruter 3 à 5 évaluateurs francophones</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>A4</strong> Approuver l'enveloppe ≈ 205 $ (60 $ jusqu'à H1)</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>A5</strong> Fournir un produit client réel, ou garder le produit de test</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+</tbody>
+</table>
+
+<div class="nobreak">
+<h3>Verdict global</h3>
+<p style="margin-bottom:14px">
+  <span class="box"></span> Paquet M05 validé — approvisionner puis exécuter E1→E7 &nbsp;&nbsp;
+  <span class="box"></span> Validé sous réserve &nbsp;&nbsp;
+  <span class="box"></span> À reprendre
+</p>
+<div class="sign"><div>Nom du relecteur</div><div>Date</div><div>Signature</div></div>
+</div>
+
+<div class="footer">
+  <span>Afrinext · Rapport de jalon M05 · Provider Procurement &amp; Experiment Setup</span>
+  <span>Document interne · pour revue</span>
+</div>
+</body></html>

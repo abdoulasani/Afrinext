@@ -1,0 +1,88 @@
+{
+  "os": "Linux 6.18.44-fc-v24",
+  "distro": "PRETTY_NAME=\"Ubuntu 24.04.4 LTS\" NAME=\"Ubuntu\"",
+  "arch": "x86_64",
+  "cpu_count": 4,
+  "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+  "ram_mb": 16075,
+  "disk_avail": "30G",
+  "gpu": "AUCUN (pas de /dev/nvidia*)",
+  "package_managers": {
+    "pip": "24.0",
+    "apt": "apt 2.8.3 (amd64)",
+    "npm": "10.9.7"
+  },
+  "outbound_proxy": true,
+  "dependencies": [
+    {
+      "dependency": "python",
+      "installed": true,
+      "version": "3.11.15",
+      "working": true,
+      "blocking": true
+    },
+    {
+      "dependency": "node",
+      "installed": true,
+      "version": "v22.22.2",
+      "working": true,
+      "blocking": false
+    },
+    {
+      "dependency": "ffmpeg",
+      "installed": true,
+      "version": "7.0.2-static",
+      "working": true,
+      "blocking": true
+    },
+    {
+      "dependency": "espeak-ng",
+      "installed": true,
+      "version": "eSpeak NG text-to-speech: 1.51",
+      "working": true,
+      "blocking": false
+    },
+    {
+      "dependency": "Pillow",
+      "installed": true,
+      "version": "12.3.0",
+      "working": true,
+      "blocking": true
+    },
+    {
+      "dependency": "numpy",
+      "installed": true,
+      "version": "2.4.6",
+      "working": true,
+      "blocking": true
+    },
+    {
+      "dependency": "httpx",
+      "installed": true,
+      "version": "0.28.1",
+      "working": true,
+      "blocking": true
+    },
+    {
+      "dependency": "requests",
+      "installed": true,
+      "version": "2.33.1",
+      "working": true,
+      "blocking": false
+    },
+    {
+      "dependency": "pypdfium2",
+      "installed": true,
+      "version": "présent",
+      "working": true,
+      "blocking": false
+    },
+    {
+      "dependency": "git",
+      "installed": true,
+      "version": "git version 2.43.0",
+      "working": true,
+      "blocking": false
+    }
+  ]
+}

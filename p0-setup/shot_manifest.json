@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "experiment_id": "P0-E1-001",
+  "status": "SPEC_READY_ASSETS_BLOCKED",
+  "target_shot_count": 10,
+  "current_assets": "substituts géométriques (p0/data/shots/), marqués SYNTHETIC, filigrane visible sur chaque frame",
+  "generation_plan": {
+    "provider": "google", "model": "veo-3.1-lite", "reachable": true, "authenticated": false,
+    "clip_seconds": 4, "resolution": "1080x1920", "fps": 25,
+    "estimated_cost_per_shot_usd": "0.20 (4 s × 0,05 $/s — source secondaire, à vérifier)",
+    "selection_factor": 2.5,
+    "estimated_total_usd": "50.00 pour 10 plans retenus (25 générations)"
+  },
+  "shots": [
+    {"shot_id": "s01", "kind": "talking_medium",   "product_slot": null,           "slot_box": null,                "purpose": "corps de script"},
+    {"shot_id": "s02", "kind": "talking_close",    "product_slot": null,           "slot_box": null,                "purpose": "hook"},
+    {"shot_id": "s03", "kind": "holding_product",  "product_slot": "hand_right",   "slot_box": [620, 980, 300, 400],"purpose": "test A — produit tenu"},
+    {"shot_id": "s04", "kind": "showing_product",  "product_slot": "front_center", "slot_box": [330, 820, 420, 560],"purpose": "test B — produit présenté"},
+    {"shot_id": "s05", "kind": "looking_product",  "product_slot": "hand_right",   "slot_box": [640, 900, 280, 380],"purpose": "regard sur le produit"},
+    {"shot_id": "s06", "kind": "pointing",         "product_slot": "hand_right",   "slot_box": [660, 940, 260, 350],"purpose": "désignation"},
+    {"shot_id": "s07", "kind": "reaction",         "product_slot": null,           "slot_box": null,                "purpose": "transition"},
+    {"shot_id": "s08", "kind": "smiling",          "product_slot": null,           "slot_box": null,                "purpose": "bénéfice"},
+    {"shot_id": "s09", "kind": "listening",        "product_slot": null,           "slot_box": null,                "purpose": "respiration"},
+    {"shot_id": "s10", "kind": "cta",              "product_slot": null,           "slot_box": null,                "purpose": "clôture"}
+  ],
+  "acceptance_criteria": {
+    "identity_consistency": "distance d'embedding facial sous seuil sur les 10 plans",
+    "framing": "9:16, sujet dans les safe zones",
+    "product_slot_visible": "les 4 plans à emplacement produit doivent avoir une zone d'incrustation dégagée et non occultée",
+    "mouth_visible": "bouche visible et non occultée sur les 10 plans — prérequis du lip-sync",
+    "no_burned_text": "aucun texte incrusté par le générateur"
+  },
+  "risk": "La cohérence du personnage entre 10 générations indépendantes est le risque qualité n°1 de E1. Si elle échoue, l'hypothèse « banque de plans » du M02 tombe."
+}

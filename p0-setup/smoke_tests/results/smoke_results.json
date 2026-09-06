@@ -1,0 +1,83 @@
+{
+  "generated_at": "2026-09-06T12:13:02.172798+00:00",
+  "dry_run": false,
+  "counts": {
+    "PASS": 1,
+    "SKIPPED": 4,
+    "BLOCKED": 0,
+    "DRY_RUN": 0
+  },
+  "total_cost_usd": 0.0,
+  "results": [
+    {
+      "test_id": "P0-RENDER-SMOKE",
+      "experiment_ref": "E1",
+      "provider": "ffmpeg",
+      "endpoint": "local",
+      "status_code": null,
+      "latency_ms": 1707,
+      "result": "PASS",
+      "failure_class": null,
+      "detail": "5282 octets",
+      "cost_usd": 0.0,
+      "artifact": "/home/user/Afrinext/p0-setup/smoke_tests/results/render_smoke.mp4",
+      "timestamp": "2026-09-06T12:13:02.172506+00:00"
+    },
+    {
+      "test_id": "P0-E2-SMOKE",
+      "experiment_ref": "E2",
+      "provider": "google-tts",
+      "endpoint": "texttospeech.googleapis.com",
+      "status_code": null,
+      "latency_ms": 0,
+      "result": "SKIPPED",
+      "failure_class": null,
+      "detail": "GOOGLE_API_KEY absente",
+      "cost_usd": 0.0,
+      "artifact": null,
+      "timestamp": "2026-09-06T12:13:02.172678+00:00"
+    },
+    {
+      "test_id": "P0-E4-SMOKE",
+      "experiment_ref": "E4",
+      "provider": "google-stt",
+      "endpoint": "speech.googleapis.com",
+      "status_code": null,
+      "latency_ms": 0,
+      "result": "SKIPPED",
+      "failure_class": null,
+      "detail": "GOOGLE_API_KEY absente",
+      "cost_usd": 0.0,
+      "artifact": null,
+      "timestamp": "2026-09-06T12:13:02.172720+00:00"
+    },
+    {
+      "test_id": "P0-E5-SMOKE",
+      "experiment_ref": "E5",
+      "provider": "google-veo",
+      "endpoint": "generativelanguage.googleapis.com",
+      "status_code": null,
+      "latency_ms": 0,
+      "result": "SKIPPED",
+      "failure_class": null,
+      "detail": "GOOGLE_API_KEY absente",
+      "cost_usd": 0.0,
+      "artifact": null,
+      "timestamp": "2026-09-06T12:13:02.172739+00:00"
+    },
+    {
+      "test_id": "P0-E3-SMOKE",
+      "experiment_ref": "E3",
+      "provider": "aucun",
+      "endpoint": "—",
+      "status_code": null,
+      "latency_ms": 0,
+      "result": "SKIPPED",
+      "failure_class": null,
+      "detail": "LIPSYNC_PROVIDER / LIPSYNC_API_KEY absents",
+      "cost_usd": 0.0,
+      "artifact": null,
+      "timestamp": "2026-09-06T12:13:02.172753+00:00"
+    }
+  ]
+}
