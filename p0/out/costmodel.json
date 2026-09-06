@@ -2,10 +2,10 @@
   "measured_volumes": {
     "tts_chars": 182.0,
     "lip_clips": 5.0,
-    "video_seconds": 13.0,
-    "cpu_s": 22.0,
-    "duration_s": 13.1,
-    "mb_per_ad": 0.5
+    "video_seconds": 13.675,
+    "cpu_s": 37.504999999999995,
+    "duration_s": 13.75,
+    "mb_per_ad": 1.01
   },
   "prices_unverified": {
     "tts_per_1k_chars": [
@@ -43,73 +43,81 @@
     "low": {
       "tts": 0.00273,
       "lipsync": 0.1,
-      "cpu": 0.00012222222222222224,
-      "storage": 4.8828125e-06,
+      "cpu": 0.00020836111111111107,
+      "storage": 9.86328125e-06,
       "llm": 0.01,
       "total": 0.1129
     },
     "base": {
       "tts": 0.00546,
       "lipsync": 0.25,
-      "cpu": 0.0002444444444444445,
-      "storage": 7.32421875e-06,
+      "cpu": 0.00041672222222222214,
+      "storage": 1.4794921875e-05,
       "llm": 0.03,
-      "total": 0.2857
+      "total": 0.2859
     },
     "high": {
       "tts": 0.01638,
       "lipsync": 0.75,
-      "cpu": 0.00036666666666666667,
-      "storage": 1.123046875e-05,
+      "cpu": 0.0006250833333333332,
+      "storage": 2.2685546875e-05,
       "llm": 0.08,
-      "total": 0.8468
+      "total": 0.847
     }
   },
   "generative": {
     "low": {
-      "generative": 1.04,
+      "generative": 1.094,
       "llm": 0.01,
-      "cpu": 0.00012222222222222224,
-      "total": 1.0501
+      "cpu": 0.00020836111111111107,
+      "total": 1.1042
     },
     "base": {
-      "generative": 2.6,
+      "generative": 2.7350000000000003,
       "llm": 0.03,
-      "cpu": 0.0002444444444444445,
-      "total": 2.6302
+      "cpu": 0.00041672222222222214,
+      "total": 2.7654
     },
     "high": {
-      "generative": 6.5,
+      "generative": 6.8375,
       "llm": 0.08,
-      "cpu": 0.00036666666666666667,
-      "total": 6.5804
+      "cpu": 0.0006250833333333332,
+      "total": 6.9181
     }
   },
-  "breakeven_lipsync_per_clip": 0.1929,
+  "breakeven_lipsync_per_clip": 0.1928,
   "infra": {
     "100": {
       "ads": 100,
-      "variable_usd": 28.57,
-      "cpu_hours": 0.6,
-      "storage_gb_new": 0.0,
+      "variable_usd": 28.59,
+      "cpu_hours": 1.0,
+      "storage_gb_new": 0.1,
       "baseline_infra_usd": 60,
-      "total_usd": 88.57
+      "total_usd": 88.59
     },
     "1000": {
       "ads": 1000,
-      "variable_usd": 285.7,
-      "cpu_hours": 6.1,
-      "storage_gb_new": 0.5,
+      "variable_usd": 285.9,
+      "cpu_hours": 10.4,
+      "storage_gb_new": 1.0,
       "baseline_infra_usd": 180,
-      "total_usd": 465.7
+      "total_usd": 465.9
     },
     "10000": {
       "ads": 10000,
-      "variable_usd": 2857.0,
-      "cpu_hours": 61.1,
-      "storage_gb_new": 4.9,
+      "variable_usd": 2859.0,
+      "cpu_hours": 104.2,
+      "storage_gb_new": 9.9,
       "baseline_infra_usd": 900,
-      "total_usd": 3757.0
+      "total_usd": 3759.0
+    },
+    "100000": {
+      "ads": 100000,
+      "variable_usd": 28590.0,
+      "cpu_hours": 1041.8,
+      "storage_gb_new": 98.6,
+      "baseline_infra_usd": 4200,
+      "total_usd": 32790.0
     }
   },
   "b5": {

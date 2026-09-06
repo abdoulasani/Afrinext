@@ -1,6 +1,6 @@
 {
   "ad_id": "AD03",
-  "produced_at": "2026-09-05T07:57:23.818981+00:00",
+  "produced_at": "2026-09-05T23:57:15.006146+00:00",
   "script_hash": "b5508f492f66ef2c",
   "product_id": "prd_test_karite",
   "character_id": "char_p0_synthetic",
@@ -12,19 +12,18 @@
     "s10_cta"
   ],
   "providers": {
-    "tts": "elevenlabs",
+    "tts": "espeak-ng-local",
     "lipsync": "lipsync-generic",
     "render": "ffmpeg"
   },
   "synthetic_stages": [
     "lipsync",
     "product",
-    "shot_bank",
-    "tts"
+    "shot_bank"
   ],
   "outputs": {
     "final": "/home/user/Afrinext/p0/out/AD03/AD03.mp4",
-    "duration_s": 13.7
+    "duration_s": 14.2
   },
   "total_cost_usd": 0.0,
   "qc": [
@@ -48,7 +47,7 @@
         "height": 1920,
         "audio_codec": "aac",
         "fps": 25.0,
-        "duration_s": 13.7
+        "duration_s": 14.2
       },
       "threshold": null,
       "severity": "P0",
@@ -69,8 +68,8 @@
       "check": "total_duration",
       "kind": "rule",
       "passed": true,
-      "value": 13.7,
-      "threshold": "13.53s ±15%",
+      "value": 14.2,
+      "threshold": "14.14s ±20%",
       "severity": "P2",
       "repair": 0,
       "detail": ""
@@ -80,10 +79,20 @@
       "kind": "rule",
       "passed": true,
       "value": [],
-      "threshold": "±25%",
+      "threshold": "vidéo ≥ audio",
       "severity": "P2",
       "repair": 0,
       "detail": ""
+    },
+    {
+      "check": "word_budget_deviation",
+      "kind": "rule",
+      "passed": true,
+      "value": [],
+      "threshold": "±35%",
+      "severity": "P3",
+      "repair": null,
+      "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
     },
     {
       "check": "black_frames",
@@ -154,7 +163,7 @@
       "passed": true,
       "value": {
         "frames_checked": 2,
-        "similarity": 0.7852
+        "similarity": 0.785
       },
       "threshold": "≥0.60 sur ≥2 frames",
       "severity": "P0",
@@ -166,7 +175,7 @@
       "kind": "rule",
       "passed": true,
       "value": {
-        "psnr_db": 24.59
+        "psnr_db": 24.6
       },
       "threshold": "≥22 dB",
       "severity": "P0",
@@ -178,14 +187,14 @@
     "T0_start": 0,
     "T1_strategy": 0,
     "T2_script": 0,
-    "T3_audio": 39,
-    "T4_lipsync": 39,
-    "T5_composite": 456,
-    "T6_first_pixel": 456,
-    "T7_final_render": 6735,
-    "T8_qc_done": 7942,
-    "TTFP_ms": 456,
-    "time_to_final_ms": 6735,
-    "time_to_publishable_ms": 7942
+    "T3_audio": 429,
+    "T4_lipsync": 429,
+    "T5_composite": 1388,
+    "T6_first_pixel": 1388,
+    "T7_final_render": 11341,
+    "T8_qc_done": 13035,
+    "TTFP_ms": 1388,
+    "time_to_final_ms": 11341,
+    "time_to_publishable_ms": 13035
   }
 }

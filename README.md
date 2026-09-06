@@ -32,17 +32,20 @@ décisions engageantes, points à valider, hypothèses à vérifier, formulaire 
 📄 **[M01 — Architecture & Product Blueprint](docs/reports/M01-blueprint-architecture.pdf)** ·
 📄 **[M02 — Product & Architecture Stress Test](docs/reports/M02-stress-test.pdf)** ·
 📄 **[M03 — P0 Proof of Concept](docs/reports/M03-p0-proof.pdf)** ·
+📄 **[M04 — P0 Validation Execution](docs/reports/M04-validation-execution.pdf)** ·
 [convention et journal des jalons](docs/reports/README.md)
 
 ## Prochaine étape
 
-**P0 exécuté partiellement · P0 STATUS: FAIL · PHASE 01: BLOCKED.**
+**M04 : BLOCKED / MISSING DEPENDENCY · H1→H4 INCONCLUSIVE · PHASE 01 BLOCKED.**
 
-Le harnais [`p0/`](p0/README.md) produit dix publicités 9:16 de bout en bout et mesure
-la fidélité produit (0,785 · 24,6 dB), la latence déterministe (7,96 s) et les coûts sur
-volumes réels. Mais **H1 — la qualité perçue du chemin C — n'a pas pu être mesurée** :
-aucun provider TTS, lip-sync ou vidéo n'était accessible.
+Le harnais [`p0/`](p0/README.md) produit dix publicités 9:16 de bout en bout, désormais
+avec de la **vraie parole française** (espeak-ng), et mesure la fidélité produit
+(0,785 · 24,6 dB), la latence complète (13,9 s jusqu'au publiable) et les coûts.
+Le readiness check de M04 identifie **6 dépendances bloquantes absentes** : ni
+credentials, ni accès sortant vers les API de génération. E1, E3, E4, E5, E6, E7 n'ont
+pas pu être exécutées.
 
-**Débloquer la Phase 01 demande les expériences E1→E7** — environ 135 à 390 $ et une
-semaine. Il ne manque que trois clés d'API, un personnage réel et trois évaluateurs.
-Voir le [rapport M03](docs/reports/M03-p0-proof.pdf).
+**Ce qui débloque tout** : un environnement avec réseau sortant, trois comptes provider
+(135–390 $), un personnage réel et trois évaluateurs francophones. Données complètes
+dans [`p0-validation/`](p0-validation/final_report.md) · [rapport M04](docs/reports/M04-validation-execution.pdf).

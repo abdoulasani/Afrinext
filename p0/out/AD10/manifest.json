@@ -1,6 +1,6 @@
 {
   "ad_id": "AD10",
-  "produced_at": "2026-09-05T07:58:34.224205+00:00",
+  "produced_at": "2026-09-05T23:58:53.053217+00:00",
   "script_hash": "5dfcfc7d0fcf7ad1",
   "product_id": "prd_test_karite",
   "character_id": "char_p0_synthetic",
@@ -12,19 +12,18 @@
     "s10_cta"
   ],
   "providers": {
-    "tts": "elevenlabs",
+    "tts": "espeak-ng-local",
     "lipsync": "lipsync-generic",
     "render": "ffmpeg"
   },
   "synthetic_stages": [
     "lipsync",
     "product",
-    "shot_bank",
-    "tts"
+    "shot_bank"
   ],
   "outputs": {
     "final": "/home/user/Afrinext/p0/out/AD10/AD10.mp4",
-    "duration_s": 10.6
+    "duration_s": 11.9
   },
   "total_cost_usd": 0.0,
   "qc": [
@@ -48,7 +47,7 @@
         "height": 1920,
         "audio_codec": "aac",
         "fps": 25.0,
-        "duration_s": 10.6
+        "duration_s": 11.9
       },
       "threshold": null,
       "severity": "P0",
@@ -69,8 +68,8 @@
       "check": "total_duration",
       "kind": "rule",
       "passed": true,
-      "value": 10.6,
-      "threshold": "10.5s ±15%",
+      "value": 11.9,
+      "threshold": "11.75s ±20%",
       "severity": "P2",
       "repair": 0,
       "detail": ""
@@ -80,10 +79,20 @@
       "kind": "rule",
       "passed": true,
       "value": [],
-      "threshold": "±25%",
+      "threshold": "vidéo ≥ audio",
       "severity": "P2",
       "repair": 0,
       "detail": ""
+    },
+    {
+      "check": "word_budget_deviation",
+      "kind": "rule",
+      "passed": true,
+      "value": [],
+      "threshold": "±35%",
+      "severity": "P3",
+      "repair": null,
+      "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
     },
     {
       "check": "black_frames",
@@ -154,7 +163,7 @@
       "passed": true,
       "value": {
         "frames_checked": 2,
-        "similarity": 0.7849
+        "similarity": 0.7851
       },
       "threshold": "≥0.60 sur ≥2 frames",
       "severity": "P0",
@@ -178,14 +187,14 @@
     "T0_start": 0,
     "T1_strategy": 0,
     "T2_script": 0,
-    "T3_audio": 37,
-    "T4_lipsync": 37,
-    "T5_composite": 497,
-    "T6_first_pixel": 497,
-    "T7_final_render": 5801,
-    "T8_qc_done": 6969,
-    "TTFP_ms": 497,
-    "time_to_final_ms": 5801,
-    "time_to_publishable_ms": 6969
+    "T3_audio": 527,
+    "T4_lipsync": 527,
+    "T5_composite": 2006,
+    "T6_first_pixel": 2006,
+    "T7_final_render": 12182,
+    "T8_qc_done": 13742,
+    "TTFP_ms": 2006,
+    "time_to_final_ms": 12182,
+    "time_to_publishable_ms": 13742
   }
 }

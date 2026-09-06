@@ -58,7 +58,7 @@ def infra_monthly(v: dict, ads_per_month: int, tier="base") -> dict:
     variable = path_c_cost(v, tier)["total"] * ads_per_month
     cpu_hours = v["cpu_s"] * ads_per_month / 3600
     storage_gb = v["mb_per_ad"] * ads_per_month / 1024
-    baseline = {100: 60, 1000: 180, 10000: 900}[ads_per_month]   # api+db+redis+workers
+    baseline = {100: 60, 1000: 180, 10000: 900, 100000: 4200}[ads_per_month]   # api+db+redis+workers
     return {"ads": ads_per_month, "variable_usd": round(variable, 2),
             "cpu_hours": round(cpu_hours, 1),
             "storage_gb_new": round(storage_gb, 1),
@@ -101,7 +101,7 @@ def main():
 
     print("\nINFRA MENSUELLE ESTIMÉE (base)")
     out["infra"] = {}
-    for n in (100, 1000, 10000):
+    for n in (100, 1000, 10000, 100000):
         m = infra_monthly(v, n); out["infra"][str(n)] = m
         print(f"  {n:>6} pubs/mois : variable {m['variable_usd']:>8.2f} $ "
               f"+ socle {m['baseline_infra_usd']:>4} $ = {m['total_usd']:>8.2f} $ "

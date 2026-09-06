@@ -1,0 +1,6 @@
+{
+  "experiment": "E4",
+  "status": "BLOCKED",
+  "blocked_reason": "aucun ASR français : hôtes de modèles injoignables, pocketsphinx en-us seulement, vosk non installable",
+  "rows": []
+}

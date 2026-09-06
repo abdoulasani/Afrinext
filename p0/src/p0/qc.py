@@ -40,10 +40,24 @@ def qc_duration(video: Path, target_s: float, tol=0.15) -> QCResult:
                     f"{target_s}s ±{int(tol*100)}%", "P2", 0)
 
 
-def qc_scene_durations(scenes: list[tuple[str, float, float]], tol=0.25) -> QCResult:
-    bad = [(n, a, p) for n, a, p in scenes if abs(a - p) > max(0.35, p * tol)]
-    return QCResult("scene_duration", "rule", not bad, bad, f"±{int(tol*100)}%", "P2", 0,
-                    "" if not bad else f"{len(bad)} scène(s) hors tolérance")
+def qc_scene_durations(scenes: list[tuple[str, float, float]], tol=0.12) -> QCResult:
+    """FIX F-011 : l'invariant réel n'est pas « la scène dure ce qui était estimé »
+    mais « la scène ne tronque pas sa propre parole ». On compare donc la durée
+    vidéo de la scène à la durée de SON audio, pas à une estimation par mots."""
+    bad = [(n, a, p) for n, a, p in scenes if a < p - max(0.15, p * tol)]
+    return QCResult("scene_duration", "rule", not bad, bad, "vidéo ≥ audio", "P2", 0,
+                    "" if not bad else f"{len(bad)} scène(s) tronquent la parole")
+
+
+def qc_word_budget(lines: list[tuple[str, int, float, float]], tol=0.35) -> QCResult:
+    """CONSULTATIF : écart entre la durée réellement synthétisée et le budget de
+    mots d'écriture. Ne bloque rien — c'est un retour au rédacteur."""
+    dev = [(role, w, round(actual, 2), round(budget, 2))
+           for role, w, actual, budget in lines
+           if budget > 0 and abs(actual - budget) / budget > tol]
+    return QCResult("word_budget_deviation", "rule", not dev, dev, f"±{int(tol*100)}%",
+                    "P3", None,
+                    "consultatif — le budget de mots guide l'écriture, pas le montage")
 
 
 def qc_black_frames(video: Path) -> QCResult:

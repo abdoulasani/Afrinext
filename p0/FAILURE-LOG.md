@@ -39,3 +39,19 @@ mesure la mauvaise zone, et une politique de réparation qui répare la mauvaise
 chose. Aucun n'aurait été visible sur un schéma d'architecture.
 
 C'est l'argument central en faveur d'une tranche verticale avant la Phase 01.
+
+---
+
+## Ajout M04 — défauts révélés par l'audio réel
+
+| ID | Étape | Description | Cause racine | Sév. | Réparation | Coût | Latence | Corrigé |
+|---|---|---|---|---|---|---|---|---|
+| **F-011** | script / montage | Avec de la vraie parole, `scene_duration` échoue sur **5 pubs sur 10** (écarts +0,54 à +1,12 s, toujours dans le même sens). 13 réparations déclenchées. | Le budget de mots (2,60 mots/s) est **exact en médiane mais imprécis par ligne** : les lignes courtes sont dominées par le coût phonétique fixe. « Écris-moi sur WhatsApp » (4 mots) planifié 1,60 s, réel 3,04 s. | **P1** | la durée de scène vient du **synthétiseur** ; le contrôle vérifie « la scène ne tronque pas sa parole » ; le budget de mots devient consultatif (`word_budget_deviation`, P3) | 0 | ~25 min | **oui** — échecs 5 → 0, réparations 13 → 1 |
+| **F-012** | environnement | ASR français impossible à obtenir. | `huggingface.co` et `alphacephei.com` injoignables (HTTP 000) ; `pocketsphinx` installé mais modèle acoustique **en-us** uniquement ; `vosk` non installable (échec de build de `srt`). | **P1** | aucune — E4 reste BLOCKED ; recommandation : ASR d'API plutôt que modèle local | — | — | **non** |
+| **F-013** | environnement | Tous les endpoints providers injoignables (ElevenLabs, Cartesia, Replicate, fal, D-ID → HTTP 000). | Pas d'accès sortant vers ces hôtes depuis cet environnement, **en plus** de l'absence de clés. | **P0 pour la mission** | exécuter le harnais dans un environnement disposant d'un réseau sortant | — | — | **non** |
+
+**Enseignement M04.** Passer du silence à de la vraie parole a suffi à faire apparaître
+un défaut d'architecture (F-011) qui invalide une hypothèse héritée du M01 et du M02 :
+la table durée→mots **guide l'écriture, elle ne planifie pas le montage**. Chaque
+augmentation de réalisme du banc d'essai révèle une couche de défauts que la précédente
+masquait.

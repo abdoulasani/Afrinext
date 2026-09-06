@@ -93,3 +93,42 @@ class GenerativeVideoProvider(Provider):
             "La comparaison PATH C vs GENERATIVE (M03 §16) ne peut pas être "
             "mesurée dans cet environnement — elle est déclarée non mesurée "
             "dans le rapport, jamais estimée.")
+
+
+# ── TTS LOCAL RÉEL (espeak-ng) ────────────────────────────────────────
+class LocalEspeakTTS(Provider):
+    """Moteur TTS RÉEL, local, à synthèse par formants.
+
+    ⚠ CE N'EST PAS un TTS neuronal de qualité produit. Il produit de la vraie
+    parole française, mesurable (durée, latence, intelligibilité mécanique),
+    mais sa naturalité n'a rien à voir avec ElevenLabs/Cartesia. Il ne répond
+    donc PAS à la question de qualité de E2 — il permet en revanche de faire
+    tourner la chaîne avec de l'audio réel au lieu du silence.
+    """
+    name = "espeak-ng-local"
+    env_var = ""
+    unit_cost_usd = 0.0
+    VOICE = "fr-fr"
+    SPEED = 145          # mots/min
+    PITCH = 42
+    AMPLITUDE = 165
+
+    def synth(self, text: str, out_path: Path, voice_id: str = "") -> dict:
+        import shutil as _sh, time as _t
+        exe = _sh.which("espeak-ng")
+        if not exe:
+            raise RuntimeError("espeak-ng absent")
+        wav = Path(out_path).with_suffix(".wav")
+        t0 = _t.perf_counter()
+        p = subprocess.run([exe, "-v", self.VOICE, "-s", str(self.SPEED),
+                            "-p", str(self.PITCH), "-a", str(self.AMPLITUDE),
+                            "-w", str(wav), text], capture_output=True, text=True)
+        if p.returncode != 0:
+            raise RuntimeError(f"espeak-ng: {p.stderr[:300]}")
+        synth_ms = int((_t.perf_counter() - t0) * 1000)
+        run([ffmpeg(), "-y", "-v", "error", "-i", wav, "-ar", "44100", "-ac", "1",
+             "-c:a", "aac", "-b:a", "128k", out_path])
+        wav.unlink(missing_ok=True)
+        return {"cost_usd": 0.0, "synthetic": False, "local_engine": True,
+                "engine": "espeak-ng-1.51", "voice": self.VOICE,
+                "synth_latency_ms": synth_ms}

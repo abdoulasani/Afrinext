@@ -1,0 +1,195 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>Afrinext · Rapport de jalon M04</title>
+<link rel="stylesheet" href="_style.css"></head><body>
+
+<div class="cover">
+  <div class="eyebrow">Afrinext · Rapport de jalon · pour revue</div>
+  <h1>M04 — P0 Validation Execution</h1>
+  <p class="sub">E1 → E7 · readiness check exécuté · aucun résultat simulé</p>
+  <div class="meta">
+    <div><div class="k">Jalon</div><div class="v">M04 · E1→E7</div></div>
+    <div><div class="k">Statut</div><div class="v">BLOCKED / MISSING DEP.</div></div>
+    <div><div class="k">Date</div><div class="v">6 septembre 2026</div></div>
+    <div><div class="k">Destinataire</div><div class="v">Senior Developer</div></div>
+    <div><div class="k">Exécuté</div><div class="v">E2 partiel · 6 bloquées</div></div>
+    <div><div class="k">Opérations</div><div class="v mono">163 tracées</div></div>
+    <div><div class="k">Coût facturé</div><div class="v">0,00 $</div></div>
+    <div><div class="k">Package</div><div class="v mono">p0-validation/</div></div>
+  </div>
+</div>
+
+<h2><span class="num">1.</span>Verdict</h2>
+
+<div class="callout danger">
+  <span class="lbl">Décision</span>
+  <strong style="font-size:12.5pt">BLOCKED / MISSING DEPENDENCY</strong><br>
+  <strong style="font-size:11pt">H1 · H2 · H3 · H4 = INCONCLUSIVE &nbsp;·&nbsp;
+  P0 STATUS : FAIL &nbsp;·&nbsp; PHASE 01 : BLOCKED</strong><br><br>
+  Le readiness check — exécuté <em>avant</em> toute expérience, comme le prescrit M04 —
+  identifie <strong>6 dépendances bloquantes absentes sur 9</strong>. E1, E3, E4, E5, E6
+  et E7 n'ont pas pu être exécutées. <strong>E2 l'a été partiellement, avec un moteur
+  réel.</strong>
+  <br><br>
+  <strong>Cause racine unique :</strong> cet environnement n'a ni credentials providers
+  ni accès sortant vers les API de génération. Ce n'est pas un défaut du pipeline —
+  c'est un problème d'approvisionnement.
+</div>
+
+<h2><span class="num">2.</span>Readiness check — preuves</h2>
+
+<table class="tight">
+<thead><tr><th style="width:26%">Dépendance</th><th style="width:7%">Exp.</th><th style="width:13%">Statut</th><th style="width:9%">Bloquant</th><th>Preuve mesurée</th></tr></thead>
+<tbody>
+<tr><td>TTS neuronal (qualité produit)</td><td>E2</td><td><strong>MISSING</strong></td><td>oui</td><td>aucune clé ; <code>api.elevenlabs.io</code> → HTTP 000</td></tr>
+<tr><td><strong>TTS local réel (espeak-ng 1.51)</strong></td><td>E2</td><td><strong>AVAILABLE</strong></td><td>non</td><td>parole française vérifiée : RMS 3080, 44,8 % de trames voisées</td></tr>
+<tr><td>Lip-sync provider</td><td>E3</td><td><strong>MISSING</strong></td><td><strong>oui</strong></td><td>aucune clé ; <code>api.d-id.com</code> → HTTP 000</td></tr>
+<tr><td>Vidéo générative</td><td>E5</td><td><strong>MISSING</strong></td><td>oui</td><td>aucune clé ; <code>api.replicate.com</code> → HTTP 000</td></tr>
+<tr><td>Banque de plans réelle + personnage</td><td>E1</td><td><strong>MISSING</strong></td><td>oui</td><td>aucun asset humain fourni ; aucun provider image joignable</td></tr>
+<tr><td>ASR français</td><td>E4</td><td><strong>MISSING</strong></td><td>oui</td><td><code>huggingface.co</code> → 000 · <code>alphacephei.com</code> → 000 · pocketsphinx installé mais modèle <strong>en-us</strong> seulement · vosk non installable</td></tr>
+<tr><td>Évaluateurs humains francophones</td><td>E6</td><td><strong>MISSING</strong></td><td>oui</td><td>environnement non interactif ; grille prête et vide</td></tr>
+<tr><td>ffmpeg · compute</td><td>E1-E7</td><td>AVAILABLE</td><td>non</td><td>10 rendus 1080×1920 · 4 vCPU / 16 Go</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">3.</span>Résultat par expérience</h2>
+
+<table class="tight">
+<thead><tr><th style="width:7%">Exp.</th><th style="width:24%">Objet</th><th style="width:12%">Statut</th><th>Obtenu</th></tr></thead>
+<tbody>
+<tr><td><strong>E1</strong></td><td>Banque de plans réelle</td><td><strong>BLOCKED</strong></td><td>plans de substitution géométriques, filigrane <code>SYNTHETIC SHOT</code> sur chaque frame</td></tr>
+<tr><td><strong>E2</strong></td><td>TTS français réel</td><td><strong>PARTIAL</strong></td><td><strong>50 lignes de vraie parole française</strong> synthétisées, latence et durées mesurées. <strong>La naturalité reste non évaluable</strong> : espeak est un synthétiseur à formants, pas un modèle neuronal</td></tr>
+<tr><td><strong>E3</strong></td><td>Lip-sync réel</td><td><strong>BLOCKED</strong></td><td>rien. <strong>C'est l'expérience qui répond à H1</strong></td></tr>
+<tr><td><strong>E4</strong></td><td>ASR</td><td><strong>BLOCKED</strong></td><td>rien — et E4 est de toute façon en aval de E2 : un WER sur de l'audio déterministe ne dirait rien du produit</td></tr>
+<tr><td><strong>E5</strong></td><td>Benchmark génératif</td><td><strong>BLOCKED</strong></td><td>rien</td></tr>
+<tr><td><strong>E6</strong></td><td>Évaluation humaine aveugle</td><td><strong>BLOCKED</strong></td><td>grille prête et vide (<code>p0/eval/grid.csv</code>)</td></tr>
+<tr><td><strong>E7</strong></td><td>Régénération réelle</td><td><strong>BLOCKED</strong></td><td>rejouer 20× un pipeline déterministe donnerait 20× le même résultat</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">4.</span>Ce que la vraie parole a révélé — F-011</h2>
+
+<p>Le passage du silence (M03) à de <strong>l'audio réel</strong> a immédiatement fait
+apparaître un défaut d'architecture que M03 ne pouvait pas voir.</p>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">F-011 · Le budget de mots ne peut pas planifier le montage</span><span class="tag majeur">P1</span></div>
+  <dl>
+    <dt>Observation</dt><dd>Avec du vrai audio, <code>scene_duration</code> échoue sur <strong>5 publicités sur 10</strong>. Écarts de +0,54 s à +1,12 s, toujours dans le même sens : l'audio est plus long que prévu.</dd>
+    <dt>Cause</dt><dd>Le débit médian mesuré est <em>exactement</em> conforme au modèle (2,60 mots/s) — mais la variance par ligne est forte. Les lignes courtes sont dominées par le coût phonétique fixe : « Écris-moi sur WhatsApp » (4 mots) planifié à 1,60 s dure <strong>3,04 s</strong>.</dd>
+    <dt>Correction</dt><dd>La durée d'une scène vient désormais <strong>du synthétiseur</strong>. Le contrôle vérifie l'invariant qui compte — <em>la scène ne tronque pas sa propre parole</em> — et le budget de mots devient un contrôle <strong>consultatif</strong> qui remonte au rédacteur.</dd>
+    <dt>Impact</dt><dd>Échecs <code>scene_duration</code> : <strong>5 → 0</strong>. Réparations déclenchées : <strong>13 → 1</strong>.</dd>
+  </dl>
+</div>
+
+<div class="callout warn">
+  <span class="lbl">Conséquence pour le M02</span>
+  La table durée→mots héritée de <code>ads-method.md</code>, que le M01 et le M02
+  traitaient comme faisant autorité pour le découpage, <strong>est un guide d'écriture,
+  jamais un planificateur de montage</strong>. Ce point n'était visible qu'en
+  synthétisant réellement.
+</div>
+
+<h2><span class="num">5.</span>Tableau final</h2>
+
+<table class="tight">
+<thead><tr><th style="width:24%">Métrique</th><th style="width:12%">Cible</th><th style="width:16%">Résultat</th><th style="width:13%">Statut</th><th style="width:10%">Confiance</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><strong>Publishability Rate</strong></td><td>&gt; 60 %</td><td>—</td><td><strong>BLOCKED</strong></td><td>—</td><td>E6 non exécutée</td></tr>
+<tr><td><strong>Blind Mean Score</strong></td><td>≥ 3,5/5</td><td>—</td><td><strong>BLOCKED</strong></td><td>—</td><td>E6 non exécutée</td></tr>
+<tr><td>Product Fidelity · similarité</td><td>≥ 0,60</td><td><strong>0,785</strong> (min 0,783)</td><td><strong>PASS</strong></td><td><strong>haute</strong></td><td>10 pubs ; détecteur validé par faute injectée</td></tr>
+<tr><td>Product Fidelity · PSNR logo</td><td>≥ 22 dB</td><td><strong>24,6 dB</strong></td><td><strong>PASS</strong></td><td><strong>haute</strong></td><td>le packaging n'est jamais redessiné</td></tr>
+<tr><td>Lip-sync Score</td><td>—</td><td>—</td><td><strong>BLOCKED</strong></td><td>—</td><td>aucun provider</td></tr>
+<tr><td><strong>Real COGS / ad</strong></td><td>&lt; 1,00 $</td><td><strong>0,00 $ facturé</strong></td><td>INCONCLUSIVE</td><td>—</td><td>aucun provider payant appelé</td></tr>
+<tr><td>TTFP</td><td>&lt; 90 s</td><td><strong>1,56 s</strong> (p95 1,96)</td><td>PASS <em>(portée)</em></td><td>moyenne</td><td>hors latence réseau lip-sync</td></tr>
+<tr><td>Time to publishable</td><td>&lt; 4 min</td><td><strong>13,9 s</strong> (p95 14,8)</td><td>PASS <em>(portée)</em></td><td>moyenne</td><td>hors latence réseau lip-sync</td></tr>
+<tr><td>Regeneration Factor</td><td>&lt; 1,4</td><td>1,00</td><td>INCONCLUSIVE</td><td>—</td><td>étages stochastiques non exercés</td></tr>
+<tr><td>Targeted Repair Rate</td><td>&gt; 60 % sans dépense</td><td>100 % (1/1)</td><td>INCONCLUSIVE</td><td>faible</td><td>échantillon d'une seule réparation</td></tr>
+<tr><td>Failure Rate</td><td>—</td><td>2/10 volontaires</td><td>PASS</td><td>haute</td><td>le contrôle de factualité bloque réellement</td></tr>
+</tbody>
+</table>
+
+<p><strong>FACT</strong> : chaque chiffre provient d'une exécution tracée (163 opérations
+dans <code>p0-validation/</code>). <strong>INFERENCE</strong> : les statuts « portée »
+supposent que la latence des providers absents ne consommera pas les ~3 min 45 s de
+budget restant. <strong>ASSUMPTION</strong> : les prix catalogue restent non vérifiés.</p>
+
+<h2><span class="num">6.</span>Test économique</h2>
+
+<table class="tight">
+<thead><tr><th style="width:22%">Volume / mois</th><th style="width:22%">Coût variable</th><th style="width:20%">Socle infra</th><th>Total</th></tr></thead>
+<tbody>
+<tr><td>100</td><td>28,59 $</td><td>60 $</td><td><strong>88,59 $</strong></td></tr>
+<tr><td>1 000</td><td>285,90 $</td><td>180 $</td><td><strong>465,90 $</strong></td></tr>
+<tr><td>10 000</td><td>2 859 $</td><td>900 $</td><td><strong>3 759 $</strong></td></tr>
+<tr><td>100 000</td><td>28 590 $</td><td>4 200 $</td><td><strong>32 790 $</strong></td></tr>
+</tbody>
+</table>
+
+<div class="callout danger">
+  <span class="lbl">Principal risque économique</span>
+  <strong>Le prix du lip-sync</strong> — ~87 % du coût variable. Seuil de rupture mesuré :
+  <strong>0,193 $ par clip</strong>, au-delà duquel la publicité dépasse 1,00 $. Cela
+  laisse 3,9× de marge sur le prix catalogue de référence, mais c'est le seul poste
+  capable de renverser le modèle, <strong>et il n'a pas été mesuré</strong>.
+</div>
+
+<h2><span class="num">7.</span>Échec → cause → action corrective</h2>
+
+<table class="tight">
+<thead><tr><th style="width:15%">Échec</th><th style="width:22%">Cause racine</th><th style="width:26%">Action corrective</th><th style="width:10%">Coût</th><th style="width:8%">Délai</th><th>Critère de retest</th></tr></thead>
+<tbody>
+<tr><td>E1, E3, E5</td><td>Aucun credential <strong>et</strong> aucun accès sortant vers les API de génération</td><td>Ouvrir les comptes (TTS neuronal, lip-sync, vidéo) et <strong>exécuter le harnais dans un environnement avec réseau sortant</strong> — poste local ou CI avec secrets</td><td>135–390 $</td><td>3-4 j</td><td>10 pubs avec les 3 providers réels, ledger non nul</td></tr>
+<tr><td>E4</td><td>Hôtes de modèles ASR injoignables ; seul un modèle <strong>anglais</strong> disponible</td><td>Utiliser un ASR d'API plutôt qu'un modèle local</td><td>&lt; 2 $</td><td>0,5 j</td><td>WER sur 50 lignes ; contrôle passant de SKIPPED à PASS/FAIL</td></tr>
+<tr><td>E6</td><td>Environnement non interactif</td><td>Faire remplir <code>p0/eval/grid.csv</code> par 3 à 5 francophones, en aveugle</td><td>0 $</td><td>0,5 j</td><td><strong>Tranche H1</strong> : Publishability Rate calculé</td></tr>
+<tr><td>E7</td><td>Pipeline déterministe : rejouer ne produit aucune variance</td><td>Rejouer 20× <strong>après</strong> E1-E3</td><td>60–200 $</td><td>1 j</td><td>Facteur sur ≥ 200 générations</td></tr>
+<tr><td>4 lignes/50 hors budget de mots</td><td>Budget imprécis sur les lignes courtes</td><td>Calibrer le budget <strong>par rôle de ligne</strong></td><td>0 $</td><td>0,5 j</td><td>&lt; 2 lignes sur 50 hors tolérance</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">8.</span>Ce que M04 a consolidé</h2>
+
+<table class="tight">
+<thead><tr><th style="width:34%">Acquis</th><th>Preuve</th></tr></thead>
+<tbody>
+<tr><td><strong>La fidélité produit tient sur 10 publicités</strong></td><td>similarité 0,785 · PSNR logo 24,6 dB · faute injectée détectée (0,660 / 19,5 dB)</td></tr>
+<tr><td><strong>La chaîne accepte de la vraie parole</strong></td><td>50 lignes synthétisées · 11 ms de latence médiane · intégration sans défaut après F-011</td></tr>
+<tr><td><strong>Un défaut d'architecture trouvé grâce au vrai audio</strong></td><td>F-011 · échecs 5 → 0 · réparations 13 → 1</td></tr>
+<tr><td><strong>Le contrôle de factualité bloque toujours</strong></td><td>2 violations volontaires interceptées à chaque exécution</td></tr>
+<tr><td><strong>Le data package est complet et honnête</strong></td><td>12 fichiers ; chaque manifeste bloqué porte <code>status: BLOCKED</code> et sa cause — jamais un PASS de complaisance</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">9.</span>Formulaire de revue</h2>
+
+<table class="review">
+<thead><tr><th>Réf.</th><th>Validé</th><th>À&nbsp;corriger</th><th>Commentaire</th></tr></thead>
+<tbody>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Conduite de M04</strong></td></tr>
+<tr><td><strong>M1</strong> Verdict BLOCKED plutôt qu'un PASS partiel</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>M2</strong> Usage d'espeak-ng comme moteur réel, étiqueté non-produit</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>M3</strong> Correction F-011 appliquée et re-mesurée</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>M4</strong> Les 4 hypothèses déclarées INCONCLUSIVE</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Décisions à prendre</strong></td></tr>
+<tr><td><strong>D1</strong> Budget 135–390 $ pour E1→E7</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>D2</strong> Environnement d'exécution avec réseau sortant</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>D3</strong> Providers retenus (TTS / lip-sync / vidéo)</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>D4</strong> Personnage réel + consentement</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>D5</strong> 3 à 5 évaluateurs francophones</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+</tbody>
+</table>
+
+<div class="nobreak">
+<h3>Verdict global</h3>
+<p style="margin-bottom:14px">
+  <span class="box"></span> Conduite validée — approvisionner et relancer E1→E7 &nbsp;&nbsp;
+  <span class="box"></span> Validé sous réserve &nbsp;&nbsp;
+  <span class="box"></span> À reprendre
+</p>
+<div class="sign"><div>Nom du relecteur</div><div>Date</div><div>Signature</div></div>
+</div>
+
+<div class="footer">
+  <span>Afrinext · Rapport de jalon M04 · P0 Validation Execution</span>
+  <span>Document interne · pour revue</span>
+</div>
+</body></html>

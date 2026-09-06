@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from .models import AdScript, ScriptLine, AdManifest, sha
 from .ledger import Ledger, Trace
 from .assets import make_product, make_shot_bank
-from .providers.impl import TTSProvider, LipSyncProvider, ffmpeg, run as ffrun
+from .providers.impl import TTSProvider, LipSyncProvider, LocalEspeakTTS, ffmpeg, run as ffrun
 from . import compose, qc as QC, repair as RP
 
 P0 = Path(__file__).resolve().parents[2]   # .../Afrinext/p0
@@ -38,13 +38,17 @@ def cpu_seconds() -> float:
 
 
 def produce(ad: AdScript, raw: dict, facts: dict, product, shots, outdir: Path,
-            ledger: Ledger, offline: bool, inject: str | None = None) -> dict:
+            ledger: Ledger, offline: bool, inject: str | None = None,
+            use_local_tts: bool = False) -> dict:
     tr = Trace()
     wd = outdir / ad.ad_id; wd.mkdir(parents=True, exist_ok=True)
     by_kind = {s.kind: s for s in shots}
-    tts, lip = TTSProvider(offline=offline), LipSyncProvider(offline=offline)
+    tts = LocalEspeakTTS() if use_local_tts else TTSProvider(offline=offline)
+    lip = LipSyncProvider(offline=offline)
     cpu0 = cpu_seconds()
     synthetic_stages, scenes, sub_lines, slots_for_qc = set(), [], [], []
+    tts_manifest = []
+    budgets = []; audio_durs = {}
     tts_chars = lip_clips = 0
     t_cursor = 0.0
     tr.mark("T1_strategy")
@@ -77,6 +81,19 @@ def produce(ad: AdScript, raw: dict, facts: dict, product, shots, outdir: Path,
             box["output_ref"] = audio.name
             box["cost_usd"] = res["cost_usd"]
             box["synthetic"] = res.get("synthetic", False)
+            tts_manifest.append({
+                "ad_id": ad.ad_id, "line_index": line.index,
+                "script_version": sha([asdict(l) for l in ad.lines]),
+                "provider": tts.name, "model": res.get("engine", "n/a"),
+                "voice": res.get("voice", ""), "language": ad.language,
+                "chars": len(line.text),
+                "planned_duration_s": line.duration_s,
+                "actual_duration_s": round(compose.probe_duration(audio), 3),
+                "synth_latency_ms": res.get("synth_latency_ms"),
+                "cost_usd": res["cost_usd"],
+                "local_engine": res.get("local_engine", False),
+                "synthetic": res.get("synthetic", False),
+                "status": "ok"})
         if res.get("synthetic"): synthetic_stages.add("tts")
 
         # ── 2. LIP-SYNC ───────────────────────────────────────────
@@ -116,7 +133,10 @@ def produce(ad: AdScript, raw: dict, facts: dict, product, shots, outdir: Path,
             tr.mark("T5_composite"); tr.mark("T6_first_pixel"); first_pixel_marked = True
 
         actual = compose.probe_duration(scene)
+        audio_dur = compose.probe_duration(audio)
+        budgets.append((line.role, line.word_count, audio_dur, line.duration_s))
         scenes.append((scene, line, actual))
+        audio_durs[line.index] = audio_dur
         if line.on_screen_text:
             sub_lines.append((t_cursor, t_cursor + actual, line.on_screen_text))
         t_cursor += actual
@@ -136,8 +156,9 @@ def produce(ad: AdScript, raw: dict, facts: dict, product, shots, outdir: Path,
         fact_qc,
         QC.qc_render_validity(final),
         QC.qc_aspect_ratio(final),
-        QC.qc_duration(final, ad.total_duration_s),
-        QC.qc_scene_durations([(l.role, a, l.duration_s) for _, l, a in scenes]),
+        QC.qc_duration(final, sum(audio_durs.values()) or ad.total_duration_s, tol=0.20),
+        QC.qc_scene_durations([(l.role, a, audio_durs.get(l.index, a)) for _, l, a in scenes]),
+        QC.qc_word_budget(budgets),
         QC.qc_black_frames(final),
         QC.qc_subtitles(Path(rmeta["subtitle_file"]), dur),
         QC.qc_cta_present(Path(rmeta["subtitle_file"]), "WhatsApp"),
@@ -245,8 +266,9 @@ def produce(ad: AdScript, raw: dict, facts: dict, product, shots, outdir: Path,
         results = [
             fact_qc,
             QC.qc_render_validity(final), QC.qc_aspect_ratio(final),
-            QC.qc_duration(final, ad.total_duration_s),
-            QC.qc_scene_durations([(l.role, a_, l.duration_s) for _, l, a_ in scenes]),
+            QC.qc_duration(final, sum(audio_durs.values()) or ad.total_duration_s, tol=0.20),
+            QC.qc_scene_durations([(l.role, a_, audio_durs.get(l.index, a_)) for _, l, a_ in scenes]),
+            QC.qc_word_budget(budgets),
             QC.qc_black_frames(final),
             QC.qc_subtitles(Path(rmeta["subtitle_file"]), dur),
             QC.qc_cta_present(Path(rmeta["subtitle_file"]), "WhatsApp"),
@@ -286,12 +308,15 @@ def produce(ad: AdScript, raw: dict, facts: dict, product, shots, outdir: Path,
             "video_seconds": round(sum(a for _, _, a in scenes), 2),
             "synthetic_stages": man.synthetic_stages,
             "repairs_remaining": RP.plan_repairs(results),
-            "repair_log": repair_log, "injected": inject}
+            "repair_log": repair_log, "injected": inject,
+            "tts_manifest": tts_manifest}
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true")
+    ap.add_argument("--local-tts", action="store_true",
+                    help="utiliser espeak-ng (moteur RÉEL local, non neuronal)")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--ad", default=None)
     ap.add_argument("--out", default=str(P0 / "out"))
@@ -311,7 +336,8 @@ def main():
         if args.ad and ad.ad_id != args.ad: continue
         t0 = time.perf_counter()
         r = produce(ad, raw, doc["facts"], product, shots, out, ledger,
-                    args.offline, inject_map.get(ad.ad_id))
+                    args.offline, inject_map.get(ad.ad_id),
+                    use_local_tts=args.local_tts)
         r["wall_s"] = round(time.perf_counter() - t0, 2)
         results.append(r)
         passed = sum(1 for x in r["qc"] if x.passed)

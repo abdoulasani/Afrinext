@@ -1,0 +1,152 @@
+[
+  {
+    "ad_id": "AD01",
+    "hook_type": "curiosity",
+    "duration_s": 16.7,
+    "qc_passed": 10,
+    "qc_failed": 1,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD02",
+    "hook_type": "pain_point",
+    "duration_s": 15.8,
+    "qc_passed": 10,
+    "qc_failed": 1,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD03",
+    "hook_type": "benefit",
+    "duration_s": 14.2,
+    "qc_passed": 11,
+    "qc_failed": 0,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD04",
+    "hook_type": "problem_solution",
+    "duration_s": 13.4,
+    "qc_passed": 11,
+    "qc_failed": 0,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD05",
+    "hook_type": "social_proof",
+    "duration_s": 13.5,
+    "qc_passed": 9,
+    "qc_failed": 2,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD06",
+    "hook_type": "product_demo",
+    "duration_s": 15.2,
+    "qc_passed": 11,
+    "qc_failed": 0,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD07",
+    "hook_type": "objection",
+    "duration_s": 14.0,
+    "qc_passed": 10,
+    "qc_failed": 1,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD08",
+    "hook_type": "comparison",
+    "duration_s": 12.3,
+    "qc_passed": 11,
+    "qc_failed": 0,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD09",
+    "hook_type": "urgency",
+    "duration_s": 12.8,
+    "qc_passed": 10,
+    "qc_failed": 1,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  },
+  {
+    "ad_id": "AD10",
+    "hook_type": "direct_offer",
+    "duration_s": 11.9,
+    "qc_passed": 11,
+    "qc_failed": 0,
+    "qc_skipped": 3,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "quality_gate": "BLOCKED_UNVERIFIABLE",
+    "quality_gate_reason": "lip-sync, naturalité audio et publishability non mesurables"
+  }
+]

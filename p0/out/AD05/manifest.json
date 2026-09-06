@@ -1,6 +1,6 @@
 {
   "ad_id": "AD05",
-  "produced_at": "2026-09-05T07:57:39.690351+00:00",
+  "produced_at": "2026-09-05T23:57:42.154188+00:00",
   "script_hash": "e84decce23f5c923",
   "product_id": "prd_test_karite",
   "character_id": "char_p0_synthetic",
@@ -12,19 +12,18 @@
     "s10_cta"
   ],
   "providers": {
-    "tts": "elevenlabs",
+    "tts": "espeak-ng-local",
     "lipsync": "lipsync-generic",
     "render": "ffmpeg"
   },
   "synthetic_stages": [
     "lipsync",
     "product",
-    "shot_bank",
-    "tts"
+    "shot_bank"
   ],
   "outputs": {
     "final": "/home/user/Afrinext/p0/out/AD05/AD05.mp4",
-    "duration_s": 12.5
+    "duration_s": 13.5
   },
   "total_cost_usd": 0.0,
   "qc": [
@@ -54,7 +53,7 @@
         "height": 1920,
         "audio_codec": "aac",
         "fps": 25.0,
-        "duration_s": 12.5
+        "duration_s": 13.5
       },
       "threshold": null,
       "severity": "P0",
@@ -75,8 +74,8 @@
       "check": "total_duration",
       "kind": "rule",
       "passed": true,
-      "value": 12.5,
-      "threshold": "12.38s ±15%",
+      "value": 13.5,
+      "threshold": "13.350000000000001s ±20%",
       "severity": "P2",
       "repair": 0,
       "detail": ""
@@ -86,10 +85,27 @@
       "kind": "rule",
       "passed": true,
       "value": [],
-      "threshold": "±25%",
+      "threshold": "vidéo ≥ audio",
       "severity": "P2",
       "repair": 0,
       "detail": ""
+    },
+    {
+      "check": "word_budget_deviation",
+      "kind": "rule",
+      "passed": false,
+      "value": [
+        [
+          "cta",
+          4,
+          2.16,
+          1.6
+        ]
+      ],
+      "threshold": "±35%",
+      "severity": "P3",
+      "repair": null,
+      "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
     },
     {
       "check": "black_frames",
@@ -160,7 +176,7 @@
       "passed": true,
       "value": {
         "frames_checked": 2,
-        "similarity": 0.7851
+        "similarity": 0.7849
       },
       "threshold": "≥0.60 sur ≥2 frames",
       "severity": "P0",
@@ -184,14 +200,14 @@
     "T0_start": 0,
     "T1_strategy": 0,
     "T2_script": 0,
-    "T3_audio": 38,
-    "T4_lipsync": 38,
-    "T5_composite": 474,
-    "T6_first_pixel": 474,
-    "T7_final_render": 6190,
-    "T8_qc_done": 7483,
-    "TTFP_ms": 474,
-    "time_to_final_ms": 6190,
-    "time_to_publishable_ms": 7483
+    "T3_audio": 461,
+    "T4_lipsync": 461,
+    "T5_composite": 1724,
+    "T6_first_pixel": 1724,
+    "T7_final_render": 11450,
+    "T8_qc_done": 13291,
+    "TTFP_ms": 1724,
+    "time_to_final_ms": 11450,
+    "time_to_publishable_ms": 13291
   }
 }

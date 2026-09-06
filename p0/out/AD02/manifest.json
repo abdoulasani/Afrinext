@@ -1,6 +1,6 @@
 {
   "ad_id": "AD02",
-  "produced_at": "2026-09-05T07:57:09.546212+00:00",
+  "produced_at": "2026-09-05T23:56:52.428136+00:00",
   "script_hash": "ace617709aad6198",
   "product_id": "prd_test_karite",
   "character_id": "char_p0_synthetic",
@@ -12,19 +12,18 @@
     "s10_cta"
   ],
   "providers": {
-    "tts": "elevenlabs",
+    "tts": "espeak-ng-local",
     "lipsync": "lipsync-generic",
     "render": "ffmpeg"
   },
   "synthetic_stages": [
     "lipsync",
     "product",
-    "shot_bank",
-    "tts"
+    "shot_bank"
   ],
   "outputs": {
     "final": "/home/user/Afrinext/p0/out/AD02/AD02.mp4",
-    "duration_s": 14.4
+    "duration_s": 15.8
   },
   "total_cost_usd": 0.0,
   "qc": [
@@ -48,7 +47,7 @@
         "height": 1920,
         "audio_codec": "aac",
         "fps": 25.0,
-        "duration_s": 14.4
+        "duration_s": 15.8
       },
       "threshold": null,
       "severity": "P0",
@@ -69,8 +68,8 @@
       "check": "total_duration",
       "kind": "rule",
       "passed": true,
-      "value": 14.4,
-      "threshold": "14.240000000000002s ±15%",
+      "value": 15.8,
+      "threshold": "15.719999999999999s ±20%",
       "severity": "P2",
       "repair": 0,
       "detail": ""
@@ -80,10 +79,27 @@
       "kind": "rule",
       "passed": true,
       "value": [],
-      "threshold": "±25%",
+      "threshold": "vidéo ≥ audio",
       "severity": "P2",
       "repair": 0,
       "detail": ""
+    },
+    {
+      "check": "word_budget_deviation",
+      "kind": "rule",
+      "passed": false,
+      "value": [
+        [
+          "proof",
+          6,
+          3.2,
+          2.31
+        ]
+      ],
+      "threshold": "±35%",
+      "severity": "P3",
+      "repair": null,
+      "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
     },
     {
       "check": "black_frames",
@@ -154,7 +170,7 @@
       "passed": true,
       "value": {
         "frames_checked": 2,
-        "similarity": 0.785
+        "similarity": 0.7851
       },
       "threshold": "≥0.60 sur ≥2 frames",
       "severity": "P0",
@@ -166,7 +182,7 @@
       "kind": "rule",
       "passed": true,
       "value": {
-        "psnr_db": 24.55
+        "psnr_db": 24.59
       },
       "threshold": "≥22 dB",
       "severity": "P0",
@@ -178,14 +194,14 @@
     "T0_start": 0,
     "T1_strategy": 0,
     "T2_script": 0,
-    "T3_audio": 37,
-    "T4_lipsync": 37,
-    "T5_composite": 435,
-    "T6_first_pixel": 435,
-    "T7_final_render": 6774,
-    "T8_qc_done": 7969,
-    "TTFP_ms": 435,
-    "time_to_final_ms": 6774,
-    "time_to_publishable_ms": 7969
+    "T3_audio": 372,
+    "T4_lipsync": 372,
+    "T5_composite": 1514,
+    "T6_first_pixel": 1514,
+    "T7_final_render": 12936,
+    "T8_qc_done": 14769,
+    "TTFP_ms": 1514,
+    "time_to_final_ms": 12936,
+    "time_to_publishable_ms": 14769
   }
 }

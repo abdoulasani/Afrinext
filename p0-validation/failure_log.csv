@@ -1,0 +1,32 @@
+failure_id,stage,description,root_cause,severity,repair,cost_usd,latency_ms,success_after_repair
+AD01-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD01-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD01-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD02-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD02-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD02-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD03-R1,logo_text_preservation,échec QC logo_text_preservation,voir p0/FAILURE-LOG.md,P2,niveau 3 · recomposite,0.000000,9541,True
+AD03-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD03-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD03-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD04-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD04-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD04-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD05-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD05-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD05-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD06-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD06-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD06-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD07-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD07-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD07-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD08-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD08-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD08-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD09-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD09-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD09-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A
+AD10-audio_transcription,audio_transcription,contrôle non exécutable,SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy),P1,aucune — SKIPPED,,,N/A
+AD10-lip_sync,lip_sync,contrôle non exécutable,SKIPPED — aucun provider lip-sync branché,P1,aucune — SKIPPED,,,N/A
+AD10-visual_quality,visual_quality,contrôle non exécutable,SKIPPED — évaluation model-based non exécutée,P2,aucune — SKIPPED,,,N/A

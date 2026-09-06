@@ -1,0 +1,6 @@
+{
+  "experiment": "E3",
+  "status": "BLOCKED",
+  "blocked_reason": "aucun provider lip-sync : ni clé, ni endpoint joignable",
+  "rows": []
+}

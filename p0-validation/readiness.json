@@ -1,0 +1,107 @@
+{
+  "generated_at": "2026-09-05T23:59:15.315867+00:00",
+  "milestone": "M04",
+  "verdict": "BLOCKED / MISSING DEPENDENCY",
+  "blocking_count": 6,
+  "dependencies": [
+    {
+      "dependency": "TTS provider (neuronal, qualité produit)",
+      "experiment": "E2",
+      "status": "MISSING",
+      "provider": "ElevenLabs / Cartesia / Azure",
+      "version": null,
+      "available": false,
+      "blocking": true,
+      "evidence": "aucune clé d'API; api.elevenlabs.io HTTP 000",
+      "notes": "les endpoints sont injoignables ET aucune clé n'est fournie"
+    },
+    {
+      "dependency": "TTS local (moteur réel, non neuronal)",
+      "experiment": "E2 partiel",
+      "status": "AVAILABLE",
+      "provider": "espeak-ng",
+      "version": "eSpeak NG text-to-speech: 1.51",
+      "available": true,
+      "blocking": false,
+      "evidence": "synthèse française vérifiée",
+      "notes": "PERMET de faire tourner la chaîne avec de la vraie parole. NE RÉPOND PAS à la question de naturalité de E2."
+    },
+    {
+      "dependency": "Lip-sync provider",
+      "experiment": "E3",
+      "status": "MISSING",
+      "provider": "sync.so / D-ID / HeyGen",
+      "version": null,
+      "available": false,
+      "blocking": true,
+      "evidence": "aucune clé; api.d-id.com HTTP 000",
+      "notes": "E3 est l'expérience qui répond à H1. Sans elle, H1 reste ouverte."
+    },
+    {
+      "dependency": "Provider vidéo génératif",
+      "experiment": "E5",
+      "status": "MISSING",
+      "provider": "Veo / Kling / Runway (via Replicate ou fal)",
+      "version": null,
+      "available": false,
+      "blocking": true,
+      "evidence": "aucune clé; api.replicate.com HTTP 000",
+      "notes": "le benchmark PATH C vs GENERATIVE ne peut pas être exécuté"
+    },
+    {
+      "dependency": "Banque de plans réelle + personnage",
+      "experiment": "E1",
+      "status": "MISSING",
+      "provider": null,
+      "version": null,
+      "available": false,
+      "blocking": true,
+      "evidence": "aucun asset humain fourni; aucun provider image/vidéo joignable",
+      "notes": "les 10 plans utilisés sont des substituts géométriques marqués SYNTHETIC"
+    },
+    {
+      "dependency": "ASR français",
+      "experiment": "E4",
+      "status": "MISSING",
+      "provider": "Whisper / Vosk / PocketSphinx-fr",
+      "version": null,
+      "available": false,
+      "blocking": true,
+      "evidence": "huggingface.co HTTP 000; alphacephei.com HTTP 000; pocketsphinx installé mais modèle acoustique en-us uniquement; vosk non installable (échec de build de la dépendance srt)",
+      "notes": "E4 est de toute façon en aval de E2 : mesurer un WER sur de l'audio espeak déterministe ne dirait rien du produit"
+    },
+    {
+      "dependency": "Évaluateurs humains francophones",
+      "experiment": "E6",
+      "status": "MISSING",
+      "provider": null,
+      "version": null,
+      "available": false,
+      "blocking": true,
+      "evidence": "environnement non interactif",
+      "notes": "grille aveugle prête et vide dans p0/eval/grid.csv"
+    },
+    {
+      "dependency": "ffmpeg",
+      "experiment": "E1-E7",
+      "status": "AVAILABLE",
+      "provider": "imageio-ffmpeg",
+      "version": "7.0.2-static",
+      "available": true,
+      "blocking": false,
+      "evidence": "10 rendus 1080x1920 produits",
+      "notes": "filtre drawtext absent; tout le texte passe par ASS"
+    },
+    {
+      "dependency": "Compute",
+      "experiment": "E1-E7",
+      "status": "AVAILABLE",
+      "provider": "conteneur",
+      "version": "4 vCPU / 16 Go",
+      "available": true,
+      "blocking": false,
+      "evidence": "mesuré",
+      "notes": ""
+    }
+  ]
+}

@@ -3,7 +3,7 @@
     "ad_id": "AD01",
     "hook": "curiosity",
     "final": "/home/user/Afrinext/p0/out/AD01/AD01.mp4",
-    "duration_s": 14.7,
+    "duration_s": 16.7,
     "qc": [
       {
         "check": "script_factuality",
@@ -25,7 +25,7 @@
           "height": 1920,
           "audio_codec": "aac",
           "fps": 25.0,
-          "duration_s": 14.7
+          "duration_s": 16.7
         },
         "threshold": null,
         "severity": "P0",
@@ -46,8 +46,8 @@
         "check": "total_duration",
         "kind": "rule",
         "passed": true,
-        "value": 14.7,
-        "threshold": "14.62s ±15%",
+        "value": 16.7,
+        "threshold": "16.52s ±20%",
         "severity": "P2",
         "repair": 0,
         "detail": ""
@@ -57,752 +57,27 @@
         "kind": "rule",
         "passed": true,
         "value": [],
-        "threshold": "±25%",
+        "threshold": "vidéo ≥ audio",
         "severity": "P2",
         "repair": 0,
         "detail": ""
       },
       {
-        "check": "black_frames",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "aucune",
-        "severity": "P1",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "subtitle_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "events": 4,
-          "problems": []
-        },
-        "threshold": "≤84 car.",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "cta_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": "WhatsApp",
-        "threshold": "présent",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "audio_transcription",
-        "kind": "rule",
-        "passed": false,
-        "value": null,
-        "threshold": "ASR",
-        "severity": "P1",
-        "repair": 1,
-        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
-      },
-      {
-        "check": "lip_sync",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P1",
-        "repair": 2,
-        "detail": "SKIPPED — aucun provider lip-sync branché"
-      },
-      {
-        "check": "visual_quality",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P2",
-        "repair": 4,
-        "detail": "SKIPPED — évaluation model-based non exécutée"
-      },
-      {
-        "check": "product_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "frames_checked": 2,
-          "similarity": 0.785
-        },
-        "threshold": "≥0.60 sur ≥2 frames",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      },
-      {
-        "check": "logo_text_preservation",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "psnr_db": 24.59
-        },
-        "threshold": "≥22 dB",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      }
-    ],
-    "timings": {
-      "T0_start": 0,
-      "T1_strategy": 0,
-      "T2_script": 0,
-      "T3_audio": 39,
-      "T4_lipsync": 39,
-      "T5_composite": 953,
-      "T6_first_pixel": 953,
-      "T7_final_render": 8434,
-      "T8_qc_done": 9689,
-      "TTFP_ms": 953,
-      "time_to_final_ms": 8434,
-      "time_to_publishable_ms": 9689
-    },
-    "cpu_s": 25.15,
-    "tts_chars": 208,
-    "lip_clips": 5,
-    "video_seconds": 14.65,
-    "synthetic_stages": [
-      "lipsync",
-      "product",
-      "shot_bank",
-      "tts"
-    ],
-    "repairs_remaining": [],
-    "repair_log": [],
-    "injected": null,
-    "wall_s": 9.69
-  },
-  {
-    "ad_id": "AD02",
-    "hook": "pain_point",
-    "final": "/home/user/Afrinext/p0/out/AD02/AD02.mp4",
-    "duration_s": 14.4,
-    "qc": [
-      {
-        "check": "script_factuality",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "0 violation",
-        "severity": "P0",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "render_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "video_codec": "h264",
-          "width": 1080,
-          "height": 1920,
-          "audio_codec": "aac",
-          "fps": 25.0,
-          "duration_s": 14.4
-        },
-        "threshold": null,
-        "severity": "P0",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "aspect_ratio",
-        "kind": "rule",
-        "passed": true,
-        "value": "1080x1920",
-        "threshold": "1080x1920",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "total_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": 14.4,
-        "threshold": "14.240000000000002s ±15%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "scene_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "±25%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "black_frames",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "aucune",
-        "severity": "P1",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "subtitle_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "events": 4,
-          "problems": []
-        },
-        "threshold": "≤84 car.",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "cta_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": "WhatsApp",
-        "threshold": "présent",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "audio_transcription",
-        "kind": "rule",
-        "passed": false,
-        "value": null,
-        "threshold": "ASR",
-        "severity": "P1",
-        "repair": 1,
-        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
-      },
-      {
-        "check": "lip_sync",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P1",
-        "repair": 2,
-        "detail": "SKIPPED — aucun provider lip-sync branché"
-      },
-      {
-        "check": "visual_quality",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P2",
-        "repair": 4,
-        "detail": "SKIPPED — évaluation model-based non exécutée"
-      },
-      {
-        "check": "product_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "frames_checked": 2,
-          "similarity": 0.785
-        },
-        "threshold": "≥0.60 sur ≥2 frames",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      },
-      {
-        "check": "logo_text_preservation",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "psnr_db": 24.55
-        },
-        "threshold": "≥22 dB",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      }
-    ],
-    "timings": {
-      "T0_start": 0,
-      "T1_strategy": 0,
-      "T2_script": 0,
-      "T3_audio": 37,
-      "T4_lipsync": 37,
-      "T5_composite": 435,
-      "T6_first_pixel": 435,
-      "T7_final_render": 6774,
-      "T8_qc_done": 7969,
-      "TTFP_ms": 435,
-      "time_to_final_ms": 6774,
-      "time_to_publishable_ms": 7969
-    },
-    "cpu_s": 22.66,
-    "tts_chars": 208,
-    "lip_clips": 5,
-    "video_seconds": 14.27,
-    "synthetic_stages": [
-      "lipsync",
-      "product",
-      "shot_bank",
-      "tts"
-    ],
-    "repairs_remaining": [],
-    "repair_log": [],
-    "injected": null,
-    "wall_s": 7.97
-  },
-  {
-    "ad_id": "AD03",
-    "hook": "benefit",
-    "final": "/home/user/Afrinext/p0/out/AD03/AD03.mp4",
-    "duration_s": 13.7,
-    "qc": [
-      {
-        "check": "script_factuality",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "0 violation",
-        "severity": "P0",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "render_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "video_codec": "h264",
-          "width": 1080,
-          "height": 1920,
-          "audio_codec": "aac",
-          "fps": 25.0,
-          "duration_s": 13.7
-        },
-        "threshold": null,
-        "severity": "P0",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "aspect_ratio",
-        "kind": "rule",
-        "passed": true,
-        "value": "1080x1920",
-        "threshold": "1080x1920",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "total_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": 13.7,
-        "threshold": "13.53s ±15%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "scene_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "±25%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "black_frames",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "aucune",
-        "severity": "P1",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "subtitle_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "events": 4,
-          "problems": []
-        },
-        "threshold": "≤84 car.",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "cta_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": "WhatsApp",
-        "threshold": "présent",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "audio_transcription",
-        "kind": "rule",
-        "passed": false,
-        "value": null,
-        "threshold": "ASR",
-        "severity": "P1",
-        "repair": 1,
-        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
-      },
-      {
-        "check": "lip_sync",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P1",
-        "repair": 2,
-        "detail": "SKIPPED — aucun provider lip-sync branché"
-      },
-      {
-        "check": "visual_quality",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P2",
-        "repair": 4,
-        "detail": "SKIPPED — évaluation model-based non exécutée"
-      },
-      {
-        "check": "product_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "frames_checked": 2,
-          "similarity": 0.7852
-        },
-        "threshold": "≥0.60 sur ≥2 frames",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      },
-      {
-        "check": "logo_text_preservation",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "psnr_db": 24.59
-        },
-        "threshold": "≥22 dB",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      }
-    ],
-    "timings": {
-      "T0_start": 0,
-      "T1_strategy": 0,
-      "T2_script": 0,
-      "T3_audio": 39,
-      "T4_lipsync": 39,
-      "T5_composite": 456,
-      "T6_first_pixel": 456,
-      "T7_final_render": 6735,
-      "T8_qc_done": 7942,
-      "TTFP_ms": 456,
-      "time_to_final_ms": 6735,
-      "time_to_publishable_ms": 7942
-    },
-    "cpu_s": 40.73,
-    "tts_chars": 175,
-    "lip_clips": 5,
-    "video_seconds": 13.58,
-    "synthetic_stages": [
-      "lipsync",
-      "product",
-      "shot_bank",
-      "tts"
-    ],
-    "repairs_remaining": [],
-    "repair_log": [
-      {
-        "round": 1,
-        "level": 3,
-        "trigger": "logo_text_preservation",
-        "action": "recomposite",
-        "free": true,
-        "latency_ms": 6328,
-        "fixed": [
-          "logo_text_preservation"
-        ]
-      }
-    ],
-    "injected": "bad_slot",
-    "wall_s": 14.27
-  },
-  {
-    "ad_id": "AD04",
-    "hook": "problem_solution",
-    "final": "/home/user/Afrinext/p0/out/AD04/AD04.mp4",
-    "duration_s": 12.1,
-    "qc": [
-      {
-        "check": "script_factuality",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "0 violation",
-        "severity": "P0",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "render_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "video_codec": "h264",
-          "width": 1080,
-          "height": 1920,
-          "audio_codec": "aac",
-          "fps": 25.0,
-          "duration_s": 12.1
-        },
-        "threshold": null,
-        "severity": "P0",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "aspect_ratio",
-        "kind": "rule",
-        "passed": true,
-        "value": "1080x1920",
-        "threshold": "1080x1920",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "total_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": 12.1,
-        "threshold": "11.930000000000001s ±15%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "scene_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "±25%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "black_frames",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "aucune",
-        "severity": "P1",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "subtitle_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "events": 4,
-          "problems": []
-        },
-        "threshold": "≤84 car.",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "cta_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": "WhatsApp",
-        "threshold": "présent",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "audio_transcription",
-        "kind": "rule",
-        "passed": false,
-        "value": null,
-        "threshold": "ASR",
-        "severity": "P1",
-        "repair": 1,
-        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
-      },
-      {
-        "check": "lip_sync",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P1",
-        "repair": 2,
-        "detail": "SKIPPED — aucun provider lip-sync branché"
-      },
-      {
-        "check": "visual_quality",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P2",
-        "repair": 4,
-        "detail": "SKIPPED — évaluation model-based non exécutée"
-      },
-      {
-        "check": "product_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "frames_checked": 2,
-          "similarity": 0.785
-        },
-        "threshold": "≥0.60 sur ≥2 frames",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      },
-      {
-        "check": "logo_text_preservation",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "psnr_db": 24.6
-        },
-        "threshold": "≥22 dB",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      }
-    ],
-    "timings": {
-      "T0_start": 0,
-      "T1_strategy": 0,
-      "T2_script": 0,
-      "T3_audio": 35,
-      "T4_lipsync": 35,
-      "T5_composite": 403,
-      "T6_first_pixel": 403,
-      "T7_final_render": 7165,
-      "T8_qc_done": 8385,
-      "TTFP_ms": 403,
-      "time_to_final_ms": 7165,
-      "time_to_publishable_ms": 8385
-    },
-    "cpu_s": 21.34,
-    "tts_chars": 175,
-    "lip_clips": 5,
-    "video_seconds": 11.98,
-    "synthetic_stages": [
-      "lipsync",
-      "product",
-      "shot_bank",
-      "tts"
-    ],
-    "repairs_remaining": [],
-    "repair_log": [],
-    "injected": null,
-    "wall_s": 8.39
-  },
-  {
-    "ad_id": "AD05",
-    "hook": "social_proof",
-    "final": "/home/user/Afrinext/p0/out/AD05/AD05.mp4",
-    "duration_s": 12.5,
-    "qc": [
-      {
-        "check": "script_factuality",
+        "check": "word_budget_deviation",
         "kind": "rule",
         "passed": false,
         "value": [
           [
-            "chiffre_non_source",
-            "2000",
-            "Plus de 2000 femmes à Niamey l'utilisent déjà."
+            "cta",
+            5,
+            3.02,
+            1.92
           ]
         ],
-        "threshold": "0 violation",
-        "severity": "P0",
-        "repair": 0,
-        "detail": "1 violation(s)"
-      },
-      {
-        "check": "render_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "video_codec": "h264",
-          "width": 1080,
-          "height": 1920,
-          "audio_codec": "aac",
-          "fps": 25.0,
-          "duration_s": 12.5
-        },
-        "threshold": null,
-        "severity": "P0",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "aspect_ratio",
-        "kind": "rule",
-        "passed": true,
-        "value": "1080x1920",
-        "threshold": "1080x1920",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "total_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": 12.5,
-        "threshold": "12.38s ±15%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "scene_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "±25%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
       },
       {
         "check": "black_frames",
@@ -885,7 +160,7 @@
         "kind": "rule",
         "passed": true,
         "value": {
-          "psnr_db": 24.6
+          "psnr_db": 24.59
         },
         "threshold": "≥22 dB",
         "severity": "P0",
@@ -897,41 +172,122 @@
       "T0_start": 0,
       "T1_strategy": 0,
       "T2_script": 0,
-      "T3_audio": 38,
-      "T4_lipsync": 38,
-      "T5_composite": 474,
-      "T6_first_pixel": 474,
-      "T7_final_render": 6190,
-      "T8_qc_done": 7483,
-      "TTFP_ms": 474,
-      "time_to_final_ms": 6190,
-      "time_to_publishable_ms": 7483
+      "T3_audio": 305,
+      "T4_lipsync": 305,
+      "T5_composite": 1059,
+      "T6_first_pixel": 1059,
+      "T7_final_render": 12176,
+      "T8_qc_done": 13931,
+      "TTFP_ms": 1059,
+      "time_to_final_ms": 12176,
+      "time_to_publishable_ms": 13931
     },
-    "cpu_s": 20.8,
-    "tts_chars": 195,
+    "cpu_s": 39.38,
+    "tts_chars": 208,
     "lip_clips": 5,
-    "video_seconds": 12.42,
+    "video_seconds": 16.57,
     "synthetic_stages": [
       "lipsync",
       "product",
-      "shot_bank",
-      "tts"
+      "shot_bank"
     ],
-    "repairs_remaining": [
-      [
-        0,
-        "script_factuality"
-      ]
-    ],
+    "repairs_remaining": [],
     "repair_log": [],
     "injected": null,
-    "wall_s": 7.48
+    "tts_manifest": [
+      {
+        "ad_id": "AD01",
+        "line_index": 0,
+        "script_version": "63567472a0820353",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 37,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.08,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD01",
+        "line_index": 1,
+        "script_version": "63567472a0820353",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 48,
+        "planned_duration_s": 3.85,
+        "actual_duration_s": 3.85,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD01",
+        "line_index": 2,
+        "script_version": "63567472a0820353",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 42,
+        "planned_duration_s": 2.69,
+        "actual_duration_s": 3.19,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD01",
+        "line_index": 3,
+        "script_version": "63567472a0820353",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 43,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.38,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD01",
+        "line_index": 4,
+        "script_version": "63567472a0820353",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 38,
+        "planned_duration_s": 1.92,
+        "actual_duration_s": 3.02,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 13.93
   },
   {
-    "ad_id": "AD06",
-    "hook": "product_demo",
-    "final": "/home/user/Afrinext/p0/out/AD06/AD06.mp4",
-    "duration_s": 14.8,
+    "ad_id": "AD02",
+    "hook": "pain_point",
+    "final": "/home/user/Afrinext/p0/out/AD02/AD02.mp4",
+    "duration_s": 15.8,
     "qc": [
       {
         "check": "script_factuality",
@@ -953,7 +309,7 @@
           "height": 1920,
           "audio_codec": "aac",
           "fps": 25.0,
-          "duration_s": 14.8
+          "duration_s": 15.8
         },
         "threshold": null,
         "severity": "P0",
@@ -974,8 +330,8 @@
         "check": "total_duration",
         "kind": "rule",
         "passed": true,
-        "value": 14.8,
-        "threshold": "14.680000000000001s ±15%",
+        "value": 15.8,
+        "threshold": "15.719999999999999s ±20%",
         "severity": "P2",
         "repair": 0,
         "detail": ""
@@ -985,10 +341,1165 @@
         "kind": "rule",
         "passed": true,
         "value": [],
-        "threshold": "±25%",
+        "threshold": "vidéo ≥ audio",
         "severity": "P2",
         "repair": 0,
         "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": false,
+        "value": [
+          [
+            "proof",
+            6,
+            3.2,
+            2.31
+          ]
+        ],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
+      },
+      {
+        "check": "black_frames",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "aucune",
+        "severity": "P1",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "subtitle_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "events": 4,
+          "problems": []
+        },
+        "threshold": "≤84 car.",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "cta_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": "WhatsApp",
+        "threshold": "présent",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "audio_transcription",
+        "kind": "rule",
+        "passed": false,
+        "value": null,
+        "threshold": "ASR",
+        "severity": "P1",
+        "repair": 1,
+        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
+      },
+      {
+        "check": "lip_sync",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P1",
+        "repair": 2,
+        "detail": "SKIPPED — aucun provider lip-sync branché"
+      },
+      {
+        "check": "visual_quality",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P2",
+        "repair": 4,
+        "detail": "SKIPPED — évaluation model-based non exécutée"
+      },
+      {
+        "check": "product_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "frames_checked": 2,
+          "similarity": 0.7851
+        },
+        "threshold": "≥0.60 sur ≥2 frames",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      },
+      {
+        "check": "logo_text_preservation",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "psnr_db": 24.59
+        },
+        "threshold": "≥22 dB",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      }
+    ],
+    "timings": {
+      "T0_start": 0,
+      "T1_strategy": 0,
+      "T2_script": 0,
+      "T3_audio": 372,
+      "T4_lipsync": 372,
+      "T5_composite": 1514,
+      "T6_first_pixel": 1514,
+      "T7_final_render": 12936,
+      "T8_qc_done": 14769,
+      "TTFP_ms": 1514,
+      "time_to_final_ms": 12936,
+      "time_to_publishable_ms": 14769
+    },
+    "cpu_s": 39.43,
+    "tts_chars": 208,
+    "lip_clips": 5,
+    "video_seconds": 15.73,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "repairs_remaining": [],
+    "repair_log": [],
+    "injected": null,
+    "tts_manifest": [
+      {
+        "ad_id": "AD02",
+        "line_index": 0,
+        "script_version": "ace617709aad6198",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 48,
+        "planned_duration_s": 2.69,
+        "actual_duration_s": 3.25,
+        "synth_latency_ms": 13,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD02",
+        "line_index": 1,
+        "script_version": "ace617709aad6198",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 44,
+        "planned_duration_s": 3.85,
+        "actual_duration_s": 3.85,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD02",
+        "line_index": 2,
+        "script_version": "ace617709aad6198",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 44,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.1,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD02",
+        "line_index": 3,
+        "script_version": "ace617709aad6198",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 44,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 3.2,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD02",
+        "line_index": 4,
+        "script_version": "ace617709aad6198",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 28,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.32,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 14.77
+  },
+  {
+    "ad_id": "AD03",
+    "hook": "benefit",
+    "final": "/home/user/Afrinext/p0/out/AD03/AD03.mp4",
+    "duration_s": 14.2,
+    "qc": [
+      {
+        "check": "script_factuality",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "0 violation",
+        "severity": "P0",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "render_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "video_codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "audio_codec": "aac",
+          "fps": 25.0,
+          "duration_s": 14.2
+        },
+        "threshold": null,
+        "severity": "P0",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "aspect_ratio",
+        "kind": "rule",
+        "passed": true,
+        "value": "1080x1920",
+        "threshold": "1080x1920",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "total_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": 14.2,
+        "threshold": "14.14s ±20%",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "scene_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "vidéo ≥ audio",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
+      },
+      {
+        "check": "black_frames",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "aucune",
+        "severity": "P1",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "subtitle_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "events": 4,
+          "problems": []
+        },
+        "threshold": "≤84 car.",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "cta_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": "WhatsApp",
+        "threshold": "présent",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "audio_transcription",
+        "kind": "rule",
+        "passed": false,
+        "value": null,
+        "threshold": "ASR",
+        "severity": "P1",
+        "repair": 1,
+        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
+      },
+      {
+        "check": "lip_sync",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P1",
+        "repair": 2,
+        "detail": "SKIPPED — aucun provider lip-sync branché"
+      },
+      {
+        "check": "visual_quality",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P2",
+        "repair": 4,
+        "detail": "SKIPPED — évaluation model-based non exécutée"
+      },
+      {
+        "check": "product_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "frames_checked": 2,
+          "similarity": 0.785
+        },
+        "threshold": "≥0.60 sur ≥2 frames",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      },
+      {
+        "check": "logo_text_preservation",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "psnr_db": 24.6
+        },
+        "threshold": "≥22 dB",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      }
+    ],
+    "timings": {
+      "T0_start": 0,
+      "T1_strategy": 0,
+      "T2_script": 0,
+      "T3_audio": 429,
+      "T4_lipsync": 429,
+      "T5_composite": 1388,
+      "T6_first_pixel": 1388,
+      "T7_final_render": 11341,
+      "T8_qc_done": 13035,
+      "TTFP_ms": 1388,
+      "time_to_final_ms": 11341,
+      "time_to_publishable_ms": 13035
+    },
+    "cpu_s": 63.99,
+    "tts_chars": 175,
+    "lip_clips": 5,
+    "video_seconds": 14.17,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "repairs_remaining": [],
+    "repair_log": [
+      {
+        "round": 1,
+        "level": 3,
+        "trigger": "logo_text_preservation",
+        "action": "recomposite",
+        "free": true,
+        "latency_ms": 9541,
+        "fixed": [
+          "logo_text_preservation"
+        ]
+      }
+    ],
+    "injected": "bad_slot",
+    "tts_manifest": [
+      {
+        "ad_id": "AD03",
+        "line_index": 0,
+        "script_version": "b5508f492f66ef2c",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 40,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.08,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD03",
+        "line_index": 1,
+        "script_version": "b5508f492f66ef2c",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 40,
+        "planned_duration_s": 3.46,
+        "actual_duration_s": 3.44,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD03",
+        "line_index": 2,
+        "script_version": "b5508f492f66ef2c",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 34,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.55,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD03",
+        "line_index": 3,
+        "script_version": "b5508f492f66ef2c",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 38,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.08,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD03",
+        "line_index": 4,
+        "script_version": "b5508f492f66ef2c",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 23,
+        "planned_duration_s": 1.6,
+        "actual_duration_s": 1.99,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 22.58
+  },
+  {
+    "ad_id": "AD04",
+    "hook": "problem_solution",
+    "final": "/home/user/Afrinext/p0/out/AD04/AD04.mp4",
+    "duration_s": 13.4,
+    "qc": [
+      {
+        "check": "script_factuality",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "0 violation",
+        "severity": "P0",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "render_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "video_codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "audio_codec": "aac",
+          "fps": 25.0,
+          "duration_s": 13.4
+        },
+        "threshold": null,
+        "severity": "P0",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "aspect_ratio",
+        "kind": "rule",
+        "passed": true,
+        "value": "1080x1920",
+        "threshold": "1080x1920",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "total_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": 13.4,
+        "threshold": "13.25s ±20%",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "scene_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "vidéo ≥ audio",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
+      },
+      {
+        "check": "black_frames",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "aucune",
+        "severity": "P1",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "subtitle_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "events": 4,
+          "problems": []
+        },
+        "threshold": "≤84 car.",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "cta_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": "WhatsApp",
+        "threshold": "présent",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "audio_transcription",
+        "kind": "rule",
+        "passed": false,
+        "value": null,
+        "threshold": "ASR",
+        "severity": "P1",
+        "repair": 1,
+        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
+      },
+      {
+        "check": "lip_sync",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P1",
+        "repair": 2,
+        "detail": "SKIPPED — aucun provider lip-sync branché"
+      },
+      {
+        "check": "visual_quality",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P2",
+        "repair": 4,
+        "detail": "SKIPPED — évaluation model-based non exécutée"
+      },
+      {
+        "check": "product_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "frames_checked": 2,
+          "similarity": 0.785
+        },
+        "threshold": "≥0.60 sur ≥2 frames",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      },
+      {
+        "check": "logo_text_preservation",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "psnr_db": 24.6
+        },
+        "threshold": "≥22 dB",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      }
+    ],
+    "timings": {
+      "T0_start": 0,
+      "T1_strategy": 0,
+      "T2_script": 0,
+      "T3_audio": 240,
+      "T4_lipsync": 240,
+      "T5_composite": 1546,
+      "T6_first_pixel": 1546,
+      "T7_final_render": 12043,
+      "T8_qc_done": 13853,
+      "TTFP_ms": 1546,
+      "time_to_final_ms": 12043,
+      "time_to_publishable_ms": 13853
+    },
+    "cpu_s": 36.93,
+    "tts_chars": 175,
+    "lip_clips": 5,
+    "video_seconds": 13.31,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "repairs_remaining": [],
+    "repair_log": [],
+    "injected": null,
+    "tts_manifest": [
+      {
+        "ad_id": "AD04",
+        "line_index": 0,
+        "script_version": "6ee4be43fa7c6402",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 30,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.31,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD04",
+        "line_index": 1,
+        "script_version": "6ee4be43fa7c6402",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 44,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.08,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD04",
+        "line_index": 2,
+        "script_version": "6ee4be43fa7c6402",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 34,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.81,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD04",
+        "line_index": 3,
+        "script_version": "6ee4be43fa7c6402",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 39,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.87,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD04",
+        "line_index": 4,
+        "script_version": "6ee4be43fa7c6402",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 28,
+        "planned_duration_s": 1.92,
+        "actual_duration_s": 2.18,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 13.85
+  },
+  {
+    "ad_id": "AD05",
+    "hook": "social_proof",
+    "final": "/home/user/Afrinext/p0/out/AD05/AD05.mp4",
+    "duration_s": 13.5,
+    "qc": [
+      {
+        "check": "script_factuality",
+        "kind": "rule",
+        "passed": false,
+        "value": [
+          [
+            "chiffre_non_source",
+            "2000",
+            "Plus de 2000 femmes à Niamey l'utilisent déjà."
+          ]
+        ],
+        "threshold": "0 violation",
+        "severity": "P0",
+        "repair": 0,
+        "detail": "1 violation(s)"
+      },
+      {
+        "check": "render_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "video_codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "audio_codec": "aac",
+          "fps": 25.0,
+          "duration_s": 13.5
+        },
+        "threshold": null,
+        "severity": "P0",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "aspect_ratio",
+        "kind": "rule",
+        "passed": true,
+        "value": "1080x1920",
+        "threshold": "1080x1920",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "total_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": 13.5,
+        "threshold": "13.350000000000001s ±20%",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "scene_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "vidéo ≥ audio",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": false,
+        "value": [
+          [
+            "cta",
+            4,
+            2.16,
+            1.6
+          ]
+        ],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
+      },
+      {
+        "check": "black_frames",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "aucune",
+        "severity": "P1",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "subtitle_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "events": 4,
+          "problems": []
+        },
+        "threshold": "≤84 car.",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "cta_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": "WhatsApp",
+        "threshold": "présent",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "audio_transcription",
+        "kind": "rule",
+        "passed": false,
+        "value": null,
+        "threshold": "ASR",
+        "severity": "P1",
+        "repair": 1,
+        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
+      },
+      {
+        "check": "lip_sync",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P1",
+        "repair": 2,
+        "detail": "SKIPPED — aucun provider lip-sync branché"
+      },
+      {
+        "check": "visual_quality",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P2",
+        "repair": 4,
+        "detail": "SKIPPED — évaluation model-based non exécutée"
+      },
+      {
+        "check": "product_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "frames_checked": 2,
+          "similarity": 0.7849
+        },
+        "threshold": "≥0.60 sur ≥2 frames",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      },
+      {
+        "check": "logo_text_preservation",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "psnr_db": 24.6
+        },
+        "threshold": "≥22 dB",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      }
+    ],
+    "timings": {
+      "T0_start": 0,
+      "T1_strategy": 0,
+      "T2_script": 0,
+      "T3_audio": 461,
+      "T4_lipsync": 461,
+      "T5_composite": 1724,
+      "T6_first_pixel": 1724,
+      "T7_final_render": 11450,
+      "T8_qc_done": 13291,
+      "TTFP_ms": 1724,
+      "time_to_final_ms": 11450,
+      "time_to_publishable_ms": 13291
+    },
+    "cpu_s": 36.29,
+    "tts_chars": 195,
+    "lip_clips": 5,
+    "video_seconds": 13.42,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "repairs_remaining": [
+      [
+        0,
+        "script_factuality"
+      ]
+    ],
+    "repair_log": [],
+    "injected": null,
+    "tts_manifest": [
+      {
+        "ad_id": "AD05",
+        "line_index": 0,
+        "script_version": "e84decce23f5c923",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 46,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.08,
+        "synth_latency_ms": 13,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD05",
+        "line_index": 1,
+        "script_version": "e84decce23f5c923",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 39,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.31,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD05",
+        "line_index": 2,
+        "script_version": "e84decce23f5c923",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 34,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.72,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD05",
+        "line_index": 3,
+        "script_version": "e84decce23f5c923",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 50,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.08,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD05",
+        "line_index": 4,
+        "script_version": "e84decce23f5c923",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 26,
+        "planned_duration_s": 1.6,
+        "actual_duration_s": 2.16,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 13.29
+  },
+  {
+    "ad_id": "AD06",
+    "hook": "product_demo",
+    "final": "/home/user/Afrinext/p0/out/AD06/AD06.mp4",
+    "duration_s": 15.2,
+    "qc": [
+      {
+        "check": "script_factuality",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "0 violation",
+        "severity": "P0",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "render_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "video_codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "audio_codec": "aac",
+          "fps": 25.0,
+          "duration_s": 15.2
+        },
+        "threshold": null,
+        "severity": "P0",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "aspect_ratio",
+        "kind": "rule",
+        "passed": true,
+        "value": "1080x1920",
+        "threshold": "1080x1920",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "total_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": 15.2,
+        "threshold": "15.070000000000002s ±20%",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "scene_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "vidéo ≥ audio",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
       },
       {
         "check": "black_frames",
@@ -1083,36 +1594,122 @@
       "T0_start": 0,
       "T1_strategy": 0,
       "T2_script": 0,
-      "T3_audio": 35,
-      "T4_lipsync": 35,
-      "T5_composite": 378,
-      "T6_first_pixel": 378,
-      "T7_final_render": 8056,
-      "T8_qc_done": 9278,
-      "TTFP_ms": 378,
-      "time_to_final_ms": 8056,
-      "time_to_publishable_ms": 9278
+      "T3_audio": 332,
+      "T4_lipsync": 332,
+      "T5_composite": 1456,
+      "T6_first_pixel": 1456,
+      "T7_final_render": 13032,
+      "T8_qc_done": 14720,
+      "TTFP_ms": 1456,
+      "time_to_final_ms": 13032,
+      "time_to_publishable_ms": 14720
     },
-    "cpu_s": 24.45,
+    "cpu_s": 40.17,
     "tts_chars": 189,
     "lip_clips": 5,
-    "video_seconds": 14.73,
+    "video_seconds": 15.13,
     "synthetic_stages": [
       "lipsync",
       "product",
-      "shot_bank",
-      "tts"
+      "shot_bank"
     ],
     "repairs_remaining": [],
     "repair_log": [],
     "injected": null,
-    "wall_s": 9.28
+    "tts_manifest": [
+      {
+        "ad_id": "AD06",
+        "line_index": 0,
+        "script_version": "2a4746ad7daf1f74",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 28,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.31,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD06",
+        "line_index": 1,
+        "script_version": "2a4746ad7daf1f74",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 48,
+        "planned_duration_s": 3.85,
+        "actual_duration_s": 3.85,
+        "synth_latency_ms": 14,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD06",
+        "line_index": 2,
+        "script_version": "2a4746ad7daf1f74",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 46,
+        "planned_duration_s": 3.46,
+        "actual_duration_s": 3.46,
+        "synth_latency_ms": 13,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD06",
+        "line_index": 3,
+        "script_version": "2a4746ad7daf1f74",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 44,
+        "planned_duration_s": 3.46,
+        "actual_duration_s": 3.46,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD06",
+        "line_index": 4,
+        "script_version": "2a4746ad7daf1f74",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 23,
+        "planned_duration_s": 1.6,
+        "actual_duration_s": 1.99,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 14.72
   },
   {
     "ad_id": "AD07",
     "hook": "objection",
     "final": "/home/user/Afrinext/p0/out/AD07/AD07.mp4",
-    "duration_s": 15.1,
+    "duration_s": 14.0,
     "qc": [
       {
         "check": "script_factuality",
@@ -1134,7 +1731,7 @@
           "height": 1920,
           "audio_codec": "aac",
           "fps": 25.0,
-          "duration_s": 15.1
+          "duration_s": 14.0
         },
         "threshold": null,
         "severity": "P0",
@@ -1155,8 +1752,8 @@
         "check": "total_duration",
         "kind": "rule",
         "passed": true,
-        "value": 15.1,
-        "threshold": "15.0s ±15%",
+        "value": 14.0,
+        "threshold": "13.870000000000001s ±20%",
         "severity": "P2",
         "repair": 0,
         "detail": ""
@@ -1166,10 +1763,27 @@
         "kind": "rule",
         "passed": true,
         "value": [],
-        "threshold": "±25%",
+        "threshold": "vidéo ≥ audio",
         "severity": "P2",
         "repair": 0,
         "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": false,
+        "value": [
+          [
+            "problem",
+            9,
+            1.74,
+            3.46
+          ]
+        ],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
       },
       {
         "check": "black_frames",
@@ -1240,7 +1854,7 @@
         "passed": true,
         "value": {
           "frames_checked": 2,
-          "similarity": 0.7853
+          "similarity": 0.785
         },
         "threshold": "≥0.60 sur ≥2 frames",
         "severity": "P0",
@@ -1264,60 +1878,122 @@
       "T0_start": 0,
       "T1_strategy": 0,
       "T2_script": 0,
-      "T3_audio": 41,
-      "T4_lipsync": 41,
-      "T5_composite": 511,
-      "T6_first_pixel": 511,
-      "T7_final_render": 7218,
-      "T8_qc_done": 8541,
-      "TTFP_ms": 511,
-      "time_to_final_ms": 7218,
-      "time_to_publishable_ms": 8541
+      "T3_audio": 446,
+      "T4_lipsync": 446,
+      "T5_composite": 1836,
+      "T6_first_pixel": 1836,
+      "T7_final_render": 11972,
+      "T8_qc_done": 13933,
+      "TTFP_ms": 1836,
+      "time_to_final_ms": 11972,
+      "time_to_publishable_ms": 13933
     },
-    "cpu_s": 62.14,
+    "cpu_s": 37.75,
     "tts_chars": 207,
     "lip_clips": 5,
-    "video_seconds": 15.07,
+    "video_seconds": 13.93,
     "synthetic_stages": [
       "lipsync",
       "product",
-      "shot_bank",
-      "tts"
+      "shot_bank"
     ],
     "repairs_remaining": [],
-    "repair_log": [
+    "repair_log": [],
+    "injected": "short_audio",
+    "tts_manifest": [
       {
-        "round": 1,
-        "level": 1,
-        "trigger": "scene_duration",
-        "action": "resynth_audio",
-        "free": false,
-        "latency_ms": 7122,
-        "fixed": [
-          "scene_duration"
-        ]
+        "ad_id": "AD07",
+        "line_index": 0,
+        "script_version": "7a7beac4f4e9f6f4",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 44,
+        "planned_duration_s": 3.46,
+        "actual_duration_s": 3.46,
+        "synth_latency_ms": 13,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
       },
       {
-        "round": 2,
-        "level": 3,
-        "trigger": "logo_text_preservation",
-        "action": "recomposite",
-        "free": true,
-        "latency_ms": 7294,
-        "fixed": [
-          "product_presence",
-          "logo_text_preservation"
-        ]
+        "ad_id": "AD07",
+        "line_index": 1,
+        "script_version": "7a7beac4f4e9f6f4",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 48,
+        "planned_duration_s": 3.46,
+        "actual_duration_s": 1.74,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD07",
+        "line_index": 2,
+        "script_version": "7a7beac4f4e9f6f4",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 45,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.08,
+        "synth_latency_ms": 14,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD07",
+        "line_index": 3,
+        "script_version": "7a7beac4f4e9f6f4",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 45,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.55,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD07",
+        "line_index": 4,
+        "script_version": "7a7beac4f4e9f6f4",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 25,
+        "planned_duration_s": 1.92,
+        "actual_duration_s": 2.04,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
       }
     ],
-    "injected": "short_audio",
-    "wall_s": 22.96
+    "wall_s": 13.93
   },
   {
     "ad_id": "AD08",
     "hook": "comparison",
     "final": "/home/user/Afrinext/p0/out/AD08/AD08.mp4",
-    "duration_s": 11.3,
+    "duration_s": 12.3,
     "qc": [
       {
         "check": "script_factuality",
@@ -1339,7 +2015,7 @@
           "height": 1920,
           "audio_codec": "aac",
           "fps": 25.0,
-          "duration_s": 11.3
+          "duration_s": 12.3
         },
         "threshold": null,
         "severity": "P0",
@@ -1360,8 +2036,8 @@
         "check": "total_duration",
         "kind": "rule",
         "passed": true,
-        "value": 11.3,
-        "threshold": "11.209999999999999s ±15%",
+        "value": 12.3,
+        "threshold": "12.169999999999998s ±20%",
         "severity": "P2",
         "repair": 0,
         "detail": ""
@@ -1371,10 +2047,20 @@
         "kind": "rule",
         "passed": true,
         "value": [],
-        "threshold": "±25%",
+        "threshold": "vidéo ≥ audio",
         "severity": "P2",
         "repair": 0,
         "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
       },
       {
         "check": "black_frames",
@@ -1392,6 +2078,576 @@
         "passed": true,
         "value": {
           "events": 4,
+          "problems": []
+        },
+        "threshold": "≤84 car.",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "cta_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": "WhatsApp",
+        "threshold": "présent",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "audio_transcription",
+        "kind": "rule",
+        "passed": false,
+        "value": null,
+        "threshold": "ASR",
+        "severity": "P1",
+        "repair": 1,
+        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
+      },
+      {
+        "check": "lip_sync",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P1",
+        "repair": 2,
+        "detail": "SKIPPED — aucun provider lip-sync branché"
+      },
+      {
+        "check": "visual_quality",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P2",
+        "repair": 4,
+        "detail": "SKIPPED — évaluation model-based non exécutée"
+      },
+      {
+        "check": "product_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "frames_checked": 2,
+          "similarity": 0.785
+        },
+        "threshold": "≥0.60 sur ≥2 frames",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      },
+      {
+        "check": "logo_text_preservation",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "psnr_db": 24.54
+        },
+        "threshold": "≥22 dB",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      }
+    ],
+    "timings": {
+      "T0_start": 0,
+      "T1_strategy": 0,
+      "T2_script": 0,
+      "T3_audio": 292,
+      "T4_lipsync": 292,
+      "T5_composite": 1579,
+      "T6_first_pixel": 1579,
+      "T7_final_render": 11781,
+      "T8_qc_done": 13617,
+      "TTFP_ms": 1579,
+      "time_to_final_ms": 11781,
+      "time_to_publishable_ms": 13617
+    },
+    "cpu_s": 35.4,
+    "tts_chars": 159,
+    "lip_clips": 5,
+    "video_seconds": 12.21,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "repairs_remaining": [],
+    "repair_log": [],
+    "injected": null,
+    "tts_manifest": [
+      {
+        "ad_id": "AD08",
+        "line_index": 0,
+        "script_version": "5591a8b536fd9f3a",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 35,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.5,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD08",
+        "line_index": 1,
+        "script_version": "5591a8b536fd9f3a",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 38,
+        "planned_duration_s": 2.69,
+        "actual_duration_s": 2.69,
+        "synth_latency_ms": 13,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD08",
+        "line_index": 2,
+        "script_version": "5591a8b536fd9f3a",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 30,
+        "planned_duration_s": 1.92,
+        "actual_duration_s": 2.44,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD08",
+        "line_index": 3,
+        "script_version": "5591a8b536fd9f3a",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 32,
+        "planned_duration_s": 2.69,
+        "actual_duration_s": 2.69,
+        "synth_latency_ms": 16,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD08",
+        "line_index": 4,
+        "script_version": "5591a8b536fd9f3a",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 24,
+        "planned_duration_s": 1.6,
+        "actual_duration_s": 1.85,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 13.62
+  },
+  {
+    "ad_id": "AD09",
+    "hook": "urgency",
+    "final": "/home/user/Afrinext/p0/out/AD09/AD09.mp4",
+    "duration_s": 12.8,
+    "qc": [
+      {
+        "check": "script_factuality",
+        "kind": "rule",
+        "passed": false,
+        "value": [
+          [
+            "claim_interdit",
+            "meilleur",
+            "C'est le meilleur karité du Niger, garanti."
+          ],
+          [
+            "claim_interdit",
+            "garanti",
+            "C'est le meilleur karité du Niger, garanti."
+          ]
+        ],
+        "threshold": "0 violation",
+        "severity": "P0",
+        "repair": 0,
+        "detail": "2 violation(s)"
+      },
+      {
+        "check": "render_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "video_codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "audio_codec": "aac",
+          "fps": 25.0,
+          "duration_s": 12.8
+        },
+        "threshold": null,
+        "severity": "P0",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "aspect_ratio",
+        "kind": "rule",
+        "passed": true,
+        "value": "1080x1920",
+        "threshold": "1080x1920",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "total_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": 12.8,
+        "threshold": "12.719999999999999s ±20%",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "scene_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "vidéo ≥ audio",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
+      },
+      {
+        "check": "black_frames",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "aucune",
+        "severity": "P1",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "subtitle_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "events": 4,
+          "problems": []
+        },
+        "threshold": "≤84 car.",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "cta_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": "WhatsApp",
+        "threshold": "présent",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "audio_transcription",
+        "kind": "rule",
+        "passed": false,
+        "value": null,
+        "threshold": "ASR",
+        "severity": "P1",
+        "repair": 1,
+        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
+      },
+      {
+        "check": "lip_sync",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P1",
+        "repair": 2,
+        "detail": "SKIPPED — aucun provider lip-sync branché"
+      },
+      {
+        "check": "visual_quality",
+        "kind": "model",
+        "passed": false,
+        "value": null,
+        "threshold": null,
+        "severity": "P2",
+        "repair": 4,
+        "detail": "SKIPPED — évaluation model-based non exécutée"
+      },
+      {
+        "check": "product_presence",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "frames_checked": 2,
+          "similarity": 0.785
+        },
+        "threshold": "≥0.60 sur ≥2 frames",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      },
+      {
+        "check": "logo_text_preservation",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "psnr_db": 24.6
+        },
+        "threshold": "≥22 dB",
+        "severity": "P0",
+        "repair": 3,
+        "detail": ""
+      }
+    ],
+    "timings": {
+      "T0_start": 0,
+      "T1_strategy": 0,
+      "T2_script": 0,
+      "T3_audio": 381,
+      "T4_lipsync": 381,
+      "T5_composite": 1963,
+      "T6_first_pixel": 1963,
+      "T7_final_render": 12978,
+      "T8_qc_done": 14879,
+      "TTFP_ms": 1963,
+      "time_to_final_ms": 12978,
+      "time_to_publishable_ms": 14879
+    },
+    "cpu_s": 37.26,
+    "tts_chars": 163,
+    "lip_clips": 5,
+    "video_seconds": 12.74,
+    "synthetic_stages": [
+      "lipsync",
+      "product",
+      "shot_bank"
+    ],
+    "repairs_remaining": [
+      [
+        0,
+        "script_factuality"
+      ]
+    ],
+    "repair_log": [],
+    "injected": null,
+    "tts_manifest": [
+      {
+        "ad_id": "AD09",
+        "line_index": 0,
+        "script_version": "7fc9e270498a15cd",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 43,
+        "planned_duration_s": 2.69,
+        "actual_duration_s": 3.04,
+        "synth_latency_ms": 12,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD09",
+        "line_index": 1,
+        "script_version": "7fc9e270498a15cd",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 31,
+        "planned_duration_s": 3.08,
+        "actual_duration_s": 3.08,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD09",
+        "line_index": 2,
+        "script_version": "7fc9e270498a15cd",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 33,
+        "planned_duration_s": 2.31,
+        "actual_duration_s": 2.31,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD09",
+        "line_index": 3,
+        "script_version": "7fc9e270498a15cd",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 36,
+        "planned_duration_s": 2.69,
+        "actual_duration_s": 2.69,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD09",
+        "line_index": 4,
+        "script_version": "7fc9e270498a15cd",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 20,
+        "planned_duration_s": 1.6,
+        "actual_duration_s": 1.6,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 14.88
+  },
+  {
+    "ad_id": "AD10",
+    "hook": "direct_offer",
+    "final": "/home/user/Afrinext/p0/out/AD10/AD10.mp4",
+    "duration_s": 11.9,
+    "qc": [
+      {
+        "check": "script_factuality",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "0 violation",
+        "severity": "P0",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "render_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "video_codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "audio_codec": "aac",
+          "fps": 25.0,
+          "duration_s": 11.9
+        },
+        "threshold": null,
+        "severity": "P0",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "aspect_ratio",
+        "kind": "rule",
+        "passed": true,
+        "value": "1080x1920",
+        "threshold": "1080x1920",
+        "severity": "P1",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "total_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": 11.9,
+        "threshold": "11.75s ±20%",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "scene_duration",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "vidéo ≥ audio",
+        "severity": "P2",
+        "repair": 0,
+        "detail": ""
+      },
+      {
+        "check": "word_budget_deviation",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "±35%",
+        "severity": "P3",
+        "repair": null,
+        "detail": "consultatif — le budget de mots guide l'écriture, pas le montage"
+      },
+      {
+        "check": "black_frames",
+        "kind": "rule",
+        "passed": true,
+        "value": [],
+        "threshold": "aucune",
+        "severity": "P1",
+        "repair": 5,
+        "detail": ""
+      },
+      {
+        "check": "subtitle_validity",
+        "kind": "rule",
+        "passed": true,
+        "value": {
+          "events": 5,
           "problems": []
         },
         "threshold": "≤84 car.",
@@ -1469,407 +2725,115 @@
       "T0_start": 0,
       "T1_strategy": 0,
       "T2_script": 0,
-      "T3_audio": 36,
-      "T4_lipsync": 36,
-      "T5_composite": 397,
-      "T6_first_pixel": 397,
-      "T7_final_render": 6491,
-      "T8_qc_done": 7713,
-      "TTFP_ms": 397,
-      "time_to_final_ms": 6491,
-      "time_to_publishable_ms": 7713
+      "T3_audio": 527,
+      "T4_lipsync": 527,
+      "T5_composite": 2006,
+      "T6_first_pixel": 2006,
+      "T7_final_render": 12182,
+      "T8_qc_done": 13742,
+      "TTFP_ms": 2006,
+      "time_to_final_ms": 12182,
+      "time_to_publishable_ms": 13742
     },
-    "cpu_s": 19.67,
-    "tts_chars": 159,
-    "lip_clips": 5,
-    "video_seconds": 11.23,
-    "synthetic_stages": [
-      "lipsync",
-      "product",
-      "shot_bank",
-      "tts"
-    ],
-    "repairs_remaining": [],
-    "repair_log": [],
-    "injected": null,
-    "wall_s": 7.71
-  },
-  {
-    "ad_id": "AD09",
-    "hook": "urgency",
-    "final": "/home/user/Afrinext/p0/out/AD09/AD09.mp4",
-    "duration_s": 12.5,
-    "qc": [
-      {
-        "check": "script_factuality",
-        "kind": "rule",
-        "passed": false,
-        "value": [
-          [
-            "claim_interdit",
-            "meilleur",
-            "C'est le meilleur karité du Niger, garanti."
-          ],
-          [
-            "claim_interdit",
-            "garanti",
-            "C'est le meilleur karité du Niger, garanti."
-          ]
-        ],
-        "threshold": "0 violation",
-        "severity": "P0",
-        "repair": 0,
-        "detail": "2 violation(s)"
-      },
-      {
-        "check": "render_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "video_codec": "h264",
-          "width": 1080,
-          "height": 1920,
-          "audio_codec": "aac",
-          "fps": 25.0,
-          "duration_s": 12.5
-        },
-        "threshold": null,
-        "severity": "P0",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "aspect_ratio",
-        "kind": "rule",
-        "passed": true,
-        "value": "1080x1920",
-        "threshold": "1080x1920",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "total_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": 12.5,
-        "threshold": "12.37s ±15%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "scene_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "±25%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "black_frames",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "aucune",
-        "severity": "P1",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "subtitle_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "events": 4,
-          "problems": []
-        },
-        "threshold": "≤84 car.",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "cta_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": "WhatsApp",
-        "threshold": "présent",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "audio_transcription",
-        "kind": "rule",
-        "passed": false,
-        "value": null,
-        "threshold": "ASR",
-        "severity": "P1",
-        "repair": 1,
-        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
-      },
-      {
-        "check": "lip_sync",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P1",
-        "repair": 2,
-        "detail": "SKIPPED — aucun provider lip-sync branché"
-      },
-      {
-        "check": "visual_quality",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P2",
-        "repair": 4,
-        "detail": "SKIPPED — évaluation model-based non exécutée"
-      },
-      {
-        "check": "product_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "frames_checked": 2,
-          "similarity": 0.7855
-        },
-        "threshold": "≥0.60 sur ≥2 frames",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      },
-      {
-        "check": "logo_text_preservation",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "psnr_db": 24.54
-        },
-        "threshold": "≥22 dB",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      }
-    ],
-    "timings": {
-      "T0_start": 0,
-      "T1_strategy": 0,
-      "T2_script": 0,
-      "T3_audio": 37,
-      "T4_lipsync": 37,
-      "T5_composite": 423,
-      "T6_first_pixel": 423,
-      "T7_final_render": 6282,
-      "T8_qc_done": 7609,
-      "TTFP_ms": 423,
-      "time_to_final_ms": 6282,
-      "time_to_publishable_ms": 7609
-    },
-    "cpu_s": 20.81,
-    "tts_chars": 163,
-    "lip_clips": 5,
-    "video_seconds": 12.39,
-    "synthetic_stages": [
-      "lipsync",
-      "product",
-      "shot_bank",
-      "tts"
-    ],
-    "repairs_remaining": [
-      [
-        0,
-        "script_factuality"
-      ]
-    ],
-    "repair_log": [],
-    "injected": null,
-    "wall_s": 7.61
-  },
-  {
-    "ad_id": "AD10",
-    "hook": "direct_offer",
-    "final": "/home/user/Afrinext/p0/out/AD10/AD10.mp4",
-    "duration_s": 10.6,
-    "qc": [
-      {
-        "check": "script_factuality",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "0 violation",
-        "severity": "P0",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "render_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "video_codec": "h264",
-          "width": 1080,
-          "height": 1920,
-          "audio_codec": "aac",
-          "fps": 25.0,
-          "duration_s": 10.6
-        },
-        "threshold": null,
-        "severity": "P0",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "aspect_ratio",
-        "kind": "rule",
-        "passed": true,
-        "value": "1080x1920",
-        "threshold": "1080x1920",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "total_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": 10.6,
-        "threshold": "10.5s ±15%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "scene_duration",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "±25%",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "black_frames",
-        "kind": "rule",
-        "passed": true,
-        "value": [],
-        "threshold": "aucune",
-        "severity": "P1",
-        "repair": 5,
-        "detail": ""
-      },
-      {
-        "check": "subtitle_validity",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "events": 5,
-          "problems": []
-        },
-        "threshold": "≤84 car.",
-        "severity": "P2",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "cta_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": "WhatsApp",
-        "threshold": "présent",
-        "severity": "P1",
-        "repair": 0,
-        "detail": ""
-      },
-      {
-        "check": "audio_transcription",
-        "kind": "rule",
-        "passed": false,
-        "value": null,
-        "threshold": "ASR",
-        "severity": "P1",
-        "repair": 1,
-        "detail": "SKIPPED — aucun moteur ASR disponible (téléchargement de modèle bloqué par le proxy)"
-      },
-      {
-        "check": "lip_sync",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P1",
-        "repair": 2,
-        "detail": "SKIPPED — aucun provider lip-sync branché"
-      },
-      {
-        "check": "visual_quality",
-        "kind": "model",
-        "passed": false,
-        "value": null,
-        "threshold": null,
-        "severity": "P2",
-        "repair": 4,
-        "detail": "SKIPPED — évaluation model-based non exécutée"
-      },
-      {
-        "check": "product_presence",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "frames_checked": 2,
-          "similarity": 0.7849
-        },
-        "threshold": "≥0.60 sur ≥2 frames",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      },
-      {
-        "check": "logo_text_preservation",
-        "kind": "rule",
-        "passed": true,
-        "value": {
-          "psnr_db": 24.59
-        },
-        "threshold": "≥22 dB",
-        "severity": "P0",
-        "repair": 3,
-        "detail": ""
-      }
-    ],
-    "timings": {
-      "T0_start": 0,
-      "T1_strategy": 0,
-      "T2_script": 0,
-      "T3_audio": 37,
-      "T4_lipsync": 37,
-      "T5_composite": 497,
-      "T6_first_pixel": 497,
-      "T7_final_render": 5801,
-      "T8_qc_done": 6969,
-      "TTFP_ms": 497,
-      "time_to_final_ms": 5801,
-      "time_to_publishable_ms": 6969
-    },
-    "cpu_s": 18.44,
+    "cpu_s": 34.05,
     "tts_chars": 156,
     "lip_clips": 5,
-    "video_seconds": 10.54,
+    "video_seconds": 11.79,
     "synthetic_stages": [
       "lipsync",
       "product",
-      "shot_bank",
-      "tts"
+      "shot_bank"
     ],
     "repairs_remaining": [],
     "repair_log": [],
     "injected": null,
-    "wall_s": 6.97
+    "tts_manifest": [
+      {
+        "ad_id": "AD10",
+        "line_index": 0,
+        "script_version": "5dfcfc7d0fcf7ad1",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 52,
+        "planned_duration_s": 3.46,
+        "actual_duration_s": 3.46,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD10",
+        "line_index": 1,
+        "script_version": "5dfcfc7d0fcf7ad1",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 32,
+        "planned_duration_s": 1.92,
+        "actual_duration_s": 2.16,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD10",
+        "line_index": 2,
+        "script_version": "5dfcfc7d0fcf7ad1",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 30,
+        "planned_duration_s": 1.92,
+        "actual_duration_s": 2.54,
+        "synth_latency_ms": 11,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD10",
+        "line_index": 3,
+        "script_version": "5dfcfc7d0fcf7ad1",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 19,
+        "planned_duration_s": 1.6,
+        "actual_duration_s": 1.6,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      },
+      {
+        "ad_id": "AD10",
+        "line_index": 4,
+        "script_version": "5dfcfc7d0fcf7ad1",
+        "provider": "espeak-ng-local",
+        "model": "espeak-ng-1.51",
+        "voice": "fr-fr",
+        "language": "fr",
+        "chars": 23,
+        "planned_duration_s": 1.6,
+        "actual_duration_s": 1.99,
+        "synth_latency_ms": 10,
+        "cost_usd": 0.0,
+        "local_engine": true,
+        "synthetic": false,
+        "status": "ok"
+      }
+    ],
+    "wall_s": 13.74
   }
 ]
