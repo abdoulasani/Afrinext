@@ -172,11 +172,59 @@ def qc_logo_preservation(video: Path, product_png: Path, t: float, box: tuple,
                     {"psnr_db": round(psnr, 2)}, "≥22 dB", "P0", 3)
 
 
-# ══ CONTRÔLES NON EXÉCUTABLES ICI ═════════════════════════════════════
-def qc_audio_transcription(_audio, _expected) -> QCResult:
-    return QCResult("audio_transcription", "rule", False, None, "ASR",
-                    "P1", 1, "SKIPPED — aucun moteur ASR disponible "
-                             "(téléchargement de modèle bloqué par le proxy)")
+# ══ E4 · ASR — WER ════════════════════════════════════════════════════
+def _wer(expected: str, actual: str) -> dict:
+    """Word Error Rate = (S + D + I) / N, par distance de Levenshtein sur les mots."""
+    ref = _norm(expected).split()
+    hyp = _norm(actual).split()
+    n, m = len(ref), len(hyp)
+    if n == 0:
+        return {"wer": None, "sub": 0, "del": 0, "ins": m, "ref_words": 0}
+    d = np.zeros((n + 1, m + 1), dtype=np.int32)
+    d[:, 0] = np.arange(n + 1); d[0, :] = np.arange(m + 1)
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            d[i, j] = min(d[i - 1, j] + 1, d[i, j - 1] + 1,
+                          d[i - 1, j - 1] + (ref[i - 1] != hyp[j - 1]))
+    # remontée pour compter S / D / I séparément
+    i, j, sub, dele, ins = n, m, 0, 0, 0
+    while i > 0 or j > 0:
+        if i > 0 and j > 0 and d[i, j] == d[i-1, j-1] + (ref[i-1] != hyp[j-1]):
+            sub += ref[i-1] != hyp[j-1]; i -= 1; j -= 1
+        elif i > 0 and d[i, j] == d[i-1, j] + 1:
+            dele += 1; i -= 1
+        else:
+            ins += 1; j -= 1
+    return {"wer": round((sub + dele + ins) / n, 4), "sub": sub, "del": dele,
+            "ins": ins, "ref_words": n,
+            "missing": [w for w in ref if w not in hyp],
+            "added": [w for w in hyp if w not in ref]}
+
+
+def qc_audio_transcription(audio_path, expected_text: str, asr=None,
+                           threshold: float = 0.25) -> QCResult:
+    """E4 · compare l'audio FINAL au script attendu.
+
+    Sans provider ASR : SKIPPED — jamais PASS.
+    """
+    if asr is None or not getattr(asr, "available", False):
+        return QCResult("audio_transcription", "rule", False, None, f"WER ≤ {threshold}",
+                        "P1", 1, "SKIPPED — aucun provider ASR configuré "
+                                 "(poser GOOGLE_API_KEY)")
+    try:
+        res = asr.transcribe(Path(audio_path))
+    except Exception as e:
+        return QCResult("audio_transcription", "rule", False, None, f"WER ≤ {threshold}",
+                        "P1", 1, f"SKIPPED — ASR en échec: {type(e).__name__}: {e}")
+    w = _wer(expected_text, res["text"])
+    ok = w["wer"] is not None and w["wer"] <= threshold
+    return QCResult("audio_transcription", "rule", ok,
+                    {"wer": w["wer"], "sub": w["sub"], "del": w["del"], "ins": w["ins"],
+                     "missing": w["missing"][:6], "added": w["added"][:6],
+                     "transcript": res["text"][:160],
+                     "confidence": res.get("confidence")},
+                    f"WER ≤ {threshold}", "P1", 1,
+                    "" if ok else "la parole générée ne correspond pas au script attendu")
 
 
 def qc_lip_sync(_video) -> QCResult:
@@ -189,4 +237,4 @@ def qc_visual_quality(_video) -> QCResult:
                     "SKIPPED — évaluation model-based non exécutée")
 
 
-SKIPPED = {"audio_transcription", "lip_sync", "visual_quality"}
+SKIPPED_WITHOUT_PROVIDER = {"audio_transcription", "lip_sync", "visual_quality"}

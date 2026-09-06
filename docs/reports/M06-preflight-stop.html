@@ -1,0 +1,184 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>Afrinext · Rapport de jalon M06</title>
+<link rel="stylesheet" href="_style.css"></head><body>
+
+<div class="cover">
+  <div class="eyebrow">Afrinext · Rapport de jalon · pour revue</div>
+  <h1>M06 — P0 Real Execution : arrêt au pre-flight</h1>
+  <p class="sub">E1 → E7 non exécutables · 7 dépendances critiques manquantes sur 11 · aucun résultat simulé</p>
+  <div class="meta">
+    <div><div class="k">Jalon</div><div class="v">M06 · exécution</div></div>
+    <div><div class="k">Statut</div><div class="v">STOP au pre-flight</div></div>
+    <div><div class="k">Date</div><div class="v">6 septembre 2026</div></div>
+    <div><div class="k">Destinataire</div><div class="v">Senior Developer</div></div>
+    <div><div class="k">Pre-flight</div><div class="v">4 / 11 prêtes</div></div>
+    <div><div class="k">Expériences</div><div class="v">0 / 7 exécutées</div></div>
+    <div><div class="k">Coût facturé</div><div class="v">0,00 $</div></div>
+    <div><div class="k">Construit</div><div class="v">adaptateurs + E4 + garde-fous</div></div>
+  </div>
+</div>
+
+<h2><span class="num">1.</span>Verdict</h2>
+
+<div class="callout danger">
+  <span class="lbl">Décision</span>
+  <strong style="font-size:12.5pt">STOP au pre-flight · H1 H2 H3 H4 = INCONCLUSIVE ·
+  P0 STATUS : FAIL · PHASE 01 : BLOCKED</strong><br><br>
+  M06 §1 impose un pre-flight avant toute exécution et un arrêt si une dépendance critique
+  manque. <strong>Le pre-flight a été exécuté : 7 dépendances critiques manquent sur 11.</strong>
+  Rien n'a changé depuis M05 — aucune clé, aucune modification de la politique réseau,
+  aucun évaluateur.
+  <br><br>
+  Aucune des sept expériences n'a pu démarrer. <strong>Aucune information nouvelle sur les
+  quatre hypothèses</strong> — ce n'est pas une régression, c'est une absence de mesure.
+</div>
+
+<h2><span class="num">2.</span>Pre-flight (§1)</h2>
+
+<table class="tight">
+<thead><tr><th style="width:17%">DEPENDENCY</th><th style="width:12%">STATUS</th><th style="width:15%">PROVIDER</th><th style="width:9%">TESTED</th><th>BLOCKER</th></tr></thead>
+<tbody>
+<tr><td>TTS</td><td><strong>BLOCKED</strong></td><td>google-tts</td><td>non</td><td><code>GOOGLE_API_KEY</code> absente</td></tr>
+<tr><td>ASR</td><td><strong>BLOCKED</strong></td><td>google-stt</td><td>non</td><td><code>GOOGLE_API_KEY</code> absente</td></tr>
+<tr><td>VIDEO_GEN</td><td><strong>BLOCKED</strong></td><td>google-veo</td><td>non</td><td><code>GOOGLE_API_KEY</code> absente</td></tr>
+<tr><td>CHARACTER</td><td><strong>BLOCKED</strong></td><td>google-veo</td><td>non</td><td><code>GOOGLE_API_KEY</code> absente</td></tr>
+<tr><td><strong>LIPSYNC</strong></td><td><strong>BLOCKED</strong></td><td>aucun</td><td>non</td><td><strong>réseau : hôte refusé au <code>CONNECT</code> du proxy</strong></td></tr>
+<tr><td>SHOT_BANK</td><td><strong>BLOCKED</strong></td><td>interne</td><td>oui</td><td>seuls des substituts géométriques existent</td></tr>
+<tr><td>PRODUCT_ASSET</td><td>READY</td><td>interne</td><td>oui</td><td>—</td></tr>
+<tr><td>STORAGE</td><td>READY</td><td>disque local</td><td>oui</td><td>—</td></tr>
+<tr><td>RENDERING</td><td>READY</td><td>ffmpeg 7.0.2</td><td>oui</td><td>—</td></tr>
+<tr><td>EVALUATORS</td><td><strong>BLOCKED</strong></td><td>humains</td><td>non</td><td>environnement non interactif</td></tr>
+<tr><td>BILLING_LIMITS</td><td>READY</td><td>garde-fous</td><td>oui</td><td>—</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <span class="lbl">Rapport d'arrêt (STOP RULE)</span>
+  <strong>BLOCKER</strong> — (1) aucun credential Google · (2) hôtes lip-sync refusés au
+  <code>CONNECT</code> · (3) aucun évaluateur.<br>
+  <strong>IMPACT</strong> — E1 à E7 non exécutables ; aucune hypothèse tranchée.<br>
+  <strong>MINIMUM ACTION</strong> — (1) une clé Google débloque E1, E2, E4, E5 ·
+  (2) autoriser l'hôte lip-sync ou exécuter ailleurs débloque E3 et E7 ·
+  (3) 3 à 5 francophones débloquent E6.<br>
+  <strong>RETEST</strong> — <code>python3 -m p0.execute --preflight</code> retourne 11/11 et
+  le code de sortie 0.
+</div>
+
+<h2><span class="num">3.</span>Ce que M06 a construit à la place</h2>
+
+<p>L'expérience est désormais <strong>exécutable en une commande</strong> dès qu'une clé
+existe. Trois apports concrets.</p>
+
+<table class="tight">
+<thead><tr><th style="width:26%">Apport</th><th>Détail</th></tr></thead>
+<tbody>
+<tr><td><strong>Adaptateurs providers réels</strong></td><td><code>GoogleTTS</code> (E2), <code>GoogleASR</code> (E4, horodatages mot à mot), <code>GoogleVeo</code> (E1 et E5, opération longue + polling). Aucun ne simule : sans clé, <code>MissingCredentials</code></td></tr>
+<tr><td><strong>E4 réellement implémentée</strong></td><td>Le contrôle <code>audio_transcription</code>, <code>SKIPPED</code> depuis M03, calcule maintenant un <strong>WER</strong> — Levenshtein sur les mots, substitutions / suppressions / insertions comptées séparément, mots manquants et ajoutés, seuil ≤ 0,25</td></tr>
+<tr><td><strong>Orchestrateur à garde-fous</strong></td><td><code>p0.execute</code> : pre-flight bloquant, coût estimé et journalisé <em>avant</em> tout appel, plafonds vérifiés, <code>DRY_RUN</code> par défaut</td></tr>
+</tbody>
+</table>
+
+<p><strong>Le WER a été vérifié</strong> sur des cas construits : transcription identique
+→ <strong>0,000</strong> · une substitution sur cinq mots → <strong>0,200</strong> · réplique
+tronquée → <strong>0,429</strong>. Sans provider, il retourne <code>SKIPPED</code>, jamais
+<code>PASS</code>.</p>
+
+<div class="callout warn">
+  <span class="lbl">Les garde-fous refusent réellement — vérifié avec une clé factice</span>
+  <code>autorisation E1: coût estimé 5.0000 $ · dépensé aujourd'hui 0.00 $<br>
+  REFUSÉE — coût estimé 5.00 $ &gt; MAX_COST_PER_RUN_USD 2.0</code>
+  <br><br>
+  <strong>Constat de configuration issu de ce test :</strong> l'estimation de E1
+  (25 générations, 5,00 $) dépasse le plafond par run de 2,00 $. E1 devra donc être
+  <strong>exécutée par lots</strong> de 5 à 8 plans, ou le plafond relevé explicitement.
+  Ce n'est pas un défaut — c'est le garde-fou qui fonctionne, et il aurait fallu s'en
+  apercevoir en dépensant.
+</div>
+
+<h2><span class="num">4.</span>Retour d'architecture (§17)</h2>
+
+<p>Classement à partir des preuves <strong>réellement disponibles</strong> (M03, M04).</p>
+
+<table class="tight">
+<thead><tr><th style="width:4%"></th><th style="width:28%">Hypothèse</th><th style="width:19%">Verdict</th><th>Preuve</th></tr></thead>
+<tbody>
+<tr><td><strong>A</strong></td><td>La durée réelle du TTS pilote la durée de scène</td><td><strong>VALIDÉE</strong></td><td>M04 F-011 : bascule sur la durée du synthétiseur → échecs <code>scene_duration</code> <strong>5 → 0</strong>, réparations <strong>13 → 1</strong></td></tr>
+<tr><td><strong>B</strong></td><td>Le compositing produit est plus sûr que la génération du packaging</td><td><strong>PARTIELLEMENT</strong></td><td>Compositing mesuré (0,785 · 24,6 dB sur 20 pubs, détecteur discriminant). <strong>Mais l'alternative générative n'a jamais tourné</strong> — « plus sûr que » n'est pas prouvé comparativement</td></tr>
+<tr><td><strong>C</strong></td><td>La réparation ciblée réduit la régénération complète</td><td><strong>PARTIELLEMENT</strong></td><td>100 % des réparations en L0-L3, <strong>zéro L5</strong> — mais sur étages déterministes uniquement</td></tr>
+<tr><td><strong>D</strong></td><td>La cohérence du personnage rend la banque de plans réutilisable</td><td><strong>INCONCLUSIVE</strong></td><td><strong>Jamais testée.</strong> Les 10 plans sont géométriques. Clé de voûte non vérifiée du chemin C</td></tr>
+<tr><td><strong>E</strong></td><td>Le lip-sync est commercialement acceptable</td><td><strong>INCONCLUSIVE</strong></td><td>Jamais exécuté</td></tr>
+<tr><td><strong>F</strong></td><td>Le QC détecte de vrais défauts</td><td><strong>VALIDÉE</strong></td><td>5 défauts réels trouvés en M03/M04 (<strong>dont 2 dans le QC lui-même</strong>) ; 2 violations de factualité et 2 fautes injectées interceptées à chaque exécution</td></tr>
+<tr><td><strong>G</strong></td><td>L'économie soutient un SaaS premium</td><td><strong>INCONCLUSIVE</strong></td><td><strong>0,00 $ facturé.</strong> Modélisé 0,11–0,85 $ avec 3,9× de marge, mais le poste dominant (~87 %) n'est pas mesuré</td></tr>
+</tbody>
+</table>
+
+<p><strong>Deux validées, deux partiellement, trois inconclusives. Aucune réfutée</strong> —
+mais <strong>D et E, les deux qui fondent le chemin C, sont exactement celles qui n'ont pas
+pu être testées.</strong></p>
+
+<h2><span class="num">5.</span>La question finale</h2>
+
+<div class="callout danger">
+  <span class="lbl">« Une vraie entreprise publierait-elle ces publicités ? »</span>
+  <strong>Incertain — et voici exactement ce qui reste incertain.</strong><br><br>
+  Nous avons prouvé que <strong>la machine fonctionne</strong>. Nous n'avons rien prouvé sur
+  <strong>ce qu'elle produit</strong>. Et la question porte entièrement sur le second point.
+</div>
+
+<table class="tight">
+<thead><tr><th style="width:50%">Ce que nous savons — mesuré</th><th>Ce que nous ignorons — décisif</th></tr></thead>
+<tbody>
+<tr>
+<td>
+Le <strong>produit apparaît fidèlement</strong> : le packaging reste lisible parce qu'il n'est jamais redessiné — 0,785 · 24,6 dB sur 20 publicités.<br><br>
+Le <strong>script ne ment pas</strong> : les allégations non sourcées et les superlatifs sont bloqués à chaque exécution.<br><br>
+La <strong>chaîne technique tient</strong> : 20 publicités 9:16 de bout en bout, 13,9 s médiane jusqu'au publiable.<br><br>
+La <strong>moitié déterministe est gratuite</strong> : 0,00025 $ par publicité.
+</td>
+<td>
+<strong>1.</strong> À quoi ressemble un <strong>vrai personnage</strong> sur ces plans — la banque est géométrique.<br><br>
+<strong>2.</strong> Si le <strong>lip-sync est crédible</strong> — jamais exécuté.<br><br>
+<strong>3.</strong> Si un <strong>humain accepterait de publier</strong> — aucun n'a été interrogé.<br><br>
+<strong>4.</strong> Ce que <strong>ça coûte vraiment</strong> — 0,00 $ facturé.
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>Trois choses lèvent l'incertitude, dans cet ordre : <strong>une clé Google</strong> (E1, E2,
+E4), <strong>un accès lip-sync</strong> (E3), <strong>trois évaluateurs</strong> (E6).
+<strong>Environ 60 $ et deux jours.</strong></p>
+
+<h2><span class="num">6.</span>Formulaire de revue</h2>
+
+<table class="review">
+<thead><tr><th>Réf.</th><th>Validé</th><th>À&nbsp;corriger</th><th>Commentaire</th></tr></thead>
+<tbody>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Conduite de M06</strong></td></tr>
+<tr><td><strong>O1</strong> Arrêt au pre-flight plutôt qu'exécution partielle simulée</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>O2</strong> Temps réinvesti dans les adaptateurs réels + E4 (WER)</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>O3</strong> Classement §17 : 2 validées, 2 partielles, 3 inconclusives</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>O4</strong> E1 à exécuter par lots (plafond de 2 $ par run)</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Actions bloquantes — inchangées depuis M05</strong></td></tr>
+<tr><td><strong>B1</strong> Clé Google Cloud</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>B2</strong> Accès lip-sync (allowlist ou autre machine)</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>B3</strong> 3 à 5 évaluateurs francophones</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>B4</strong> Enveloppe ≈ 60 $ jusqu'à la décision H1</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+</tbody>
+</table>
+
+<div class="nobreak">
+<h3>Verdict global</h3>
+<p style="margin-bottom:14px">
+  <span class="box"></span> Arrêt validé — lever les 3 bloqueurs puis relancer M06 &nbsp;&nbsp;
+  <span class="box"></span> Validé sous réserve &nbsp;&nbsp;
+  <span class="box"></span> À reprendre
+</p>
+<div class="sign"><div>Nom du relecteur</div><div>Date</div><div>Signature</div></div>
+</div>
+
+<div class="footer">
+  <span>Afrinext · Rapport de jalon M06 · P0 Real Execution</span>
+  <span>Document interne · pour revue</span>
+</div>
+</body></html>

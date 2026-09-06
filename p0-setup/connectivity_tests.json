@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T12:07:43.562012+00:00",
+  "generated_at": "2026-09-06T22:48:57.348956+00:00",
   "note": "Test le plus économique possible : requête GET non authentifiée. Aucun appel facturable n'a été émis.",
   "results": [
     {
@@ -9,14 +9,14 @@
       "endpoint": "https://api.elevenlabs.io/v1/models",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 294,
+      "latency_ms": 367,
       "credential_env": "ELEVENLABS_API_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:40.186041+00:00"
+      "timestamp": "2026-09-06T22:48:52.605939+00:00"
     },
     {
       "experiment_ref": "P0-E2",
@@ -25,14 +25,14 @@
       "endpoint": "https://api.cartesia.ai/voices",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 276,
+      "latency_ms": 232,
       "credential_env": "CARTESIA_API_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:40.493785+00:00"
+      "timestamp": "2026-09-06T22:48:52.972118+00:00"
     },
     {
       "experiment_ref": "P0-E2",
@@ -41,14 +41,14 @@
       "endpoint": "https://francecentral.tts.speech.microsoft.com/cognitiveservices/voices/list",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 259,
+      "latency_ms": 242,
       "credential_env": "AZURE_SPEECH_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:40.799884+00:00"
+      "timestamp": "2026-09-06T22:48:53.253082+00:00"
     },
     {
       "experiment_ref": "P0-E2",
@@ -57,14 +57,14 @@
       "endpoint": "https://api.openai.com/v1/models",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 261,
+      "latency_ms": 229,
       "credential_env": "OPENAI_API_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:41.063976+00:00"
+      "timestamp": "2026-09-06T22:48:53.486118+00:00"
     },
     {
       "experiment_ref": "P0-E3",
@@ -73,14 +73,14 @@
       "endpoint": "https://api.sync.so/v2/generate",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 260,
+      "latency_ms": 237,
       "credential_env": "SYNC_API_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:41.349197+00:00"
+      "timestamp": "2026-09-06T22:48:53.752392+00:00"
     },
     {
       "experiment_ref": "P0-E3",
@@ -89,14 +89,14 @@
       "endpoint": "https://api.hedra.com/web-app/public/voices",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 230,
+      "latency_ms": 1295,
       "credential_env": "HEDRA_API_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:41.614352+00:00"
+      "timestamp": "2026-09-06T22:48:55.065381+00:00"
     },
     {
       "experiment_ref": "P0-E3",
@@ -105,14 +105,14 @@
       "endpoint": "https://fal.run/health",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 258,
+      "latency_ms": 243,
       "credential_env": "FAL_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:41.875180+00:00"
+      "timestamp": "2026-09-06T22:48:55.312091+00:00"
     },
     {
       "experiment_ref": "P0-E3",
@@ -121,14 +121,14 @@
       "endpoint": "https://api.replicate.com/v1/models",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 307,
+      "latency_ms": 261,
       "credential_env": "REPLICATE_API_TOKEN",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:42.217451+00:00"
+      "timestamp": "2026-09-06T22:48:55.590127+00:00"
     },
     {
       "experiment_ref": "P0-E4",
@@ -137,14 +137,14 @@
       "endpoint": "https://api.deepgram.com/v1/projects",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 259,
+      "latency_ms": 266,
       "credential_env": "DEEPGRAM_API_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:42.492331+00:00"
+      "timestamp": "2026-09-06T22:48:55.900337+00:00"
     },
     {
       "experiment_ref": "P0-E4",
@@ -153,14 +153,14 @@
       "endpoint": "https://api.assemblyai.com/v2/transcript",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 256,
+      "latency_ms": 255,
       "credential_env": "ASSEMBLYAI_API_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:42.763619+00:00"
+      "timestamp": "2026-09-06T22:48:56.190950+00:00"
     },
     {
       "experiment_ref": "P0-E5",
@@ -169,14 +169,14 @@
       "endpoint": "https://fal.run/health",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 230,
+      "latency_ms": 254,
       "credential_env": "FAL_KEY",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:42.999064+00:00"
+      "timestamp": "2026-09-06T22:48:56.447924+00:00"
     },
     {
       "experiment_ref": "P0-E5",
@@ -185,14 +185,14 @@
       "endpoint": "https://api.replicate.com/v1/models",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 104,
+      "latency_ms": 241,
       "credential_env": "REPLICATE_API_TOKEN",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:43.123620+00:00"
+      "timestamp": "2026-09-06T22:48:56.718195+00:00"
     },
     {
       "experiment_ref": "P0-E5",
@@ -201,14 +201,14 @@
       "endpoint": "https://generativelanguage.googleapis.com/v1beta/models",
       "dns": "OK",
       "status_code": "403",
-      "latency_ms": 351,
+      "latency_ms": 342,
       "credential_env": "GEMINI_API_KEY",
       "credential_present": false,
       "failure_class": "AUTH",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:43.478708+00:00"
+      "timestamp": "2026-09-06T22:48:57.066338+00:00"
     },
     {
       "experiment_ref": "P0-E1",
@@ -217,14 +217,14 @@
       "endpoint": "https://cloudflarestorage.com",
       "dns": "OK",
       "status_code": "000",
-      "latency_ms": 49,
+      "latency_ms": 265,
       "credential_env": "R2_ACCESS_KEY_ID",
       "credential_present": false,
       "failure_class": "NETWORK",
       "reachable": false,
       "usable": false,
       "cost_usd": 0.0,
-      "timestamp": "2026-09-06T12:07:43.561557+00:00"
+      "timestamp": "2026-09-06T22:48:57.348340+00:00"
     }
   ]
 }

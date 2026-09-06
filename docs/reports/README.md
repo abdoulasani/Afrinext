@@ -12,6 +12,7 @@ revue. Il valide, ou renvoie des corrections.
 | **M03** | [P0 Proof of Concept](M03-p0-proof.pdf) | 2026-09-05 | `d671d3b`+ | **P0 FAIL · Phase 01 BLOCKED** — H1 non mesurée, expériences E1→E7 requises |
 | **M04** | [P0 Validation Execution](M04-validation-execution.pdf) | 2026-09-06 | `6572ff9`+ | **BLOCKED / MISSING DEPENDENCY** — 6 dépendances bloquantes absentes ; E2 partielle ; H1→H4 INCONCLUSIVE |
 | **M05** | [Provider Procurement & Experiment Setup](M05-provider-procurement.pdf) | 2026-09-06 | `b5b634e`+ | **BLOCKED** — 19/19 livrables écrits ; lip-sync refusé au CONNECT du proxy ; Google seul joignable |
+| **M06** | [P0 Real Execution — arrêt au pre-flight](M06-preflight-stop.pdf) | 2026-09-06 | `e50ea49`+ | **STOP au pre-flight** — 4/11 prêtes, 0/7 expériences exécutées ; adaptateurs réels + E4 (WER) construits |
 
 ## Contenu obligatoire d'un rapport
 

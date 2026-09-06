@@ -23,6 +23,7 @@ applicatif n'a encore été écrit.
 | [08 · M02 — Produit et marché](docs/blueprint/08-m02-produit-marche.md) | MVP A/B/C, playbooks, Market Context, agences, UX, moat, pricing |
 | [09 · M02 — Décision](docs/blueprint/09-m02-exploitation-et-decision.md) | failure modes, versioning, MVP final, **GO/NO-GO** |
 | [10 · M03 — P0 résultats](docs/blueprint/10-m03-p0-results.md) | tranche verticale exécutée, mesures réelles, **P0 FAIL** |
+| [11 · M06 — Pre-flight et arrêt](docs/blueprint/11-m06-preflight-stop.md) | pre-flight 4/11, retour d'architecture A→G, question finale |
 
 ## Rapports de jalon
 
@@ -34,6 +35,7 @@ décisions engageantes, points à valider, hypothèses à vérifier, formulaire 
 📄 **[M03 — P0 Proof of Concept](docs/reports/M03-p0-proof.pdf)** ·
 📄 **[M04 — P0 Validation Execution](docs/reports/M04-validation-execution.pdf)** ·
 📄 **[M05 — Provider Procurement](docs/reports/M05-provider-procurement.pdf)** ·
+📄 **[M06 — P0 Real Execution : arrêt au pre-flight](docs/reports/M06-preflight-stop.pdf)** ·
 [convention et journal des jalons](docs/reports/README.md)
 
 ## Prochaine étape

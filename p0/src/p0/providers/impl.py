@@ -1,7 +1,7 @@
 """Adaptateurs providers. HTTP réel quand une clé existe ; substitut marqué
 SYNTHETIC en --offline. Aucun résultat plausible n'est jamais fabriqué."""
 from __future__ import annotations
-import subprocess, json, shutil
+import subprocess, json, shutil, os
 from pathlib import Path
 from .base import Provider
 
@@ -132,3 +132,161 @@ class LocalEspeakTTS(Provider):
         return {"cost_usd": 0.0, "synthetic": False, "local_engine": True,
                 "engine": "espeak-ng-1.51", "voice": self.VOICE,
                 "synth_latency_ms": synth_ms}
+
+
+# ══════════════════════════════════════════════════════════════════════
+# ADAPTATEURS GOOGLE CLOUD — seuls providers joignables (voir M05)
+# Écrits pour être exécutables dès qu'une clé existe. Sans clé :
+# MissingCredentials. Jamais de simulation.
+# ══════════════════════════════════════════════════════════════════════
+
+class GoogleTTS(Provider):
+    """Google Cloud Text-to-Speech · E2. Endpoint joignable depuis cet environnement."""
+    name = "google-tts"
+    env_var = "GOOGLE_API_KEY"
+    ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize"
+    # tarif catalogue NON VÉRIFIÉ — à remplacer par la valeur facturée réelle
+    unit_cost_usd = 0.000016          # $/caractère (hypothèse 16 $/1M)
+
+    def __init__(self, offline: bool = False,
+                 voice: str = "fr-FR-Neural2-A", language_code: str = "fr-FR"):
+        super().__init__(offline)
+        self.voice = os.environ.get("TTS_VOICE", voice)
+        self.language_code = language_code
+
+    def synth(self, text: str, out_path: Path, voice_id: str = "") -> dict:
+        self.require_key()
+        import base64, httpx, time as _t
+        body = {"input": {"text": text},
+                "voice": {"languageCode": self.language_code,
+                          "name": voice_id or self.voice},
+                "audioConfig": {"audioEncoding": "MP3", "speakingRate": 1.0}}
+        t0 = _t.perf_counter()
+        r = httpx.post(self.ENDPOINT, params={"key": self.key}, json=body, timeout=90)
+        lat = int((_t.perf_counter() - t0) * 1000)
+        if r.status_code != 200:
+            raise RuntimeError(f"google-tts HTTP {r.status_code}: {r.text[:200]}")
+        mp3 = Path(out_path).with_suffix(".mp3")
+        mp3.write_bytes(base64.b64decode(r.json()["audioContent"]))
+        run([ffmpeg(), "-y", "-v", "error", "-i", mp3, "-ar", "44100", "-ac", "1",
+             "-c:a", "aac", "-b:a", "128k", out_path])
+        mp3.unlink(missing_ok=True)
+        return {"cost_usd": round(len(text) * self.unit_cost_usd, 8),
+                "cost_basis": "ESTIMATED_catalogue_non_verifie",
+                "synthetic": False, "engine": "google-tts-v1",
+                "voice": voice_id or self.voice, "synth_latency_ms": lat}
+
+
+class GoogleASR(Provider):
+    """Google Cloud Speech-to-Text · E4. Fournit les horodatages mot à mot."""
+    name = "google-stt"
+    env_var = "GOOGLE_API_KEY"
+    ENDPOINT = "https://speech.googleapis.com/v1/speech:recognize"
+    unit_cost_usd = 0.006             # $/15 s — NON VÉRIFIÉ
+
+    def transcribe(self, audio_path: Path, language_code: str = "fr-FR") -> dict:
+        self.require_key()
+        import base64, httpx, time as _t
+        wav = Path(audio_path).with_suffix(".asr.wav")
+        run([ffmpeg(), "-y", "-v", "error", "-i", audio_path,
+             "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", wav])
+        body = {"config": {"languageCode": language_code, "encoding": "LINEAR16",
+                           "sampleRateHertz": 16000, "enableWordTimeOffsets": True,
+                           "model": "latest_long"},
+                "audio": {"content": base64.b64encode(wav.read_bytes()).decode()}}
+        t0 = _t.perf_counter()
+        r = httpx.post(self.ENDPOINT, params={"key": self.key}, json=body, timeout=180)
+        lat = int((_t.perf_counter() - t0) * 1000)
+        wav.unlink(missing_ok=True)
+        if r.status_code != 200:
+            raise RuntimeError(f"google-stt HTTP {r.status_code}: {r.text[:200]}")
+        data = r.json()
+        results = data.get("results", [])
+        text = " ".join(a["alternatives"][0]["transcript"].strip()
+                        for a in results if a.get("alternatives"))
+        words = [{"word": w["word"],
+                  "start_s": float(str(w.get("startTime", "0s")).rstrip("s")),
+                  "end_s": float(str(w.get("endTime", "0s")).rstrip("s"))}
+                 for a in results for w in a["alternatives"][0].get("words", [])]
+        conf = [a["alternatives"][0].get("confidence") for a in results
+                if a.get("alternatives")]
+        return {"text": text, "words": words,
+                "confidence": (sum(c for c in conf if c) / len(conf)) if conf else None,
+                "latency_ms": lat, "cost_usd": 0.0,
+                "cost_basis": "ESTIMATED_catalogue_non_verifie", "raw": data}
+
+
+class GoogleVeo(Provider):
+    """Veo via l'API Gemini · E1 (banque de plans) et E5 (contrôle génératif).
+
+    L'API est asynchrone : soumission puis interrogation d'une opération longue.
+    Le nom exact du modèle et la forme de la réponse DOIVENT être confirmés sur
+    la documentation officielle au moment de l'exécution — ils changent souvent.
+    """
+    name = "google-veo"
+    env_var = "GOOGLE_API_KEY"
+    BASE = "https://generativelanguage.googleapis.com/v1beta"
+    unit_cost_usd = 0.05              # $/seconde en Lite — NON VÉRIFIÉ
+
+    def __init__(self, offline: bool = False, model: str = "veo-3.1-lite"):
+        super().__init__(offline)
+        self.model = os.environ.get("VIDEO_MODEL", model)
+
+    def list_models(self) -> list[str]:
+        self.require_key()
+        import httpx
+        r = httpx.get(f"{self.BASE}/models", params={"key": self.key}, timeout=60)
+        r.raise_for_status()
+        return [m["name"] for m in r.json().get("models", [])]
+
+    def generate(self, prompt: str, out_path: Path, seconds: float = 4.0,
+                 reference_image: Path | None = None,
+                 aspect_ratio: str = "9:16", poll_s: int = 10,
+                 timeout_s: int = 900) -> dict:
+        self.require_key()
+        import base64, httpx, time as _t
+        inst: dict = {"prompt": prompt}
+        if reference_image and Path(reference_image).exists():
+            inst["image"] = {"bytesBase64Encoded":
+                             base64.b64encode(Path(reference_image).read_bytes()).decode(),
+                             "mimeType": "image/png"}
+        body = {"instances": [inst],
+                "parameters": {"aspectRatio": aspect_ratio,
+                               "durationSeconds": int(seconds), "sampleCount": 1}}
+        t0 = _t.perf_counter()
+        r = httpx.post(f"{self.BASE}/models/{self.model}:predictLongRunning",
+                       params={"key": self.key}, json=body, timeout=120)
+        if r.status_code != 200:
+            raise RuntimeError(f"google-veo submit HTTP {r.status_code}: {r.text[:300]}")
+        op = r.json().get("name")
+        if not op:
+            raise RuntimeError(f"google-veo: aucune opération retournée: {r.text[:200]}")
+        while _t.perf_counter() - t0 < timeout_s:
+            _t.sleep(poll_s)
+            p = httpx.get(f"{self.BASE}/{op}", params={"key": self.key}, timeout=60)
+            if p.status_code != 200:
+                raise RuntimeError(f"google-veo poll HTTP {p.status_code}: {p.text[:200]}")
+            d = p.json()
+            if d.get("error"):
+                raise RuntimeError(f"google-veo erreur: {str(d['error'])[:300]}")
+            if d.get("done"):
+                vids = (d.get("response", {}).get("generatedSamples")
+                        or d.get("response", {}).get("videos") or [])
+                if not vids:
+                    raise RuntimeError(f"google-veo: réponse sans vidéo: {str(d)[:300]}")
+                v = vids[0]
+                if "bytesBase64Encoded" in str(v):
+                    b64 = v.get("bytesBase64Encoded") or v.get("video", {}).get("bytesBase64Encoded")
+                    Path(out_path).write_bytes(base64.b64decode(b64))
+                else:
+                    uri = v.get("uri") or v.get("video", {}).get("uri")
+                    if not uri:
+                        raise RuntimeError(f"google-veo: ni bytes ni uri: {str(v)[:200]}")
+                    dl = httpx.get(uri, params={"key": self.key}, timeout=300)
+                    dl.raise_for_status()
+                    Path(out_path).write_bytes(dl.content)
+                return {"cost_usd": round(seconds * self.unit_cost_usd, 6),
+                        "cost_basis": "ESTIMATED_catalogue_non_verifie",
+                        "latency_ms": int((_t.perf_counter() - t0) * 1000),
+                        "model": self.model, "operation": op, "synthetic": False}
+        raise TimeoutError(f"google-veo: opération {op} non terminée en {timeout_s}s")
