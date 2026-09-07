@@ -1,0 +1,188 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>Afrinext · Rapport de jalon M07</title>
+<link rel="stylesheet" href="_style.css"></head><body>
+
+<div class="cover">
+  <div class="eyebrow">Afrinext · Rapport de jalon · pour revue</div>
+  <h1>M07 v2 — Levée opérationnelle des bloqueurs</h1>
+  <p class="sub">B1 · B2 · B3 → objectif READY · outillage livré et vérifié · aucun résultat simulé</p>
+  <div class="meta">
+    <div><div class="k">Jalon</div><div class="v">M07 v2</div></div>
+    <div><div class="k">Statut</div><div class="v">BLOCKED</div></div>
+    <div><div class="k">Date</div><div class="v">6 septembre 2026</div></div>
+    <div><div class="k">Destinataire</div><div class="v">Senior Developer</div></div>
+    <div><div class="k">Pre-flight</div><div class="v">4 / 11 (inchangé)</div></div>
+    <div><div class="k">Sécurité</div><div class="v">PASS · 0 fuite</div></div>
+    <div><div class="k">Dépensé</div><div class="v">0,00 $</div></div>
+    <div><div class="k">Preuves</div><div class="v mono">M07_EVIDENCE/</div></div>
+  </div>
+</div>
+
+<h2><span class="num">1.</span>Rapport final (§17)</h2>
+
+<div class="callout danger">
+<span class="lbl">M07 v2 STATUS : BLOCKED</span>
+<pre style="margin:6px 0 0;font-size:8.4pt;line-height:1.45;white-space:pre-wrap">BLOCKER REGISTER
+  B1 GOOGLE      — BLOCKED   (API joignable, credential absent)
+  B2 LIP-SYNC    — BLOCKED   (politique d'egress de l'organisation)
+  B3 EVALUATORS  — BLOCKED   (aucun évaluateur recruté)
+
+PROVIDER READINESS      TTS BLOCKED · ASR BLOCKED · VEO BLOCKED · LIP-SYNC BLOCKED
+
+REAL SMOKE TESTS        TTS SKIPPED · ASR SKIPPED · VEO SKIPPED · LIP-SYNC SKIPPED
+                        RENDU LOCAL <b>PASS</b> — seul test ayant produit un artefact réel
+
+HUMAN EVALUATION        évaluateurs confirmés = 0 · protocole = READY
+
+SECURITY                <b>PASS</b> — 90 fichiers · 13 motifs · arbre + historique git · 0 trouvaille
+
+BUDGET                  dépensé 0,00 $ · restant pré-H1 60,00 $
+                        prochaine dépense autorisée : aucune (gate 1 bloquée sur B1)
+
+M06 PRE-FLIGHT          4/11 READY          P0 : STILL BLOCKED</pre>
+<br><strong>« M07 BLOCKED — bloqueurs restants : B1 Google, B2 lip-sync, B3 évaluateurs. »</strong>
+</div>
+
+<p>Aucun <code>PASS</code> n'est employé dans le registre : <strong>aucun test d'acceptation
+réel n'a réussi.</strong> Les trois bloqueurs exigent une action hors de cette session — un
+compte, une politique réseau, trois personnes.</p>
+
+<h2><span class="num">2.</span>Registre des bloqueurs (§01)</h2>
+
+<table class="tight">
+<thead><tr><th style="width:5%">ID</th><th style="width:20%">Bloqueur</th><th style="width:26%">État constaté</th><th style="width:16%">Owner</th><th>Statut</th></tr></thead>
+<tbody>
+<tr><td><strong>B1</strong></td><td>Credentials Google Cloud</td><td>aucune clé ; <strong>API joignable</strong> — HTTP 403 « Please use API Key »</td><td>utilisateur</td><td><strong>BLOCKED</strong></td></tr>
+<tr><td><strong>B2</strong></td><td>Accès lip-sync</td><td>11 hôtes refusés au <code>CONNECT</code> du proxy</td><td>utilisateur / admin org</td><td><strong>BLOCKED</strong></td></tr>
+<tr><td><strong>B3</strong></td><td>Évaluateurs humains</td><td>aucun ; protocole et outillage complets</td><td>utilisateur</td><td><strong>BLOCKED</strong></td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">3.</span>B2 — le blocage n'est pas levable ici, et la doc le dit</h2>
+
+<div class="callout warn">
+  <span class="lbl">/root/.ccr/README.md</span>
+  <em>« The destination host is not allowed by your organization's egress policy for this
+  session. <strong>Do not retry or route around it</strong> — report the blocked host. »</em>
+</div>
+
+<p>Le proxy a enregistré <strong>13 refus de <code>CONNECT</code></strong>
+(<code>policy denial</code>). Conformément à §05 et à cette consigne,
+<strong>je n'ai ni retenté ni contourné.</strong> C'est une décision d'administration, pas
+un problème technique.</p>
+
+<table class="tight">
+<thead><tr><th style="width:6%"></th><th style="width:36%">Option</th><th style="width:22%">Changement d'architecture</th><th>Faisable par moi ?</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>Autoriser l'endpoint dans la politique d'egress</td><td><strong>nul</strong></td><td>non — administrateur de l'organisation</td></tr>
+<tr><td><strong>B</strong></td><td><strong>Exécuter le harnais existant sur une machine à HTTPS ouvert</strong></td><td><strong>nul</strong></td><td><strong>retenue</strong> — moindre changement</td></tr>
+<tr><td>C</td><td>Trouver un fournisseur déjà joignable</td><td>moyen</td><td>aucun candidat : Google n'a pas d'offre lip-sync</td></tr>
+</tbody>
+</table>
+
+<p><code>bootstrap.sh</code> (syntaxe validée) <strong>ne reconstruit rien</strong> : il clone,
+installe quatre dépendances, <strong>teste l'accès réseau avant tout transport</strong>, puis
+lance le pre-flight et les smoke tests existants. Une seule chose reste à écrire —
+<code>LipSyncProvider.sync()</code> contre l'API retenue, ~40 lignes, volontairement absente
+tant que le fournisseur n'est pas choisi.</p>
+
+<h2><span class="num">4.</span>Ce qui est livré et vérifié</h2>
+
+<table class="tight">
+<thead><tr><th style="width:30%">Livrable</th><th>Vérification réelle</th></tr></thead>
+<tbody>
+<tr><td><strong>B1 · checklist de handoff</strong></td><td>les 8 éléments exacts de §03 : action console, APIs, méthode d'auth, variable, <strong>permission au moindre privilège</strong>, commande de smoke test, signal de succès, signal d'échec</td></tr>
+<tr><td><strong>B2 · paquet de lancement</strong></td><td><code>bash -n bootstrap.sh</code> → <strong>syntaxe OK</strong> ; vérifie l'accès réseau avant de transporter quoi que ce soit</td></tr>
+<tr><td><strong>B3 · kit E6 complet (A→H)</strong></td><td>consignes en français, identifiants anonymes, <strong>randomisation indépendante par évaluateur</strong>, grille vierge, confidentialité, rétention, soumission, agrégation</td></tr>
+<tr><td><strong>B3 · agrégateur</strong></td><td><strong>testé</strong> sur données factices : seuils H1 appliqués correctement → <code>INCONCLUSIVE</code> (taux 0,567 &lt; 0,60). Sans données : retourne <code>BLOCKED</code>, <strong>jamais un résultat fabriqué</strong></td></tr>
+<tr><td><strong>Sécurité (§11)</strong></td><td><strong>PASS</strong> — 90 fichiers, 13 motifs (clés Google, PEM, AWS, OpenAI, Anthropic, GitHub, en-têtes Bearer, URLs signées…), <strong>arbre de travail et historique git</strong>, 0 trouvaille</td></tr>
+<tr><td><strong>Budget (§10)</strong></td><td>0,00 $ dépensé · 60 $ pré-H1 non engagés · <strong>les 205 $ BASE ne sont pas autorisés</strong></td></tr>
+<tr><td><strong>Pre-flight (§13)</strong></td><td>relancé <strong>sans modifier la logique</strong> pour forcer un succès : <strong>4/11</strong>, inchangé</td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">5.</span>Pour chaque bloqueur : impact, action, retest</h2>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">B1 · Google Cloud</span><span class="tag majeur">4 exp. sur 7</span></div>
+  <dl>
+    <dt>Impact</dt><dd>E1, E2, E4, E5 non exécutables.</dd>
+    <dt>Action</dt><dd>Projet GCP + facturation + activer <code>texttospeech</code>, <code>speech</code>, <code>generativelanguage</code> + <strong>clé d'API restreinte à ces 3 APIs</strong> + poser <code>GOOGLE_API_KEY</code> en local. <strong>Ne jamais coller la clé dans le chat</strong> — répondez simplement « Configuré ».</dd>
+    <dt>Retest</dt><dd><code>cd p0-setup/smoke_tests && GOOGLE_API_KEY=… python3 run_smoke.py --all</code></dd>
+    <dt>Succès</dt><dd><code>[PASS] P0-E2-SMOKE … HTTP 200</code> · <code>[PASS] P0-E4-SMOKE … transcription</code> · <code>[PASS] P0-E5-SMOKE … Veo</code></dd>
+    <dt>Coût · temps</dt><dd>quelques centimes · 15 à 30 minutes</dd>
+  </dl>
+</div>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">B2 · Lip-sync</span><span class="tag bloquant">Décisif</span></div>
+  <dl>
+    <dt>Impact</dt><dd>E3 non exécutable ⇒ <strong>H1 indécidable</strong> ⇒ E7 sans objet.</dd>
+    <dt>Action</dt><dd><strong>A</strong> faire autoriser l'hôte dans la politique d'egress · <strong>ou B</strong> exécuter <code>bootstrap.sh</code> sur une machine à HTTPS ouvert.</dd>
+    <dt>Retest</dt><dd><code>curl -s -o /dev/null -w '%{http_code}' -m 10 https://api.sync.so/</code></dd>
+    <dt>Succès</dt><dd><strong>toute valeur autre que <code>000</code></strong> — 403, 404 ou 200 signifient que l'hôte répond</dd>
+    <dt>Coût · temps</dt><dd>0 $ pour l'accès, ~8 $ pour E3 · 10 min (option B) à quelques jours (option A)</dd>
+  </dl>
+</div>
+
+<div class="decision">
+  <div class="hd"><span class="ttl">B3 · Évaluateurs</span><span class="tag bloquant">Décisif</span></div>
+  <dl>
+    <dt>Impact</dt><dd>E6 non exécutable ⇒ <strong>H1 indécidable</strong>.</dd>
+    <dt>Action</dt><dd>3 à 5 francophones : comprennent le français, jugement indépendant, disponibles ~20 min, <strong>sans lien avec l'équipe de production</strong>. Aucune donnée personnelle requise.</dd>
+    <dt>Retest</dt><dd><code>python3 M07_EVIDENCE/evaluators/aggregate.py responses.csv key.csv</code></dd>
+    <dt>Succès</dt><dd>≥ 3 évaluateurs et verdict H1 calculé selon les seuils fixés en M05</dd>
+    <dt>Coût · temps</dt><dd>0 $ · 1 à 3 jours de recrutement, 20 min par personne</dd>
+  </dl>
+</div>
+
+<h2><span class="num">6.</span>Distinctions maintenues (§15)</h2>
+
+<table class="tight">
+<thead><tr><th style="width:42%">Distinction</th><th>État réel</th></tr></thead>
+<tbody>
+<tr><td>Configuré ≠ testé</td><td>aucune configuration n'existe, donc rien n'est testé</td></tr>
+<tr><td>API joignable ≠ sortie utilisable</td><td>Google est joignable ; <strong>aucune sortie n'a été produite</strong></td></tr>
+<tr><td>Un smoke test ≠ qualité commerciale</td><td>seul le rendu local a produit un artefact</td></tr>
+<tr><td>Évaluateurs recrutés ≠ E6 réussie</td><td>0 recruté ; le protocole seul est prêt</td></tr>
+<tr><td>11/11 READY ≠ P0 PASS</td><td>nous sommes à <strong>4/11</strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>M07 n'a pas été optimisé pour obtenir un PASS.</strong> Deux des trois bloqueurs
+ne dépendent d'aucun travail technique supplémentaire de ma part : ils dépendent d'un compte,
+d'une politique réseau et de trois personnes.</p>
+
+<h2><span class="num">7.</span>Formulaire de revue</h2>
+
+<table class="review">
+<thead><tr><th>Réf.</th><th>Validé</th><th>À&nbsp;corriger</th><th>Commentaire</th></tr></thead>
+<tbody>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Conduite de M07</strong></td></tr>
+<tr><td><strong>P1</strong> Verdict BLOCKED malgré l'outillage complet</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>P2</strong> B2 : ne pas contourner la politique d'egress</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>P3</strong> Option B (machine ouverte) plutôt que refonte</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td><strong>P4</strong> Clé d'API restreinte plutôt que compte de service</td><td><span class="box"></span></td><td><span class="box"></span></td><td>&nbsp;</td></tr>
+<tr><td colspan="4" style="background:#eef2f4"><strong>Actions attendues de vous</strong></td></tr>
+<tr><td><strong>B1</strong> Projet Google + clé (ne pas la coller ici)</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>B2</strong> Allowlist, ou machine à réseau ouvert</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>B3</strong> 3 à 5 évaluateurs francophones</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+<tr><td><strong>BUD</strong> Autoriser ~60 $ pré-H1 (pas les 205 $)</td><td colspan="2" style="text-align:center">réponse :</td><td>&nbsp;</td></tr>
+</tbody>
+</table>
+
+<div class="nobreak">
+<h3>Verdict global</h3>
+<p style="margin-bottom:14px">
+  <span class="box"></span> M07 validé — lever B1/B2/B3 puis relancer M06 &nbsp;&nbsp;
+  <span class="box"></span> Validé sous réserve &nbsp;&nbsp;
+  <span class="box"></span> À reprendre
+</p>
+<div class="sign"><div>Nom du relecteur</div><div>Date</div><div>Signature</div></div>
+</div>
+
+<div class="footer">
+  <span>Afrinext · Rapport de jalon M07 v2 · Operational Unblocking</span>
+  <span>Document interne · pour revue</span>
+</div>
+</body></html>

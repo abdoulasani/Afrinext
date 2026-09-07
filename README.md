@@ -24,6 +24,7 @@ applicatif n'a encore été écrit.
 | [09 · M02 — Décision](docs/blueprint/09-m02-exploitation-et-decision.md) | failure modes, versioning, MVP final, **GO/NO-GO** |
 | [10 · M03 — P0 résultats](docs/blueprint/10-m03-p0-results.md) | tranche verticale exécutée, mesures réelles, **P0 FAIL** |
 | [11 · M06 — Pre-flight et arrêt](docs/blueprint/11-m06-preflight-stop.md) | pre-flight 4/11, retour d'architecture A→G, question finale |
+| [12 · M07 — Levée opérationnelle](docs/blueprint/12-m07-unblocking.md) | registre des bloqueurs, handoffs, kit E6, sécurité |
 
 ## Rapports de jalon
 
@@ -36,6 +37,7 @@ décisions engageantes, points à valider, hypothèses à vérifier, formulaire 
 📄 **[M04 — P0 Validation Execution](docs/reports/M04-validation-execution.pdf)** ·
 📄 **[M05 — Provider Procurement](docs/reports/M05-provider-procurement.pdf)** ·
 📄 **[M06 — P0 Real Execution : arrêt au pre-flight](docs/reports/M06-preflight-stop.pdf)** ·
+📄 **[M07 v2 — Operational Unblocking](docs/reports/M07-unblocking.pdf)** ·
 [convention et journal des jalons](docs/reports/README.md)
 
 ## Prochaine étape
@@ -53,12 +55,18 @@ pas pu être exécutées.
 providers, contrats de pipeline, schémas, taxonomie de panne, protocole d'évaluation avec
 seuils H1 fixés d'avance, budget séquencé et smoke tests exécutables.
 
-**Les trois bloqueurs restants**, mesurés et non supposés :
+**M07 v2** a préparé la levée : checklist de handoff Google, paquet de lancement portable
+(`bootstrap.sh`), kit d'évaluation E6 complet avec agrégateur testé, scan de sécurité
+**PASS** (90 fichiers, historique git inclus). Preuves : [`M07_EVIDENCE/`](M07_EVIDENCE/README.md).
 
-1. **Aucune clé Google Cloud** → une seule clé débloque E1, E2, E4 et E5.
-2. **Le lip-sync est refusé au `CONNECT` du proxy** (`403 policy denial`) — c'est une
-   politique réseau, pas un manque de budget. Seul bloqueur que l'argent ne résout pas.
-3. **Aucun évaluateur** → 3 à 5 francophones tranchent H1.
+**Les trois bloqueurs exigent une action hors session** :
 
-Enveloppe : **≈ 205 $**, dont **60 $ jusqu'à la décision H1**.
+1. **B1 — clé Google Cloud.** L'API est joignable, seul le credential manque.
+   Une clé débloque E1, E2, E4, E5. *(15-30 min)*
+2. **B2 — accès lip-sync.** 11 hôtes refusés au `CONNECT` par la politique d'egress de
+   l'organisation ; la documentation du proxy interdit de contourner. Allowlist, ou
+   exécuter `M07_EVIDENCE/lipsync/bootstrap.sh` sur une machine ouverte. *(10 min à qq jours)*
+3. **B3 — 3 à 5 évaluateurs francophones.** *(1-3 jours)*
+
+**B2 et B3 conditionnent H1.** Enveloppe demandée : **~60 $ pré-H1** — pas les 205 $.
 Données : [`p0-validation/`](p0-validation/final_report.md) · [`p0-setup/`](p0-setup/readiness_report.md).

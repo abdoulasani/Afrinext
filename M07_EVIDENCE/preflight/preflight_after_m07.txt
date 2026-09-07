@@ -1,0 +1,20 @@
+
+M06 · exécution P0  ·  2026-09-07T05:48:03.166099+00:00
+garde-fous : {'MAX_COST_PER_RUN_USD': 2.0, 'MAX_DAILY_COST_USD': 25.0, 'MAX_CLIPS_PER_RUN': 12, 'MAX_RETRIES_PER_STAGE': 2, 'MAX_GENERATIONS_PER_DAY': 300}
+mode : DRY_RUN (aucune dépense)
+
+DEPENDENCY      STATUS        PROVIDER      TESTED  BLOCKER
+────────────────────────────────────────────────────────────────────────────────────────────────────
+TTS             BLOCKED       google-tts    non     GOOGLE_API_KEY absente
+ASR             BLOCKED       google-stt    non     GOOGLE_API_KEY absente
+VIDEO_GEN       BLOCKED       google-veo    non     GOOGLE_API_KEY absente
+CHARACTER       BLOCKED       google-veo    non     GOOGLE_API_KEY absente
+LIPSYNC         BLOCKED       aucun         non     réseau: hôte refusé au CONNECT du proxy
+SHOT_BANK       BLOCKED       interne       oui     seuls des substituts géométriques existent
+PRODUCT_ASSET   READY         interne       oui     
+STORAGE         READY         disque local  oui     
+RENDERING       READY         ffmpeg        oui     
+EVALUATORS      BLOCKED       humains       non     aucun évaluateur dans un environnement non interacti
+BILLING_LIMITS  READY         garde-fous    oui     
+────────────────────────────────────────────────────────────────────────────────────────────────────
+4/11 prêtes · 7 dépendance(s) critique(s) manquante(s)

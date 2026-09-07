@@ -1,0 +1,25 @@
+{
+  "milestone": "M07 v2",
+  "generated_at": "2026-09-06",
+  "spent_usd_actual": 0.0,
+  "spend_evidence": "p0/out/ledger.jsonl — aucun provider payant appelé ; p0/out/authorizations.jsonl — aucune autorisation accordée",
+  "pre_h1_budget_usd": 60.0,
+  "remaining_pre_h1_usd": 60.0,
+  "full_base_budget_usd": 205.0,
+  "base_budget_authorized": false,
+  "note": "M07 §10 interdit d'autoriser les 205 $ BASE. Seul le budget pré-H1 (~60 $) est en discussion.",
+  "gates": [
+    {"gate": 1, "name": "smoke tests Google", "estimated_usd": 0.05, "status": "BLOCKED", "blocker": "GOOGLE_API_KEY absente"},
+    {"gate": 2, "name": "E1 + E2 + E4", "estimated_usd": 51.0, "status": "BLOCKED", "blocker": "GOOGLE_API_KEY absente", "note": "E1 doit être exécutée par lots : 5,00 $ > MAX_COST_PER_RUN_USD 2,00 $"},
+    {"gate": 3, "name": "E3 lip-sync", "estimated_usd": 8.0, "status": "BLOCKED", "blocker": "politique d'egress de l'organisation"},
+    {"gate": 4, "name": "E6 évaluation humaine", "estimated_usd": 0.0, "status": "BLOCKED", "blocker": "aucun évaluateur recruté"},
+    {"gate": 5, "name": "E5 contrôle génératif", "estimated_usd": 20.0, "status": "NOT_AUTHORIZED", "blocker": "après H1 seulement"},
+    {"gate": 6, "name": "E7 régénération", "estimated_usd": 90.0, "status": "NOT_AUTHORIZED", "blocker": "après H1 seulement"}
+  ],
+  "guardrails": {
+    "MAX_COST_PER_RUN_USD": 2.0, "MAX_DAILY_COST_USD": 25.0,
+    "MAX_CLIPS_PER_RUN": 12, "MAX_RETRIES_PER_STAGE": 2,
+    "MAX_GENERATIONS_PER_DAY": 300, "DRY_RUN_default": true
+  },
+  "guardrail_verification": "Vérifié en M06 avec une clé factice : E1 refusée à 5,00 $ contre un plafond de 2,00 $, refus journalisé."
+}

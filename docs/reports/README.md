@@ -13,6 +13,7 @@ revue. Il valide, ou renvoie des corrections.
 | **M04** | [P0 Validation Execution](M04-validation-execution.pdf) | 2026-09-06 | `6572ff9`+ | **BLOCKED / MISSING DEPENDENCY** — 6 dépendances bloquantes absentes ; E2 partielle ; H1→H4 INCONCLUSIVE |
 | **M05** | [Provider Procurement & Experiment Setup](M05-provider-procurement.pdf) | 2026-09-06 | `b5b634e`+ | **BLOCKED** — 19/19 livrables écrits ; lip-sync refusé au CONNECT du proxy ; Google seul joignable |
 | **M06** | [P0 Real Execution — arrêt au pre-flight](M06-preflight-stop.pdf) | 2026-09-06 | `e50ea49`+ | **STOP au pre-flight** — 4/11 prêtes, 0/7 expériences exécutées ; adaptateurs réels + E4 (WER) construits |
+| **M07 v2** | [Operational Unblocking](M07-unblocking.pdf) | 2026-09-06 | `9777104`+ | **BLOCKED** — B1/B2/B3 exigent une action hors session ; kit E6 complet, scan sécurité PASS, pre-flight 4/11 |
 
 ## Contenu obligatoire d'un rapport
 

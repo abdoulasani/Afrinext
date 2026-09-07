@@ -31,6 +31,7 @@ s'appuie sur trois sources analysées en profondeur :
 | **[09 · M02 — Exploitation et décision](09-m02-exploitation-et-decision.md)** | 42 failure modes, escalade humaine, execution trace, versioning, flywheel, sécurité, simplification, **MVP final, GO/NO-GO, autorisation de phase** | M02 · 26→38 |
 | **[10 · M03 — P0 : résultats mesurés](10-m03-p0-results.md)** | Tranche verticale exécutée : 10 publicités produites, fidélité produit mesurée, coûts modélisés sur volumes réels, latence, réparation ciblée, 10 défauts, **P0 FAIL · Phase 01 BLOCKED** | M03 |
 | **[11 · M06 — Pre-flight et arrêt](11-m06-preflight-stop.md)** | Pre-flight mesuré (4/11), rapport d'arrêt, adaptateurs Google réels, E4 (WER) implémentée, garde-fous vérifiés, **retour d'architecture A→G** | M06 |
+| **[12 · M07 — Levée opérationnelle](12-m07-unblocking.md)** | Registre des bloqueurs, handoff Google, paquet de lancement portable, kit d'évaluation E6 complet, scan de sécurité, **rapport final §17** | M07 v2 |
 
 ---
 
